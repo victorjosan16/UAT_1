@@ -1,10 +1,505 @@
-export default function HomePage() {
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import {
+  ShoppingCart,
+  X,
+  Plus,
+  Minus,
+  Trash2,
+  Loader2,
+  CheckCircle2,
+  ImageOff,
+} from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Tipuri
+// ---------------------------------------------------------------------------
+
+interface Categorie {
+  id: string;
+  nume: string;
+  ordine: number;
+}
+
+interface Produs {
+  id: string;
+  nume: string;
+  descriere: string;
+  pret: number;
+  pretRedus: number | null;
+  sku: string;
+  stoc: number;
+  categorie_id: string;
+  imagini: string[];
+  vizibil: boolean;
+}
+
+interface ItemCos {
+  produsId: string;
+  nume: string;
+  pretUnitar: number;
+  imagine: string | null;
+  cantitate: number;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formateazaPret(pret: number): string {
+  return new Intl.NumberFormat("ro-RO", { minimumFractionDigits: 0 }).format(pret) + " lei";
+}
+
+function pretEfectiv(produs: Produs): number {
+  return produs.pretRedus !== null && produs.pretRedus !== undefined && produs.pretRedus < produs.pret
+    ? produs.pretRedus
+    : produs.pret;
+}
+
+// ---------------------------------------------------------------------------
+// Pagina
+// ---------------------------------------------------------------------------
+
+export default function MagazinPage() {
+  const [categorii, setCategorii] = useState<Categorie[]>([]);
+  const [produse, setProduse] = useState<Produs[]>([]);
+  const [seIncarca, setSeIncarca] = useState(true);
+  const [categorieActiva, setCategorieActiva] = useState<string>("toate");
+
+  const [cosDeschis, setCosDeschis] = useState(false);
+  const [cos, setCos] = useState<ItemCos[]>([]);
+  const [comandaTrimisa, setComandaTrimisa] = useState(false);
+  const [seTrimite, setSeTrimite] = useState(false);
+  const [eroareComanda, setEroareComanda] = useState<string | null>(null);
+  const [numeClient, setNumeClient] = useState("");
+  const [telefonClient, setTelefonClient] = useState("");
+
+  // Categorii — live din Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "categories"), (snapshot) => {
+      const lista: Categorie[] = snapshot.docs
+        .map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            nume: data.nume ?? "Categorie",
+            ordine: typeof data.ordine === "number" ? data.ordine : 0,
+          };
+        })
+        .sort((a, b) => a.ordine - b.ordine);
+      setCategorii(lista);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Produse — live din Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "products"),
+      (snapshot) => {
+        const lista: Produs[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            nume: data.nume ?? "Produs",
+            descriere: data.descriere ?? "",
+            pret: typeof data.pret === "number" ? data.pret : 0,
+            pretRedus: typeof data.pretRedus === "number" ? data.pretRedus : null,
+            sku: data.sku ?? "",
+            stoc: typeof data.stoc === "number" ? data.stoc : 0,
+            categorie_id: data.categorie_id ?? "",
+            imagini: Array.isArray(data.imagini) ? data.imagini : [],
+            vizibil: data.vizibil !== false,
+          };
+        });
+        setProduse(lista);
+        setSeIncarca(false);
+      },
+      () => setSeIncarca(false)
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Ascunde automat produsele fără stoc sau marcate ca invizibile
+  const produseDisponibile = useMemo(
+    () => produse.filter((p) => p.vizibil && p.stoc > 0),
+    [produse]
+  );
+
+  const produseFiltrate = useMemo(() => {
+    if (categorieActiva === "toate") return produseDisponibile;
+    return produseDisponibile.filter((p) => p.categorie_id === categorieActiva);
+  }, [produseDisponibile, categorieActiva]);
+
+  // -------------------------------------------------------------------------
+  // Coș
+  // -------------------------------------------------------------------------
+
+  function adaugaInCos(produs: Produs) {
+    setCos((prev) => {
+      const existent = prev.find((item) => item.produsId === produs.id);
+      if (existent) {
+        return prev.map((item) =>
+          item.produsId === produs.id
+            ? { ...item, cantitate: Math.min(item.cantitate + 1, produs.stoc) }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          produsId: produs.id,
+          nume: produs.nume,
+          pretUnitar: pretEfectiv(produs),
+          imagine: produs.imagini[0] ?? null,
+          cantitate: 1,
+        },
+      ];
+    });
+    setCosDeschis(true);
+  }
+
+  function modificaCantitate(produsId: string, delta: number) {
+    setCos((prev) =>
+      prev
+        .map((item) =>
+          item.produsId === produsId
+            ? { ...item, cantitate: item.cantitate + delta }
+            : item
+        )
+        .filter((item) => item.cantitate > 0)
+    );
+  }
+
+  function eliminaDinCos(produsId: string) {
+    setCos((prev) => prev.filter((item) => item.produsId !== produsId));
+  }
+
+  const totalCos = useMemo(
+    () => cos.reduce((suma, item) => suma + item.pretUnitar * item.cantitate, 0),
+    [cos]
+  );
+  const numarItemiCos = useMemo(
+    () => cos.reduce((suma, item) => suma + item.cantitate, 0),
+    [cos]
+  );
+
+  async function trimiteComanda() {
+    setEroareComanda(null);
+
+    if (cos.length === 0) return;
+    if (!numeClient.trim() || !telefonClient.trim()) {
+      setEroareComanda("Te rugăm să completezi numele și telefonul.");
+      return;
+    }
+
+    setSeTrimite(true);
+    try {
+      const produseText = cos.map((item) => `${item.cantitate}x ${item.nume}`).join(" + ");
+      await addDoc(collection(db, "orders"), {
+        client: numeClient.trim(),
+        telefon: telefonClient.trim(),
+        suma: totalCos,
+        produse: produseText,
+        status: "noua",
+        termen: "",
+        data_creare: serverTimestamp(),
+      });
+      setComandaTrimisa(true);
+      setCos([]);
+      setNumeClient("");
+      setTelefonClient("");
+    } catch (err) {
+      console.error("Eroare la trimiterea comenzii:", err);
+      setEroareComanda("A apărut o eroare. Te rugăm să încerci din nou.");
+    } finally {
+      setSeTrimite(false);
+    }
+  }
+
+  function inchideCos() {
+    setCosDeschis(false);
+    setComandaTrimisa(false);
+    setEroareComanda(null);
+  }
+
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-900">PosterART</h1>
-        <p className="text-sm text-gray-500 mt-1">Magazinul public — în curs de dezvoltare.</p>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-brand-primary flex items-center justify-center text-white font-bold text-sm">
+              P
+            </div>
+            <span className="font-semibold text-gray-900">PosterART</span>
+          </div>
+
+          <button
+            onClick={() => setCosDeschis(true)}
+            className="relative flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Coș
+            {numarItemiCos > 0 && (
+              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center">
+                {numarItemiCos}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Filtru categorii */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setCategorieActiva("toate")}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              categorieActiva === "toate"
+                ? "bg-brand-primary text-white"
+                : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            Toate
+          </button>
+          {categorii.map((categorie) => (
+            <button
+              key={categorie.id}
+              onClick={() => setCategorieActiva(categorie.id)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                categorieActiva === categorie.id
+                  ? "bg-brand-primary text-white"
+                  : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              {categorie.nume}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Grid produse */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+        {seIncarca ? (
+          <div className="flex items-center justify-center h-64 text-gray-400">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            Se încarcă produsele...
+          </div>
+        ) : produseFiltrate.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
+            <ImageOff className="w-8 h-8" />
+            Niciun produs disponibil momentan.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+            {produseFiltrate.map((produs) => (
+              <ProdusCard key={produs.id} produs={produs} onAdauga={() => adaugaInCos(produs)} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Coș slide-out */}
+      {cosDeschis && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40 animate-in fade-in"
+            onClick={inchideCos}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl flex flex-col animate-in slide-in-from-right">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100 flex-shrink-0">
+              <h2 className="font-semibold text-gray-900">Coșul tău</h2>
+              <button
+                onClick={inchideCos}
+                className="p-2 rounded-lg hover:bg-gray-100"
+                aria-label="Închide"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {comandaTrimisa ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-8 gap-3 animate-in fade-in">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <p className="font-semibold text-gray-900">Comandă trimisă cu succes!</p>
+                <p className="text-sm text-gray-500">Te contactăm în curând pentru confirmare.</p>
+                <button
+                  onClick={inchideCos}
+                  className="mt-4 bg-brand-primary text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-primary-dark transition-colors"
+                >
+                  Închide
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                  {cos.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                      <ShoppingCart className="w-8 h-8" />
+                      Coșul este gol.
+                    </div>
+                  ) : (
+                    cos.map((item) => (
+                      <div
+                        key={item.produsId}
+                        className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3"
+                      >
+                        <div className="w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 overflow-hidden">
+                          {item.imagine ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.imagine} alt={item.nume} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <ImageOff className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{item.nume}</p>
+                          <p className="text-xs text-gray-500">{formateazaPret(item.pretUnitar)} / buc</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <button
+                              onClick={() => modificaCantitate(item.produsId, -1)}
+                              className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                              aria-label="Scade cantitatea"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-sm font-medium w-4 text-center">{item.cantitate}</span>
+                            <button
+                              onClick={() => modificaCantitate(item.produsId, 1)}
+                              className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                              aria-label="Crește cantitatea"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end justify-between self-stretch">
+                          <button
+                            onClick={() => eliminaDinCos(item.produsId)}
+                            className="text-gray-300 hover:text-red-500 transition-colors"
+                            aria-label="Elimină produsul"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                            {formateazaPret(item.pretUnitar * item.cantitate)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {cos.length > 0 && (
+                  <div className="flex-shrink-0 border-t border-gray-100 p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Total</span>
+                      <span className="text-lg font-semibold text-gray-900">{formateazaPret(totalCos)}</span>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Nume complet"
+                      value={numeClient}
+                      onChange={(e) => setNumeClient(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Telefon"
+                      value={telefonClient}
+                      onChange={(e) => setTelefonClient(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                    />
+
+                    {eroareComanda && (
+                      <p className="text-xs text-red-600">{eroareComanda}</p>
+                    )}
+
+                    <button
+                      onClick={trimiteComanda}
+                      disabled={seTrimite}
+                      className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white font-medium py-3 rounded-xl hover:bg-brand-primary-dark transition-colors disabled:opacity-60"
+                    >
+                      {seTrimite ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Trimite Comanda"
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Card produs
+// ---------------------------------------------------------------------------
+
+function ProdusCard({ produs, onAdauga }: { produs: Produs; onAdauga: () => void }) {
+  const areReducere = produs.pretRedus !== null && produs.pretRedus < produs.pret;
+  const imagine = produs.imagini[0] ?? null;
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow border border-gray-100 flex flex-col">
+      <div className="relative aspect-square bg-gray-100">
+        {imagine ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imagine} alt={produs.nume} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <ImageOff className="w-8 h-8" />
+          </div>
+        )}
+        {areReducere && (
+          <span className="absolute top-2 left-2 bg-brand-accent text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+            Reducere
+          </span>
+        )}
+      </div>
+
+      <div className="p-3.5 flex flex-col flex-1">
+        <p className="text-sm font-medium text-gray-900 line-clamp-2">{produs.nume}</p>
+
+        <div className="mt-auto pt-3 flex items-center justify-between">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-semibold text-brand-primary">
+              {formateazaPret(pretEfectiv(produs))}
+            </span>
+            {areReducere && (
+              <span className="text-xs text-gray-400 line-through">
+                {formateazaPret(produs.pret)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={onAdauga}
+          className="mt-3 w-full bg-gray-900 text-white text-xs font-medium py-2.5 rounded-xl hover:bg-brand-primary transition-colors"
+        >
+          Adaugă în coș
+        </button>
+      </div>
+    </div>
   );
 }
