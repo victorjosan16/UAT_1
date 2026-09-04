@@ -11,8 +11,7 @@ import {
   increment,
   serverTimestamp,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import {
   Plus,
   Minus,
@@ -72,6 +71,30 @@ function genereazaSKU(nume: string): string {
     .slice(0, 14);
   const sufix = Math.floor(1000 + Math.random() * 9000);
   return `${baza || "PROD"}-${sufix}`;
+}
+
+async function incarcaImagineCloudinary(fisier: File): Promise<string> {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!cloudName || !uploadPreset) {
+    throw new Error("Cloudinary nu este configurat (variabilele de mediu lipsesc).");
+  }
+
+  const formData = new FormData();
+  formData.append("file", fisier);
+  formData.append("upload_preset", uploadPreset);
+
+  const raspuns = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!raspuns.ok) {
+    throw new Error("Eroare la încărcarea pozei pe Cloudinary.");
+  }
+
+  const data = await raspuns.json();
+  return data.secure_url as string;
 }
 
 // ---------------------------------------------------------------------------
@@ -471,10 +494,7 @@ function TabProdusForm({
     try {
       const urlNoi: string[] = [];
       for (const fisier of fisiereNoi) {
-        const cale = `products/${Date.now()}-${fisier.name}`;
-        const storageRef = ref(storage, cale);
-        await uploadBytes(storageRef, fisier);
-        urlNoi.push(await getDownloadURL(storageRef));
+        urlNoi.push(await incarcaImagineCloudinary(fisier));
       }
 
       const campuri = {
