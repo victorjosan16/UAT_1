@@ -23,10 +23,9 @@ import {
 // Tipuri
 // ---------------------------------------------------------------------------
 
-interface Categorie {
+interface Grupa {
   id: string;
   nume: string;
-  ordine: number;
 }
 
 interface Produs {
@@ -37,7 +36,7 @@ interface Produs {
   pretRedus: number | null;
   sku: string;
   stoc: number;
-  categorie_id: string;
+  group_id: string;
   imagini: string[];
   vizibil: boolean;
 }
@@ -69,10 +68,10 @@ function pretEfectiv(produs: Produs): number {
 // ---------------------------------------------------------------------------
 
 export default function MagazinPage() {
-  const [categorii, setCategorii] = useState<Categorie[]>([]);
+  const [grupe, setGrupe] = useState<Grupa[]>([]);
   const [produse, setProduse] = useState<Produs[]>([]);
   const [seIncarca, setSeIncarca] = useState(true);
-  const [categorieActiva, setCategorieActiva] = useState<string>("toate");
+  const [grupaActiva, setGrupaActiva] = useState<string>("toate");
 
   const [cosDeschis, setCosDeschis] = useState(false);
   const [cos, setCos] = useState<ItemCos[]>([]);
@@ -82,20 +81,19 @@ export default function MagazinPage() {
   const [numeClient, setNumeClient] = useState("");
   const [telefonClient, setTelefonClient] = useState("");
 
-  // Categorii — live din Firestore
+  // Grupe — live din Firestore
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "categories"), (snapshot) => {
-      const lista: Categorie[] = snapshot.docs
+    const unsubscribe = onSnapshot(collection(db, "groups"), (snapshot) => {
+      const lista: Grupa[] = snapshot.docs
         .map((docSnap) => {
           const data = docSnap.data();
           return {
             id: docSnap.id,
-            nume: data.nume ?? "Categorie",
-            ordine: typeof data.ordine === "number" ? data.ordine : 0,
+            nume: data.nume ?? "Grupă",
           };
         })
-        .sort((a, b) => a.ordine - b.ordine);
-      setCategorii(lista);
+        .sort((a, b) => a.nume.localeCompare(b.nume, "ro"));
+      setGrupe(lista);
     });
     return () => unsubscribe();
   }, []);
@@ -115,7 +113,7 @@ export default function MagazinPage() {
             pretRedus: typeof data.pretRedus === "number" ? data.pretRedus : null,
             sku: data.sku ?? "",
             stoc: typeof data.stoc === "number" ? data.stoc : 0,
-            categorie_id: data.categorie_id ?? "",
+            group_id: data.group_id ?? "",
             imagini: Array.isArray(data.imagini) ? data.imagini : [],
             vizibil: data.vizibil !== false,
           };
@@ -135,9 +133,9 @@ export default function MagazinPage() {
   );
 
   const produseFiltrate = useMemo(() => {
-    if (categorieActiva === "toate") return produseDisponibile;
-    return produseDisponibile.filter((p) => p.categorie_id === categorieActiva);
-  }, [produseDisponibile, categorieActiva]);
+    if (grupaActiva === "toate") return produseDisponibile;
+    return produseDisponibile.filter((p) => p.group_id === grupaActiva);
+  }, [produseDisponibile, grupaActiva]);
 
   // -------------------------------------------------------------------------
   // Coș
@@ -262,26 +260,26 @@ export default function MagazinPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button
-            onClick={() => setCategorieActiva("toate")}
+            onClick={() => setGrupaActiva("toate")}
             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              categorieActiva === "toate"
+              grupaActiva === "toate"
                 ? "bg-brand-primary text-white"
                 : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
             }`}
           >
             Toate
           </button>
-          {categorii.map((categorie) => (
+          {grupe.map((grupa) => (
             <button
-              key={categorie.id}
-              onClick={() => setCategorieActiva(categorie.id)}
+              key={grupa.id}
+              onClick={() => setGrupaActiva(grupa.id)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                categorieActiva === categorie.id
+                grupaActiva === grupa.id
                   ? "bg-brand-primary text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}
             >
-              {categorie.nume}
+              {grupa.nume}
             </button>
           ))}
         </div>
