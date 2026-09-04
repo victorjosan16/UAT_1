@@ -17,16 +17,75 @@ import {
   Loader2,
   CheckCircle2,
   ImageOff,
+  ArrowRight,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Tipuri
+// Tipuri — blocuri de pagină
 // ---------------------------------------------------------------------------
 
-interface Grupa {
-  id: string;
-  nume: string;
+type TipBloc = "hero" | "text_imagine" | "carusel_produse" | "banner_simplu";
+
+interface ContinutHero {
+  titlu: string;
+  subtitlu: string;
+  imagineBg: string;
+  textButon: string;
+  linkButon: string;
 }
+
+interface ContinutTextImagine {
+  titlu: string;
+  text: string;
+  imagine: string;
+  pozitieImagine: "stanga" | "dreapta";
+}
+
+interface ContinutCaruselProduse {
+  titluSectiune: string;
+  group_id: string;
+}
+
+interface ContinutBannerSimplu {
+  text: string;
+  textButon: string;
+  linkButon: string;
+}
+
+interface BlocHeroData {
+  id: string;
+  tip: "hero";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutHero;
+}
+interface BlocTextImagineData {
+  id: string;
+  tip: "text_imagine";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutTextImagine;
+}
+interface BlocCaruselData {
+  id: string;
+  tip: "carusel_produse";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutCaruselProduse;
+}
+interface BlocBannerData {
+  id: string;
+  tip: "banner_simplu";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutBannerSimplu;
+}
+
+type BlocPagina = BlocHeroData | BlocTextImagineData | BlocCaruselData | BlocBannerData;
+
+// ---------------------------------------------------------------------------
+// Tipuri — catalog & coș
+// ---------------------------------------------------------------------------
 
 interface Produs {
   id: string;
@@ -68,10 +127,9 @@ function pretEfectiv(produs: Produs): number {
 // ---------------------------------------------------------------------------
 
 export default function MagazinPage() {
-  const [grupe, setGrupe] = useState<Grupa[]>([]);
+  const [blocuri, setBlocuri] = useState<BlocPagina[]>([]);
   const [produse, setProduse] = useState<Produs[]>([]);
   const [seIncarca, setSeIncarca] = useState(true);
-  const [grupaActiva, setGrupaActiva] = useState<string>("toate");
 
   const [cosDeschis, setCosDeschis] = useState(false);
   const [cos, setCos] = useState<ItemCos[]>([]);
@@ -81,19 +139,24 @@ export default function MagazinPage() {
   const [numeClient, setNumeClient] = useState("");
   const [telefonClient, setTelefonClient] = useState("");
 
-  // Grupe — live din Firestore
+  // Blocurile paginii principale — live din Firestore
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "groups"), (snapshot) => {
-      const lista: Grupa[] = snapshot.docs
+    const unsubscribe = onSnapshot(collection(db, "homepage_blocks"), (snapshot) => {
+      const lista: BlocPagina[] = snapshot.docs
         .map((docSnap) => {
           const data = docSnap.data();
           return {
             id: docSnap.id,
-            nume: data.nume ?? "Grupă",
-          };
+            tip: data.tip,
+            ordine: typeof data.ordine === "number" ? data.ordine : 0,
+            vizibil: data.vizibil !== false,
+            continut: data.continut ?? {},
+          } as BlocPagina;
         })
-        .sort((a, b) => a.nume.localeCompare(b.nume, "ro"));
-      setGrupe(lista);
+        .filter((bloc) => bloc.vizibil)
+        .sort((a, b) => a.ordine - b.ordine);
+      setBlocuri(lista);
+      setSeIncarca(false);
     });
     return () => unsubscribe();
   }, []);
@@ -119,9 +182,8 @@ export default function MagazinPage() {
           };
         });
         setProduse(lista);
-        setSeIncarca(false);
       },
-      () => setSeIncarca(false)
+      () => {}
     );
     return () => unsubscribe();
   }, []);
@@ -131,11 +193,6 @@ export default function MagazinPage() {
     () => produse.filter((p) => p.vizibil && p.stoc > 0),
     [produse]
   );
-
-  const produseFiltrate = useMemo(() => {
-    if (grupaActiva === "toate") return produseDisponibile;
-    return produseDisponibile.filter((p) => p.group_id === grupaActiva);
-  }, [produseDisponibile, grupaActiva]);
 
   // -------------------------------------------------------------------------
   // Coș
@@ -256,55 +313,24 @@ export default function MagazinPage() {
         </div>
       </header>
 
-      {/* Filtru categorii */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setGrupaActiva("toate")}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              grupaActiva === "toate"
-                ? "bg-brand-primary text-white"
-                : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            Toate
-          </button>
-          {grupe.map((grupa) => (
-            <button
-              key={grupa.id}
-              onClick={() => setGrupaActiva(grupa.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                grupaActiva === grupa.id
-                  ? "bg-brand-primary text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              {grupa.nume}
-            </button>
+      {/* Blocuri dinamice ale paginii */}
+      {seIncarca ? (
+        <div className="flex items-center justify-center h-64 text-gray-400">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" />
+          Se încarcă pagina...
+        </div>
+      ) : blocuri.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
+          <ImageOff className="w-8 h-8" />
+          Magazinul este în curs de configurare.
+        </div>
+      ) : (
+        <div className="pb-16">
+          {blocuri.map((bloc) => (
+            <RandeazaBloc key={bloc.id} bloc={bloc} produseDisponibile={produseDisponibile} onAdaugaInCos={adaugaInCos} />
           ))}
         </div>
-      </div>
-
-      {/* Grid produse */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-        {seIncarca ? (
-          <div className="flex items-center justify-center h-64 text-gray-400">
-            <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            Se încarcă produsele...
-          </div>
-        ) : produseFiltrate.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
-            <ImageOff className="w-8 h-8" />
-            Niciun produs disponibil momentan.
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-            {produseFiltrate.map((produs) => (
-              <ProdusCard key={produs.id} produs={produs} onAdauga={() => adaugaInCos(produs)} />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Coș slide-out */}
       {cosDeschis && (
@@ -446,6 +472,133 @@ export default function MagazinPage() {
         </div>
       )}
     </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Randare bloc — dispatch pe tip
+// ---------------------------------------------------------------------------
+
+function RandeazaBloc({
+  bloc,
+  produseDisponibile,
+  onAdaugaInCos,
+}: {
+  bloc: BlocPagina;
+  produseDisponibile: Produs[];
+  onAdaugaInCos: (produs: Produs) => void;
+}) {
+  switch (bloc.tip) {
+    case "hero":
+      return <BlocHero continut={bloc.continut} />;
+    case "text_imagine":
+      return <BlocTextImagine continut={bloc.continut} />;
+    case "carusel_produse":
+      return (
+        <BlocCaruselProduse
+          continut={bloc.continut}
+          produseDisponibile={produseDisponibile}
+          onAdaugaInCos={onAdaugaInCos}
+        />
+      );
+    case "banner_simplu":
+      return <BlocBannerSimplu continut={bloc.continut} />;
+    default:
+      return null;
+  }
+}
+
+function BlocHero({ continut }: { continut: ContinutHero }) {
+  return (
+    <section
+      className="relative min-h-[420px] flex items-center justify-center text-center px-6 py-20 bg-gray-900 bg-cover bg-center"
+      style={continut.imagineBg ? { backgroundImage: `url(${continut.imagineBg})` } : undefined}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative z-10 max-w-2xl">
+        <h1 className="text-3xl sm:text-4xl font-semibold text-white">{continut.titlu}</h1>
+        {continut.subtitlu && <p className="mt-3 text-white/80">{continut.subtitlu}</p>}
+        {continut.textButon && (
+          <a
+            href={continut.linkButon || "#"}
+            className="inline-flex items-center gap-2 mt-6 bg-brand-accent text-white font-medium px-6 py-3 rounded-2xl hover:brightness-95 transition"
+          >
+            {continut.textButon}
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BlocTextImagine({ continut }: { continut: ContinutTextImagine }) {
+  const imagineStanga = continut.pozitieImagine === "stanga";
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <div className={`flex flex-col ${imagineStanga ? "md:flex-row" : "md:flex-row-reverse"} gap-8 items-center`}>
+        <div className="flex-1 w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
+          {continut.imagine ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={continut.imagine} alt={continut.titlu} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <ImageOff className="w-8 h-8" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <h2 className="text-2xl font-semibold text-gray-900">{continut.titlu}</h2>
+          <p className="mt-3 text-gray-600 whitespace-pre-line">{continut.text}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BlocCaruselProduse({
+  continut,
+  produseDisponibile,
+  onAdaugaInCos,
+}: {
+  continut: ContinutCaruselProduse;
+  produseDisponibile: Produs[];
+  onAdaugaInCos: (produs: Produs) => void;
+}) {
+  const produseGrup = useMemo(
+    () => produseDisponibile.filter((p) => p.group_id === continut.group_id),
+    [produseDisponibile, continut.group_id]
+  );
+
+  if (produseGrup.length === 0) return null;
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">{continut.titluSectiune}</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+        {produseGrup.map((produs) => (
+          <ProdusCard key={produs.id} produs={produs} onAdauga={() => onAdaugaInCos(produs)} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocBannerSimplu({ continut }: { continut: ContinutBannerSimplu }) {
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="bg-brand-primary rounded-2xl px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-white text-center sm:text-left">
+        <p className="font-medium text-lg">{continut.text}</p>
+        {continut.textButon && (
+          <a
+            href={continut.linkButon || "#"}
+            className="flex-shrink-0 bg-white text-brand-primary font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            {continut.textButon}
+          </a>
+        )}
+      </div>
+    </section>
   );
 }
 

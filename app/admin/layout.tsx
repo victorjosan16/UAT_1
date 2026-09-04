@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Users,
   Settings,
+  LayoutTemplate,
   Menu,
   X,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { useState } from "react";
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/catalog", label: "Catalog Produse", icon: Package },
+  { href: "/admin/storefront", label: "Constructor Pagină", icon: LayoutTemplate },
   { href: "/admin/comenzi", label: "Procesare Comenzi", icon: ClipboardList },
   { href: "/admin/clienti", label: "CRM & Clienți", icon: Users },
   { href: "/admin/setari", label: "Setări", icon: Settings },
