@@ -21,13 +21,21 @@ import {
   ArrowRight,
   MapPin,
   Search,
+  Sparkles,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Tipuri — blocuri de pagină
 // ---------------------------------------------------------------------------
 
-type TipBloc = "hero" | "text_imagine" | "carusel_produse" | "banner_simplu";
+type TipBloc =
+  | "hero"
+  | "hero_imagine"
+  | "text_imagine"
+  | "carusel_produse"
+  | "banner_simplu"
+  | "carduri_beneficii"
+  | "pasi";
 
 interface ContinutHero {
   titlu: string;
@@ -35,6 +43,24 @@ interface ContinutHero {
   imagineBg: string;
   textButon: string;
   linkButon: string;
+}
+
+interface StatisticaHero {
+  id: string;
+  valoare: string;
+  eticheta: string;
+}
+
+interface ContinutHeroImagine {
+  eyebrow: string;
+  titlu: string;
+  subtitlu: string;
+  imagine: string;
+  textButonPrimar: string;
+  linkButonPrimar: string;
+  textButonSecundar: string;
+  linkButonSecundar: string;
+  statistici: StatisticaHero[];
 }
 
 interface ContinutTextImagine {
@@ -55,12 +81,42 @@ interface ContinutBannerSimplu {
   linkButon: string;
 }
 
+interface CardBeneficiu {
+  id: string;
+  titlu: string;
+  text: string;
+}
+
+interface ContinutCarduriBeneficii {
+  titluSectiune: string;
+  carduri: CardBeneficiu[];
+}
+
+interface PasItem {
+  id: string;
+  titlu: string;
+  text: string;
+}
+
+interface ContinutPasi {
+  titluSectiune: string;
+  imagine: string;
+  pasi: PasItem[];
+}
+
 interface BlocHeroData {
   id: string;
   tip: "hero";
   ordine: number;
   vizibil: boolean;
   continut: ContinutHero;
+}
+interface BlocHeroImagineData {
+  id: string;
+  tip: "hero_imagine";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutHeroImagine;
 }
 interface BlocTextImagineData {
   id: string;
@@ -83,8 +139,29 @@ interface BlocBannerData {
   vizibil: boolean;
   continut: ContinutBannerSimplu;
 }
+interface BlocCarduriBeneficiiData {
+  id: string;
+  tip: "carduri_beneficii";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutCarduriBeneficii;
+}
+interface BlocPasiData {
+  id: string;
+  tip: "pasi";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutPasi;
+}
 
-type BlocPagina = BlocHeroData | BlocTextImagineData | BlocCaruselData | BlocBannerData;
+type BlocPagina =
+  | BlocHeroData
+  | BlocHeroImagineData
+  | BlocTextImagineData
+  | BlocCaruselData
+  | BlocBannerData
+  | BlocCarduriBeneficiiData
+  | BlocPasiData;
 
 // ---------------------------------------------------------------------------
 // Tipuri — catalog & coș
@@ -591,6 +668,8 @@ function RandeazaBloc({
   switch (bloc.tip) {
     case "hero":
       return <BlocHero continut={bloc.continut} />;
+    case "hero_imagine":
+      return <BlocHeroImagine continut={bloc.continut} />;
     case "text_imagine":
       return <BlocTextImagine continut={bloc.continut} />;
     case "carusel_produse":
@@ -603,6 +682,10 @@ function RandeazaBloc({
       );
     case "banner_simplu":
       return <BlocBannerSimplu continut={bloc.continut} />;
+    case "carduri_beneficii":
+      return <BlocCarduriBeneficii continut={bloc.continut} />;
+    case "pasi":
+      return <BlocPasi continut={bloc.continut} />;
     default:
       return null;
   }
@@ -627,6 +710,66 @@ function BlocHero({ continut }: { continut: ContinutHero }) {
             <ArrowRight className="w-4 h-4" />
           </a>
         )}
+      </div>
+    </section>
+  );
+}
+
+function BlocHeroImagine({ continut }: { continut: ContinutHeroImagine }) {
+  return (
+    <section className="bg-brand-primary relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center">
+        <div className="text-white">
+          {continut.eyebrow && (
+            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-sm mb-4">
+              {continut.eyebrow}
+            </div>
+          )}
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight">{continut.titlu}</h1>
+          {continut.subtitlu && <p className="mt-4 text-white/80 max-w-md">{continut.subtitlu}</p>}
+          <div className="mt-6 flex flex-wrap gap-3">
+            {continut.textButonPrimar && (
+              <a
+                href={continut.linkButonPrimar || "#"}
+                className="bg-gray-900 text-white px-5 py-3 rounded-2xl font-medium hover:bg-gray-800 transition-colors"
+              >
+                {continut.textButonPrimar}
+              </a>
+            )}
+            {continut.textButonSecundar && (
+              <a
+                href={continut.linkButonSecundar || "#"}
+                className="bg-brand-accent text-white px-5 py-3 rounded-2xl font-medium hover:brightness-95 transition"
+              >
+                {continut.textButonSecundar}
+              </a>
+            )}
+          </div>
+          {continut.statistici.length > 0 && (
+            <div className="mt-10 flex flex-wrap gap-8">
+              {continut.statistici.map((stat) => (
+                <div key={stat.id}>
+                  <p className="text-2xl font-bold text-white">{stat.valoare}</p>
+                  <p className="text-xs text-white/60">{stat.eticheta}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          {continut.imagine ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={continut.imagine}
+              alt={continut.titlu}
+              className="rounded-[2.5rem] w-full object-cover aspect-[4/5]"
+            />
+          ) : (
+            <div className="rounded-[2.5rem] w-full aspect-[4/5] bg-white/10 flex items-center justify-center text-white/40">
+              <ImageOff className="w-10 h-10" />
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -696,6 +839,67 @@ function BlocBannerSimplu({ continut }: { continut: ContinutBannerSimplu }) {
           >
             {continut.textButon}
           </a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BlocCarduriBeneficii({ continut }: { continut: ContinutCarduriBeneficii }) {
+  if (continut.carduri.length === 0) return null;
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <h2 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-10">
+        {continut.titluSectiune}
+      </h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {continut.carduri.map((card) => (
+          <div
+            key={card.id}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow p-6"
+          >
+            <div className="w-11 h-11 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mb-4">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <h3 className="font-semibold text-gray-900">{card.titlu}</h3>
+            {card.text && <p className="text-sm text-gray-500 mt-2">{card.text}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocPasi({ continut }: { continut: ContinutPasi }) {
+  if (continut.pasi.length === 0) return null;
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <h2 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-12">
+        {continut.titluSectiune}
+      </h2>
+      <div className={`grid gap-10 items-center ${continut.imagine ? "md:grid-cols-2" : ""}`}>
+        <div className="space-y-6">
+          {continut.pasi.map((pas, index) => (
+            <div key={pas.id} className="flex gap-4">
+              <div className="w-9 h-9 rounded-full bg-brand-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
+                {index + 1}
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">{pas.titlu}</h3>
+                {pas.text && <p className="text-sm text-gray-500 mt-1">{pas.text}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+        {continut.imagine && (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={continut.imagine}
+              alt={continut.titluSectiune}
+              className="rounded-[2.5rem] w-full object-cover aspect-square"
+            />
+          </div>
         )}
       </div>
     </section>

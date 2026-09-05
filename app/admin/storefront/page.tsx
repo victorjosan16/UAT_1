@@ -28,6 +28,9 @@ import {
   Columns2,
   GalleryHorizontal,
   Megaphone,
+  Sparkles,
+  LayoutGrid,
+  ListOrdered,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -39,7 +42,14 @@ interface Grupa {
   nume: string;
 }
 
-type TipBloc = "hero" | "text_imagine" | "carusel_produse" | "banner_simplu";
+type TipBloc =
+  | "hero"
+  | "hero_imagine"
+  | "text_imagine"
+  | "carusel_produse"
+  | "banner_simplu"
+  | "carduri_beneficii"
+  | "pasi";
 
 interface ContinutHero {
   titlu: string;
@@ -47,6 +57,24 @@ interface ContinutHero {
   imagineBg: string;
   textButon: string;
   linkButon: string;
+}
+
+interface StatisticaHero {
+  id: string;
+  valoare: string;
+  eticheta: string;
+}
+
+interface ContinutHeroImagine {
+  eyebrow: string;
+  titlu: string;
+  subtitlu: string;
+  imagine: string;
+  textButonPrimar: string;
+  linkButonPrimar: string;
+  textButonSecundar: string;
+  linkButonSecundar: string;
+  statistici: StatisticaHero[];
 }
 
 interface ContinutTextImagine {
@@ -67,12 +95,42 @@ interface ContinutBannerSimplu {
   linkButon: string;
 }
 
+interface CardBeneficiu {
+  id: string;
+  titlu: string;
+  text: string;
+}
+
+interface ContinutCarduriBeneficii {
+  titluSectiune: string;
+  carduri: CardBeneficiu[];
+}
+
+interface PasItem {
+  id: string;
+  titlu: string;
+  text: string;
+}
+
+interface ContinutPasi {
+  titluSectiune: string;
+  imagine: string;
+  pasi: PasItem[];
+}
+
 interface BlocHeroData {
   id: string;
   tip: "hero";
   ordine: number;
   vizibil: boolean;
   continut: ContinutHero;
+}
+interface BlocHeroImagineData {
+  id: string;
+  tip: "hero_imagine";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutHeroImagine;
 }
 interface BlocTextImagineData {
   id: string;
@@ -95,8 +153,33 @@ interface BlocBannerData {
   vizibil: boolean;
   continut: ContinutBannerSimplu;
 }
+interface BlocCarduriBeneficiiData {
+  id: string;
+  tip: "carduri_beneficii";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutCarduriBeneficii;
+}
+interface BlocPasiData {
+  id: string;
+  tip: "pasi";
+  ordine: number;
+  vizibil: boolean;
+  continut: ContinutPasi;
+}
 
-type BlocPagina = BlocHeroData | BlocTextImagineData | BlocCaruselData | BlocBannerData;
+type BlocPagina =
+  | BlocHeroData
+  | BlocHeroImagineData
+  | BlocTextImagineData
+  | BlocCaruselData
+  | BlocBannerData
+  | BlocCarduriBeneficiiData
+  | BlocPasiData;
+
+function idNou(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
 
 // ---------------------------------------------------------------------------
 // Config tipuri de bloc
@@ -104,16 +187,22 @@ type BlocPagina = BlocHeroData | BlocTextImagineData | BlocCaruselData | BlocBan
 
 const ETICHETE_TIP: Record<TipBloc, string> = {
   hero: "Secțiune Hero",
+  hero_imagine: "Hero cu Imagine",
   text_imagine: "Text + Imagine",
   carusel_produse: "Carusel Produse",
   banner_simplu: "Banner Simplu",
+  carduri_beneficii: "Carduri Beneficii",
+  pasi: "Pași",
 };
 
 const ICOANE_TIP: Record<TipBloc, typeof ImageIcon> = {
   hero: ImageIcon,
+  hero_imagine: Sparkles,
   text_imagine: Columns2,
   carusel_produse: GalleryHorizontal,
   banner_simplu: Megaphone,
+  carduri_beneficii: LayoutGrid,
+  pasi: ListOrdered,
 };
 
 function continutImplicit(tip: TipBloc): BlocPagina["continut"] {
@@ -126,6 +215,18 @@ function continutImplicit(tip: TipBloc): BlocPagina["continut"] {
         textButon: "Vezi Produsele",
         linkButon: "#",
       };
+    case "hero_imagine":
+      return {
+        eyebrow: "★★★★★ 5.0 (peste 1.000 recenzii)",
+        titlu: "Printuri Profesionale, Livrate Rapid",
+        subtitlu: "De la cărți de vizită la bannere mari — calitate premium, comandă în câteva minute.",
+        imagine: "",
+        textButonPrimar: "Vezi Produsele",
+        linkButonPrimar: "#",
+        textButonSecundar: "",
+        linkButonSecundar: "#",
+        statistici: [],
+      };
     case "text_imagine":
       return {
         titlu: "Titlu secțiune",
@@ -137,6 +238,10 @@ function continutImplicit(tip: TipBloc): BlocPagina["continut"] {
       return { titluSectiune: "Produse Recomandate", group_id: "" };
     case "banner_simplu":
       return { text: "Reducere specială pentru tine!", textButon: "Cumpără Acum", linkButon: "#" };
+    case "carduri_beneficii":
+      return { titluSectiune: "De ce să ne alegi", carduri: [] };
+    case "pasi":
+      return { titluSectiune: "Cum funcționează", imagine: "", pasi: [] };
   }
 }
 
@@ -144,12 +249,18 @@ function rezumatBloc(bloc: BlocPagina): string {
   switch (bloc.tip) {
     case "hero":
       return bloc.continut.titlu || "(fără titlu)";
+    case "hero_imagine":
+      return bloc.continut.titlu || "(fără titlu)";
     case "text_imagine":
       return bloc.continut.titlu || "(fără titlu)";
     case "carusel_produse":
       return bloc.continut.titluSectiune || "(fără titlu)";
     case "banner_simplu":
       return bloc.continut.text || "(fără text)";
+    case "carduri_beneficii":
+      return bloc.continut.titluSectiune || "(fără titlu)";
+    case "pasi":
+      return bloc.continut.titluSectiune || "(fără titlu)";
   }
 }
 
@@ -402,6 +513,14 @@ function PanouEditareBloc({
       {bloc.tip === "hero" && (
         <FormHero blocId={bloc.id} continutInitial={bloc.continut} vizibilInitial={bloc.vizibil} onSalvat={onSalvat} />
       )}
+      {bloc.tip === "hero_imagine" && (
+        <FormHeroImagine
+          blocId={bloc.id}
+          continutInitial={bloc.continut}
+          vizibilInitial={bloc.vizibil}
+          onSalvat={onSalvat}
+        />
+      )}
       {bloc.tip === "text_imagine" && (
         <FormTextImagine
           blocId={bloc.id}
@@ -426,6 +545,17 @@ function PanouEditareBloc({
           vizibilInitial={bloc.vizibil}
           onSalvat={onSalvat}
         />
+      )}
+      {bloc.tip === "carduri_beneficii" && (
+        <FormCarduriBeneficii
+          blocId={bloc.id}
+          continutInitial={bloc.continut}
+          vizibilInitial={bloc.vizibil}
+          onSalvat={onSalvat}
+        />
+      )}
+      {bloc.tip === "pasi" && (
+        <FormPasi blocId={bloc.id} continutInitial={bloc.continut} vizibilInitial={bloc.vizibil} onSalvat={onSalvat} />
       )}
     </div>
   );
@@ -866,6 +996,467 @@ function FormBannerSimplu({
           <input type="text" value={linkButon} onChange={(e) => setLinkButon(e.target.value)} className={stilInput} />
         </div>
       </div>
+      <ToggleVizibil vizibil={vizibil} onChange={setVizibil} />
+      <MesajeForm eroare={eroare} succes={succes} />
+      <button
+        type="submit"
+        disabled={seSalveaza}
+        className="flex items-center justify-center gap-2 bg-brand-primary text-white font-medium px-6 py-2.5 rounded-xl hover:bg-brand-primary-dark transition-colors disabled:opacity-60"
+      >
+        {seSalveaza ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvează Modificările"}
+      </button>
+    </form>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Formular: Hero cu Imagine
+// ---------------------------------------------------------------------------
+
+function FormHeroImagine({
+  blocId,
+  continutInitial,
+  vizibilInitial,
+  onSalvat,
+}: {
+  blocId: string;
+  continutInitial: ContinutHeroImagine;
+  vizibilInitial: boolean;
+  onSalvat: () => void;
+}) {
+  const [eyebrow, setEyebrow] = useState(continutInitial.eyebrow);
+  const [titlu, setTitlu] = useState(continutInitial.titlu);
+  const [subtitlu, setSubtitlu] = useState(continutInitial.subtitlu);
+  const [textButonPrimar, setTextButonPrimar] = useState(continutInitial.textButonPrimar);
+  const [linkButonPrimar, setLinkButonPrimar] = useState(continutInitial.linkButonPrimar);
+  const [textButonSecundar, setTextButonSecundar] = useState(continutInitial.textButonSecundar);
+  const [linkButonSecundar, setLinkButonSecundar] = useState(continutInitial.linkButonSecundar);
+  const [imagine, setImagine] = useState(continutInitial.imagine);
+  const [fisierNou, setFisierNou] = useState<File | null>(null);
+  const [previewNou, setPreviewNou] = useState<string | null>(null);
+  const [statistici, setStatistici] = useState<StatisticaHero[]>(continutInitial.statistici);
+  const [vizibil, setVizibil] = useState(vizibilInitial);
+  const [seSalveaza, setSeSalveaza] = useState(false);
+  const [eroare, setEroare] = useState<string | null>(null);
+  const [succes, setSucces] = useState(false);
+
+  function adaugaStatistica() {
+    setStatistici((prev) => [...prev, { id: idNou(), valoare: "", eticheta: "" }]);
+  }
+  function actualizeazaStatistica(id: string, campuri: Partial<Omit<StatisticaHero, "id">>) {
+    setStatistici((prev) => prev.map((s) => (s.id === id ? { ...s, ...campuri } : s)));
+  }
+  function stergeStatistica(id: string) {
+    setStatistici((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  async function salveaza(e: React.FormEvent) {
+    e.preventDefault();
+    setEroare(null);
+    setSucces(false);
+    if (!titlu.trim()) return setEroare("Titlul este obligatoriu.");
+
+    setSeSalveaza(true);
+    try {
+      const urlImagine = fisierNou ? await incarcaImagineCloudinary(fisierNou) : imagine;
+      const continut: ContinutHeroImagine = {
+        eyebrow: eyebrow.trim(),
+        titlu: titlu.trim(),
+        subtitlu: subtitlu.trim(),
+        imagine: urlImagine,
+        textButonPrimar: textButonPrimar.trim(),
+        linkButonPrimar: linkButonPrimar.trim(),
+        textButonSecundar: textButonSecundar.trim(),
+        linkButonSecundar: linkButonSecundar.trim(),
+        statistici,
+      };
+      await updateDoc(doc(db, "homepage_blocks", blocId), { continut, vizibil });
+      setSucces(true);
+      setTimeout(onSalvat, 700);
+    } catch (err) {
+      console.error("Eroare la salvarea blocului hero cu imagine:", err);
+      setEroare("A apărut o eroare la salvare.");
+    } finally {
+      setSeSalveaza(false);
+    }
+  }
+
+  return (
+    <form onSubmit={salveaza} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Eyebrow (ex: rating) — opțional</label>
+        <input type="text" value={eyebrow} onChange={(e) => setEyebrow(e.target.value)} className={stilInput} />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Titlu</label>
+        <input type="text" value={titlu} onChange={(e) => setTitlu(e.target.value)} className={stilInput} />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Subtitlu</label>
+        <input type="text" value={subtitlu} onChange={(e) => setSubtitlu(e.target.value)} className={stilInput} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Text buton principal</label>
+          <input
+            type="text"
+            value={textButonPrimar}
+            onChange={(e) => setTextButonPrimar(e.target.value)}
+            className={stilInput}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Link buton principal</label>
+          <input
+            type="text"
+            value={linkButonPrimar}
+            onChange={(e) => setLinkButonPrimar(e.target.value)}
+            className={stilInput}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Text buton secundar (opțional)</label>
+          <input
+            type="text"
+            value={textButonSecundar}
+            onChange={(e) => setTextButonSecundar(e.target.value)}
+            className={stilInput}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Link buton secundar</label>
+          <input
+            type="text"
+            value={linkButonSecundar}
+            onChange={(e) => setLinkButonSecundar(e.target.value)}
+            className={stilInput}
+          />
+        </div>
+      </div>
+      <CampImagine
+        eticheta="Fotografie"
+        imagineCurenta={previewNou ?? imagine}
+        onImagineNoua={(fisier, preview) => {
+          setFisierNou(fisier);
+          setPreviewNou(preview);
+        }}
+      />
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">Statistici (ex: 20M+ Descărcări)</label>
+          <button
+            type="button"
+            onClick={adaugaStatistica}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-primary hover:underline"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Adaugă
+          </button>
+        </div>
+        {statistici.length === 0 ? (
+          <p className="text-xs text-gray-400">Nicio statistică adăugată.</p>
+        ) : (
+          <div className="space-y-2">
+            {statistici.map((stat) => (
+              <div key={stat.id} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2.5">
+                <input
+                  type="text"
+                  value={stat.valoare}
+                  onChange={(e) => actualizeazaStatistica(stat.id, { valoare: e.target.value })}
+                  placeholder="Valoare (ex: 20M+)"
+                  className="w-28 flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                />
+                <input
+                  type="text"
+                  value={stat.eticheta}
+                  onChange={(e) => actualizeazaStatistica(stat.id, { eticheta: e.target.value })}
+                  placeholder="Etichetă (ex: Clienți)"
+                  className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => stergeStatistica(stat.id)}
+                  className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  aria-label="Șterge statistica"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <ToggleVizibil vizibil={vizibil} onChange={setVizibil} />
+      <MesajeForm eroare={eroare} succes={succes} />
+      <button
+        type="submit"
+        disabled={seSalveaza}
+        className="flex items-center justify-center gap-2 bg-brand-primary text-white font-medium px-6 py-2.5 rounded-xl hover:bg-brand-primary-dark transition-colors disabled:opacity-60"
+      >
+        {seSalveaza ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvează Modificările"}
+      </button>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Formular: Carduri Beneficii
+// ---------------------------------------------------------------------------
+
+function FormCarduriBeneficii({
+  blocId,
+  continutInitial,
+  vizibilInitial,
+  onSalvat,
+}: {
+  blocId: string;
+  continutInitial: ContinutCarduriBeneficii;
+  vizibilInitial: boolean;
+  onSalvat: () => void;
+}) {
+  const [titluSectiune, setTitluSectiune] = useState(continutInitial.titluSectiune);
+  const [carduri, setCarduri] = useState<CardBeneficiu[]>(continutInitial.carduri);
+  const [vizibil, setVizibil] = useState(vizibilInitial);
+  const [seSalveaza, setSeSalveaza] = useState(false);
+  const [eroare, setEroare] = useState<string | null>(null);
+  const [succes, setSucces] = useState(false);
+
+  function adaugaCard() {
+    setCarduri((prev) => [...prev, { id: idNou(), titlu: "", text: "" }]);
+  }
+  function actualizeazaCard(id: string, campuri: Partial<Omit<CardBeneficiu, "id">>) {
+    setCarduri((prev) => prev.map((c) => (c.id === id ? { ...c, ...campuri } : c)));
+  }
+  function stergeCard(id: string) {
+    setCarduri((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  async function salveaza(e: React.FormEvent) {
+    e.preventDefault();
+    setEroare(null);
+    setSucces(false);
+    if (!titluSectiune.trim()) return setEroare("Titlul secțiunii este obligatoriu.");
+
+    setSeSalveaza(true);
+    try {
+      const continut: ContinutCarduriBeneficii = { titluSectiune: titluSectiune.trim(), carduri };
+      await updateDoc(doc(db, "homepage_blocks", blocId), { continut, vizibil });
+      setSucces(true);
+      setTimeout(onSalvat, 700);
+    } catch (err) {
+      console.error("Eroare la salvarea blocului carduri beneficii:", err);
+      setEroare("A apărut o eroare la salvare.");
+    } finally {
+      setSeSalveaza(false);
+    }
+  }
+
+  return (
+    <form onSubmit={salveaza} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Titlu secțiune</label>
+        <input
+          type="text"
+          value={titluSectiune}
+          onChange={(e) => setTitluSectiune(e.target.value)}
+          className={stilInput}
+        />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">Carduri</label>
+          <button
+            type="button"
+            onClick={adaugaCard}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-primary hover:underline"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Adaugă Card
+          </button>
+        </div>
+        {carduri.length === 0 ? (
+          <p className="text-xs text-gray-400">Niciun card adăugat.</p>
+        ) : (
+          <div className="space-y-2">
+            {carduri.map((card) => (
+              <div key={card.id} className="flex items-start gap-2 bg-gray-50 rounded-xl p-2.5">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <input
+                    type="text"
+                    value={card.titlu}
+                    onChange={(e) => actualizeazaCard(card.id, { titlu: e.target.value })}
+                    placeholder="Titlu card (ex: Suport 24/7)"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                  />
+                  <input
+                    type="text"
+                    value={card.text}
+                    onChange={(e) => actualizeazaCard(card.id, { text: e.target.value })}
+                    placeholder="Text scurt"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => stergeCard(card.id)}
+                  className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  aria-label="Șterge cardul"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <ToggleVizibil vizibil={vizibil} onChange={setVizibil} />
+      <MesajeForm eroare={eroare} succes={succes} />
+      <button
+        type="submit"
+        disabled={seSalveaza}
+        className="flex items-center justify-center gap-2 bg-brand-primary text-white font-medium px-6 py-2.5 rounded-xl hover:bg-brand-primary-dark transition-colors disabled:opacity-60"
+      >
+        {seSalveaza ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvează Modificările"}
+      </button>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Formular: Pași
+// ---------------------------------------------------------------------------
+
+function FormPasi({
+  blocId,
+  continutInitial,
+  vizibilInitial,
+  onSalvat,
+}: {
+  blocId: string;
+  continutInitial: ContinutPasi;
+  vizibilInitial: boolean;
+  onSalvat: () => void;
+}) {
+  const [titluSectiune, setTitluSectiune] = useState(continutInitial.titluSectiune);
+  const [imagine, setImagine] = useState(continutInitial.imagine);
+  const [fisierNou, setFisierNou] = useState<File | null>(null);
+  const [previewNou, setPreviewNou] = useState<string | null>(null);
+  const [pasi, setPasi] = useState<PasItem[]>(continutInitial.pasi);
+  const [vizibil, setVizibil] = useState(vizibilInitial);
+  const [seSalveaza, setSeSalveaza] = useState(false);
+  const [eroare, setEroare] = useState<string | null>(null);
+  const [succes, setSucces] = useState(false);
+
+  function adaugaPas() {
+    setPasi((prev) => [...prev, { id: idNou(), titlu: "", text: "" }]);
+  }
+  function actualizeazaPas(id: string, campuri: Partial<Omit<PasItem, "id">>) {
+    setPasi((prev) => prev.map((p) => (p.id === id ? { ...p, ...campuri } : p)));
+  }
+  function stergePas(id: string) {
+    setPasi((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  async function salveaza(e: React.FormEvent) {
+    e.preventDefault();
+    setEroare(null);
+    setSucces(false);
+    if (!titluSectiune.trim()) return setEroare("Titlul secțiunii este obligatoriu.");
+
+    setSeSalveaza(true);
+    try {
+      const urlImagine = fisierNou ? await incarcaImagineCloudinary(fisierNou) : imagine;
+      const continut: ContinutPasi = { titluSectiune: titluSectiune.trim(), imagine: urlImagine, pasi };
+      await updateDoc(doc(db, "homepage_blocks", blocId), { continut, vizibil });
+      setSucces(true);
+      setTimeout(onSalvat, 700);
+    } catch (err) {
+      console.error("Eroare la salvarea blocului pași:", err);
+      setEroare("A apărut o eroare la salvare.");
+    } finally {
+      setSeSalveaza(false);
+    }
+  }
+
+  return (
+    <form onSubmit={salveaza} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Titlu secțiune</label>
+        <input
+          type="text"
+          value={titluSectiune}
+          onChange={(e) => setTitluSectiune(e.target.value)}
+          className={stilInput}
+        />
+      </div>
+
+      <CampImagine
+        eticheta="Fotografie (opțional)"
+        imagineCurenta={previewNou ?? imagine}
+        onImagineNoua={(fisier, preview) => {
+          setFisierNou(fisier);
+          setPreviewNou(preview);
+        }}
+      />
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">Pași</label>
+          <button
+            type="button"
+            onClick={adaugaPas}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-primary hover:underline"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Adaugă Pas
+          </button>
+        </div>
+        {pasi.length === 0 ? (
+          <p className="text-xs text-gray-400">Niciun pas adăugat.</p>
+        ) : (
+          <div className="space-y-2">
+            {pasi.map((pas, index) => (
+              <div key={pas.id} className="flex items-start gap-2 bg-gray-50 rounded-xl p-2.5">
+                <div className="w-6 h-6 rounded-full bg-brand-primary text-white text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-1">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <input
+                    type="text"
+                    value={pas.titlu}
+                    onChange={(e) => actualizeazaPas(pas.id, { titlu: e.target.value })}
+                    placeholder="Titlu pas (ex: Alege produsul)"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                  />
+                  <input
+                    type="text"
+                    value={pas.text}
+                    onChange={(e) => actualizeazaPas(pas.id, { text: e.target.value })}
+                    placeholder="Text scurt"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => stergePas(pas.id)}
+                  className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  aria-label="Șterge pasul"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <ToggleVizibil vizibil={vizibil} onChange={setVizibil} />
       <MesajeForm eroare={eroare} succes={succes} />
       <button
