@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useSite, type Produs } from "@/lib/site-context";
@@ -399,12 +400,15 @@ function BlocHeroImagine({ continut }: { continut: ContinutHeroImagine }) {
         <div className="relative">
           <div className="absolute -inset-4 bg-brand-accent/20 rounded-[3rem] -rotate-3 -z-0" />
           {continut.imagine ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={continut.imagine}
-              alt={continut.titlu}
-              className="relative rounded-[2.5rem] w-full object-cover aspect-[4/5]"
-            />
+            <div className="relative rounded-[2.5rem] w-full aspect-[4/5] overflow-hidden">
+              <Image
+                src={continut.imagine}
+                alt={continut.titlu}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div className="relative rounded-[2.5rem] w-full aspect-[4/5] bg-white/10 flex items-center justify-center text-white/40">
               <ImageOff className="w-10 h-10" />
@@ -421,10 +425,15 @@ function BlocTextImagine({ continut }: { continut: ContinutTextImagine }) {
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       <div className={`flex flex-col ${imagineStanga ? "md:flex-row" : "md:flex-row-reverse"} gap-8 items-center`}>
-        <div className="flex-1 w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
+        <div className="relative flex-1 w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
           {continut.imagine ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={continut.imagine} alt={continut.titlu} className="w-full h-full object-cover" />
+            <Image
+              src={continut.imagine}
+              alt={continut.titlu}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
               <ImageOff className="w-8 h-8" />
@@ -541,11 +550,12 @@ function BlocPasi({ continut }: { continut: ContinutPasi }) {
         </div>
         {continut.imagine && (
           <div className="relative mx-auto w-full max-w-sm aspect-square">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={continut.imagine}
               alt={continut.titluSectiune}
-              className="w-full h-full object-cover rounded-full"
+              fill
+              sizes="(max-width: 640px) 100vw, 384px"
+              className="object-cover rounded-full"
             />
             {continut.statistici.map((stat, index) => (
               <div

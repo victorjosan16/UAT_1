@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { incarcaImagineCloudinary } from "@/lib/cloudinary";
+import { ConfirmDialog, type ConfirmDialogState } from "@/components/ConfirmDialog";
 import {
   Plus,
   ArrowUp,
@@ -300,6 +301,7 @@ export default function StorefrontPage() {
   const [blocInEditare, setBlocInEditare] = useState<BlocPagina | null>(null);
   const [menuTipDeschis, setMenuTipDeschis] = useState(false);
   const [idInLucru, setIdInLucru] = useState<string | null>(null);
+  const [confirmare, setConfirmare] = useState<ConfirmDialogState | null>(null);
 
   useEffect(() => {
     const unsubBlocuri = onSnapshot(collection(db, "homepage_blocks"), (snapshot) => {
@@ -370,16 +372,21 @@ export default function StorefrontPage() {
     }
   }
 
-  async function stergeBloc(bloc: BlocPagina) {
-    if (!confirm(`Ștergi blocul „${ETICHETE_TIP[bloc.tip]}"? Această acțiune nu poate fi anulată.`)) return;
-    setIdInLucru(bloc.id);
-    try {
-      await deleteDoc(doc(db, "homepage_blocks", bloc.id));
-    } catch (err) {
-      console.error("Eroare la ștergerea blocului:", err);
-    } finally {
-      setIdInLucru(null);
-    }
+  function stergeBloc(bloc: BlocPagina) {
+    setConfirmare({
+      titlu: "Șterge blocul",
+      mesaj: `Ștergi blocul „${ETICHETE_TIP[bloc.tip]}"? Această acțiune nu poate fi anulată.`,
+      onConfirm: async () => {
+        setIdInLucru(bloc.id);
+        try {
+          await deleteDoc(doc(db, "homepage_blocks", bloc.id));
+        } catch (err) {
+          console.error("Eroare la ștergerea blocului:", err);
+        } finally {
+          setIdInLucru(null);
+        }
+      },
+    });
   }
 
   return (
@@ -506,6 +513,7 @@ export default function StorefrontPage() {
           )}
         </>
       )}
+      <ConfirmDialog stare={confirmare} onClose={() => setConfirmare(null)} />
     </div>
   );
 }

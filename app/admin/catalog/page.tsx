@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { incarcaImagineCloudinary } from "@/lib/cloudinary";
+import { ConfirmDialog, type ConfirmDialogState } from "@/components/ConfirmDialog";
 import {
   Plus,
   Minus,
@@ -219,6 +220,7 @@ function TabInventar({
   onEditeaza: (produs: Produs) => void;
 }) {
   const [idInLucru, setIdInLucru] = useState<string | null>(null);
+  const [confirmare, setConfirmare] = useState<ConfirmDialogState | null>(null);
 
   async function modificaStoc(produs: Produs, delta: number) {
     if (produs.stoc + delta < 0) return;
@@ -243,16 +245,21 @@ function TabInventar({
     }
   }
 
-  async function stergeProdus(produs: Produs) {
-    if (!confirm(`Ștergi produsul "${produs.nume}"? Această acțiune nu poate fi anulată.`)) return;
-    setIdInLucru(produs.id);
-    try {
-      await deleteDoc(doc(db, "products", produs.id));
-    } catch (err) {
-      console.error("Eroare la ștergerea produsului:", err);
-    } finally {
-      setIdInLucru(null);
-    }
+  function stergeProdus(produs: Produs) {
+    setConfirmare({
+      titlu: "Șterge produsul",
+      mesaj: `Ștergi produsul "${produs.nume}"? Această acțiune nu poate fi anulată.`,
+      onConfirm: async () => {
+        setIdInLucru(produs.id);
+        try {
+          await deleteDoc(doc(db, "products", produs.id));
+        } catch (err) {
+          console.error("Eroare la ștergerea produsului:", err);
+        } finally {
+          setIdInLucru(null);
+        }
+      },
+    });
   }
 
   if (seIncarca) {
@@ -397,6 +404,7 @@ function TabInventar({
           </div>
         </div>
       ))}
+      <ConfirmDialog stare={confirmare} onClose={() => setConfirmare(null)} />
     </div>
   );
 }
@@ -726,6 +734,7 @@ function TabGrupe({ grupe }: { grupe: Grupa[] }) {
   const [numeEditat, setNumeEditat] = useState("");
   const [descriereEditata, setDescriereEditata] = useState("");
   const [idInLucru, setIdInLucru] = useState<string | null>(null);
+  const [confirmare, setConfirmare] = useState<ConfirmDialogState | null>(null);
 
   async function adaugaGrupa(e: React.FormEvent) {
     e.preventDefault();
@@ -775,16 +784,21 @@ function TabGrupe({ grupe }: { grupe: Grupa[] }) {
     }
   }
 
-  async function stergeGrupa(grupa: Grupa) {
-    if (!confirm(`Ștergi grupa "${grupa.nume}"? Produsele existente rămân, dar fără grupă.`)) return;
-    setIdInLucru(grupa.id);
-    try {
-      await deleteDoc(doc(db, "groups", grupa.id));
-    } catch (err) {
-      console.error("Eroare la ștergerea grupei:", err);
-    } finally {
-      setIdInLucru(null);
-    }
+  function stergeGrupa(grupa: Grupa) {
+    setConfirmare({
+      titlu: "Șterge grupa",
+      mesaj: `Ștergi grupa "${grupa.nume}"? Produsele existente rămân, dar fără grupă.`,
+      onConfirm: async () => {
+        setIdInLucru(grupa.id);
+        try {
+          await deleteDoc(doc(db, "groups", grupa.id));
+        } catch (err) {
+          console.error("Eroare la ștergerea grupei:", err);
+        } finally {
+          setIdInLucru(null);
+        }
+      },
+    });
   }
 
   return (
@@ -902,6 +916,7 @@ function TabGrupe({ grupe }: { grupe: Grupa[] }) {
           </ul>
         )}
       </div>
+      <ConfirmDialog stare={confirmare} onClose={() => setConfirmare(null)} />
     </div>
   );
 }

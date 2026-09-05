@@ -17,11 +17,32 @@ import {
   Loader2,
   LogOut,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { collection, addDoc, onSnapshot, serverTimestamp, Timestamp } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { db, getFirebaseAuth } from "@/lib/firebase";
 import { useAdminAuth } from "@/lib/use-admin-auth";
+
+interface NotificarePreview {
+  id: string;
+  tip: "comanda" | "mesaj";
+  titlu: string;
+  detaliu: string;
+  data: Timestamp | null;
+  href: string;
+}
+
+function formateazaOraRelativa(ts: Timestamp | null): string {
+  if (!ts) return "";
+  const diffMs = Date.now() - ts.toDate().getTime();
+  const minute = Math.floor(diffMs / 60000);
+  if (minute < 1) return "acum";
+  if (minute < 60) return `acum ${minute} min`;
+  const ore = Math.floor(minute / 60);
+  if (ore < 24) return `acum ${ore} h`;
+  const zile = Math.floor(ore / 24);
+  return `acum ${zile} zile`;
+}
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -38,14 +59,94 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, seIncarca } = useAdminAuth();
   const [menuDeschis, setMenuDeschis] = useState(false);
   const [modalComandaDeschis, setModalComandaDeschis] = useState(false);
+  const [textCautare, setTextCautare] = useState("");
+  const [notificariDeschise, setNotificariDeschise] = useState(false);
+  const [comenziNoi, setComenziNoi] = useState<NotificarePreview[]>([]);
+  const [mesajeNecitite, setMesajeNecitite] = useState<NotificarePreview[]>([]);
+  const notificariRef = useRef<HTMLDivElement>(null);
 
   const esteLogin = pathname === "/admin/login";
+
+  function cauta(e: React.FormEvent) {
+    e.preventDefault();
+    const termen = textCautare.trim();
+    if (!termen) return;
+    router.push(`/admin/comenzi?cauta=${encodeURIComponent(termen)}`);
+  }
 
   useEffect(() => {
     if (!esteLogin && !seIncarca && !user) {
       router.replace("/admin/login");
     }
   }, [esteLogin, seIncarca, user, router]);
+
+  useEffect(() => {
+    if (esteLogin || !user) return;
+
+    const unsubComenzi = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const lista: NotificarePreview[] = snapshot.docs
+        .filter((docSnap) => {
+          const status = docSnap.data().status;
+          return !status || status === "noua";
+        })
+        .map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            tip: "comanda" as const,
+            titlu: data.client ?? "Client necunoscut",
+            detaliu: data.produse ?? "Comandă nouă",
+            data: data.data_creare ?? null,
+            href: "/admin/comenzi",
+          };
+        })
+        .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
+      setComenziNoi(lista);
+    });
+
+    const unsubMesaje = onSnapshot(collection(db, "contact_mesaje"), (snapshot) => {
+      const lista: NotificarePreview[] = snapshot.docs
+        .filter((docSnap) => docSnap.data().citit !== true)
+        .map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            tip: "mesaj" as const,
+            titlu: data.nume ?? "Necunoscut",
+            detaliu: data.mesaj ?? "Mesaj nou de contact",
+            data: data.data_creare ?? null,
+            href: "/admin/clienti",
+          };
+        })
+        .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
+      setMesajeNecitite(lista);
+    });
+
+    return () => {
+      unsubComenzi();
+      unsubMesaje();
+    };
+  }, [esteLogin, user]);
+
+  useEffect(() => {
+    if (!notificariDeschise) return;
+    function pePeClicExterior(e: MouseEvent) {
+      if (notificariRef.current && !notificariRef.current.contains(e.target as Node)) {
+        setNotificariDeschise(false);
+      }
+    }
+    document.addEventListener("mousedown", pePeClicExterior);
+    return () => document.removeEventListener("mousedown", pePeClicExterior);
+  }, [notificariDeschise]);
+
+  const notificari = useMemo(
+    () =>
+      [...comenziNoi, ...mesajeNecitite].sort(
+        (a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0)
+      ),
+    [comenziNoi, mesajeNecitite]
+  );
+  const numarNotificari = notificari.length;
 
   async function delogheaza() {
     await signOut(getFirebaseAuth());
@@ -158,22 +259,83 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 lg:pl-64 flex flex-col min-h-screen">
         {/* Top bar - desktop */}
         <div className="hidden lg:flex items-center gap-3 h-16 px-6 bg-white border-b border-gray-100 sticky top-0 z-20">
-          <div className="relative flex-1 max-w-md">
+          <form onSubmit={cauta} className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Caută comandă, client sau fișier ID..."
+              value={textCautare}
+              onChange={(e) => setTextCautare(e.target.value)}
+              placeholder="Caută comandă, client sau telefon..."
               className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
             />
-          </div>
+          </form>
           <div className="flex-1" />
-          <button
-            className="relative p-2.5 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
-            aria-label="Notificări"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-accent" />
-          </button>
+          <div className="relative" ref={notificariRef}>
+            <button
+              onClick={() => setNotificariDeschise((v) => !v)}
+              className="relative p-2.5 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
+              aria-label="Notificări"
+            >
+              <Bell className="w-5 h-5" />
+              {numarNotificari > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-accent text-white text-[10px] font-semibold flex items-center justify-center">
+                  {numarNotificari > 9 ? "9+" : numarNotificari}
+                </span>
+              )}
+            </button>
+
+            {notificariDeschise && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-30 animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-900">Notificări</p>
+                  <p className="text-xs text-gray-400">
+                    {numarNotificari === 0
+                      ? "Nimic nou momentan"
+                      : `${numarNotificari} lucru${numarNotificari === 1 ? "" : "ri"} necesită atenție`}
+                  </p>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notificari.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-gray-400">Ești la zi cu totul.</div>
+                  ) : (
+                    notificari.slice(0, 8).map((n) => (
+                      <button
+                        key={`${n.tip}-${n.id}`}
+                        onClick={() => {
+                          setNotificariDeschise(false);
+                          router.push(n.href);
+                        }}
+                        className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/70 transition-colors flex items-start gap-3"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            n.tip === "comanda"
+                              ? "bg-brand-primary/10 text-brand-primary"
+                              : "bg-brand-accent/10 text-brand-accent"
+                          }`}
+                        >
+                          {n.tip === "comanda" ? (
+                            <ClipboardList className="w-4 h-4" />
+                          ) : (
+                            <Bell className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {n.tip === "comanda" ? "Comandă nouă" : "Mesaj nou"} · {n.titlu}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{n.detaliu}</p>
+                        </div>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">
+                          {formateazaOraRelativa(n.data)}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setModalComandaDeschis(true)}
             className="flex items-center gap-2 bg-brand-accent text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:brightness-95 transition-all"

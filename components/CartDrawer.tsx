@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import { CheckCircle2, ImageOff, Loader2, Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { formateazaPret, useSite } from "@/lib/site-context";
 
@@ -8,6 +10,7 @@ export function CartDrawer() {
     cosDeschis,
     inchideCos,
     comandaTrimisa,
+    numarComandaFinalizata,
     cos,
     modificaCantitate,
     eliminaDinCos,
@@ -20,6 +23,8 @@ export function CartDrawer() {
     trimiteComanda,
     seTrimite,
   } = useSite();
+
+  const [siteWeb, setSiteWeb] = useState("");
 
   if (!cosDeschis) return null;
 
@@ -40,6 +45,11 @@ export function CartDrawer() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
             <p className="font-semibold text-gray-900">Comandă trimisă cu succes!</p>
+            {numarComandaFinalizata && (
+              <p className="text-sm text-gray-500">
+                Numărul comenzii tale: <span className="font-semibold text-gray-900">#{numarComandaFinalizata}</span>
+              </p>
+            )}
             <p className="text-sm text-gray-500">Te contactăm în curând pentru confirmare.</p>
             <button
               onClick={inchideCos}
@@ -59,10 +69,9 @@ export function CartDrawer() {
               ) : (
                 cos.map((item) => (
                   <div key={item.produsId} className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
-                    <div className="w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 overflow-hidden">
+                    <div className="relative w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 overflow-hidden">
                       {item.imagine ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.imagine} alt={item.nume} className="w-full h-full object-cover" />
+                        <Image src={item.imagine} alt={item.nume} fill sizes="56px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <ImageOff className="w-5 h-5" />
@@ -129,10 +138,21 @@ export function CartDrawer() {
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
                 />
 
+                {/* Câmp-capcană pentru roboți — invizibil și inaccesibil pentru oameni */}
+                <input
+                  type="text"
+                  value={siteWeb}
+                  onChange={(e) => setSiteWeb(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+                />
+
                 {eroareComanda && <p className="text-xs text-red-600">{eroareComanda}</p>}
 
                 <button
-                  onClick={trimiteComanda}
+                  onClick={() => trimiteComanda(siteWeb)}
                   disabled={seTrimite}
                   className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white font-medium py-3 rounded-xl hover:bg-brand-primary-dark transition-colors disabled:opacity-60"
                 >

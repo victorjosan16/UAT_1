@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   collection,
   onSnapshot,
@@ -11,7 +12,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { ArrowRight, Loader2, Phone, Clock, PackageSearch, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Loader2, Phone, Clock, PackageSearch, CheckCircle2, SearchX, X } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Tipuri
@@ -100,6 +101,25 @@ function initiale(nume: string): string {
 // ---------------------------------------------------------------------------
 
 export default function ProcesareComenziPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-96 text-gray-400">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" />
+          Se încarcă comenzile...
+        </div>
+      }
+    >
+      <ProcesareComenziContinut />
+    </Suspense>
+  );
+}
+
+function ProcesareComenziContinut() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const termenCautare = (searchParams.get("cauta") ?? "").trim().toLowerCase();
+
   const [comenzi, setComenzi] = useState<Comanda[]>([]);
   const [seIncarca, setSeIncarca] = useState(true);
   const [eroare, setEroare] = useState<string | null>(null);
@@ -138,6 +158,18 @@ export default function ProcesareComenziPage() {
     return () => unsubscribe();
   }, []);
 
+  const comenziFiltrate = useMemo(() => {
+    if (!termenCautare) return comenzi;
+    return comenzi.filter((comanda) => {
+      return (
+        comanda.client.toLowerCase().includes(termenCautare) ||
+        comanda.telefon.toLowerCase().includes(termenCautare) ||
+        comanda.produse.toLowerCase().includes(termenCautare) ||
+        comanda.id.toLowerCase().includes(termenCautare)
+      );
+    });
+  }, [comenzi, termenCautare]);
+
   const comenziPeColoana = useMemo(() => {
     const grupate: Record<OrderStatus, Comanda[]> = {
       noua: [],
@@ -145,11 +177,11 @@ export default function ProcesareComenziPage() {
       productie: [],
       expediata: [],
     };
-    for (const comanda of comenzi) {
+    for (const comanda of comenziFiltrate) {
       grupate[comanda.status]?.push(comanda);
     }
     return grupate;
-  }, [comenzi]);
+  }, [comenziFiltrate]);
 
   async function schimbaStatus(id: string, statusCurent: OrderStatus) {
     const statusNou = URMATORUL_STATUS[statusCurent];
@@ -191,6 +223,23 @@ export default function ProcesareComenziPage() {
           Fluxul de producție, actualizat live din baza de date.
         </p>
       </div>
+
+      {termenCautare && (
+        <div className="mb-5 flex items-center gap-2 flex-wrap bg-brand-primary/5 border border-brand-primary/10 rounded-xl px-4 py-2.5 text-sm">
+          <SearchX className="w-4 h-4 text-brand-primary flex-shrink-0" />
+          <span className="text-gray-700">
+            {comenziFiltrate.length} rezultat{comenziFiltrate.length === 1 ? "" : "e"} pentru{" "}
+            <strong className="text-gray-900">&ldquo;{termenCautare}&rdquo;</strong>
+          </span>
+          <button
+            onClick={() => router.push("/admin/comenzi")}
+            className="ml-auto flex items-center gap-1 text-brand-primary hover:text-brand-primary-dark font-medium"
+          >
+            <X className="w-3.5 h-3.5" />
+            Șterge filtrul
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         {COLOANE.map((coloana) => {
