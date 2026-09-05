@@ -59,10 +59,16 @@ function idNou(prefix) {
   return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-const MENIU_HEADER = ["Acasă", "Despre Noi", "Servicii", "Prețuri", "Contact"].map((eticheta) => ({
+const MENIU_HEADER = [
+  { eticheta: "Acasă", link: "/" },
+  { eticheta: "Despre Noi", link: "/despre-noi" },
+  { eticheta: "Servicii", link: "/servicii" },
+  { eticheta: "Prețuri", link: "/preturi" },
+  { eticheta: "Contact", link: "/contact" },
+].map(({ eticheta, link }) => ({
   id: idNou("link"),
   eticheta,
-  link: "#",
+  link,
   vizibil: true,
 }));
 
