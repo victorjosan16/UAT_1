@@ -37,6 +37,7 @@ import {
   Truck,
   ShieldCheck,
   Clock,
+  Handshake,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -51,6 +52,7 @@ const OPTIUNI_ICON_CARD = [
   { valoare: "truck", eticheta: "Livrare", Icon: Truck },
   { valoare: "shield", eticheta: "Garanție", Icon: ShieldCheck },
   { valoare: "clock", eticheta: "Rapiditate", Icon: Clock },
+  { valoare: "handshake", eticheta: "Suport uman", Icon: Handshake },
 ] as const;
 
 // ---------------------------------------------------------------------------

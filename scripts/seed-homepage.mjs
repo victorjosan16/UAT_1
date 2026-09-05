@@ -1,13 +1,24 @@
 // Populează homepage_blocks cu un set curat de blocuri (Hero cu Imagine,
 // Carduri Beneficii, Pași, Carusel Produse), ca pagina principală să arate
-// ca layout-ul de referință, cu text adaptat pentru un print shop.
+// ca layout-ul de referință, cu text adaptat pentru un print shop (PosterART).
+// Actualizează și meniul din site_config/header (nav + buton CTA), păstrând
+// logo/locație/telefon/program existente neschimbate.
 //
 // Rulare: node scripts/seed-homepage.mjs
 // (din rădăcina proiectului, cu .env.local completat)
 
 import { readFileSync, existsSync } from "node:fs";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, deleteDoc, doc, addDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  addDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
 
 function incarcaEnvLocal() {
   const cale = ".env.local";
@@ -44,25 +55,36 @@ if (!firebaseConfig.projectId) {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+function idNou(prefix) {
+  return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+const MENIU_HEADER = ["Acasă", "Despre Noi", "Servicii", "Prețuri", "Contact"].map((eticheta) => ({
+  id: idNou("link"),
+  eticheta,
+  link: "#",
+  vizibil: true,
+}));
+
 const BLOCURI = (groupIdCarusel) => [
   {
     tip: "hero_imagine",
     ordine: 0,
     vizibil: true,
     continut: {
-      eyebrow: "★★★★★ 4.9 (peste 500 recenzii)",
-      titlu: "Printuri Profesionale, Fără Bătăi de Cap",
+      eyebrow: "",
+      titlu: "Pentru că printarea profesională nu ar trebui să fie complicată.",
       subtitlu:
-        "De la cărți de vizită la bannere de format mare — calitate premium, comandă online în câteva minute.",
+        "Soluții de tipar rapide, de înaltă calitate și accesibile pentru afacerea ta. Încărcare simplă a fișierelor, finisaje premium.",
       imagine: "",
-      textButonPrimar: "Vezi Produsele",
+      textButonPrimar: "Explorează Serviciile",
       linkButonPrimar: "#produse",
-      textButonSecundar: "Cum Funcționează",
-      linkButonSecundar: "#pasi",
+      textButonSecundar: "Cere Ofertă",
+      linkButonSecundar: "#contact",
       statistici: [
-        { id: "stat1", valoare: "15.000+", eticheta: "Comenzi Livrate" },
-        { id: "stat2", valoare: "250+", eticheta: "Clienți Fideli" },
-        { id: "stat3", valoare: "24h", eticheta: "Producție Rapidă" },
+        { id: "stat1", valoare: "15.000+", eticheta: "Proiecte Finalizate" },
+        { id: "stat2", valoare: "800+", eticheta: "Clienți Activi" },
+        { id: "stat3", valoare: "24/7", eticheta: "Suport Expert" },
       ],
     },
   },
@@ -71,27 +93,27 @@ const BLOCURI = (groupIdCarusel) => [
     ordine: 1,
     vizibil: true,
     continut: {
-      titluSectiune: "De ce să ne alegi",
+      titluSectiune: "3 Motive Pentru a Alege PosterART",
       carduri: [
         {
           id: "card1",
-          titlu: "Suport 24/7",
-          text: "Echipa noastră îți răspunde rapid la orice întrebare despre comandă sau fișiere.",
-          icon: "headphones",
-          link: "",
-        },
-        {
-          id: "card2",
-          titlu: "Fișiere Verificate",
-          text: "Verificăm fiecare fișier înainte de print, ca rezultatul să fie exact cum ți-l dorești.",
+          titlu: "Calitate Garantată",
+          text: "Fiecare comandă este verificată riguros pentru a asigura un finisaj perfect.",
           icon: "shield",
           link: "",
         },
         {
-          id: "card3",
-          titlu: "Producție Rapidă",
-          text: "Majoritatea comenzilor sunt gata în 24-48 de ore, fără compromisuri de calitate.",
+          id: "card2",
+          titlu: "Livrare Rapidă",
+          text: "Termene limită strânse? Oferim opțiuni de printare expres pentru a livra la timp.",
           icon: "clock",
+          link: "",
+        },
+        {
+          id: "card3",
+          titlu: "Suport Personalizat",
+          text: "Echipa noastră de experți vă ghidează de la pregătirea fișierului până la livrare.",
+          icon: "handshake",
           link: "",
         },
       ],
@@ -102,25 +124,29 @@ const BLOCURI = (groupIdCarusel) => [
     ordine: 2,
     vizibil: true,
     continut: {
-      titluSectiune: "Cum Comanzi în 3 Pași Simpli",
+      titluSectiune: "Urmează Acești 3 Pași Simpli Pentru a Comanda!",
       imagine: "",
       pasi: [
-        { id: "pas1", titlu: "Alege Produsul", text: "Selectezi tipul de print și specificațiile din catalog." },
+        {
+          id: "pas1",
+          titlu: "Încarcă Fișierele Gata de Print",
+          text: "Trimiți fișierele (PDF, AI, PSD) direct din platformă.",
+        },
         {
           id: "pas2",
-          titlu: "Încarci Fișierul",
-          text: "Trimiți designul tău sau ceri ajutor de la echipa de grafică.",
+          titlu: "Aprobă Bunul de Tipar Digital",
+          text: "Verifici previzualizarea digitală și confirmi înainte de producție.",
         },
         {
           id: "pas3",
-          titlu: "Primești Comanda",
-          text: "Printăm, împachetăm și livrăm sau pregătim pentru ridicare.",
+          titlu: "Primește Comanda",
+          text: "Ridici comanda sau o primești prin livrare, gata de utilizare.",
         },
       ],
       statistici: [
-        { id: "stat1", valoare: "98%", eticheta: "Clienți Mulțumiți" },
-        { id: "stat2", valoare: "15.000+", eticheta: "Comenzi" },
-        { id: "stat3", valoare: "4.9/5", eticheta: "Rating Mediu" },
+        { id: "stat1", valoare: "99,8%", eticheta: "Satisfacție Clienți" },
+        { id: "stat2", valoare: "2.500+", eticheta: "Recenzii Pozitive" },
+        { id: "stat3", valoare: "5★", eticheta: "Calificativ Mediu" },
       ],
     },
   },
@@ -129,7 +155,7 @@ const BLOCURI = (groupIdCarusel) => [
     ordine: 3,
     vizibil: true,
     continut: {
-      titluSectiune: "Produsele Noastre Populare",
+      titluSectiune: "Serviciile Noastre de Top",
       group_id: groupIdCarusel,
     },
   },
@@ -160,6 +186,21 @@ async function main() {
     await addDoc(collection(db, "homepage_blocks"), bloc);
     console.log(`Adăugat bloc: ${bloc.tip}`);
   }
+
+  console.log("Actualizez meniul din antet (păstrez logo/locație/telefon/program existente)...");
+  const headerRef = doc(db, "site_config", "header");
+  const headerSnap = await getDoc(headerRef);
+  const headerExistent = headerSnap.exists() ? headerSnap.data() : {};
+  await setDoc(
+    headerRef,
+    {
+      ...headerExistent,
+      textButonLogin: "Înregistrare",
+      linkuriMeniu: MENIU_HEADER,
+    },
+    { merge: true }
+  );
+  console.log("Meniu actualizat: Acasă, Despre Noi, Servicii, Prețuri, Contact.");
 
   console.log("\nGata! Deschide pagina principală și fă refresh.");
   console.log("Nu uita: încarcă pozele pentru Hero și Pași din Admin → Constructor Pagină (Editează).");

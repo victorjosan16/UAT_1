@@ -30,6 +30,7 @@ import {
   Clock,
   PlayCircle,
   Star,
+  Handshake,
 } from "lucide-react";
 
 const HARTA_ICOANE_CARD: Record<string, typeof Sparkles> = {
@@ -40,6 +41,7 @@ const HARTA_ICOANE_CARD: Record<string, typeof Sparkles> = {
   truck: Truck,
   shield: ShieldCheck,
   clock: Clock,
+  handshake: Handshake,
 };
 
 // ---------------------------------------------------------------------------
