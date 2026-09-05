@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   collection,
+  doc,
   onSnapshot,
   addDoc,
   serverTimestamp,
@@ -18,6 +19,8 @@ import {
   CheckCircle2,
   ImageOff,
   ArrowRight,
+  MapPin,
+  Search,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -108,6 +111,31 @@ interface ItemCos {
   cantitate: number;
 }
 
+interface LinkMeniu {
+  id: string;
+  eticheta: string;
+  link: string;
+  vizibil: boolean;
+}
+
+interface ConfigHeader {
+  logoText: string;
+  locatie: string;
+  telefon: string;
+  program: string;
+  textButonLogin: string;
+  linkuriMeniu: LinkMeniu[];
+}
+
+const CONFIG_HEADER_IMPLICIT: ConfigHeader = {
+  logoText: "PosterART",
+  locatie: "",
+  telefon: "",
+  program: "",
+  textButonLogin: "",
+  linkuriMeniu: [],
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -127,6 +155,7 @@ function pretEfectiv(produs: Produs): number {
 // ---------------------------------------------------------------------------
 
 export default function MagazinPage() {
+  const [configHeader, setConfigHeader] = useState<ConfigHeader>(CONFIG_HEADER_IMPLICIT);
   const [blocuri, setBlocuri] = useState<BlocPagina[]>([]);
   const [produse, setProduse] = useState<Produs[]>([]);
   const [seIncarca, setSeIncarca] = useState(true);
@@ -138,6 +167,24 @@ export default function MagazinPage() {
   const [eroareComanda, setEroareComanda] = useState<string | null>(null);
   const [numeClient, setNumeClient] = useState("");
   const [telefonClient, setTelefonClient] = useState("");
+
+  // Configurarea antetului — live din Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "site_config", "header"), (snap) => {
+      const data = snap.data();
+      if (data) {
+        setConfigHeader({
+          logoText: data.logoText ?? CONFIG_HEADER_IMPLICIT.logoText,
+          locatie: data.locatie ?? "",
+          telefon: data.telefon ?? "",
+          program: data.program ?? "",
+          textButonLogin: data.textButonLogin ?? "",
+          linkuriMeniu: Array.isArray(data.linkuriMeniu) ? data.linkuriMeniu : [],
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Blocurile paginii principale — live din Firestore
   useEffect(() => {
@@ -289,27 +336,80 @@ export default function MagazinPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-brand-primary flex items-center justify-center text-white font-bold text-sm">
-              P
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-100">
+        <div className="h-1 bg-brand-primary" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-3 py-3">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-brand-primary flex items-center justify-center text-white font-bold text-sm">
+                P
+              </div>
+              <span className="font-semibold text-gray-900 text-lg">{configHeader.logoText}</span>
             </div>
-            <span className="font-semibold text-gray-900">PosterART</span>
+
+            {configHeader.locatie && (
+              <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-500 flex-shrink-0">
+                <MapPin className="w-3.5 h-3.5" />
+                {configHeader.locatie}
+              </div>
+            )}
+
+            {(configHeader.telefon || configHeader.program) && (
+              <div className="hidden md:flex flex-col flex-shrink-0 leading-tight">
+                {configHeader.telefon && (
+                  <span className="text-sm font-semibold text-gray-900">{configHeader.telefon}</span>
+                )}
+                {configHeader.program && <span className="text-xs text-gray-400">{configHeader.program}</span>}
+              </div>
+            )}
+
+            <div className="hidden sm:block flex-1 min-w-[140px] max-w-xs">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Căutare"
+                  className="w-full rounded-xl border border-gray-200 pl-3 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                />
+                <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+              {configHeader.textButonLogin && (
+                <button className="hidden sm:inline-flex bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors">
+                  {configHeader.textButonLogin}
+                </button>
+              )}
+              <button
+                onClick={() => setCosDeschis(true)}
+                className="relative flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Coș
+                {numarItemiCos > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center">
+                    {numarItemiCos}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
-          <button
-            onClick={() => setCosDeschis(true)}
-            className="relative flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Coș
-            {numarItemiCos > 0 && (
-              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center">
-                {numarItemiCos}
-              </span>
-            )}
-          </button>
+          {configHeader.linkuriMeniu.some((l) => l.vizibil) && (
+            <nav className="flex gap-5 overflow-x-auto pb-3 text-sm border-t border-gray-50 pt-2.5">
+              {configHeader.linkuriMeniu
+                .filter((l) => l.vizibil)
+                .map((linkItem) => (
+                  <a
+                    key={linkItem.id}
+                    href={linkItem.link || "#"}
+                    className="flex-shrink-0 text-gray-600 hover:text-brand-primary font-medium transition-colors"
+                  >
+                    {linkItem.eticheta}
+                  </a>
+                ))}
+            </nav>
+          )}
         </div>
       </header>
 
