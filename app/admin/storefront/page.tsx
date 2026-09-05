@@ -31,7 +31,27 @@ import {
   Sparkles,
   LayoutGrid,
   ListOrdered,
+  Headphones,
+  BookOpen,
+  Monitor,
+  Truck,
+  ShieldCheck,
+  Clock,
 } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Iconițe selectabile pentru cardurile de beneficii
+// ---------------------------------------------------------------------------
+
+const OPTIUNI_ICON_CARD = [
+  { valoare: "sparkles", eticheta: "Sclipici", Icon: Sparkles },
+  { valoare: "headphones", eticheta: "Suport", Icon: Headphones },
+  { valoare: "book", eticheta: "Ghid", Icon: BookOpen },
+  { valoare: "monitor", eticheta: "Digital", Icon: Monitor },
+  { valoare: "truck", eticheta: "Livrare", Icon: Truck },
+  { valoare: "shield", eticheta: "Garanție", Icon: ShieldCheck },
+  { valoare: "clock", eticheta: "Rapiditate", Icon: Clock },
+] as const;
 
 // ---------------------------------------------------------------------------
 // Tipuri
@@ -99,6 +119,8 @@ interface CardBeneficiu {
   id: string;
   titlu: string;
   text: string;
+  icon: string;
+  link: string;
 }
 
 interface ContinutCarduriBeneficii {
@@ -116,6 +138,7 @@ interface ContinutPasi {
   titluSectiune: string;
   imagine: string;
   pasi: PasItem[];
+  statistici: StatisticaHero[];
 }
 
 interface BlocHeroData {
@@ -241,7 +264,7 @@ function continutImplicit(tip: TipBloc): BlocPagina["continut"] {
     case "carduri_beneficii":
       return { titluSectiune: "De ce să ne alegi", carduri: [] };
     case "pasi":
-      return { titluSectiune: "Cum funcționează", imagine: "", pasi: [] };
+      return { titluSectiune: "Cum funcționează", imagine: "", pasi: [], statistici: [] };
   }
 }
 
@@ -1227,7 +1250,7 @@ function FormCarduriBeneficii({
   const [succes, setSucces] = useState(false);
 
   function adaugaCard() {
-    setCarduri((prev) => [...prev, { id: idNou(), titlu: "", text: "" }]);
+    setCarduri((prev) => [...prev, { id: idNou(), titlu: "", text: "", icon: "sparkles", link: "" }]);
   }
   function actualizeazaCard(id: string, campuri: Partial<Omit<CardBeneficiu, "id">>) {
     setCarduri((prev) => prev.map((c) => (c.id === id ? { ...c, ...campuri } : c)));
@@ -1287,19 +1310,39 @@ function FormCarduriBeneficii({
             {carduri.map((card) => (
               <div key={card.id} className="flex items-start gap-2 bg-gray-50 rounded-xl p-2.5">
                 <div className="flex-1 min-w-0 space-y-2">
-                  <input
-                    type="text"
-                    value={card.titlu}
-                    onChange={(e) => actualizeazaCard(card.id, { titlu: e.target.value })}
-                    placeholder="Titlu card (ex: Suport 24/7)"
-                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={card.icon}
+                      onChange={(e) => actualizeazaCard(card.id, { icon: e.target.value })}
+                      className="rounded-lg border border-gray-200 px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                    >
+                      {OPTIUNI_ICON_CARD.map((opt) => (
+                        <option key={opt.valoare} value={opt.valoare}>
+                          {opt.eticheta}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={card.titlu}
+                      onChange={(e) => actualizeazaCard(card.id, { titlu: e.target.value })}
+                      placeholder="Titlu card (ex: Suport 24/7)"
+                      className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                    />
+                  </div>
                   <input
                     type="text"
                     value={card.text}
                     onChange={(e) => actualizeazaCard(card.id, { text: e.target.value })}
                     placeholder="Text scurt"
                     className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                  />
+                  <input
+                    type="text"
+                    value={card.link}
+                    onChange={(e) => actualizeazaCard(card.id, { link: e.target.value })}
+                    placeholder="Link „Citește mai mult” (opțional)"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
                   />
                 </div>
                 <button
@@ -1349,6 +1392,7 @@ function FormPasi({
   const [fisierNou, setFisierNou] = useState<File | null>(null);
   const [previewNou, setPreviewNou] = useState<string | null>(null);
   const [pasi, setPasi] = useState<PasItem[]>(continutInitial.pasi);
+  const [statistici, setStatistici] = useState<StatisticaHero[]>(continutInitial.statistici);
   const [vizibil, setVizibil] = useState(vizibilInitial);
   const [seSalveaza, setSeSalveaza] = useState(false);
   const [eroare, setEroare] = useState<string | null>(null);
@@ -1364,6 +1408,16 @@ function FormPasi({
     setPasi((prev) => prev.filter((p) => p.id !== id));
   }
 
+  function adaugaStatistica() {
+    setStatistici((prev) => [...prev, { id: idNou(), valoare: "", eticheta: "" }]);
+  }
+  function actualizeazaStatistica(id: string, campuri: Partial<Omit<StatisticaHero, "id">>) {
+    setStatistici((prev) => prev.map((s) => (s.id === id ? { ...s, ...campuri } : s)));
+  }
+  function stergeStatistica(id: string) {
+    setStatistici((prev) => prev.filter((s) => s.id !== id));
+  }
+
   async function salveaza(e: React.FormEvent) {
     e.preventDefault();
     setEroare(null);
@@ -1373,7 +1427,12 @@ function FormPasi({
     setSeSalveaza(true);
     try {
       const urlImagine = fisierNou ? await incarcaImagineCloudinary(fisierNou) : imagine;
-      const continut: ContinutPasi = { titluSectiune: titluSectiune.trim(), imagine: urlImagine, pasi };
+      const continut: ContinutPasi = {
+        titluSectiune: titluSectiune.trim(),
+        imagine: urlImagine,
+        pasi,
+        statistici,
+      };
       await updateDoc(doc(db, "homepage_blocks", blocId), { continut, vizibil });
       setSucces(true);
       setTimeout(onSalvat, 700);
@@ -1448,6 +1507,54 @@ function FormPasi({
                   onClick={() => stergePas(pas.id)}
                   className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                   aria-label="Șterge pasul"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Statistici plutitoare lângă poză (opțional)
+          </label>
+          <button
+            type="button"
+            onClick={adaugaStatistica}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-primary hover:underline"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Adaugă
+          </button>
+        </div>
+        {statistici.length === 0 ? (
+          <p className="text-xs text-gray-400">Nicio statistică adăugată.</p>
+        ) : (
+          <div className="space-y-2">
+            {statistici.map((stat) => (
+              <div key={stat.id} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2.5">
+                <input
+                  type="text"
+                  value={stat.valoare}
+                  onChange={(e) => actualizeazaStatistica(stat.id, { valoare: e.target.value })}
+                  placeholder="Valoare (ex: 500+)"
+                  className="w-28 flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                />
+                <input
+                  type="text"
+                  value={stat.eticheta}
+                  onChange={(e) => actualizeazaStatistica(stat.id, { eticheta: e.target.value })}
+                  placeholder="Etichetă (ex: Comenzi)"
+                  className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => stergeStatistica(stat.id)}
+                  className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  aria-label="Șterge statistica"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

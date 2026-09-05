@@ -22,7 +22,25 @@ import {
   MapPin,
   Search,
   Sparkles,
+  Headphones,
+  BookOpen,
+  Monitor,
+  Truck,
+  ShieldCheck,
+  Clock,
+  PlayCircle,
+  Star,
 } from "lucide-react";
+
+const HARTA_ICOANE_CARD: Record<string, typeof Sparkles> = {
+  sparkles: Sparkles,
+  headphones: Headphones,
+  book: BookOpen,
+  monitor: Monitor,
+  truck: Truck,
+  shield: ShieldCheck,
+  clock: Clock,
+};
 
 // ---------------------------------------------------------------------------
 // Tipuri — blocuri de pagină
@@ -85,6 +103,8 @@ interface CardBeneficiu {
   id: string;
   titlu: string;
   text: string;
+  icon: string;
+  link: string;
 }
 
 interface ContinutCarduriBeneficii {
@@ -102,6 +122,7 @@ interface ContinutPasi {
   titluSectiune: string;
   imagine: string;
   pasi: PasItem[];
+  statistici: StatisticaHero[];
 }
 
 interface BlocHeroData {
@@ -717,7 +738,10 @@ function BlocHero({ continut }: { continut: ContinutHero }) {
 
 function BlocHeroImagine({ continut }: { continut: ContinutHeroImagine }) {
   return (
-    <section className="bg-brand-primary relative overflow-hidden">
+    <section className="bg-brand-primary relative overflow-hidden rounded-b-[2.5rem] sm:rounded-b-[4rem]">
+      <Star className="hidden sm:block absolute top-10 right-[38%] w-5 h-5 text-brand-accent/70 -rotate-12" />
+      <Sparkles className="hidden sm:block absolute bottom-16 right-[8%] w-6 h-6 text-white/40 rotate-12" />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center">
         <div className="text-white">
           {continut.eyebrow && (
@@ -739,8 +763,9 @@ function BlocHeroImagine({ continut }: { continut: ContinutHeroImagine }) {
             {continut.textButonSecundar && (
               <a
                 href={continut.linkButonSecundar || "#"}
-                className="bg-brand-accent text-white px-5 py-3 rounded-2xl font-medium hover:brightness-95 transition"
+                className="flex items-center gap-2 bg-brand-accent text-white px-5 py-3 rounded-2xl font-medium hover:brightness-95 transition"
               >
+                <PlayCircle className="w-4 h-4" />
                 {continut.textButonSecundar}
               </a>
             )}
@@ -757,15 +782,16 @@ function BlocHeroImagine({ continut }: { continut: ContinutHeroImagine }) {
           )}
         </div>
         <div className="relative">
+          <div className="absolute -inset-4 bg-brand-accent/20 rounded-[3rem] -rotate-3 -z-0" />
           {continut.imagine ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={continut.imagine}
               alt={continut.titlu}
-              className="rounded-[2.5rem] w-full object-cover aspect-[4/5]"
+              className="relative rounded-[2.5rem] w-full object-cover aspect-[4/5]"
             />
           ) : (
-            <div className="rounded-[2.5rem] w-full aspect-[4/5] bg-white/10 flex items-center justify-center text-white/40">
+            <div className="relative rounded-[2.5rem] w-full aspect-[4/5] bg-white/10 flex items-center justify-center text-white/40">
               <ImageOff className="w-10 h-10" />
             </div>
           )}
@@ -853,18 +879,31 @@ function BlocCarduriBeneficii({ continut }: { continut: ContinutCarduriBeneficii
         {continut.titluSectiune}
       </h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {continut.carduri.map((card) => (
-          <div
-            key={card.id}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow p-6"
-          >
-            <div className="w-11 h-11 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mb-4">
-              <Sparkles className="w-5 h-5" />
+        {continut.carduri.map((card) => {
+          const Icon = HARTA_ICOANE_CARD[card.icon] ?? Sparkles;
+          return (
+            <div
+              key={card.id}
+              className="bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-shadow p-6"
+              style={{ clipPath: "polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%)" }}
+            >
+              <div className="w-11 h-11 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mb-4">
+                <Icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-semibold text-gray-900">{card.titlu}</h3>
+              {card.text && <p className="text-sm text-gray-500 mt-2">{card.text}</p>}
+              {card.link && (
+                <a
+                  href={card.link}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary mt-4 hover:underline"
+                >
+                  Citește mai mult
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              )}
             </div>
-            <h3 className="font-semibold text-gray-900">{card.titlu}</h3>
-            {card.text && <p className="text-sm text-gray-500 mt-2">{card.text}</p>}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -872,6 +911,12 @@ function BlocCarduriBeneficii({ continut }: { continut: ContinutCarduriBeneficii
 
 function BlocPasi({ continut }: { continut: ContinutPasi }) {
   if (continut.pasi.length === 0) return null;
+  const pozitiiInsigne = [
+    "top-4 -right-6",
+    "bottom-8 -left-8",
+    "top-1/3 -left-10",
+    "bottom-1/4 -right-8",
+  ];
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       <h2 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-12">
@@ -892,13 +937,22 @@ function BlocPasi({ continut }: { continut: ContinutPasi }) {
           ))}
         </div>
         {continut.imagine && (
-          <div className="relative">
+          <div className="relative mx-auto w-full max-w-sm aspect-square">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={continut.imagine}
               alt={continut.titluSectiune}
-              className="rounded-[2.5rem] w-full object-cover aspect-square"
+              className="w-full h-full object-cover rounded-full"
             />
+            {continut.statistici.map((stat, index) => (
+              <div
+                key={stat.id}
+                className={`absolute ${pozitiiInsigne[index % pozitiiInsigne.length]} bg-white rounded-2xl shadow-lg px-4 py-2.5`}
+              >
+                <p className="text-sm font-bold text-gray-900">{stat.valoare}</p>
+                <p className="text-[10px] text-gray-500">{stat.eticheta}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
