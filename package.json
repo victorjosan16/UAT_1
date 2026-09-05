@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:homepage": "node scripts/seed-homepage.mjs"
   },
   "dependencies": {
     "firebase": "^12.18.0",
