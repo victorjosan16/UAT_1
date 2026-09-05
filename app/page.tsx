@@ -248,6 +248,64 @@ function pretEfectiv(produs: Produs): number {
     : produs.pret;
 }
 
+// Completează câmpurile lipsă din documente vechi (create înainte ca un tip
+// de bloc să primească un câmp nou), ca randarea să nu crape pe date vechi.
+function normalizeazaContinut(tip: TipBloc, continut: Record<string, unknown> | undefined): BlocPagina["continut"] {
+  const c = continut ?? {};
+  switch (tip) {
+    case "hero":
+      return {
+        titlu: (c.titlu as string) ?? "",
+        subtitlu: (c.subtitlu as string) ?? "",
+        imagineBg: (c.imagineBg as string) ?? "",
+        textButon: (c.textButon as string) ?? "",
+        linkButon: (c.linkButon as string) ?? "",
+      };
+    case "hero_imagine":
+      return {
+        eyebrow: (c.eyebrow as string) ?? "",
+        titlu: (c.titlu as string) ?? "",
+        subtitlu: (c.subtitlu as string) ?? "",
+        imagine: (c.imagine as string) ?? "",
+        textButonPrimar: (c.textButonPrimar as string) ?? "",
+        linkButonPrimar: (c.linkButonPrimar as string) ?? "",
+        textButonSecundar: (c.textButonSecundar as string) ?? "",
+        linkButonSecundar: (c.linkButonSecundar as string) ?? "",
+        statistici: Array.isArray(c.statistici) ? (c.statistici as StatisticaHero[]) : [],
+      };
+    case "text_imagine":
+      return {
+        titlu: (c.titlu as string) ?? "",
+        text: (c.text as string) ?? "",
+        imagine: (c.imagine as string) ?? "",
+        pozitieImagine: c.pozitieImagine === "stanga" ? "stanga" : "dreapta",
+      };
+    case "carusel_produse":
+      return {
+        titluSectiune: (c.titluSectiune as string) ?? "",
+        group_id: (c.group_id as string) ?? "",
+      };
+    case "banner_simplu":
+      return {
+        text: (c.text as string) ?? "",
+        textButon: (c.textButon as string) ?? "",
+        linkButon: (c.linkButon as string) ?? "",
+      };
+    case "carduri_beneficii":
+      return {
+        titluSectiune: (c.titluSectiune as string) ?? "",
+        carduri: Array.isArray(c.carduri) ? (c.carduri as CardBeneficiu[]) : [],
+      };
+    case "pasi":
+      return {
+        titluSectiune: (c.titluSectiune as string) ?? "",
+        imagine: (c.imagine as string) ?? "",
+        pasi: Array.isArray(c.pasi) ? (c.pasi as PasItem[]) : [],
+        statistici: Array.isArray(c.statistici) ? (c.statistici as StatisticaHero[]) : [],
+      };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Pagina
 // ---------------------------------------------------------------------------
@@ -295,7 +353,7 @@ export default function MagazinPage() {
             tip: data.tip,
             ordine: typeof data.ordine === "number" ? data.ordine : 0,
             vizibil: data.vizibil !== false,
-            continut: data.continut ?? {},
+            continut: normalizeazaContinut(data.tip, data.continut),
           } as BlocPagina;
         })
         .filter((bloc) => bloc.vizibil)

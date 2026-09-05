@@ -309,7 +309,9 @@ export default function StorefrontPage() {
             tip: data.tip,
             ordine: typeof data.ordine === "number" ? data.ordine : 0,
             vizibil: data.vizibil !== false,
-            continut: data.continut ?? continutImplicit(data.tip),
+            // merge cu valorile implicite, ca documentele vechi (create înainte
+            // ca un tip de bloc să primească un câmp nou) să nu crape formularul
+            continut: { ...continutImplicit(data.tip), ...(data.continut ?? {}) },
           } as BlocPagina;
         })
         .sort((a, b) => a.ordine - b.ordine);
