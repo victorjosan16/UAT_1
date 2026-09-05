@@ -19,6 +19,12 @@ import { ArrowRight, Loader2, Phone, Clock, PackageSearch, CheckCircle2 } from "
 
 type OrderStatus = "noua" | "grafica" | "productie" | "expediata";
 
+const STATUSURI_VALIDE: OrderStatus[] = ["noua", "grafica", "productie", "expediata"];
+
+function normalizeazaStatus(status: unknown): OrderStatus {
+  return STATUSURI_VALIDE.includes(status as OrderStatus) ? (status as OrderStatus) : "noua";
+}
+
 interface Comanda {
   id: string;
   client: string;
@@ -113,7 +119,7 @@ export default function ProcesareComenziPage() {
             telefon: data.telefon ?? "",
             suma: typeof data.suma === "number" ? data.suma : 0,
             produse: data.produse ?? "",
-            status: (data.status as OrderStatus) ?? "noua",
+            status: normalizeazaStatus(data.status),
             termen: data.termen ?? "",
             data_creare: data.data_creare ?? null,
           };

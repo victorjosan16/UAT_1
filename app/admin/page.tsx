@@ -28,6 +28,12 @@ const ETICHETA_STATUS: Record<OrderStatus, { eticheta: string; culoare: string }
   expediata: { eticheta: "Expediată", culoare: "bg-gray-100 text-gray-600" },
 };
 
+const STATUSURI_VALIDE: OrderStatus[] = ["noua", "grafica", "productie", "expediata"];
+
+function normalizeazaStatus(status: unknown): OrderStatus {
+  return STATUSURI_VALIDE.includes(status as OrderStatus) ? (status as OrderStatus) : "noua";
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -62,7 +68,7 @@ export default function AdminDashboard() {
           client: data.client ?? "Client necunoscut",
           suma: typeof data.suma === "number" ? data.suma : 0,
           produse: data.produse ?? "",
-          status: (data.status as OrderStatus) ?? "noua",
+          status: normalizeazaStatus(data.status),
           termen: data.termen ?? "",
           data_creare: data.data_creare ?? null,
         };
