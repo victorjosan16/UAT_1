@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -15,10 +15,13 @@ import {
   Bell,
   Plus,
   Loader2,
+  LogOut,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
+import { db, getFirebaseAuth } from "@/lib/firebase";
+import { useAdminAuth } from "@/lib/use-admin-auth";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -31,8 +34,35 @@ const NAV = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, seIncarca } = useAdminAuth();
   const [menuDeschis, setMenuDeschis] = useState(false);
   const [modalComandaDeschis, setModalComandaDeschis] = useState(false);
+
+  const esteLogin = pathname === "/admin/login";
+
+  useEffect(() => {
+    if (!esteLogin && !seIncarca && !user) {
+      router.replace("/admin/login");
+    }
+  }, [esteLogin, seIncarca, user, router]);
+
+  async function delogheaza() {
+    await signOut(getFirebaseAuth());
+    router.replace("/admin/login");
+  }
+
+  if (esteLogin) {
+    return <>{children}</>;
+  }
+
+  if (seIncarca || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 lg:flex">
@@ -66,12 +96,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
         <div className="p-4 border-t border-white/10 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-brand-accent flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            A
+            {(user.email ?? "A").slice(0, 1).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">Admin</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white truncate">{user.email}</p>
             <p className="text-xs text-white/50">Super Admin</p>
           </div>
+          <button
+            onClick={delogheaza}
+            className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+            aria-label="Deconectare"
+            title="Deconectare"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
@@ -107,6 +145,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
+          <button
+            onClick={delogheaza}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/80 hover:bg-white/10"
+          >
+            <LogOut className="w-4 h-4" />
+            Deconectare
+          </button>
         </div>
       )}
 

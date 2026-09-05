@@ -1,0 +1,58 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esteAutentificat() {
+      return request.auth != null;
+    }
+
+    // Catalog — citire publică (magazinul are nevoie de ele), scriere doar din admin
+    match /products/{produsId} {
+      allow read: if true;
+      allow write: if esteAutentificat();
+    }
+
+    match /groups/{grupaId} {
+      allow read: if true;
+      allow write: if esteAutentificat();
+    }
+
+    // Constructor de Pagină — citire publică, scriere doar din admin
+    match /homepage_blocks/{blocId} {
+      allow read: if true;
+      allow write: if esteAutentificat();
+    }
+
+    // Configurare site (antet, meniu) — citire publică, scriere doar din admin
+    match /site_config/{docId} {
+      allow read: if true;
+      allow write: if esteAutentificat();
+    }
+
+    // Comenzi — oricine poate crea o comandă nouă (checkout public sau
+    // comanda manuală din admin), dar doar admin-ul autentificat poate
+    // citi lista, schimba statusul sau șterge o comandă.
+    match /orders/{orderId} {
+      allow create: if request.resource.data.keys().hasAll(['client', 'telefon', 'suma', 'produse', 'status'])
+        && request.resource.data.client is string && request.resource.data.client.size() > 0
+        && request.resource.data.telefon is string && request.resource.data.telefon.size() > 0
+        && request.resource.data.suma is number && request.resource.data.suma >= 0
+        && request.resource.data.produse is string
+        && request.resource.data.status == 'noua';
+      allow read, update, delete: if esteAutentificat();
+    }
+
+    // Mesaje din formularul de Contact — oricine poate trimite un mesaj,
+    // doar admin-ul autentificat le poate citi sau marca ca citite.
+    match /contact_mesaje/{mesajId} {
+      allow create: if request.resource.data.keys().hasAll(['nume', 'telefon', 'mesaj'])
+        && request.resource.data.nume is string && request.resource.data.nume.size() > 0
+        && request.resource.data.telefon is string && request.resource.data.telefon.size() > 0
+        && request.resource.data.mesaj is string && request.resource.data.mesaj.size() > 0;
+      allow read, update, delete: if esteAutentificat();
+    }
+
+    // Orice altă colecție rămâne blocată implicit.
+  }
+}

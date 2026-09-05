@@ -1,10 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, Search, ShoppingCart } from "lucide-react";
 import { useSite } from "@/lib/site-context";
 
 export function SiteHeader() {
   const { configHeader, numarItemiCos, setCosDeschis } = useSite();
+  const router = useRouter();
+  const [cautare, setCautare] = useState("");
+
+  function cautaProduse(e: React.FormEvent) {
+    e.preventDefault();
+    const query = cautare.trim();
+    router.push(query ? `/preturi?cauta=${encodeURIComponent(query)}` : "/preturi");
+  }
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-100">
@@ -34,16 +44,24 @@ export function SiteHeader() {
             </div>
           )}
 
-          <div className="hidden sm:block flex-1 min-w-[140px] max-w-xs">
+          <form onSubmit={cautaProduse} className="hidden sm:block flex-1 min-w-[140px] max-w-xs">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Căutare"
+                value={cautare}
+                onChange={(e) => setCautare(e.target.value)}
+                placeholder="Căutare produse..."
                 className="w-full rounded-xl border border-gray-200 pl-3 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
               />
-              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-primary"
+                aria-label="Caută"
+              >
+                <Search className="w-4 h-4" />
+              </button>
             </div>
-          </div>
+          </form>
 
           <div className="flex items-center gap-2 ml-auto flex-shrink-0">
             {configHeader.textButonLogin && (
