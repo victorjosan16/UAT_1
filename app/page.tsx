@@ -31,6 +31,7 @@ import {
   PlayCircle,
   Star,
   Handshake,
+  Phone,
 } from "lucide-react";
 
 const HARTA_ICOANE_CARD: Record<string, typeof Sparkles> = {
@@ -583,12 +584,14 @@ export default function MagazinPage() {
           Magazinul este în curs de configurare.
         </div>
       ) : (
-        <div className="pb-16">
+        <div>
           {blocuri.map((bloc) => (
             <RandeazaBloc key={bloc.id} bloc={bloc} produseDisponibile={produseDisponibile} onAdaugaInCos={adaugaInCos} />
           ))}
         </div>
       )}
+
+      <FooterContact configHeader={configHeader} />
 
       {/* Coș slide-out */}
       {cosDeschis && (
@@ -902,7 +905,7 @@ function BlocCaruselProduse({
   if (produseGrup.length === 0) return null;
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <section id="produse" className="max-w-6xl mx-auto px-4 sm:px-6 py-12 scroll-mt-32">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">{continut.titluSectiune}</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
         {produseGrup.map((produs) => (
@@ -934,7 +937,7 @@ function BlocBannerSimplu({ continut }: { continut: ContinutBannerSimplu }) {
 function BlocCarduriBeneficii({ continut }: { continut: ContinutCarduriBeneficii }) {
   if (continut.carduri.length === 0) return null;
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+    <section id="despre" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 scroll-mt-32">
       <h2 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-10">
         {continut.titluSectiune}
       </h2>
@@ -1070,5 +1073,48 @@ function ProdusCard({ produs, onAdauga }: { produs: Produs; onAdauga: () => void
         </button>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Footer cu date de contact — și ancoră pentru linkul "Contact" din meniu
+// ---------------------------------------------------------------------------
+
+function FooterContact({ configHeader }: { configHeader: ConfigHeader }) {
+  return (
+    <footer id="contact" className="scroll-mt-20 bg-gray-900 text-white mt-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 grid sm:grid-cols-2 gap-8">
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-brand-primary flex items-center justify-center text-white font-bold text-sm">
+              P
+            </div>
+            <span className="font-semibold text-lg">{configHeader.logoText}</span>
+          </div>
+          <p className="text-sm text-gray-400 max-w-sm">
+            Printuri profesionale, comandate online, livrate rapid.
+          </p>
+        </div>
+
+        <div className="space-y-2 text-sm text-gray-300 sm:text-right">
+          {configHeader.locatie && (
+            <p className="flex items-center gap-1.5 sm:justify-end">
+              <MapPin className="w-4 h-4 text-gray-500" />
+              {configHeader.locatie}
+            </p>
+          )}
+          {configHeader.telefon && (
+            <p className="flex items-center gap-1.5 sm:justify-end">
+              <Phone className="w-4 h-4 text-gray-500" />
+              {configHeader.telefon}
+            </p>
+          )}
+          {configHeader.program && <p className="text-gray-500">{configHeader.program}</p>}
+        </div>
+      </div>
+      <div className="border-t border-white/10 py-4 text-center text-xs text-gray-500">
+        © {new Date().getFullYear()} {configHeader.logoText}. Toate drepturile rezervate.
+      </div>
+    </footer>
   );
 }
