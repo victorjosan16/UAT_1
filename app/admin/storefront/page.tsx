@@ -304,6 +304,7 @@ export default function StorefrontPage() {
   useEffect(() => {
     const unsubBlocuri = onSnapshot(collection(db, "homepage_blocks"), (snapshot) => {
       const lista: BlocPagina[] = snapshot.docs
+        .filter((docSnap) => Object.prototype.hasOwnProperty.call(ETICHETE_TIP, docSnap.data().tip))
         .map((docSnap) => {
           const data = docSnap.data();
           return {
