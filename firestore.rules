@@ -1,0 +1,114 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Email-ul contului "proprietar" — trebuie să coincidă cu cel din
+    // lib/admin-roles.ts (EMAIL_PROPRIETAR). Are mereu acces de administrator,
+    // chiar dacă documentul lui din admin_users nu există încă (bootstrap).
+    function emailProprietar() {
+      return "victor.josan.16@gmail.com";
+    }
+
+    function emailCurent() {
+      return request.auth.token.email.lower();
+    }
+
+    function esteAutentificat() {
+      return request.auth != null;
+    }
+
+    function esteProprietar() {
+      return esteAutentificat() && emailCurent() == emailProprietar();
+    }
+
+    function areDocAngajat() {
+      return esteAutentificat() &&
+        exists(/databases/$(database)/documents/admin_users/$(emailCurent()));
+    }
+
+    function docAngajat() {
+      return get(/databases/$(database)/documents/admin_users/$(emailCurent())).data;
+    }
+
+    // Cont activ (invitație acceptată, nedezactivat) — condiția de bază
+    // pentru orice citire/scriere din panoul de admin.
+    function esteAngajatActiv() {
+      return esteProprietar() || (areDocAngajat() && docAngajat().status == 'activ');
+    }
+
+    // Rol cu drepturi depline, inclusiv gestionarea echipei.
+    function esteAdministrator() {
+      return esteProprietar() ||
+        (areDocAngajat() && docAngajat().status == 'activ' && docAngajat().rol == 'administrator');
+    }
+
+    // Catalog — citire publică (magazinul are nevoie de ele), scriere doar din admin
+    match /products/{produsId} {
+      allow read: if true;
+      allow write: if esteAngajatActiv();
+    }
+
+    match /groups/{grupaId} {
+      allow read: if true;
+      allow write: if esteAngajatActiv();
+    }
+
+    // Constructor de Pagină — citire publică, scriere doar din admin
+    match /homepage_blocks/{blocId} {
+      allow read: if true;
+      allow write: if esteAngajatActiv();
+    }
+
+    // Configurare site (antet, meniu) — citire publică, scriere doar din admin
+    match /site_config/{docId} {
+      allow read: if true;
+      allow write: if esteAngajatActiv();
+    }
+
+    // Comenzi — oricine poate crea o comandă nouă (checkout public sau
+    // comanda manuală din admin), dar doar un angajat activ poate citi
+    // lista, schimba statusul sau șterge o comandă.
+    match /orders/{orderId} {
+      allow create: if request.resource.data.keys().hasAll(['client', 'telefon', 'suma', 'produse', 'status'])
+        && request.resource.data.client is string && request.resource.data.client.size() > 0
+        && request.resource.data.telefon is string && request.resource.data.telefon.size() > 0
+        && request.resource.data.suma is number && request.resource.data.suma >= 0
+        && request.resource.data.produse is string
+        && request.resource.data.status == 'noua';
+      allow read, update, delete: if esteAngajatActiv();
+    }
+
+    // Mesaje din formularul de Contact — oricine poate trimite un mesaj,
+    // doar un angajat activ le poate citi sau marca ca citite.
+    match /contact_mesaje/{mesajId} {
+      allow create: if request.resource.data.keys().hasAll(['nume', 'telefon', 'mesaj'])
+        && request.resource.data.nume is string && request.resource.data.nume.size() > 0
+        && request.resource.data.telefon is string && request.resource.data.telefon.size() > 0
+        && request.resource.data.mesaj is string && request.resource.data.mesaj.size() > 0;
+      allow read, update, delete: if esteAngajatActiv();
+    }
+
+    // Conturi de admin/angajați — rolurile și statusul lor de invitație.
+    // Cheia documentului este emailul (lowercase).
+    match /admin_users/{email} {
+      allow read: if esteAngajatActiv();
+
+      // Creare: fie proprietarul își face bootstrap propriului cont, fie
+      // un administrator invită un angajat nou.
+      allow create: if esteAdministrator() ||
+        (esteProprietar() && emailCurent() == email);
+
+      // Actualizare: un administrator poate schimba orice (rol, status etc).
+      // Un angajat își poate finaliza singur înregistrarea (nume, parolă,
+      // status, uid) dar NU își poate schimba propriul rol.
+      allow update: if esteAdministrator() ||
+        (esteAutentificat() && emailCurent() == email &&
+         request.resource.data.rol == resource.data.rol);
+
+      allow delete: if esteAdministrator();
+    }
+
+    // Orice altă colecție rămâne blocată implicit.
+  }
+}
