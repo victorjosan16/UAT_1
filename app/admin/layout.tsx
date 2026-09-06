@@ -9,6 +9,7 @@ import {
   Users,
   Settings,
   LayoutTemplate,
+  UserCog,
   Menu,
   X,
   Search,
@@ -16,12 +17,14 @@ import {
   Plus,
   Loader2,
   LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, addDoc, onSnapshot, serverTimestamp, Timestamp } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { db, getFirebaseAuth } from "@/lib/firebase";
 import { useAdminAuth } from "@/lib/use-admin-auth";
+import { ROLURI, poateAccesa, type ModulAdmin } from "@/lib/admin-roles";
 
 interface NotificarePreview {
   id: string;
@@ -44,19 +47,20 @@ function formateazaOraRelativa(ts: Timestamp | null): string {
   return `acum ${zile} zile`;
 }
 
-const NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/catalog", label: "Catalog Produse", icon: Package },
-  { href: "/admin/storefront", label: "Constructor Pagină", icon: LayoutTemplate },
-  { href: "/admin/comenzi", label: "Procesare Comenzi", icon: ClipboardList },
-  { href: "/admin/clienti", label: "CRM & Clienți", icon: Users },
-  { href: "/admin/setari", label: "Setări", icon: Settings },
+const NAV: { href: string; label: string; icon: typeof LayoutDashboard; modul: ModulAdmin }[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, modul: "dashboard" },
+  { href: "/admin/catalog", label: "Catalog Produse", icon: Package, modul: "catalog" },
+  { href: "/admin/storefront", label: "Constructor Pagină", icon: LayoutTemplate, modul: "storefront" },
+  { href: "/admin/comenzi", label: "Procesare Comenzi", icon: ClipboardList, modul: "comenzi" },
+  { href: "/admin/clienti", label: "CRM & Clienți", icon: Users, modul: "clienti" },
+  { href: "/admin/echipa", label: "Echipă", icon: UserCog, modul: "echipa" },
+  { href: "/admin/setari", label: "Setări", icon: Settings, modul: "setari" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, seIncarca } = useAdminAuth();
+  const { user, seIncarca, angajat } = useAdminAuth();
   const [menuDeschis, setMenuDeschis] = useState(false);
   const [modalComandaDeschis, setModalComandaDeschis] = useState(false);
   const [textCautare, setTextCautare] = useState("");
@@ -65,7 +69,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mesajeNecitite, setMesajeNecitite] = useState<NotificarePreview[]>([]);
   const notificariRef = useRef<HTMLDivElement>(null);
 
-  const esteLogin = pathname === "/admin/login";
+  const estePaginaPublica = pathname === "/admin/login" || pathname === "/admin/inregistrare";
+  const areAcces = !!angajat && angajat.status === "activ";
+  const navFiltrat = useMemo(
+    () => (angajat ? NAV.filter((item) => poateAccesa(angajat.rol, item.modul)) : []),
+    [angajat]
+  );
+  const poateComenzi = !!angajat && poateAccesa(angajat.rol, "comenzi");
+  const poateClienti = !!angajat && poateAccesa(angajat.rol, "clienti");
 
   function cauta(e: React.FormEvent) {
     e.preventDefault();
@@ -75,58 +86,74 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   useEffect(() => {
-    if (!esteLogin && !seIncarca && !user) {
+    if (!estePaginaPublica && !seIncarca && !user) {
       router.replace("/admin/login");
     }
-  }, [esteLogin, seIncarca, user, router]);
+  }, [estePaginaPublica, seIncarca, user, router]);
+
+  // Redirecționează angajatul către Dashboard dacă nu are acces la modulul
+  // rutei curente (ex: intră direct pe /admin/setari cu un link vechi).
+  useEffect(() => {
+    if (estePaginaPublica || seIncarca || !user || !areAcces) return;
+    const itemCurent = NAV.find((item) =>
+      item.href === "/admin" ? pathname === item.href : pathname?.startsWith(item.href)
+    );
+    if (itemCurent && !poateAccesa(angajat!.rol, itemCurent.modul)) {
+      router.replace("/admin");
+    }
+  }, [estePaginaPublica, seIncarca, user, areAcces, angajat, pathname, router]);
 
   useEffect(() => {
-    if (esteLogin || !user) return;
+    if (estePaginaPublica || !user || !areAcces) return;
 
-    const unsubComenzi = onSnapshot(collection(db, "orders"), (snapshot) => {
-      const lista: NotificarePreview[] = snapshot.docs
-        .filter((docSnap) => {
-          const status = docSnap.data().status;
-          return !status || status === "noua";
+    const unsubComenzi = poateComenzi
+      ? onSnapshot(collection(db, "orders"), (snapshot) => {
+          const lista: NotificarePreview[] = snapshot.docs
+            .filter((docSnap) => {
+              const status = docSnap.data().status;
+              return !status || status === "noua";
+            })
+            .map((docSnap) => {
+              const data = docSnap.data();
+              return {
+                id: docSnap.id,
+                tip: "comanda" as const,
+                titlu: data.client ?? "Client necunoscut",
+                detaliu: data.produse ?? "Comandă nouă",
+                data: data.data_creare ?? null,
+                href: "/admin/comenzi",
+              };
+            })
+            .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
+          setComenziNoi(lista);
         })
-        .map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            tip: "comanda" as const,
-            titlu: data.client ?? "Client necunoscut",
-            detaliu: data.produse ?? "Comandă nouă",
-            data: data.data_creare ?? null,
-            href: "/admin/comenzi",
-          };
-        })
-        .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
-      setComenziNoi(lista);
-    });
+      : null;
 
-    const unsubMesaje = onSnapshot(collection(db, "contact_mesaje"), (snapshot) => {
-      const lista: NotificarePreview[] = snapshot.docs
-        .filter((docSnap) => docSnap.data().citit !== true)
-        .map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            tip: "mesaj" as const,
-            titlu: data.nume ?? "Necunoscut",
-            detaliu: data.mesaj ?? "Mesaj nou de contact",
-            data: data.data_creare ?? null,
-            href: "/admin/clienti",
-          };
+    const unsubMesaje = poateClienti
+      ? onSnapshot(collection(db, "contact_mesaje"), (snapshot) => {
+          const lista: NotificarePreview[] = snapshot.docs
+            .filter((docSnap) => docSnap.data().citit !== true)
+            .map((docSnap) => {
+              const data = docSnap.data();
+              return {
+                id: docSnap.id,
+                tip: "mesaj" as const,
+                titlu: data.nume ?? "Necunoscut",
+                detaliu: data.mesaj ?? "Mesaj nou de contact",
+                data: data.data_creare ?? null,
+                href: "/admin/clienti",
+              };
+            })
+            .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
+          setMesajeNecitite(lista);
         })
-        .sort((a, b) => (b.data?.toMillis() ?? 0) - (a.data?.toMillis() ?? 0));
-      setMesajeNecitite(lista);
-    });
+      : null;
 
     return () => {
-      unsubComenzi();
-      unsubMesaje();
+      unsubComenzi?.();
+      unsubMesaje?.();
     };
-  }, [esteLogin, user]);
+  }, [estePaginaPublica, user, areAcces, poateComenzi, poateClienti]);
 
   useEffect(() => {
     if (!notificariDeschise) return;
@@ -153,7 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.replace("/admin/login");
   }
 
-  if (esteLogin) {
+  if (estePaginaPublica) {
     return <>{children}</>;
   }
 
@@ -161,6 +188,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!areAcces) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-sm w-full text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
+          <h1 className="font-semibold text-gray-900 mb-1.5">Acces restricționat</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            {angajat?.status === "dezactivat"
+              ? "Contul tău a fost dezactivat. Contactează administratorul dacă e o eroare."
+              : "Contul tău nu are (încă) acces la panoul de administrare. Contactează administratorul pentru o invitație."}
+          </p>
+          <button
+            onClick={delogheaza}
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 font-medium py-2.5 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Deconectare
+          </button>
+        </div>
       </div>
     );
   }
@@ -176,7 +228,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV.map((item) => {
+          {navFiltrat.map((item) => {
             const activ = item.href === "/admin" ? pathname === item.href : pathname?.startsWith(item.href);
             const Icon = item.icon;
             return (
@@ -201,7 +253,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-white truncate">{user.email}</p>
-            <p className="text-xs text-white/50">Super Admin</p>
+            <p className="text-xs text-white/50">{angajat ? ROLURI[angajat.rol].eticheta : ""}</p>
           </div>
           <button
             onClick={delogheaza}
@@ -232,7 +284,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
       {menuDeschis && (
         <div className="lg:hidden bg-brand-primary px-3 py-2 space-y-1 animate-in fade-in slide-in-from-top-2">
-          {NAV.map((item) => {
+          {navFiltrat.map((item) => {
             const Icon = item.icon;
             return (
               <Link
@@ -259,16 +311,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 lg:pl-64 flex flex-col min-h-screen">
         {/* Top bar - desktop */}
         <div className="hidden lg:flex items-center gap-3 h-16 px-6 bg-white border-b border-gray-100 sticky top-0 z-20">
-          <form onSubmit={cauta} className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={textCautare}
-              onChange={(e) => setTextCautare(e.target.value)}
-              placeholder="Caută comandă, client sau telefon..."
-              className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
-            />
-          </form>
+          {poateComenzi ? (
+            <form onSubmit={cauta} className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={textCautare}
+                onChange={(e) => setTextCautare(e.target.value)}
+                placeholder="Caută comandă, client sau telefon..."
+                className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+              />
+            </form>
+          ) : (
+            <div />
+          )}
           <div className="flex-1" />
           <div className="relative" ref={notificariRef}>
             <button
@@ -336,13 +392,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             )}
           </div>
-          <button
-            onClick={() => setModalComandaDeschis(true)}
-            className="flex items-center gap-2 bg-brand-accent text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:brightness-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Adaugă Comandă Manuală
-          </button>
+          {poateComenzi && (
+            <button
+              onClick={() => setModalComandaDeschis(true)}
+              className="flex items-center gap-2 bg-brand-accent text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:brightness-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Adaugă Comandă Manuală
+            </button>
+          )}
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8 flex-1">{children}</div>
