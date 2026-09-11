@@ -156,6 +156,32 @@ Structura este deja pregătită pentru integrare:
   (interfața e deja izolată, exact pentru acest motiv), iar autentificarea pe
   webhook (semnătură HMAC, token) ar trebui adăugată în `webhook.py`.
 
+## Deploy frontend pe Firebase Hosting
+
+Firebase Hosting servește doar fișiere statice — **nu** poate rula backend-ul
+FastAPI. Configurația din acest repo (`firebase.json`) publică doar folderul
+`frontend/`; backend-ul trebuie rulat separat (Codespaces, Cloud Run, VPS
+etc.) și expus pe un URL public.
+
+1. Rulează backend-ul undeva accesibil public și notează URL-ul (ex.
+   `https://backend-xxxxx.a.run.app`).
+2. Editează `frontend/config.js` și pune acel URL:
+   ```js
+   window.PRINT_SERVICE_API_BASE = "https://backend-xxxxx.a.run.app";
+   ```
+3. Asigură-te că backend-ul acceptă cereri de pe domeniul Firebase (CORS e
+   deja permisiv — `allow_origins=["*"]` în `app/main.py`).
+4. Din rădăcina repo-ului:
+   ```bash
+   npm install -g firebase-tools   # o singură dată
+   firebase login
+   firebase use --add               # selectează/asociază proiectul Firebase
+   firebase deploy --only hosting
+   ```
+
+Fără backend accesibil public la pasul 2, aplicația se încarcă dar upload-ul
+va eșua (nu are unde trimite cererea).
+
 ## Variabile de mediu
 
 | Variabilă           | Implicit                          | Descriere                                |

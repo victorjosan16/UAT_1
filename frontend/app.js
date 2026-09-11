@@ -1,4 +1,4 @@
-const API_BASE = ""; // same origin (servit de FastAPI); schimbă dacă rulezi frontend separat
+const API_BASE = window.PRINT_SERVICE_API_BASE || ""; // vezi config.js
 
 const el = (id) => document.getElementById(id);
 const form = el("upload-form");
