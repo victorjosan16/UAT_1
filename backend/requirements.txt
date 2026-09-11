@@ -1,0 +1,13 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pydantic>=2.6
+Pillow>=10.2
+numpy>=1.26
+opencv-python-headless>=4.9
+requests>=2.31
+
+# Opțional - pas 2 (eliminare fundal). Necesită onnxruntime, poate fi greu
+# de instalat pe unele platforme. Codul funcționează și fără el (vezi
+# processing/background_removal.py), afișând un avertisment în raport.
+rembg>=2.0.55

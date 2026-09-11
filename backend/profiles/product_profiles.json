@@ -1,0 +1,42 @@
+{
+  "tricou": {
+    "nume": "Tricou",
+    "dimensiune_cm": { "latime": 30, "inaltime": 40 },
+    "dpi_minim": 300,
+    "spatiu_culoare": "RGB",
+    "zona_bleed_mm": 3,
+    "necesita_eliminare_fundal": true
+  },
+  "cana": {
+    "nume": "Cană",
+    "dimensiune_cm": { "latime": 20, "inaltime": 9 },
+    "dpi_minim": 300,
+    "spatiu_culoare": "RGB",
+    "zona_bleed_mm": 2,
+    "necesita_eliminare_fundal": true
+  },
+  "banner": {
+    "nume": "Banner",
+    "dimensiune_cm": { "latime": 200, "inaltime": 100 },
+    "dpi_minim": 150,
+    "spatiu_culoare": "CMYK",
+    "zona_bleed_mm": 10,
+    "necesita_eliminare_fundal": false
+  },
+  "poster": {
+    "nume": "Poster A2",
+    "dimensiune_cm": { "latime": 42, "inaltime": 59.4 },
+    "dpi_minim": 300,
+    "spatiu_culoare": "CMYK",
+    "zona_bleed_mm": 5,
+    "necesita_eliminare_fundal": false
+  },
+  "carte_vizita": {
+    "nume": "Carte de vizită",
+    "dimensiune_cm": { "latime": 9, "inaltime": 5 },
+    "dpi_minim": 300,
+    "spatiu_culoare": "CMYK",
+    "zona_bleed_mm": 2,
+    "necesita_eliminare_fundal": false
+  }
+}

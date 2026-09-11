@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Procesare imagini pentru print</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Procesare automată imagini pentru print</h1>
+    <p>Upload → verificare rezoluție/DPI → conversie culoare → poziționare cu bleed → raport de validare</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Încarcă imaginea</h2>
+      <form id="upload-form">
+        <div class="field">
+          <label for="tip_produs">Tip produs</label>
+          <select id="tip_produs" name="tip_produs" required></select>
+        </div>
+        <div id="profile-meta" class="profile-meta" hidden></div>
+        <div class="field">
+          <label for="file">Fișier imagine</label>
+          <input type="file" id="file" name="file" accept="image/*" required />
+        </div>
+        <button type="submit" id="submit-btn">Procesează imaginea</button>
+      </form>
+      <p id="status-line" hidden></p>
+    </section>
+
+    <section class="card">
+      <h2>2. Preview</h2>
+      <div class="previews">
+        <div>
+          <label>Imagine originală</label>
+          <div class="preview-box" id="original-preview">
+            <span class="placeholder">Nicio imagine încărcată</span>
+          </div>
+        </div>
+        <div>
+          <label>Imagine procesată</label>
+          <div class="preview-box" id="final-preview">
+            <span class="placeholder">În așteptare</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="report-section" hidden>
+      <h2>3. Raport de validare</h2>
+      <div id="report-status"></div>
+      <div class="summary-grid" id="report-summary"></div>
+      <ul class="checks" id="report-checks"></ul>
+      <a href="#" id="download-link" class="download-link" hidden>⬇ Descarcă imaginea procesată + raportul (.zip)</a>
+    </section>
+
+    <section class="card" id="error-section" hidden>
+      <h2>Eroare</h2>
+      <div class="error-box" id="error-box"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
