@@ -5,6 +5,8 @@ export interface FallingPieceOptions extends Interval {
   height: number;
   /** Initial horizontal drift, world units/sec. */
   vx?: number;
+  /** Matches the color the fragment's parent block had at the moment it was cut. */
+  fillColor?: string;
 }
 
 /**
@@ -22,6 +24,7 @@ export class FallingPiece {
   angularVelocity: number;
   ageMs = 0;
   readonly maxAgeMs = 1400;
+  readonly fillColor?: string;
 
   private static readonly GRAVITY = 2600; // world units / s^2
 
@@ -32,6 +35,7 @@ export class FallingPiece {
     this.height = options.height;
     this.vx = options.vx ?? 0;
     this.angularVelocity = (options.vx ?? 0) * 0.004 + (Math.random() - 0.5) * 1.2;
+    this.fillColor = options.fillColor;
   }
 
   get width(): number {

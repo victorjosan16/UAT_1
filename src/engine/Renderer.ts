@@ -22,6 +22,9 @@ export interface MovingBlockView {
   height: number;
   isDrifting: boolean;
   speed: number;
+  /** Preview of the level-hue color this block will be baked with once placed (default skin only). */
+  fillColor?: string;
+  gradientTopColor?: string;
 }
 
 export interface RenderFrame {
@@ -105,14 +108,15 @@ export class Renderer {
     ctx.translate(frame.shakeOffset.x, frame.shakeOffset.y);
 
     if (frame.movingBlock) {
-      frame.trail.render(ctx, worldToScreenX, worldToScreenY, frame.skin.blockFill, frame.qualityScale);
+      frame.trail.render(ctx, worldToScreenX, worldToScreenY, frame.movingBlock.fillColor ?? frame.skin.blockFill, frame.qualityScale);
     }
 
     for (const block of frame.blocks) {
       const isTop = block === frame.blocks[frame.blocks.length - 1];
       const fogFade = frame.fogAmount > 0 ? this.fogFadeFor(block, frame) : 1;
       if (fogFade <= 0.02) continue;
-      this.drawBlock(block.left, block.right, block.y, block.height, frame.skin, worldToScreenY, isTop && frame.perfectPulse > 0 ? frame.perfectPulse : 0, fogFade);
+      const colors = block.fillColor ? { fillColor: block.fillColor, gradientTopColor: block.gradientTopColor ?? block.fillColor } : undefined;
+      this.drawBlock(block.left, block.right, block.y, block.height, frame.skin, worldToScreenY, isTop && frame.perfectPulse > 0 ? frame.perfectPulse : 0, fogFade, colors);
     }
 
     for (const piece of frame.fallingPieces) {
@@ -120,7 +124,8 @@ export class Renderer {
     }
 
     if (frame.movingBlock) {
-      this.drawBlock(frame.movingBlock.left, frame.movingBlock.right, frame.movingBlock.y, frame.movingBlock.height, frame.skin, worldToScreenY, 0, 1);
+      const colors = frame.movingBlock.fillColor ? { fillColor: frame.movingBlock.fillColor, gradientTopColor: frame.movingBlock.gradientTopColor ?? frame.movingBlock.fillColor } : undefined;
+      this.drawBlock(frame.movingBlock.left, frame.movingBlock.right, frame.movingBlock.y, frame.movingBlock.height, frame.skin, worldToScreenY, 0, 1, colors);
     }
 
     frame.particles.render(ctx, worldToScreenY);
@@ -190,6 +195,7 @@ export class Renderer {
     worldToScreenY: (y: number) => number,
     glowPulse: number,
     alpha: number,
+    colorOverride?: { fillColor: string; gradientTopColor: string },
   ): void {
     const ctx = this.ctx;
     const x = this.worldToScreenX(left);
@@ -213,9 +219,11 @@ export class Renderer {
       ctx.translate(-cx, -cy);
     }
 
+    const fillColor = colorOverride?.fillColor ?? skin.blockFill;
+    const gradientTopColor = colorOverride?.gradientTopColor ?? skin.blockGradientTop ?? skin.blockFill;
     const grad = ctx.createLinearGradient(0, yTop, 0, yBottom);
-    grad.addColorStop(0, skin.blockGradientTop ?? skin.blockFill);
-    grad.addColorStop(1, skin.blockFill);
+    grad.addColorStop(0, gradientTopColor);
+    grad.addColorStop(1, fillColor);
     ctx.fillStyle = grad;
 
     const radius = Math.min(6, h / 3, width / 3);
@@ -244,7 +252,7 @@ export class Renderer {
     ctx.globalAlpha = alpha;
     ctx.translate(cx, cy);
     ctx.rotate(piece.rotation);
-    ctx.fillStyle = skin.blockFill;
+    ctx.fillStyle = piece.fillColor ?? skin.blockFill;
     ctx.fillRect(-width / 2, -h / 2, width, h);
     ctx.restore();
   }

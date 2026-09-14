@@ -12,6 +12,7 @@ import { ScoreEngine } from "@/scoring/ScoreEngine";
 import { SeededRandom } from "@/utils/rng";
 import { environmentForHeight } from "@/ui/theme/environment";
 import { DEFAULT_TOWER_SKIN, type TowerSkin } from "@/ui/skins/TowerSkin";
+import { resolveBlockColors } from "@/ui/theme/blockColor";
 import { GAME_VERSION, RULES_VERSION } from "@/branding";
 import { VFX_CONFIG } from "./VFXConfig";
 import { createInitialState, type GameState } from "./GameState";
@@ -151,7 +152,8 @@ export class Game {
     this.state.level = this.startLevel;
     const startDef = this.levelDefFor(this.startLevel);
     const baseWidth = startDef.startingBlockWidth;
-    this.tower = new Tower({ left: -baseWidth / 2, right: baseWidth / 2 }, BASE_BLOCK_HEIGHT);
+    const baseColor = resolveBlockColors(this.skin, 0) ?? undefined;
+    this.tower = new Tower({ left: -baseWidth / 2, right: baseWidth / 2 }, BASE_BLOCK_HEIGHT, baseColor);
     this.camera.reset(0);
     this.camera.setTarget(0);
 
@@ -307,6 +309,7 @@ export class Game {
   private readonly renderFrame = (): void => {
     if (!this.tower) return;
     const height = this.tower.height;
+    const previewColors = this.moving ? resolveBlockColors(this.skin, height + 1) : null;
     const frame: RenderFrame = {
       blocks: this.tower.allBlocks,
       movingBlock: this.moving
@@ -317,6 +320,8 @@ export class Game {
             height: this.moving.height,
             isDrifting: this.currentLevelDef?.specialModifier === "WIND",
             speed: this.effectiveSpeed(this.moving.passElapsedSeconds),
+            fillColor: previewColors?.fillColor,
+            gradientTopColor: previewColors?.gradientTopColor,
           }
         : null,
       fallingPieces: this.fallingPieces,
@@ -348,11 +353,12 @@ export class Game {
     const flingDirection = this.moving.direction;
     const dropY = this.moving.y;
     const dropHeight = this.moving.height;
+    const dropColors = resolveBlockColors(this.skin, previous.floor + 1);
 
     for (const fragment of overlapResult.fallingFragments) {
       const isRightSide = fragment.left >= (overlapResult.overlap?.right ?? previous.center);
       const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtDrop * 0.5) + flingDirection * 20;
-      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx }));
+      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
     }
 
     if (!overlapResult.overlap) {
@@ -361,7 +367,7 @@ export class Game {
     }
 
     const movingWidth = this.moving.right - this.moving.left;
-    const placedBlock = this.tower.place(overlapResult.overlap, BASE_BLOCK_HEIGHT);
+    const placedBlock = this.tower.place(overlapResult.overlap, BASE_BLOCK_HEIGHT, dropColors ?? undefined);
     const blockCenterScreenX = worldXToScreenX((placedBlock.left + placedBlock.right) / 2);
 
     const result = this.scoreEngine.place(
@@ -407,7 +413,7 @@ export class Game {
 
       if (overlapResult.fallingFragments.length > 0) {
         const fractionCut = movingWidth === 0 ? 0 : 1 - (overlapResult.overlap.right - overlapResult.overlap.left) / movingWidth;
-        this.effects.handle({ type: "BLOCK_CUT", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, direction: flingDirection, fractionCut, color: this.skin.blockFill });
+        this.effects.handle({ type: "BLOCK_CUT", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, direction: flingDirection, fractionCut, color: dropColors?.fillColor ?? this.skin.blockFill });
       }
 
       if (isNearMiss) {
@@ -419,7 +425,7 @@ export class Game {
     }
 
     if (VFX_CONFIG.combo.milestones.includes(result.combo.streak)) {
-      this.effects.handle({ type: "COMBO_CHANGED", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, multiplier: result.combo.multiplier, streak: result.combo.streak, color: this.skin.blockFill });
+      this.effects.handle({ type: "COMBO_CHANGED", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, multiplier: result.combo.multiplier, streak: result.combo.streak, color: dropColors?.fillColor ?? this.skin.blockFill });
     }
 
     if (!this.recordCrossed && this.personalBestScore > 0 && this.state.score > this.personalBestScore) {

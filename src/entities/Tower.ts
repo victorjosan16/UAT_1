@@ -1,6 +1,11 @@
 import { Block } from "./Block";
 import type { Interval } from "@/types";
 
+export interface BlockColor {
+  fillColor?: string;
+  gradientTopColor?: string;
+}
+
 export interface OverlapResult {
   /** Signed distance between moving and previous block centers. */
   offset: number;
@@ -43,8 +48,8 @@ export class Tower {
   private readonly blocks: Block[] = [];
   readonly baseWidth: number;
 
-  constructor(baseInterval: Interval, floorHeight: number) {
-    const base = new Block({ ...baseInterval, floor: 0, y: 0, height: floorHeight });
+  constructor(baseInterval: Interval, floorHeight: number, color?: BlockColor) {
+    const base = new Block({ ...baseInterval, floor: 0, y: 0, height: floorHeight, ...color });
     this.blocks.push(base);
     this.baseWidth = base.width;
   }
@@ -64,7 +69,7 @@ export class Tower {
   }
 
   /** Adds a new placed block on top, at the given already-clipped interval. */
-  place(interval: Interval, floorHeight: number): Block {
+  place(interval: Interval, floorHeight: number, color?: BlockColor): Block {
     const top = this.topBlock;
     const block = new Block({
       left: interval.left,
@@ -72,6 +77,7 @@ export class Tower {
       floor: top.floor + 1,
       y: top.y + top.height,
       height: floorHeight,
+      ...color,
     });
     this.blocks.push(block);
     return block;
