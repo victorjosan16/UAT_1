@@ -1,0 +1,22 @@
+{
+  "name": "Tiny Tower",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+  "postCreateCommand": "npm install && npm --prefix firebase/functions install",
+  "forwardPorts": [5173, 5000, 5001, 8080, 9099, 4000],
+  "portsAttributes": {
+    "5173": { "label": "Vite dev server" },
+    "5000": { "label": "Firebase Hosting emulator" },
+    "5001": { "label": "Cloud Functions emulator" },
+    "8080": { "label": "Firestore emulator" },
+    "9099": { "label": "Auth emulator" },
+    "4000": { "label": "Emulator Suite UI" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}

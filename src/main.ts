@@ -19,9 +19,7 @@ const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
 const uiRoot = document.getElementById("ui-root");
 if (!uiRoot) throw new Error("#ui-root missing");
 
-const identity = playerService.ensureIdentity();
-analyticsService.track("app_open", { playerId: identity.playerId });
-
+let identity: { playerId: string; nickname: string } = { playerId: "", nickname: "" };
 let activeGame: Game | null = null;
 let pendingChallenge: ChallengeDetails | null = null;
 let pendingDailyDateKey: string | undefined;
@@ -218,6 +216,9 @@ async function handleShare(): Promise<void> {
 }
 
 async function boot(): Promise<void> {
+  identity = await playerService.ensureIdentity();
+  analyticsService.track("app_open", { playerId: identity.playerId });
+
   const match = /^\/challenge\/([A-Za-z0-9]+)/.exec(window.location.pathname);
   if (match) {
     const challengeId = match[1] ?? "";

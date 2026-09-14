@@ -32,7 +32,6 @@ export interface PendingSubmission {
 
 const KEYS = {
   playerId: "tt.playerId",
-  playerToken: "tt.playerToken",
   nickname: "tt.nickname",
   preferences: "tt.preferences",
   localBests: "tt.localBests",
@@ -88,12 +87,6 @@ export const LocalStorageService = {
   },
   setPlayerId(id: string): void {
     safeSet(KEYS.playerId, id);
-  },
-  getPlayerToken(): string | null {
-    return safeGet(KEYS.playerToken);
-  },
-  setPlayerToken(token: string): void {
-    safeSet(KEYS.playerToken, token);
   },
   getNickname(): string | null {
     return safeGet(KEYS.nickname);

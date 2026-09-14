@@ -6,26 +6,30 @@
   "description": "TINY TOWER — a minimalist, viral, precision-stacking arcade game.",
   "scripts": {
     "dev": "vite",
-    "dev:worker": "wrangler dev worker/index.ts --local --persist-to .wrangler/state",
-    "dev:all": "npm run dev:worker & npm run dev",
+    "emulators": "firebase emulators:start --config firebase/firebase.json --project demo-tiny-tower",
+    "dev:all": "concurrently -k \"npm:emulators\" \"npm:dev\"",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
-    "lint": "tsc -b --noEmit",
-    "db:migrate:local": "wrangler d1 migrations apply tiny_tower_db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply tiny_tower_db --remote",
-    "deploy": "npm run build && wrangler deploy",
-    "deploy:pages": "npm run build && wrangler pages deploy dist"
+    "test:functions": "npm run --prefix firebase/functions test",
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --prefix firebase/functions",
+    "lint": "npm run typecheck",
+    "deploy": "npm run build && firebase deploy --config firebase/firebase.json --only hosting,functions,firestore",
+    "deploy:hosting": "npm run build && firebase deploy --config firebase/firebase.json --only hosting",
+    "deploy:functions": "firebase deploy --config firebase/firebase.json --only functions",
+    "deploy:firestore": "firebase deploy --config firebase/firebase.json --only firestore"
+  },
+  "dependencies": {
+    "firebase": "^11.0.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250101.0",
     "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "firebase-tools": "^13.28.0",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
     "vite-plugin-pwa": "^0.20.5",
-    "vitest": "^2.1.8",
-    "wrangler": "^3.90.0"
+    "vitest": "^2.1.8"
   }
 }

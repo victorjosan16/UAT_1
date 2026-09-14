@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// All writes happen server-side via the Admin SDK in Cloud Functions, which
+// bypasses these rules entirely — they exist purely to lock the database
+// down against any direct client access. Leaderboards are readable
+// publicly (they're shown pre-login on the start screen); everything else
+// (players, sessions, challenges, daily stats) is served exclusively
+// through the /api/* Cloud Functions so every read/write can be validated
+// and rate-limited. See docs/SECURITY.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /leaderboard_alltime/{playerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /leaderboard_daily/{dateKey}/entries/{playerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /leaderboard_weekly/{weekKey}/entries/{playerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -10,14 +10,21 @@ backend/processed/*
 
 .DS_Store
 
-# Tiny Tower (Node/Vite/Cloudflare)
+# Tiny Tower (Node/Vite/Firebase)
 node_modules/
 dist/
 dist-ssr/
-.wrangler/
 *.local
 .env
 .env.*
 !.env.example
 coverage/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase/functions/lib/
+firebase/functions/node_modules/
 

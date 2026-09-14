@@ -1,7 +1,13 @@
+import { ensureSignedIn } from "./firebase";
+import { withTimeout } from "@/utils/async";
+
+const AUTH_TOKEN_TIMEOUT_MS = 4000;
+
 /**
  * Thin fetch wrapper — the single network boundary. Every other service
- * goes through this so swapping backends (Cloudflare Workers → Firebase)
- * only means rewriting this file and the service methods that call it.
+ * goes through this so swapping backends (Firebase could later be swapped
+ * for something else) only means rewriting this file and the service
+ * methods that call it.
  */
 
 export class ApiError extends Error {
@@ -17,13 +23,13 @@ export class ApiError extends Error {
 
 export interface ApiClientOptions {
   baseUrl?: string;
-  getAuthToken?: () => string | null;
+  getAuthToken?: () => Promise<string | null> | string | null;
   timeoutMs?: number;
 }
 
 export class ApiClient {
   private readonly baseUrl: string;
-  private readonly getAuthToken?: () => string | null;
+  private readonly getAuthToken?: () => Promise<string | null> | string | null;
   private readonly timeoutMs: number;
 
   constructor(options: ApiClientOptions = {}) {
@@ -38,7 +44,7 @@ export class ApiClient {
 
     const headers = new Headers(init.headers);
     headers.set("Content-Type", "application/json");
-    const token = this.getAuthToken?.();
+    const token = await this.getAuthToken?.();
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
     try {
@@ -73,9 +79,10 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient({
-  getAuthToken: () => {
+  getAuthToken: async () => {
     try {
-      return window.localStorage.getItem("tt.playerToken");
+      const user = await withTimeout(ensureSignedIn(), AUTH_TOKEN_TIMEOUT_MS);
+      return await user.getIdToken();
     } catch {
       return null;
     }

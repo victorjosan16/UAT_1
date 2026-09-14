@@ -1,0 +1,33 @@
+{
+  "name": "tiny-tower-functions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tiny Tower API — Firebase Cloud Functions (session anti-cheat, leaderboards, daily, challenges).",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --tsconfig=tsconfig.json --bundle --platform=node --target=node20 --outfile=lib/index.js --external:firebase-admin --external:firebase-functions --external:express --external:cors --external:zod",
+    "build:watch": "npm run build -- --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "serve": "npm run build && firebase emulators:start --only functions --config ../firebase.json",
+    "deploy": "npm run build && firebase deploy --config ../firebase.json --only functions"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

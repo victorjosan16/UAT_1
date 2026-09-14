@@ -18,8 +18,11 @@ export default defineConfig({
     port: 5173,
     host: true,
     proxy: {
+      // Firebase Hosting emulator (`npm run emulators`) applies the same
+      // "/api/**" -> Cloud Function rewrite as production, so local dev
+      // hits the exact same routing as `firebase deploy`.
       "/api": {
-        target: "http://127.0.0.1:8787",
+        target: "http://127.0.0.1:5000",
         changeOrigin: true,
       },
     },

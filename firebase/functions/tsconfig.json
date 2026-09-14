@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "lib": ["ES2022"],
-    "moduleResolution": "Bundler",
-    "types": ["@cloudflare/workers-types"],
+    "types": ["node"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
@@ -14,20 +14,12 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
     "resolveJsonModule": true,
-    "baseUrl": "..",
+    "noEmit": true,
+    "baseUrl": "../..",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "../src/scoring/**/*.ts",
-    "../src/levels/**/*.ts",
-    "../src/types/**/*.ts",
-    "../src/utils/rng.ts",
-    "../src/utils/dailySeed.ts",
-    "../src/utils/math.ts"
-  ]
+  "include": ["src/**/*.ts", "../../src/scoring/**/*.ts", "../../src/levels/**/*.ts", "../../src/modes/ChallengeMode.ts", "../../src/types/**/*.ts", "../../src/utils/rng.ts", "../../src/utils/dailySeed.ts", "../../src/utils/math.ts", "../../src/branding.ts"]
 }
