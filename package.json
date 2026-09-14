@@ -1,0 +1,31 @@
+{
+  "name": "tiny-tower",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TINY TOWER — a minimalist, viral, precision-stacking arcade game.",
+  "scripts": {
+    "dev": "vite",
+    "dev:worker": "wrangler dev worker/index.ts --local --persist-to .wrangler/state",
+    "dev:all": "npm run dev:worker & npm run dev",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
+    "lint": "tsc -b --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply tiny_tower_db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tiny_tower_db --remote",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:pages": "npm run build && wrangler pages deploy dist"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.90.0"
+  }
+}

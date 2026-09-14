@@ -9,3 +9,15 @@ backend/processed/*
 !backend/processed/.gitkeep
 
 .DS_Store
+
+# Tiny Tower (Node/Vite/Cloudflare)
+node_modules/
+dist/
+dist-ssr/
+.wrangler/
+*.local
+.env
+.env.*
+!.env.example
+coverage/
+
