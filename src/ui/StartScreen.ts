@@ -6,10 +6,12 @@ export interface StartScreenCallbacks {
   onPlayClassic: () => void;
   onPlayDaily: () => void;
   onOpenLeaderboard: () => void;
+  onEditNickname: () => void;
 }
 
 export class StartScreen {
   readonly root: HTMLElement;
+  private readonly nicknamePill: HTMLButtonElement;
 
   constructor(callbacks: StartScreenCallbacks) {
     const bests = LocalStorageService.getLocalBests();
@@ -17,6 +19,9 @@ export class StartScreen {
 
     const title = el("h1", { className: "tt-title", text: GAME_NAME });
     const subtitle = el("p", { className: "tt-subtitle", text: GAME_SUBTITLE });
+
+    this.nicknamePill = el("button", { className: "tt-nickname-pill" });
+    this.nicknamePill.addEventListener("click", callbacks.onEditNickname);
 
     const playBtn = el("button", { className: "tt-btn tt-btn--primary", text: tutorialDone ? "PLAY" : TAGLINES.tap }) as HTMLButtonElement;
     playBtn.addEventListener("click", callbacks.onPlayClassic);
@@ -35,7 +40,11 @@ export class StartScreen {
           ])
         : el("div");
 
-    this.root = el("div", { className: "tt-screen", id: "start-screen" }, [title, subtitle, bestRow, playBtn, dailyBtn, leaderboardBtn]);
+    this.root = el("div", { className: "tt-screen", id: "start-screen" }, [title, subtitle, this.nicknamePill, bestRow, playBtn, dailyBtn, leaderboardBtn]);
+  }
+
+  setNickname(nickname: string): void {
+    this.nicknamePill.textContent = `👤 ${nickname}`;
   }
 
   setVisible(visible: boolean): void {

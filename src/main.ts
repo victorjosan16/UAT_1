@@ -4,6 +4,7 @@ import { StartScreen } from "@/ui/StartScreen";
 import { GameOverScreen, type GameOverStats } from "@/ui/GameOverScreen";
 import { Leaderboard } from "@/ui/Leaderboard";
 import { ChallengeScreen } from "@/ui/ChallengeScreen";
+import { NicknameScreen } from "@/ui/NicknameScreen";
 import { playerService } from "@/services/PlayerService";
 import { challengeService, type ChallengeDetails } from "@/services/ChallengeService";
 import { runSubmitter } from "@/services/RunSubmitter";
@@ -23,6 +24,7 @@ let identity: { playerId: string; nickname: string } = { playerId: "", nickname:
 let activeGame: Game | null = null;
 let pendingChallenge: ChallengeDetails | null = null;
 let pendingDailyDateKey: string | undefined;
+let isFirstBoot = true;
 
 const hud = new HUD({
   onToggleSound: (enabled) => activeGame?.setSoundEnabled(enabled),
@@ -73,9 +75,30 @@ const startScreen = new StartScreen({
     analyticsService.track("leaderboard_opened", {});
     void leaderboard.open(identity.playerId);
   },
+  onEditNickname: () => {
+    nicknameScreen.setValue(identity.nickname);
+    startScreen.setVisible(false);
+    nicknameScreen.setVisible(true);
+  },
 });
 
-uiRoot.append(startScreen.root, hud.root, gameOverScreen.root, leaderboard.root, challengeScreen.root);
+const nicknameScreen = new NicknameScreen({
+  onConfirm: (nickname) => {
+    playerService.setNickname(nickname);
+    LocalStorageService.updatePreferences({ nicknameConfirmed: true });
+    identity = { ...identity, nickname };
+    startScreen.setNickname(nickname);
+    nicknameScreen.setVisible(false);
+    if (isFirstBoot) {
+      isFirstBoot = false;
+      void enterApp();
+    } else {
+      showStart();
+    }
+  },
+});
+
+uiRoot.append(startScreen.root, hud.root, gameOverScreen.root, leaderboard.root, challengeScreen.root, nicknameScreen.root);
 
 interface RunConfig {
   mode: GameMode;
@@ -95,6 +118,7 @@ function showStart(): void {
   gameOverScreen.setVisible(false);
   challengeScreen.setVisible(false);
   leaderboard.setVisible(false);
+  nicknameScreen.setVisible(false);
 }
 
 function startRun(config: RunConfig): void {
@@ -215,10 +239,8 @@ async function handleShare(): Promise<void> {
   await shareResult({ height: bests.highestFloor, score: bests.highScore, topPercent: null, url: window.location.origin });
 }
 
-async function boot(): Promise<void> {
-  identity = await playerService.ensureIdentity();
-  analyticsService.track("app_open", { playerId: identity.playerId });
-
+/** Deep-link/start-screen routing, resumed once a nickname is confirmed. */
+async function enterApp(): Promise<void> {
   const match = /^\/challenge\/([A-Za-z0-9]+)/.exec(window.location.pathname);
   if (match) {
     const challengeId = match[1] ?? "";
@@ -233,6 +255,24 @@ async function boot(): Promise<void> {
     }
   }
   showStart();
+}
+
+async function boot(): Promise<void> {
+  identity = await playerService.ensureIdentity();
+  analyticsService.track("app_open", { playerId: identity.playerId });
+  startScreen.setNickname(identity.nickname);
+
+  if (!LocalStorageService.getPreferences().nicknameConfirmed) {
+    // First launch — ask the player to confirm/pick a nickname before
+    // anything else, since it's what identifies them on the leaderboard.
+    startScreen.setVisible(false);
+    nicknameScreen.setValue(identity.nickname);
+    nicknameScreen.setVisible(true);
+    return;
+  }
+
+  isFirstBoot = false;
+  await enterApp();
 }
 
 void boot();

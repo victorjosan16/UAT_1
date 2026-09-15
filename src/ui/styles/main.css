@@ -291,6 +291,39 @@ body {
   padding: 8px 12px;
 }
 
+.tt-input {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  width: 100%;
+  max-width: 320px;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.tt-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tt-nickname-pill {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
 .tt-offline-banner {
   position: absolute;
   bottom: calc(14px + var(--safe-bottom));

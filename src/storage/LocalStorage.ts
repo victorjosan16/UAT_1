@@ -11,6 +11,8 @@ export interface Preferences {
   hapticsEnabled: boolean;
   tutorialCompleted: boolean;
   reducedEffects: boolean;
+  /** True once the player has explicitly confirmed a nickname (vs. the silent auto-generated default) — gates the one-time nickname prompt. */
+  nicknameConfirmed: boolean;
 }
 
 export interface LocalBests {
@@ -43,6 +45,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   hapticsEnabled: true,
   tutorialCompleted: false,
   reducedEffects: false,
+  nicknameConfirmed: false,
 };
 
 const DEFAULT_BESTS: LocalBests = {
