@@ -36,11 +36,26 @@ hud.setVisible(false);
 const gameOverScreen = new GameOverScreen({
   onPlayAgain: () => startRun(lastModeConfig()),
   onChallengeFriend: () => void handleCreateChallenge(),
-  onOpenLeaderboard: () => void leaderboard.open(identity.playerId),
+  onOpenLeaderboard: () => openLeaderboard(() => gameOverScreen.setVisible(true)),
   onShare: () => void handleShare(),
 });
 
-const leaderboard = new Leaderboard(() => leaderboard.setVisible(false));
+/** Whichever screen the leaderboard should return to on close — since it can be opened from more than one place, `showStart()` alone would drop the player back at the wrong screen. */
+let leaderboardReturnTo: () => void = () => showStart();
+
+const leaderboard = new Leaderboard(() => {
+  leaderboard.setVisible(false);
+  leaderboardReturnTo();
+});
+
+function openLeaderboard(returnTo: () => void): void {
+  leaderboardReturnTo = returnTo;
+  startScreen.setVisible(false);
+  gameOverScreen.setVisible(false);
+  challengeScreen.setVisible(false);
+  nicknameScreen.setVisible(false);
+  void leaderboard.open(identity.playerId);
+}
 
 const challengeScreen = new ChallengeScreen({
   onAccept: (challenge) => {
@@ -74,7 +89,7 @@ const startScreen = new StartScreen({
   },
   onOpenLeaderboard: () => {
     analyticsService.track("leaderboard_opened", {});
-    void leaderboard.open(identity.playerId);
+    openLeaderboard(showStart);
   },
   onEditNickname: () => {
     nicknameScreen.setValue(identity.nickname);

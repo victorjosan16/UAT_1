@@ -1,5 +1,8 @@
 import { el } from "./dom";
 import { leaderboardService, type LeaderboardWindow, type LeaderboardEntry } from "@/services/LeaderboardService";
+import { withTimeout } from "@/utils/async";
+
+const LEADERBOARD_LOAD_TIMEOUT_MS = 8000;
 
 const WINDOWS: { key: LeaderboardWindow; label: string }[] = [
   { key: "daily", label: "TODAY" },
@@ -46,9 +49,12 @@ export class Leaderboard {
     for (const [key, btn] of this.tabButtons) btn.style.opacity = key === window ? "1" : "0.5";
     this.listEl.replaceChildren(el("p", { style: "color:var(--text-dim)", text: "Loading…" }));
     try {
-      const result = await leaderboardService.fetchLeaderboard(window);
+      const result = await withTimeout(leaderboardService.fetchLeaderboard(window), LEADERBOARD_LOAD_TIMEOUT_MS);
       this.renderEntries(result.entries);
     } catch {
+      // Firestore has no built-in query timeout, so a stuck connection would
+      // otherwise leave "Loading…" showing forever — withTimeout guarantees
+      // this always resolves to a message within a few seconds.
       this.listEl.replaceChildren(el("p", { style: "color:var(--text-dim)", text: "Leaderboard unavailable offline." }));
     }
   }
