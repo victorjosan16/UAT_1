@@ -5,7 +5,7 @@ import { EffectsManager } from "@/engine/EffectsManager";
 import { PerformanceMonitor } from "@/engine/PerformanceMonitor";
 import { Tower, computeOverlap, type OverlapResult } from "@/entities/Tower";
 import { FallingPiece } from "@/entities/FallingPiece";
-import { getLevel, MAX_LEVEL, BASE_BLOCK_HEIGHT } from "@/levels/levels";
+import { getLevel, MAX_LEVEL, BASE_BLOCK_HEIGHT, PLAY_AREA_WIDTH } from "@/levels/levels";
 import type { LevelDefinition } from "@/levels/LevelDefinition";
 import { DifficultyEngine } from "@/levels/DifficultyEngine";
 import { ScoreEngine } from "@/scoring/ScoreEngine";
@@ -39,6 +39,17 @@ import {
   FALL_DURATION_MS,
   MOVING_AUTO_DROP_MS,
 } from "./GameConfig";
+import {
+  POWERUP_TYPES,
+  POWERUP_MIN_FLOOR,
+  POWERUP_SPAWN_CHANCE,
+  POWERUP_FREEZE_SPEED_FACTOR,
+  POWERUP_WIDE_FACTOR,
+  POWERUP_WIDE_MAX_FRACTION,
+  POWERUP_SCORE_MULTIPLIER,
+  POWERUP_LABEL,
+  type PowerUpType,
+} from "./PowerUps";
 import type { Direction, GameMode, Grade, Interval, PlacementResult, RunSummary } from "@/types";
 
 export interface GameCallbacks {
@@ -68,6 +79,8 @@ interface MovingBlockState extends Interval {
   fallElapsedMs: number;
   /** Real (unscaled) ms since this block spawned — if the player never taps, it auto-drops once this hits MOVING_AUTO_DROP_MS. */
   aliveMs: number;
+  /** Bonus this block carries, collected automatically by placing it — null on most blocks. */
+  powerUp: PowerUpType | null;
 }
 
 /** Snapshot of everything needed to resolve a placement, captured at tap time and applied once the fall animation lands. */
@@ -77,6 +90,7 @@ interface PendingPlacement {
   movingWidth: number;
   flingDirection: Direction;
   dropColors: ResolvedBlockColor | null;
+  powerUp: PowerUpType | null;
 }
 
 const GAME_OVER_STATUS_DELAY_MS = VFX_CONFIG.gameOver.transitionMs;
@@ -222,6 +236,15 @@ export class Game {
       effectiveWidth *= SMALL_START_WIDTH_FACTOR;
     }
 
+    let powerUp: PowerUpType | null = null;
+    const landingFloor = this.tower.height + 1;
+    if (landingFloor >= POWERUP_MIN_FLOOR && this.rng.float() < POWERUP_SPAWN_CHANCE) {
+      powerUp = this.rng.pick(POWERUP_TYPES);
+      if (powerUp === "WIDE") {
+        effectiveWidth = Math.min(effectiveWidth * POWERUP_WIDE_FACTOR, PLAY_AREA_WIDTH * POWERUP_WIDE_MAX_FRACTION);
+      }
+    }
+
     const direction = this.directionForSpawn(def.directionPattern);
     this.lastDirection = direction;
 
@@ -243,6 +266,7 @@ export class Game {
       fallTargetY: 0,
       fallElapsedMs: 0,
       aliveMs: 0,
+      powerUp,
     };
     this.effects.trail.clear();
 
@@ -265,6 +289,7 @@ export class Game {
     if (def.specialModifier === "SPEED_SHIFT") {
       speed *= 1 + SPEED_SHIFT_AMPLITUDE * Math.sin(passElapsed * 2 * Math.PI * SPEED_SHIFT_FREQUENCY_HZ);
     }
+    if (this.moving?.powerUp === "FREEZE") speed *= POWERUP_FREEZE_SPEED_FACTOR;
     return speed;
   }
 
@@ -375,6 +400,7 @@ export class Game {
             speed: this.effectiveSpeed(this.moving.passElapsedSeconds),
             fillColor: previewColors?.fillColor,
             gradientTopColor: previewColors?.gradientTopColor,
+            powerUp: this.moving.powerUp,
           }
         : null,
       fallingPieces: this.fallingPieces,
@@ -431,7 +457,7 @@ export class Game {
     // fall — it's exactly what will land, the whole way down.
     this.moving.left = overlapResult.overlap.left;
     this.moving.right = overlapResult.overlap.right;
-    this.pendingPlacement = { overlapResult, previousWidth, movingWidth, flingDirection, dropColors };
+    this.pendingPlacement = { overlapResult, previousWidth, movingWidth, flingDirection, dropColors, powerUp: this.moving.powerUp };
     this.moving.falling = true;
     this.moving.fallStartY = dropY;
     this.moving.fallTargetY = previous.y + previous.height;
@@ -444,19 +470,14 @@ export class Game {
     if (!pending || !moving) return;
     this.pendingPlacement = null;
 
-    const { overlapResult, previousWidth, movingWidth, flingDirection, dropColors } = pending;
+    const { overlapResult, previousWidth, movingWidth, flingDirection, dropColors, powerUp } = pending;
     const overlap = overlapResult.overlap!;
 
     const placedBlock = this.tower.place(overlap, BASE_BLOCK_HEIGHT, dropColors ?? undefined);
     const blockCenterScreenX = worldXToScreenX((placedBlock.left + placedBlock.right) / 2);
 
-    const result = this.scoreEngine.place(
-      overlap.right - overlap.left,
-      previousWidth,
-      placedBlock.floor,
-      overlapResult.isPerfect,
-      this.currentLevelDef.scoreMultiplier,
-    );
+    const levelScoreMultiplier = this.currentLevelDef.scoreMultiplier * (powerUp === "MULTIPLIER" ? POWERUP_SCORE_MULTIPLIER : 1);
+    const result = this.scoreEngine.place(overlap.right - overlap.left, previousWidth, placedBlock.floor, overlapResult.isPerfect, levelScoreMultiplier);
 
     this.state.score = this.scoreEngine.totalScore;
     this.state.combo = this.scoreEngine.comboState;
@@ -504,6 +525,14 @@ export class Game {
       } else {
         this.callbacks.onFeedback?.(placement.index === 0 ? "NICE!" : result.grade === "GREAT" ? "SO CLOSE!" : result.grade === "GOOD" ? "NICE!" : "RISKY!", result.grade === "GREAT" ? "close" : "nice");
       }
+    }
+
+    if (powerUp) {
+      // Collecting a power-up is the more exciting thing that just happened —
+      // its banner replaces the grade text for this one placement, on top of
+      // (not instead of) whatever grade/perfect effects already fired above.
+      this.effects.handle({ type: "POWERUP_COLLECTED", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, powerUp });
+      this.callbacks.onFeedback?.(POWERUP_LABEL[powerUp], "perfect");
     }
 
     if (VFX_CONFIG.combo.milestones.includes(result.combo.streak)) {

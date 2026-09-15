@@ -5,6 +5,7 @@ import { TimeScaleManager } from "./TimeScaleManager";
 import { AudioManager } from "./Audio";
 import { HapticsManager } from "./Haptics";
 import { VFX_CONFIG } from "@/game/VFXConfig";
+import { POWERUP_GLOW_COLOR, type PowerUpType } from "@/game/PowerUps";
 import type { Grade } from "@/types";
 
 export type GameEvent =
@@ -15,7 +16,8 @@ export type GameEvent =
   | { type: "NEAR_MISS"; x: number; y: number; ratio: number }
   | { type: "MILESTONE"; x: number; y: number; floor: number; color: string }
   | { type: "NEW_RECORD"; x: number; y: number }
-  | { type: "GAME_OVER"; x: number; y: number };
+  | { type: "GAME_OVER"; x: number; y: number }
+  | { type: "POWERUP_COLLECTED"; x: number; y: number; powerUp: PowerUpType };
 
 /**
  * Event-driven "juice" hub: Game.ts owns gameplay math and only calls
@@ -127,6 +129,13 @@ export class EffectsManager {
         this.timeScale.trigger(VFX_CONFIG.gameOver.slowMoScale, 90, VFX_CONFIG.gameOver.slowMoMs - 90, 220);
         this.gameOverStartMs = performance.now();
         this.trail.clear();
+        break;
+
+      case "POWERUP_COLLECTED":
+        this.audio.powerUp();
+        this.haptics.comboMilestone();
+        this.particles.milestone(event.x, event.y, POWERUP_GLOW_COLOR[event.powerUp]);
+        this.shake.add(VFX_CONFIG.perfect.shakeTrauma);
         break;
     }
   }

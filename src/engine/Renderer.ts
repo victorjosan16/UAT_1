@@ -5,6 +5,7 @@ import type { TrailRenderer } from "./TrailRenderer";
 import type { EnvironmentTheme } from "@/ui/theme/environment";
 import type { TowerSkin } from "@/ui/skins/TowerSkin";
 import { VFX_CONFIG } from "@/game/VFXConfig";
+import { POWERUP_GLYPH, POWERUP_GLOW_COLOR, type PowerUpType } from "@/game/PowerUps";
 
 export const VIRTUAL_WIDTH = 360;
 
@@ -25,6 +26,8 @@ export interface MovingBlockView {
   /** Preview of the level-hue color this block will be baked with once placed (default skin only). */
   fillColor?: string;
   gradientTopColor?: string;
+  /** Bonus this block carries — drawn as a glowing badge, cleared once placed. */
+  powerUp?: PowerUpType | null;
 }
 
 export interface RenderFrame {
@@ -126,6 +129,9 @@ export class Renderer {
     if (frame.movingBlock) {
       const colors = frame.movingBlock.fillColor ? { fillColor: frame.movingBlock.fillColor, gradientTopColor: frame.movingBlock.gradientTopColor ?? frame.movingBlock.fillColor } : undefined;
       this.drawBlock(frame.movingBlock.left, frame.movingBlock.right, frame.movingBlock.y, frame.movingBlock.height, frame.skin, worldToScreenY, 0, 1, colors);
+      if (frame.movingBlock.powerUp) {
+        this.drawPowerUpBadge(frame.movingBlock, frame.movingBlock.powerUp, worldToScreenX, worldToScreenY);
+      }
     }
 
     frame.particles.render(ctx, worldToScreenY);
@@ -235,6 +241,38 @@ export class Renderer {
     ctx.globalAlpha = alpha * 0.5;
     ctx.stroke();
 
+    ctx.restore();
+  }
+
+  /** Pulsing glow ring + plain-text glyph centered on the moving block, marking the bonus it carries. Plain text (never emoji) so it renders identically everywhere. */
+  private drawPowerUpBadge(view: MovingBlockView, powerUp: PowerUpType, worldToScreenX: (x: number) => number, worldToScreenY: (y: number) => number): void {
+    const ctx = this.ctx;
+    const cx = worldToScreenX((view.left + view.right) / 2);
+    const yTop = worldToScreenY(view.y + view.height);
+    const yBottom = worldToScreenY(view.y);
+    const cy = (yTop + yBottom) / 2;
+    const width = worldToScreenX(view.right) - worldToScreenX(view.left);
+    const color = POWERUP_GLOW_COLOR[powerUp];
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 220);
+
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10 + 6 * pulse;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.6 + 0.4 * pulse;
+    const radius = Math.min(width, yBottom - yTop) * 0.32;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#04101c";
+    ctx.font = "700 11px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(POWERUP_GLYPH[powerUp], cx, cy + 1);
     ctx.restore();
   }
 

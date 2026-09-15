@@ -96,4 +96,9 @@ export class AudioManager {
     this.tone(180, 260, "sawtooth", 0.16);
     this.tone(90, 380, "sawtooth", 0.14, 90);
   }
+
+  /** Bright ascending chime for collecting a power-up block — distinct from perfect/milestone tones. */
+  powerUp(): void {
+    [520, 660, 840].forEach((freq, i) => this.tone(freq, 110, "square", 0.14, i * 55));
+  }
 }
