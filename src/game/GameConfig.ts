@@ -27,3 +27,6 @@ export const REVERSE_FRACTION_MAX = 0.65;
 /** Purely visual "drops in from above" entrance for each new moving block — see Game.ts renderFrame. */
 export const MOVING_SPAWN_DROP_DISTANCE = 220;
 export const MOVING_SPAWN_DURATION_MS = 380;
+
+/** Extra headroom the camera keeps above the current top block, so the player sees a little more of what's coming. */
+export const CAMERA_LOOKAHEAD = 26;

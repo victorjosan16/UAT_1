@@ -48,6 +48,9 @@ export class AudioManager {
   }
 
   place(): void {
+    // Low percussive "thump" layered under the melodic tone — gives every
+    // landing a felt, physical weight, not just a musical blip.
+    this.tone(95, 90, "sine", 0.16);
     this.tone(220, 70, "sine", 0.18);
   }
 

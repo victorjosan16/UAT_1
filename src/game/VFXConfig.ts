@@ -4,6 +4,13 @@
  * are presented. Keep every "magic number" for juice in this one file.
  */
 export const VFX_CONFIG = {
+  placement: {
+    // Baseline "thud" every successful placement gets, on top of anything
+    // grade-specific (perfect/cut/etc.) — this is the everyday tap feel.
+    dustParticleCount: 5,
+    shakeTrauma: 0.03,
+    cameraPunch: 14,
+  },
   perfect: {
     durationMs: 380,
     particleCountBase: 14,
@@ -13,6 +20,7 @@ export const VFX_CONFIG = {
     scalePulse: 1.08,
     shakeTrauma: 0.06,
     shakeTraumaBigStreak: 0.14,
+    cameraPunch: 24,
   },
   perfectSlowMo: {
     // Only fires at meaningful streaks / records — never on every Perfect.
@@ -45,6 +53,7 @@ export const VFX_CONFIG = {
     slowMoMs: 420,
     darkenPeak: 0.72,
     particleCount: 24,
+    cameraPunch: 60,
   },
   record: {
     particleCount: 40,

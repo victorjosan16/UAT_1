@@ -105,6 +105,13 @@ export class ParticleSystem {
     }
   }
 
+  /** The baseline "thud" every successful placement gets — a small, low, sideways dust puff, not a big burst. */
+  landingDust(x: number, y: number, color: string): void {
+    const count = Math.max(1, Math.round(VFX_CONFIG.placement.dustParticleCount / 2));
+    this.spawnDirectional(x, y, count, color, 0, 0.7, 70);
+    this.spawnDirectional(x, y, count, color, Math.PI, 0.7, 70);
+  }
+
   perfect(x: number, y: number, streak: number, color: string): void {
     const count = Math.min(VFX_CONFIG.perfect.particleCountCap, VFX_CONFIG.perfect.particleCountBase + streak * VFX_CONFIG.perfect.particleCountPerStreak);
     this.spawnBurst(x, y, count, color, 190);

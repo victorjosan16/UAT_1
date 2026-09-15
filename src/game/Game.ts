@@ -36,6 +36,7 @@ import {
   REVERSE_FRACTION_MAX,
   MOVING_SPAWN_DROP_DISTANCE,
   MOVING_SPAWN_DURATION_MS,
+  CAMERA_LOOKAHEAD,
 } from "./GameConfig";
 import type { Direction, GameMode, Grade, Interval, PlacementResult, RunSummary } from "@/types";
 
@@ -160,6 +161,7 @@ export class Game {
     this.tower = new Tower({ left: -baseWidth / 2, right: baseWidth / 2 }, BASE_BLOCK_HEIGHT, baseColor);
     this.camera.reset(0);
     this.camera.setTarget(0);
+    this.camera.setSpeed(startDef.cameraSpeed);
 
     this.currentLevelDef = startDef;
     this.currentSpeed = this.currentLevelDef.movementSpeed;
@@ -221,7 +223,7 @@ export class Game {
     this.effects.playSpawnWhoosh(speedFactor);
 
     this.movingBaseAnchor = top.toInterval();
-    this.camera.setTarget(top.y + top.height - this.renderer.baselineWorldY + this.renderer.visibleWorldHeight * 0.5);
+    this.camera.setTarget(top.y + top.height + CAMERA_LOOKAHEAD - this.renderer.baselineWorldY + this.renderer.visibleWorldHeight * 0.5);
   }
 
   private effectiveTolerance(): number {
@@ -246,7 +248,9 @@ export class Game {
 
     if (this.state.status === "GAME_OVER") {
       // Keep the falling piece / shake / darken cinematic playing briefly before the summary fires,
-      // at the reduced time-scale the GAME_OVER effect triggers (see EffectsManager).
+      // at the reduced time-scale the GAME_OVER effect triggers (see EffectsManager). Camera still
+      // updates too, purely so its landing "punch" spring can settle rather than freezing mid-dip.
+      this.camera.update(realDtSeconds);
       const scaledDt = realDtSeconds * this.effects.timeScaleValue;
       const piece0 = this.fallingPieces;
       for (const piece of piece0) piece.update(scaledDt);
@@ -335,7 +339,7 @@ export class Game {
           }
         : null,
       fallingPieces: this.fallingPieces,
-      cameraY: this.camera.y,
+      cameraY: this.camera.renderY,
       environment: environmentForHeight(height),
       skin: this.skin,
       particles: this.effects.particles,
@@ -417,9 +421,11 @@ export class Game {
 
     if (overlapResult.isPerfect) {
       this.effects.handle({ type: "PERFECT", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, streak: result.combo.perfectStreak, color: this.skin.perfectGlowColor });
+      this.camera.punch(VFX_CONFIG.perfect.cameraPunch);
       this.callbacks.onFeedback?.(result.combo.perfectStreak > 1 ? `PERFECT ×${result.combo.perfectStreak}` : "PERFECT!", "perfect");
     } else {
-      this.effects.handle({ type: "BLOCK_PLACED", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, grade: result.grade });
+      this.effects.handle({ type: "BLOCK_PLACED", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, grade: result.grade, color: dropColors?.fillColor ?? this.skin.blockFill });
+      this.camera.punch(VFX_CONFIG.placement.cameraPunch);
 
       if (overlapResult.fallingFragments.length > 0) {
         const fractionCut = movingWidth === 0 ? 0 : 1 - (overlapResult.overlap.right - overlapResult.overlap.left) / movingWidth;
@@ -459,6 +465,7 @@ export class Game {
       this.blocksPlacedInLevel = 0;
       this.currentLevelDef = this.levelDefFor(this.state.level);
       this.currentSpeed = this.currentLevelDef.movementSpeed;
+      this.camera.setSpeed(this.currentLevelDef.cameraSpeed);
       if (finishedLevel === MAX_LEVEL) {
         this.callbacks.onEndlessUnlocked?.();
       } else if (finishedLevel < MAX_LEVEL) {
@@ -475,6 +482,7 @@ export class Game {
     this.state.status = "GAME_OVER";
     this.gameOverAtMs = performance.now();
     this.effects.handle({ type: "GAME_OVER", x: screenX, y: worldY });
+    this.camera.punch(VFX_CONFIG.gameOver.cameraPunch);
   }
 
   private fireGameOverSummary(): void {

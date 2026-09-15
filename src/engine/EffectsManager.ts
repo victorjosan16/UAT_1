@@ -8,7 +8,7 @@ import { VFX_CONFIG } from "@/game/VFXConfig";
 import type { Grade } from "@/types";
 
 export type GameEvent =
-  | { type: "BLOCK_PLACED"; x: number; y: number; grade: Grade }
+  | { type: "BLOCK_PLACED"; x: number; y: number; grade: Grade; color: string }
   | { type: "BLOCK_CUT"; x: number; y: number; direction: 1 | -1; fractionCut: number; color: string }
   | { type: "PERFECT"; x: number; y: number; streak: number; color: string }
   | { type: "COMBO_CHANGED"; x: number; y: number; multiplier: number; streak: number; color: string }
@@ -63,6 +63,8 @@ export class EffectsManager {
       case "BLOCK_PLACED":
         this.audio.place();
         this.haptics.place();
+        this.particles.landingDust(event.x, event.y, event.color);
+        this.shake.add(VFX_CONFIG.placement.shakeTrauma);
         break;
 
       case "BLOCK_CUT":
