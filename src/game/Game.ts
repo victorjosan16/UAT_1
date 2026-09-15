@@ -75,7 +75,6 @@ interface PendingPlacement {
   overlapResult: OverlapResult;
   previousWidth: number;
   movingWidth: number;
-  speedAtTap: number;
   flingDirection: Direction;
   dropColors: ResolvedBlockColor | null;
 }
@@ -406,29 +405,35 @@ export class Game {
     const speedAtTap = this.effectiveSpeed(this.moving.passElapsedSeconds);
     const flingDirection = this.moving.direction;
     const dropColors = resolveBlockColors(this.skin, previous.floor + 1);
+    const dropY = this.moving.y;
+    const dropHeight = this.moving.height;
+    const movingWidth = this.moving.right - this.moving.left;
+
+    // Any cut-away fragment detaches right at the tap, not once the kept
+    // sliver lands — it starts its real-gravity fall immediately.
+    for (const fragment of overlapResult.fallingFragments) {
+      const isRightSide = fragment.left >= (overlapResult.overlap?.right ?? previous.center);
+      const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtTap * 0.5) + flingDirection * 20;
+      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
+    }
 
     if (!overlapResult.overlap) {
-      // A miss resolves immediately — the whole block becomes cosmetic falling
-      // fragments right away, with real gravity physics carrying them the rest
-      // of the (now much longer, since it starts near the top of the screen) way down.
-      const dropY = this.moving.y;
-      const dropHeight = this.moving.height;
-      for (const fragment of overlapResult.fallingFragments) {
-        const isRightSide = fragment.left >= previous.center;
-        const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtTap * 0.5) + flingDirection * 20;
-        this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
-      }
+      // A miss resolves immediately — the whole block is already cosmetic
+      // falling fragments (pushed above), with real gravity physics carrying
+      // them the rest of the (now much longer, top-of-screen) way down.
       this.beginGameOver(worldXToScreenX((this.moving.left + this.moving.right) / 2), dropY);
       return;
     }
 
     // A successful placement is only scored once the block visibly falls to
-    // the tower — freeze it here and let update()/resolvePendingPlacement()
-    // apply everything once the fall animation lands.
-    const movingWidth = this.moving.right - this.moving.left;
-    this.pendingPlacement = { overlapResult, previousWidth, movingWidth, speedAtTap, flingDirection, dropColors };
+    // the tower. Truncate the falling sliver to its final (already-cut)
+    // width right now, so it never visibly "snaps" partway through the
+    // fall — it's exactly what will land, the whole way down.
+    this.moving.left = overlapResult.overlap.left;
+    this.moving.right = overlapResult.overlap.right;
+    this.pendingPlacement = { overlapResult, previousWidth, movingWidth, flingDirection, dropColors };
     this.moving.falling = true;
-    this.moving.fallStartY = this.moving.y;
+    this.moving.fallStartY = dropY;
     this.moving.fallTargetY = previous.y + previous.height;
     this.moving.fallElapsedMs = 0;
   }
@@ -439,16 +444,8 @@ export class Game {
     if (!pending || !moving) return;
     this.pendingPlacement = null;
 
-    const { overlapResult, previousWidth, movingWidth, speedAtTap, flingDirection, dropColors } = pending;
+    const { overlapResult, previousWidth, movingWidth, flingDirection, dropColors } = pending;
     const overlap = overlapResult.overlap!;
-    const dropY = moving.fallTargetY;
-    const dropHeight = moving.height;
-
-    for (const fragment of overlapResult.fallingFragments) {
-      const isRightSide = fragment.left >= overlap.right;
-      const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtTap * 0.5) + flingDirection * 20;
-      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
-    }
 
     const placedBlock = this.tower.place(overlap, BASE_BLOCK_HEIGHT, dropColors ?? undefined);
     const blockCenterScreenX = worldXToScreenX((placedBlock.left + placedBlock.right) / 2);
