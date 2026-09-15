@@ -45,16 +45,19 @@ export function getFirebaseAuth(): Auth {
  * (that requires the Blaze plan), so firestore.rules is what stands between
  * this and abuse instead of server-side validation.
  *
- * `experimentalAutoDetectLongPolling` works around a well-known Firestore
- * web SDK issue where its default WebChannel streaming transport gets
- * silently blocked by some mobile carriers/proxies/data-saver modes —
- * everything reads back "unavailable" forever even though the backend and
- * rules are fine. Auto-detect falls back to long-polling only when the
- * streaming transport doesn't work, so it's a no-op everywhere else.
+ * Forces long-polling instead of Firestore's default WebChannel streaming
+ * transport, which gets silently blocked by some mobile carriers/proxies/
+ * data-saver modes — reads back "unavailable" forever even though the
+ * backend and rules are fine. `experimentalAutoDetectLongPolling` (probe
+ * first, fall back only if needed) was tried first, but its own detection
+ * handshake can take longer than is comfortable to wait on a leaderboard
+ * fetch, so this skips the probe and always uses long-polling — slightly
+ * less efficient when streaming would have worked, but consistent and
+ * fast to fail/succeed either way.
  */
 export function getFirestoreDb(): Firestore {
   if (!firestore) {
-    firestore = initializeFirestore(ensureApp(), { experimentalAutoDetectLongPolling: true });
+    firestore = initializeFirestore(ensureApp(), { experimentalForceLongPolling: true });
     if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true" && !firestoreEmulatorConnected) {
       connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
       firestoreEmulatorConnected = true;

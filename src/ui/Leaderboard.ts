@@ -2,7 +2,7 @@ import { el } from "./dom";
 import { leaderboardService, type LeaderboardWindow, type LeaderboardEntry } from "@/services/LeaderboardService";
 import { withTimeout } from "@/utils/async";
 
-const LEADERBOARD_LOAD_TIMEOUT_MS = 8000;
+const LEADERBOARD_LOAD_TIMEOUT_MS = 15000;
 
 const WINDOWS: { key: LeaderboardWindow; label: string }[] = [
   { key: "daily", label: "TODAY" },
