@@ -73,7 +73,7 @@ src/
   types/                 Shared TypeScript interfaces
 
 firebase/
-  firebase.json           Hosting (public: ../dist, "/api/**" rewrite), Functions, Firestore, emulators
+  firebase.json           Hosting (public: dist, "/api/**" rewrite), Functions, Firestore, emulators
   .firebaserc             Project alias — replace with your own Firebase project id
   firestore.rules          Locks the DB to server-only writes; public leaderboard reads
   firestore.indexes.json   (empty — every leaderboard query is a single-field orderBy)

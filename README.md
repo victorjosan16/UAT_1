@@ -75,7 +75,7 @@ npm run test:functions    # anti-cheat re-validation logic
 
 ```bash
 npm run typecheck   # client + Cloud Functions, strict TypeScript
-npm run build        # tsc --noEmit + vite build → dist/
+npm run build        # tsc --noEmit + vite build → firebase/dist/
 ```
 
 ### 7. Deploy
@@ -120,7 +120,7 @@ frontend/        Unrelated: that service's static frontend
 | `npm run dev` | Vite dev server |
 | `npm run emulators` | Firebase emulator suite (Hosting/Functions/Firestore/Auth) |
 | `npm run dev:all` | Both of the above together |
-| `npm run build` | Type-check + production build → `dist/` |
+| `npm run build` | Type-check + production build → `firebase/dist/` |
 | `npm run preview` | Preview the production build locally |
 | `npm run test` / `test:watch` | Client-side gameplay tests |
 | `npm run test:functions` | Cloud Functions anti-cheat tests |

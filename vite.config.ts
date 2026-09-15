@@ -29,7 +29,11 @@ export default defineConfig({
   },
   build: {
     target: "es2020",
-    outDir: "dist",
+    // Built straight into firebase/dist (not a root-level dist/) because the
+    // Firebase CLI refuses a hosting "public" path that resolves outside the
+    // directory containing firebase.json — see firebase/firebase.json.
+    outDir: "firebase/dist",
+    emptyOutDir: true,
     sourcemap: true,
   },
   plugins: [

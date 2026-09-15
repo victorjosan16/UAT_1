@@ -65,7 +65,7 @@ npm run typecheck         # client + functions TypeScript, strict mode
 ## 5. Deploy
 
 ```bash
-npm run build              # tsc --noEmit + vite build → dist/
+npm run build              # tsc --noEmit + vite build → firebase/dist/
 npm run deploy              # hosting + functions + firestore rules/indexes, in one command
 ```
 
