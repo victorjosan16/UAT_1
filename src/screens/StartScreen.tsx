@@ -3,14 +3,18 @@ import { LocalStorageService } from "@/storage/LocalStorage";
 import { difficultyGroupForLevel, MAX_LEVEL } from "@/quiz/LevelDefinition";
 
 export interface StartScreenProps {
-  onPlay: () => void;
+  onPlayLogoQuiz: () => void;
+  onPlayGuessThePlayer: () => void;
 }
 
-export function StartScreen({ onPlay }: StartScreenProps) {
+function levelLabelFor(level: number): string {
+  return level > MAX_LEVEL ? `ENDLESS — ROUND ${level - MAX_LEVEL}` : `LEVEL ${level} · ${difficultyGroupForLevel(level)}`;
+}
+
+export function StartScreen({ onPlayLogoQuiz, onPlayGuessThePlayer }: StartScreenProps) {
   const bests = LocalStorageService.getLocalBests();
-  const currentLevel = LocalStorageService.getCurrentLevel();
-  const isEndless = currentLevel > MAX_LEVEL;
-  const levelLabel = isEndless ? `ENDLESS — ROUND ${currentLevel - MAX_LEVEL}` : `LEVEL ${currentLevel} · ${difficultyGroupForLevel(currentLevel)}`;
+  const logoLevel = LocalStorageService.getCurrentLevel();
+  const playerLevel = LocalStorageService.getCurrentPlayerLevel();
 
   return (
     <div className="screen" id="start-screen">
@@ -31,11 +35,17 @@ export function StartScreen({ onPlay }: StartScreenProps) {
       )}
 
       <p className="subtitle" style={{ marginTop: 4 }}>
-        {levelLabel}
+        {levelLabelFor(logoLevel)}
       </p>
+      <button className="btn btn--primary" onClick={onPlayLogoQuiz}>
+        {bests.totalQuizzesPlayed > 0 ? "LOGO QUIZ" : TAGLINES.tap}
+      </button>
 
-      <button className="btn btn--primary" onClick={onPlay}>
-        {bests.totalQuizzesPlayed > 0 ? "PLAY" : TAGLINES.tap}
+      <p className="subtitle" style={{ marginTop: 12 }}>
+        GUESS THE PLAYER · {levelLabelFor(playerLevel)}
+      </p>
+      <button className="btn btn--secondary" onClick={onPlayGuessThePlayer}>
+        GUESS THE PLAYER
       </button>
     </div>
   );

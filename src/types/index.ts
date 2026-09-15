@@ -26,7 +26,27 @@ export interface QuizQuestion {
   timeLimitMs: number;
 }
 
+/** A real player's public career path (club names/history are factual, not a licensing concern — see docs/ASSETS_AND_RIGHTS.md). No photo is ever used; the guessing mode shows a generic silhouette instead. */
+export interface Player {
+  id: string;
+  name: string;
+  difficulty: ClubDifficulty;
+  /** Club ids, in chronological order — must all exist in the club dataset so their crests can render in the transfer chain. */
+  careerClubIds: string[];
+}
+
+export interface PlayerQuestion {
+  index: number;
+  player: Player;
+  /** 4 players including the correct one, in final display order. */
+  options: Player[];
+  correctIndex: number;
+  timeLimitMs: number;
+}
+
 export type QuizMode = "QUICK" | "DAILY" | "CHALLENGE" | "ENDLESS";
+
+export type QuizGameType = "LOGO" | "PLAYER_CHAIN";
 
 export type QuizStatus = "IDLE" | "PLAYING" | "REVEAL" | "COMPLETE";
 
@@ -57,5 +77,35 @@ export interface QuizSummary {
   averageResponseMs: number;
   footballIQ: number;
   answers: AnswerResult[];
+  durationMs: number;
+}
+
+/** Same shape as AnswerResult, for the "Guess the Player" mode — kept as its own type rather than overloading clubId/selectedClubId with two different meanings. */
+export interface PlayerAnswerResult {
+  index: number;
+  playerId: string;
+  selectedPlayerId: string | null;
+  correct: boolean;
+  timedOut: boolean;
+  responseTimeMs: number;
+  timeLimitMs: number;
+  difficulty: ClubDifficulty;
+  scoreGained: number;
+  streakAfter: number;
+  totalScore: number;
+}
+
+export interface PlayerQuizSummary {
+  mode: QuizMode;
+  seed: string;
+  gameVersion: string;
+  rulesVersion: number;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  bestStreak: number;
+  averageResponseMs: number;
+  footballIQ: number;
+  answers: PlayerAnswerResult[];
   durationMs: number;
 }

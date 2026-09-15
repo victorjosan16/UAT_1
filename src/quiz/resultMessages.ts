@@ -1,4 +1,10 @@
-import type { QuizSummary } from "@/types";
+/** The subset of QuizSummary/PlayerQuizSummary this needs — works for either mode's result. */
+export interface ResultSignal {
+  totalQuestions: number;
+  correctCount: number;
+  averageResponseMs: number;
+  bestStreak: number;
+}
 
 /**
  * Contextual result copy generated from this run's own real numbers —
@@ -6,7 +12,7 @@ import type { QuizSummary } from "@/types";
  * roughly most-impressive-first so a perfect fast streaky round still
  * leads with "perfect" rather than something less specific.
  */
-export function resultMessage(summary: QuizSummary): string {
+export function resultMessage(summary: ResultSignal): string {
   if (summary.totalQuestions === 0) return "";
   if (summary.correctCount === summary.totalQuestions) return "PERFECT KNOWLEDGE.";
   if (summary.correctCount === summary.totalQuestions - 1) return "ONE AWAY FROM PERFECT.";

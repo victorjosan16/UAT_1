@@ -38,6 +38,7 @@ const KEYS = {
   localBests: "flc.localBests",
   pendingQueue: "flc.pendingQueue",
   currentLevel: "flc.currentLevel",
+  currentPlayerLevel: "flc.currentPlayerLevel",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -124,6 +125,16 @@ export const LocalStorageService = {
   },
   setCurrentLevel(level: number): void {
     safeSet(KEYS.currentLevel, String(level));
+  },
+
+  /** Same idea as getCurrentLevel, tracked separately for "Guess the Player" mode. */
+  getCurrentPlayerLevel(): number {
+    const raw = safeGet(KEYS.currentPlayerLevel);
+    const parsed = raw ? Number.parseInt(raw, 10) : 1;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  },
+  setCurrentPlayerLevel(level: number): void {
+    safeSet(KEYS.currentPlayerLevel, String(level));
   },
 
   getPendingQueue(): PendingSubmission[] {

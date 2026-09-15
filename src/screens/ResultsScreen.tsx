@@ -1,9 +1,18 @@
 import { rankForFootballIQ } from "@/quiz/FootballIQ";
 import { resultMessage } from "@/quiz/resultMessages";
-import type { QuizSummary } from "@/types";
+
+/** Shared shape between QuizSummary and PlayerQuizSummary — this screen never needs the mode-specific `answers` entries. */
+export interface ResultsSummaryView {
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  bestStreak: number;
+  averageResponseMs: number;
+  footballIQ: number;
+}
 
 export interface ResultsScreenProps {
-  summary: QuizSummary;
+  summary: ResultsSummaryView;
   isNewRecord: boolean;
   onPlayAgain: () => void;
   onBackToStart: () => void;

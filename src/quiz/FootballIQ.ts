@@ -1,5 +1,13 @@
 import { roundTo } from "@/utils/math";
-import type { AnswerResult } from "@/types";
+import type { ClubDifficulty } from "@/types";
+
+/** The subset of AnswerResult/PlayerAnswerResult this needs — works for either mode's answer log. */
+export interface IQSignal {
+  correct: boolean;
+  responseTimeMs: number;
+  timeLimitMs: number;
+  difficulty: ClubDifficulty;
+}
 
 /**
  * FOOTBALL IQ (0-100) is an in-game performance rating, not a real
@@ -36,7 +44,7 @@ function stdDev(values: readonly number[]): number {
 }
 
 /** Pure and deterministic given the run's own answers — no Date/Math.random. */
-export function computeFootballIQ(answers: readonly AnswerResult[]): number {
+export function computeFootballIQ(answers: readonly IQSignal[]): number {
   if (answers.length === 0) return 0;
 
   const correct = answers.filter((a) => a.correct);
