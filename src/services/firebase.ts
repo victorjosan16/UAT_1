@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator, type Auth, type User } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
+import { initializeFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
 
 /**
  * Firebase API keys are not secret (see Firebase's own docs) — safety
@@ -44,10 +44,17 @@ export function getFirebaseAuth(): Auth {
  * LeaderboardService) — there's no Cloud Functions deployment backing it
  * (that requires the Blaze plan), so firestore.rules is what stands between
  * this and abuse instead of server-side validation.
+ *
+ * `experimentalAutoDetectLongPolling` works around a well-known Firestore
+ * web SDK issue where its default WebChannel streaming transport gets
+ * silently blocked by some mobile carriers/proxies/data-saver modes —
+ * everything reads back "unavailable" forever even though the backend and
+ * rules are fine. Auto-detect falls back to long-polling only when the
+ * streaming transport doesn't work, so it's a no-op everywhere else.
  */
 export function getFirestoreDb(): Firestore {
   if (!firestore) {
-    firestore = getFirestore(ensureApp());
+    firestore = initializeFirestore(ensureApp(), { experimentalAutoDetectLongPolling: true });
     if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true" && !firestoreEmulatorConnected) {
       connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
       firestoreEmulatorConnected = true;

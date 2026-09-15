@@ -97,7 +97,7 @@ export class LeaderboardService {
           const existing = snap.data() as { score?: number } | undefined;
           if (existing?.score !== undefined && existing.score >= boundedScore) return;
           tx.set(ref, { nickname, score: boundedScore, height: boundedHeight, updatedAt: Date.now() });
-        }).catch(() => undefined),
+        }).catch((error: unknown) => console.error(`Leaderboard submit (${window}) failed:`, error)),
       ),
     );
   }

@@ -51,10 +51,11 @@ export class Leaderboard {
     try {
       const result = await withTimeout(leaderboardService.fetchLeaderboard(window), LEADERBOARD_LOAD_TIMEOUT_MS);
       this.renderEntries(result.entries);
-    } catch {
+    } catch (error) {
       // Firestore has no built-in query timeout, so a stuck connection would
       // otherwise leave "Loading…" showing forever — withTimeout guarantees
       // this always resolves to a message within a few seconds.
+      console.error("Leaderboard fetch failed:", error);
       this.listEl.replaceChildren(el("p", { style: "color:var(--text-dim)", text: "Leaderboard unavailable offline." }));
     }
   }
