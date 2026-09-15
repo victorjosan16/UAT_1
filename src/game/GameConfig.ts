@@ -39,3 +39,6 @@ export const CAMERA_LOOKAHEAD = 26;
  */
 export const MOVING_TOP_MARGIN = 130;
 export const FALL_DURATION_MS = 260;
+
+/** If the player never taps, the block auto-drops from wherever it currently is once it's been alive this long. */
+export const MOVING_AUTO_DROP_MS = 5000;

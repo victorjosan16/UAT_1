@@ -37,6 +37,7 @@ import {
   CAMERA_LOOKAHEAD,
   MOVING_TOP_MARGIN,
   FALL_DURATION_MS,
+  MOVING_AUTO_DROP_MS,
 } from "./GameConfig";
 import type { Direction, GameMode, Grade, Interval, PlacementResult, RunSummary } from "@/types";
 
@@ -65,6 +66,8 @@ interface MovingBlockState extends Interval {
   fallStartY: number;
   fallTargetY: number;
   fallElapsedMs: number;
+  /** Real (unscaled) ms since this block spawned — if the player never taps, it auto-drops once this hits MOVING_AUTO_DROP_MS. */
+  aliveMs: number;
 }
 
 /** Snapshot of everything needed to resolve a placement, captured at tap time and applied once the fall animation lands. */
@@ -240,6 +243,7 @@ export class Game {
       fallStartY: 0,
       fallTargetY: 0,
       fallElapsedMs: 0,
+      aliveMs: 0,
     };
     this.effects.trail.clear();
 
@@ -311,6 +315,14 @@ export class Game {
       const t = Math.min(1, moving.fallElapsedMs / FALL_DURATION_MS);
       moving.y = lerp(moving.fallStartY, moving.fallTargetY, easeInQuad(t));
       if (t >= 1) this.resolvePendingPlacement();
+      return;
+    }
+
+    moving.aliveMs += realDtSeconds * 1000;
+    if (moving.aliveMs >= MOVING_AUTO_DROP_MS) {
+      // Player waited too long — drop it from wherever it currently is,
+      // exactly as if they'd tapped right now.
+      this.place();
       return;
     }
 
