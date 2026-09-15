@@ -13,11 +13,11 @@ export interface PlayerIdentity {
 }
 
 export interface PlayerStats {
-  highScore: number;
-  highestFloor: number;
-  bestPerfectStreak: number;
-  bestAverageAccuracy: number;
-  totalTowersBuilt: number;
+  bestScore: number;
+  bestFootballIQ: number;
+  bestStreak: number;
+  totalQuizzesPlayed: number;
+  dailyStreak: number;
 }
 
 /**

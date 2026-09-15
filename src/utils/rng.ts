@@ -61,6 +61,20 @@ export class SeededRandom {
   sign(): 1 | -1 {
     return this.next() < 0.5 ? -1 : 1;
   }
+
+  /** Fisher-Yates shuffle — deterministic for this RNG's seed/position, never mutates the input. */
+  shuffle<T>(items: readonly T[]): T[] {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = this.intRange(0, i);
+      const a = result[i];
+      const b = result[j];
+      if (a === undefined || b === undefined) continue;
+      result[i] = b;
+      result[j] = a;
+    }
+    return result;
+  }
 }
 
 /** Random-looking but unguessable id for guest players / challenges. */

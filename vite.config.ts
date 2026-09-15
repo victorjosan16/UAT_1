@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,6 +38,7 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
+    react(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
@@ -44,7 +46,7 @@ export default defineConfig({
       manifest: {
         name: `${GAME_NAME} — ${GAME_SUBTITLE}`,
         short_name: GAME_NAME,
-        description: `${GAME_NAME}: stack blocks, chase precision, build the tallest tower.`,
+        description: `${GAME_NAME}: how fast can you name the club?`,
         theme_color: THEME_COLOR,
         background_color: BACKGROUND_COLOR,
         display: "standalone",

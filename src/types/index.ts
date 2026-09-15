@@ -1,57 +1,61 @@
-export interface Interval {
-  left: number;
-  right: number;
+export type League = "PREMIER_LEAGUE" | "LALIGA" | "SERIE_A" | "BUNDESLIGA" | "LIGUE_1" | "OTHER_EUROPE" | "INTERNATIONAL";
+
+/** 1 = extremely famous, 5 = obscure / easily confused with a similar crest. */
+export type ClubDifficulty = 1 | 2 | 3 | 4 | 5;
+
+export interface Club {
+  id: string;
+  name: string;
+  country: string;
+  league: League;
+  difficulty: ClubDifficulty;
+  /** Alternate accepted names (e.g. "Man United" for "Manchester United") — reserved for future free-text modes; the multiple-choice mode only needs `name`. */
+  aliases: string[];
 }
 
-export type Grade = "PERFECT" | "GREAT" | "GOOD" | "RISKY";
+/** How the crest is presented for a given question — same underlying club data either way. */
+export type RevealMode = "FULL" | "ZOOM" | "BLUR" | "SILHOUETTE" | "PIECE";
 
-export type Direction = 1 | -1;
-
-export type SpecialModifier =
-  | "NONE"
-  | "WIND"
-  | "SPEED_SHIFT"
-  | "SMALL_START"
-  | "PRECISION"
-  | "REVERSE"
-  | "DOUBLE_SPEED"
-  | "FOG"
-  | "MOVING_BASE";
-
-export type DirectionPattern = "CONSTANT" | "ALTERNATING" | "VARIABLE";
-
-export type GameMode = "CLASSIC" | "ENDLESS" | "DAILY" | "CHALLENGE";
-
-export type GameStatus = "IDLE" | "READY" | "PLAYING" | "GAME_OVER";
-
-/** One placement outcome — the unit the scoring engine and the trace both use. */
-export interface PlacementResult {
+export interface QuizQuestion {
   index: number;
-  floor: number;
-  accuracy: number;
-  grade: Grade;
-  isPerfect: boolean;
-  perfectStreak: number;
-  comboMultiplier: number;
-  overlapWidth: number;
-  blockWidthBefore: number;
-  blockWidthAfter: number;
-  scoreGained: number;
-  totalScore: number;
-  timestampMs: number;
+  club: Club;
+  /** 4 clubs including the correct one, in final display order. */
+  options: Club[];
+  correctIndex: number;
+  revealMode: RevealMode;
+  timeLimitMs: number;
 }
 
-export interface RunSummary {
-  mode: GameMode;
+export type QuizMode = "QUICK" | "DAILY" | "CHALLENGE" | "ENDLESS";
+
+export type QuizStatus = "IDLE" | "PLAYING" | "REVEAL" | "COMPLETE";
+
+/** One question's outcome — the unit the scoring engine and the server-validation trace both use. */
+export interface AnswerResult {
+  index: number;
+  clubId: string;
+  selectedClubId: string | null;
+  correct: boolean;
+  timedOut: boolean;
+  responseTimeMs: number;
+  timeLimitMs: number;
+  difficulty: ClubDifficulty;
+  scoreGained: number;
+  streakAfter: number;
+  totalScore: number;
+}
+
+export interface QuizSummary {
+  mode: QuizMode;
   seed: string;
   gameVersion: string;
   rulesVersion: number;
   score: number;
-  height: number;
-  perfectCount: number;
-  bestCombo: number;
-  bestPerfectStreak: number;
-  averageAccuracy: number;
-  placements: PlacementResult[];
+  correctCount: number;
+  totalQuestions: number;
+  bestStreak: number;
+  averageResponseMs: number;
+  footballIQ: number;
+  answers: AnswerResult[];
   durationMs: number;
 }

@@ -16,28 +16,28 @@ export interface Preferences {
 }
 
 export interface LocalBests {
-  highScore: number;
-  highestFloor: number;
-  bestPerfectStreak: number;
-  bestAverageAccuracy: number;
-  totalTowersBuilt: number;
+  bestScore: number;
+  bestFootballIQ: number;
+  bestStreak: number;
+  totalQuizzesPlayed: number;
   dailyStreak: number;
   lastDailyDateKey: string | null;
 }
 
 export interface PendingSubmission {
   id: string;
-  kind: "session" | "challengeAttempt" | "dailyScore";
+  kind: "quizSession" | "challengeAttempt" | "dailyScore";
   payload: unknown;
   createdAtMs: number;
 }
 
 const KEYS = {
-  playerId: "tt.playerId",
-  nickname: "tt.nickname",
-  preferences: "tt.preferences",
-  localBests: "tt.localBests",
-  pendingQueue: "tt.pendingQueue",
+  playerId: "flc.playerId",
+  nickname: "flc.nickname",
+  preferences: "flc.preferences",
+  localBests: "flc.localBests",
+  pendingQueue: "flc.pendingQueue",
+  currentLevel: "flc.currentLevel",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -49,11 +49,10 @@ const DEFAULT_PREFERENCES: Preferences = {
 };
 
 const DEFAULT_BESTS: LocalBests = {
-  highScore: 0,
-  highestFloor: 0,
-  bestPerfectStreak: 0,
-  bestAverageAccuracy: 0,
-  totalTowersBuilt: 0,
+  bestScore: 0,
+  bestFootballIQ: 0,
+  bestStreak: 0,
+  totalQuizzesPlayed: 0,
   dailyStreak: 0,
   lastDailyDateKey: null,
 };
@@ -115,6 +114,16 @@ export const LocalStorageService = {
   },
   setLocalBests(bests: LocalBests): void {
     safeSet(KEYS.localBests, JSON.stringify(bests));
+  },
+
+  /** Which of the 20 curriculum levels (or beyond, for Endless) the player is currently on. */
+  getCurrentLevel(): number {
+    const raw = safeGet(KEYS.currentLevel);
+    const parsed = raw ? Number.parseInt(raw, 10) : 1;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  },
+  setCurrentLevel(level: number): void {
+    safeSet(KEYS.currentLevel, String(level));
   },
 
   getPendingQueue(): PendingSubmission[] {

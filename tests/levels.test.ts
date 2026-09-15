@@ -1,68 +1,52 @@
 import { describe, expect, it } from "vitest";
-import { LEVELS, MAX_LEVEL, getLevel, MIN_BLOCK_WIDTH } from "@/levels/levels";
-import { DifficultyEngine } from "@/levels/DifficultyEngine";
+import { getLevel, MAX_LEVEL, QUESTIONS_PER_LEVEL } from "@/quiz/levels";
+import { DifficultyEngine } from "@/quiz/DifficultyEngine";
 
-describe("LEVELS (classic progression)", () => {
-  it("has exactly 20 handcrafted stages", () => {
-    expect(LEVELS).toHaveLength(20);
-    expect(MAX_LEVEL).toBe(20);
-  });
-
-  it("numbers levels sequentially starting at 1", () => {
-    LEVELS.forEach((level, i) => expect(level.level).toBe(i + 1));
-  });
-
-  it("never produces a block narrower than the configured minimum", () => {
-    for (const level of LEVELS) {
-      expect(level.startingBlockWidth).toBeGreaterThanOrEqual(MIN_BLOCK_WIDTH);
+describe("getLevel", () => {
+  it("has exactly MAX_LEVEL levels, each with QUESTIONS_PER_LEVEL questions", () => {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      expect(getLevel(level).questionCount).toBe(QUESTIONS_PER_LEVEL);
     }
   });
 
-  it("generally increases difficulty (speed) and tightens tolerance from level 1 to 20", () => {
-    const first = getLevel(1);
-    const last = getLevel(20);
-    expect(last.movementSpeed).toBeGreaterThan(first.movementSpeed);
-    expect(last.perfectTolerance).toBeLessThan(first.perfectTolerance);
+  it("time limit strictly decreases as levels progress", () => {
+    const times = Array.from({ length: MAX_LEVEL }, (_, i) => getLevel(i + 1).timeLimitMs);
+    for (let i = 1; i < times.length; i++) {
+      expect(times[i]).toBeLessThanOrEqual(times[i - 1]!);
+    }
+    expect(times[0]).toBeGreaterThan(times[times.length - 1]!);
   });
 
-  it("clamps out-of-range level lookups instead of throwing", () => {
-    expect(getLevel(0)).toEqual(getLevel(1));
-    expect(getLevel(999)).toEqual(getLevel(20));
+  it("difficulty range widens/rises as levels progress", () => {
+    const level1 = getLevel(1);
+    const level20 = getLevel(MAX_LEVEL);
+    expect(level20.minDifficulty).toBeGreaterThanOrEqual(level1.minDifficulty);
+    expect(level20.maxDifficulty).toBeGreaterThanOrEqual(level1.maxDifficulty);
   });
 
-  it("level 20 (MASTER TOWER) carries the MOVING_BASE modifier and unlocks endless", () => {
-    expect(getLevel(20).specialModifier).toBe("MOVING_BASE");
+  it("clamps out-of-range levels instead of throwing", () => {
+    expect(getLevel(0).level).toBe(1);
+    expect(getLevel(999).level).toBe(MAX_LEVEL);
+  });
+
+  it("is deterministic (pure function of level)", () => {
+    expect(getLevel(10)).toEqual(getLevel(10));
   });
 });
 
-describe("DifficultyEngine (endless)", () => {
-  it("is deterministic for a given seed", () => {
-    const a = new DifficultyEngine("seed-a");
-    const b = new DifficultyEngine("seed-a");
-    for (let floor = 1; floor <= 30; floor++) {
-      expect(a.definitionForFloor(floor)).toEqual(b.definitionForFloor(floor));
-    }
+describe("DifficultyEngine (Endless)", () => {
+  it("keeps producing valid definitions well past level 20", () => {
+    const engine = new DifficultyEngine();
+    const round1 = engine.definitionForRound(1);
+    const round50 = engine.definitionForRound(50);
+    expect(round1.level).toBe(MAX_LEVEL + 1);
+    expect(round50.level).toBe(MAX_LEVEL + 50);
+    expect(round50.timeLimitMs).toBeGreaterThan(0);
   });
 
-  it("can diverge for different seeds", () => {
-    const a = new DifficultyEngine("seed-a").definitionForFloor(9);
-    const b = new DifficultyEngine("seed-b").definitionForFloor(9);
-    // Not guaranteed to differ on every field, but the modifier schedule should not always match.
-    const anyDifference = JSON.stringify(a) !== JSON.stringify(b);
-    expect(typeof anyDifference).toBe("boolean");
-  });
-
-  it("never produces a block narrower than the minimum, however far into endless", () => {
-    const engine = new DifficultyEngine("seed-a");
-    for (const floor of [1, 50, 500, 5000]) {
-      expect(engine.definitionForFloor(floor).startingBlockWidth).toBeGreaterThanOrEqual(MIN_BLOCK_WIDTH);
-    }
-  });
-
-  it("caps movement speed and never lets tolerance go to zero or below", () => {
-    const engine = new DifficultyEngine("seed-a");
-    const def = engine.definitionForFloor(100000);
-    expect(def.movementSpeed).toBeLessThanOrEqual(620);
-    expect(def.perfectTolerance).toBeGreaterThan(0);
+  it("never lets the time limit go below the configured floor", () => {
+    const engine = new DifficultyEngine();
+    const farRound = engine.definitionForRound(10000);
+    expect(farRound.timeLimitMs).toBeGreaterThanOrEqual(3500);
   });
 });

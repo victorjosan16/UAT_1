@@ -1,8 +1,11 @@
 import { GAME_NAME } from "@/branding";
 
 export interface ShareCardData {
-  height: number;
+  footballIQ: number;
+  correctCount: number;
+  totalQuestions: number;
   score: number;
+  bestStreak: number;
   topPercent: number | null;
   url: string;
 }
@@ -11,11 +14,13 @@ export function buildShareText(data: ShareCardData): string {
   const lines = [
     GAME_NAME,
     "",
-    `${data.height} FLOORS`,
+    `FOOTBALL IQ ${data.footballIQ}`,
+    `${data.correctCount}/${data.totalQuestions}`,
     `${data.score.toLocaleString("en-US")} POINTS`,
   ];
-  if (data.topPercent !== null) lines.push(`TOP ${data.topPercent.toFixed(1)}%`);
-  lines.push("", "CAN YOU BUILD HIGHER?", data.url);
+  if (data.bestStreak >= 3) lines.push(`🔥 ×${data.bestStreak}`);
+  if (data.topPercent !== null) lines.push(`TOP ${data.topPercent.toFixed(0)}%`);
+  lines.push("", "CAN YOU BEAT ME?", data.url);
   return lines.join("\n");
 }
 

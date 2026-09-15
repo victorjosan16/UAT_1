@@ -1,30 +1,33 @@
 {
-  "name": "tiny-tower",
+  "name": "football-logo-challenge",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "TINY TOWER — a minimalist, viral, precision-stacking arcade game.",
+  "description": "FOOTBALL LOGO CHALLENGE — a fast, competitive, shareable football club logo quiz.",
   "scripts": {
     "dev": "vite",
-    "emulators": "firebase emulators:start --config firebase/firebase.json --project demo-tiny-tower",
+    "emulators": "firebase emulators:start --config firebase/firebase.json --project demo-football-logo-challenge",
     "dev:all": "concurrently -k \"npm:emulators\" \"npm:dev\"",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:functions": "npm run --prefix firebase/functions test",
-    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --prefix firebase/functions",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "npm run typecheck",
-    "deploy": "npm run build && firebase deploy --config firebase/firebase.json --only hosting,functions,firestore",
+    "deploy": "npm run build && firebase deploy --config firebase/firebase.json --only hosting,firestore",
     "deploy:hosting": "npm run build && firebase deploy --config firebase/firebase.json --only hosting",
-    "deploy:functions": "firebase deploy --config firebase/firebase.json --only functions",
     "deploy:firestore": "firebase deploy --config firebase/firebase.json --only firestore"
   },
   "dependencies": {
-    "firebase": "^11.0.2"
+    "firebase": "^11.0.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.1.0",
     "firebase-tools": "^13.28.0",
     "typescript": "^5.6.3",
