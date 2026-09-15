@@ -50,6 +50,38 @@ export function ClubCrest({ club, size = 120, revealMode = "FULL", revealProgres
 
   const pieceRadius = revealMode === "PIECE" ? 8 + progress * 90 : null;
 
+  if (club.logoUrl) {
+    return (
+      <div className={className} style={wrapperStyle}>
+        <svg viewBox="0 0 100 100" width="100%" height="100%" role="img" aria-label={revealMode === "SILHOUETTE" ? "Mystery club crest" : `${club.name} crest`}>
+          <defs>
+            {pieceRadius !== null && (
+              <clipPath id={clipId}>
+                <circle cx="50" cy="50" r={pieceRadius} />
+              </clipPath>
+            )}
+          </defs>
+          <g clipPath={pieceRadius !== null ? `url(#${clipId})` : undefined}>
+            <image
+              href={club.logoUrl}
+              x="4"
+              y="4"
+              width="92"
+              height="92"
+              preserveAspectRatio="xMidYMid meet"
+              style={{
+                transform: isZoom ? `scale(${zoomScale})` : undefined,
+                transformOrigin: isZoom ? `${focusX}% ${focusY}%` : undefined,
+                transition: "transform 200ms linear",
+                filter: revealMode === "SILHOUETTE" ? "brightness(0)" : undefined,
+              }}
+            />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className={className} style={wrapperStyle}>
       <svg

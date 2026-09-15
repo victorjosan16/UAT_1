@@ -17,7 +17,7 @@ export function StartScreen({ onPlayLogoQuiz, onPlayGuessThePlayer }: StartScree
   const playerLevel = LocalStorageService.getCurrentPlayerLevel();
 
   return (
-    <div className="screen" id="start-screen">
+    <div className="screen screen--start" id="start-screen">
       <h1 className="title">{GAME_NAME}</h1>
       <p className="subtitle">{GAME_SUBTITLE}</p>
 

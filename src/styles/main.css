@@ -180,6 +180,40 @@ button {
   cursor: pointer;
 }
 
+/* ---------- Start screen (open/light design) ---------- */
+
+.screen--start {
+  background: #ffffff;
+  color: #1c1c22;
+}
+
+.screen--start .title {
+  color: #1c1c22;
+}
+
+.screen--start .subtitle {
+  color: #8a8a94;
+}
+
+.screen--start .stat-card {
+  background: #f2f3f6;
+  border: none;
+}
+
+.screen--start .stat-card__label {
+  color: #9a9aa3;
+}
+
+.screen--start .stat-card__value {
+  color: #1c1c22;
+}
+
+.screen--start .btn--secondary {
+  background: #f2f3f6;
+  border: none;
+  color: #1c1c22;
+}
+
 /* ---------- Quiz screen (pitch design) ---------- */
 
 .pitch-quiz {

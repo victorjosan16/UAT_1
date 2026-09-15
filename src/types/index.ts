@@ -11,6 +11,12 @@ export interface Club {
   difficulty: ClubDifficulty;
   /** Alternate accepted names (e.g. "Man United" for "Manchester United") — reserved for future free-text modes; the multiple-choice mode only needs `name`. */
   aliases: string[];
+  /**
+   * Path to a real, licensed crest image (e.g. "/crests/real-madrid.svg"), set only once
+   * usage rights for that specific club are confirmed. Left undefined, ClubCrest falls back
+   * to the procedural placeholder — see docs/ASSETS_AND_RIGHTS.md.
+   */
+  logoUrl?: string;
 }
 
 /** How the crest is presented for a given question — same underlying club data either way. */
