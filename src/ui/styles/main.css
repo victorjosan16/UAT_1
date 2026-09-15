@@ -305,6 +305,12 @@ body {
   letter-spacing: 1.5px;
   text-align: center;
   text-transform: uppercase;
+  /* The app-wide reset below disables selection/touch-gestures for gameplay;
+     this is the one real text field, so restore normal typing/tap behavior
+     (some mobile browsers otherwise fail to focus/show the keyboard). */
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
 }
 
 .tt-input:focus {

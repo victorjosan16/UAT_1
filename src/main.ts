@@ -8,6 +8,7 @@ import { NicknameScreen } from "@/ui/NicknameScreen";
 import { playerService } from "@/services/PlayerService";
 import { challengeService, type ChallengeDetails } from "@/services/ChallengeService";
 import { runSubmitter } from "@/services/RunSubmitter";
+import { leaderboardService } from "@/services/LeaderboardService";
 import { analyticsService } from "@/services/AnalyticsService";
 import { LocalStorageService } from "@/storage/LocalStorage";
 import { createClassicRun } from "@/modes/ClassicMode";
@@ -195,6 +196,7 @@ function onGameOver(summary: RunSummary): void {
     dailyDateKey: summary.mode === "DAILY" ? pendingDailyDateKey : undefined,
     challengeId: summary.mode === "CHALLENGE" ? pendingChallenge?.challengeId : undefined,
   });
+  void leaderboardService.submitScore(identity.playerId, identity.nickname, summary.score, summary.height);
 
   if (summary.mode === "CHALLENGE" && pendingChallenge) {
     const outcome = evaluateChallengeOutcome(summary.score, pendingChallenge.creatorScore);

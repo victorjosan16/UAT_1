@@ -1,28 +1,41 @@
 rules_version = '2';
 
-// All writes happen server-side via the Admin SDK in Cloud Functions, which
-// bypasses these rules entirely — they exist purely to lock the database
-// down against any direct client access. Leaderboards are readable
-// publicly (they're shown pre-login on the start screen); everything else
-// (players, sessions, challenges, daily stats) is served exclusively
-// through the /api/* Cloud Functions so every read/write can be validated
-// and rate-limited. See docs/SECURITY.md.
+// Cloud Functions (Admin SDK, bypasses these rules) is the intended write
+// path for everything, but it needs the Blaze plan and isn't deployed —
+// see docs/SECURITY.md. Until then, the leaderboard is written directly
+// from the client (LeaderboardService.submitScore), so THESE rules are the
+// only validation those writes get: signed-in, own uid only, one
+// bounded-shape doc per player per window. This is a deliberate, accepted
+// tradeoff (no server-side score re-derivation) — a determined client could
+// still write a fake-but-plausible score. Everything else (players,
+// sessions, challenges, daily stats) stays Functions-only/locked down.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isValidLeaderboardEntry(playerId) {
+      let data = request.resource.data;
+      return request.auth != null
+        && request.auth.uid == playerId
+        && data.keys().hasOnly(['nickname', 'score', 'height', 'updatedAt'])
+        && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
+        && data.score is number && data.score >= 0 && data.score <= 10000000
+        && data.height is number && data.height >= 0 && data.height <= 100000
+        && data.updatedAt is number;
+    }
+
     match /leaderboard_alltime/{playerId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isValidLeaderboardEntry(playerId);
     }
 
     match /leaderboard_daily/{dateKey}/entries/{playerId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isValidLeaderboardEntry(playerId);
     }
 
     match /leaderboard_weekly/{weekKey}/entries/{playerId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isValidLeaderboardEntry(playerId);
     }
 
     match /{document=**} {
