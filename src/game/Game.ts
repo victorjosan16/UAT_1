@@ -10,6 +10,7 @@ import type { LevelDefinition } from "@/levels/LevelDefinition";
 import { DifficultyEngine } from "@/levels/DifficultyEngine";
 import { ScoreEngine } from "@/scoring/ScoreEngine";
 import { SeededRandom } from "@/utils/rng";
+import { easeOutCubic } from "@/utils/math";
 import { environmentForHeight } from "@/ui/theme/environment";
 import { DEFAULT_TOWER_SKIN, type TowerSkin } from "@/ui/skins/TowerSkin";
 import { resolveBlockColors } from "@/ui/theme/blockColor";
@@ -33,6 +34,8 @@ import {
   MOVING_BASE_FREQUENCY_HZ,
   REVERSE_FRACTION_MIN,
   REVERSE_FRACTION_MAX,
+  MOVING_SPAWN_DROP_DISTANCE,
+  MOVING_SPAWN_DURATION_MS,
 } from "./GameConfig";
 import type { Direction, GameMode, Grade, Interval, PlacementResult, RunSummary } from "@/types";
 
@@ -92,6 +95,7 @@ export class Game {
   private blocksPlacedInLevel = 0;
   private movingBaseAnchor: Interval | null = null;
   private lastDirection: Direction = 1;
+  private movingSpawnElapsedMs = 0;
   private recordCrossed = false;
   private gameOverAtMs: number | null = null;
   private gameOverSummaryFired = false;
@@ -211,6 +215,7 @@ export class Game {
       reversedThisPass: false,
     };
     this.effects.trail.clear();
+    this.movingSpawnElapsedMs = 0;
 
     const speedFactor = Math.min(1, this.currentSpeed / VFX_CONFIG.trail.maxReferenceSpeed);
     this.effects.playSpawnWhoosh(speedFactor);
@@ -257,6 +262,7 @@ export class Game {
     if (this.state.status !== "PLAYING") return;
 
     this.camera.update(realDtSeconds);
+    if (this.movingSpawnElapsedMs < MOVING_SPAWN_DURATION_MS) this.movingSpawnElapsedMs += realDtSeconds * 1000;
 
     const scaledDt = realDtSeconds * this.effects.timeScaleValue;
     for (const piece of this.fallingPieces) piece.update(scaledDt);
@@ -310,13 +316,17 @@ export class Game {
     if (!this.tower) return;
     const height = this.tower.height;
     const previewColors = this.moving ? resolveBlockColors(this.skin, height + 1) : null;
+    // Purely visual "drops in from above" entrance — the block's real (gameplay) y
+    // never moves, only where it's drawn, so placement/collision math is untouched.
+    const spawnProgress = easeOutCubic(this.movingSpawnElapsedMs / MOVING_SPAWN_DURATION_MS);
+    const spawnDropOffset = (1 - spawnProgress) * MOVING_SPAWN_DROP_DISTANCE;
     const frame: RenderFrame = {
       blocks: this.tower.allBlocks,
       movingBlock: this.moving
         ? {
             left: this.moving.left,
             right: this.moving.right,
-            y: this.moving.y,
+            y: this.moving.y + spawnDropOffset,
             height: this.moving.height,
             isDrifting: this.currentLevelDef?.specialModifier === "WIND",
             speed: this.effectiveSpeed(this.moving.passElapsedSeconds),

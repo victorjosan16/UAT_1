@@ -16,3 +16,7 @@ export function roundTo(value: number, decimals: number): number {
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
 }
+
+export function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+}

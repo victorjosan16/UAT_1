@@ -23,3 +23,7 @@ export const MOVING_BASE_AMPLITUDE = 7;
 export const MOVING_BASE_FREQUENCY_HZ = 0.28;
 export const REVERSE_FRACTION_MIN = 0.35;
 export const REVERSE_FRACTION_MAX = 0.65;
+
+/** Purely visual "drops in from above" entrance for each new moving block — see Game.ts renderFrame. */
+export const MOVING_SPAWN_DROP_DISTANCE = 220;
+export const MOVING_SPAWN_DURATION_MS = 380;
