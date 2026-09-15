@@ -10,16 +10,18 @@ export interface QuizScreenProps {
   seed: string;
   level: number;
   onComplete: (summary: QuizSummary) => void;
+  onQuit: () => void;
 }
 
-function feedbackText(correct: boolean, timedOut: boolean, correctClub: Club): string {
+function feedbackText(correct: boolean, timedOut: boolean, correctClub: Club, scoreGained: number): string {
   if (timedOut) return TAGLINES.timesUp;
-  return correct ? TAGLINES.correct : correctClub.name.toUpperCase();
+  if (correct) return `${TAGLINES.correct} +${scoreGained.toLocaleString("en-US")}`;
+  return correctClub.name.toUpperCase();
 }
 
-export function QuizScreen({ mode, seed, level, onComplete }: QuizScreenProps) {
+export function QuizScreen({ mode, seed, level, onComplete, onQuit }: QuizScreenProps) {
   const { state, submitAnswer } = useQuizSession(mode, seed, level, onComplete);
-  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, streakTierReached, questionIndex, totalQuestions } = state;
+  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, questionIndex, totalQuestions, correctCount } = state;
 
   if (!currentQuestion) return null;
 
@@ -29,48 +31,63 @@ export function QuizScreen({ mode, seed, level, onComplete }: QuizScreenProps) {
   const crestClass = isReveal ? (lastAnswer?.correct ? "crest-stage__inner crest-stage__inner--correct" : "crest-stage__inner crest-stage__inner--wrong") : "crest-stage__inner";
 
   return (
-    <div className="quiz-screen" id="quiz-screen">
-      <div className="quiz-hud">
-        <span>
-          LEVEL {level > 20 ? `E${level - 20}` : level} · {difficultyGroupForLevel(Math.min(level, 20))} · {questionIndex + 1}/{totalQuestions}
-        </span>
-        <span className={streakTierReached ? "streak-badge streak-badge--visible" : "streak-badge"}>🔥 ×{streak.current}</span>
-        <span className="quiz-hud__score">{score.toLocaleString("en-US")}</span>
-      </div>
-
-      <Timer remainingMs={isReveal ? timeLimitMs : remainingMs} timeLimitMs={timeLimitMs} />
-
-      <div className="crest-stage" style={{ position: "relative" }}>
-        <div className={crestClass}>
-          <ClubCrest club={currentQuestion.club} size={150} revealMode={isReveal ? "FULL" : currentQuestion.revealMode} revealProgress={isReveal ? 1 : revealProgress} />
+    <div className="pitch-quiz" id="quiz-screen">
+      <div className="pitch-stage">
+        <div className="pitch-topbar">
+          <button className="pitch-close" onClick={onQuit} aria-label="Quit">×</button>
+          <span className="pitch-level-chip">LEVEL {level > 20 ? `E${level - 20}` : level} · {difficultyGroupForLevel(Math.min(level, 20))}</span>
         </div>
+
+        <p className="pitch-eyebrow">Question {questionIndex + 1} of {totalQuestions}</p>
+
+        <div style={{ position: "relative" }}>
+          <div className={crestClass}>
+            <ClubCrest club={currentQuestion.club} size={110} revealMode={isReveal ? "FULL" : currentQuestion.revealMode} revealProgress={isReveal ? 1 : revealProgress} />
+          </div>
+        </div>
+
+        <p className="pitch-question">Which club is this?</p>
+
+        <Timer remainingMs={isReveal ? timeLimitMs : remainingMs} timeLimitMs={timeLimitMs} />
 
         {isReveal && lastAnswer && (
           <div key={questionIndex} className={`feedback-banner feedback-banner--show ${lastAnswer.correct ? "feedback-banner--correct" : "feedback-banner--wrong"}`}>
-            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, currentQuestion.club)}
-            {lastAnswer.correct && (
-              <div className="score-float score-float--show">+{lastAnswer.scoreGained.toLocaleString("en-US")}</div>
-            )}
+            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, currentQuestion.club, lastAnswer.scoreGained)}
           </div>
         )}
       </div>
 
-      <p className="question-prompt">Which club is this?</p>
+      <div className="answers-sheet">
+        <div className="answer-pill-list">
+          {currentQuestion.options.map((club) => {
+            let extraClass = "";
+            if (isReveal && lastAnswer) {
+              if (club.id === lastAnswer.clubId) extraClass = " answer-pill--correct";
+              else if (club.id === lastAnswer.selectedClubId) extraClass = " answer-pill--wrong";
+              else extraClass = " answer-pill--disabled";
+            }
+            return (
+              <button key={club.id} className={`answer-pill${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(club.id)}>
+                {club.name}
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="answers-grid">
-        {currentQuestion.options.map((club) => {
-          let extraClass = "";
-          if (isReveal && lastAnswer) {
-            if (club.id === lastAnswer.clubId) extraClass = " answer-btn--correct";
-            else if (club.id === lastAnswer.selectedClubId) extraClass = " answer-btn--wrong";
-            else extraClass = " answer-btn--disabled";
-          }
-          return (
-            <button key={club.id} className={`answer-btn${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(club.id)}>
-              {club.name}
-            </button>
-          );
-        })}
+        <div className="pitch-footer">
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{correctCount}/{totalQuestions}</div>
+            <div className="pitch-footer__label">Correct answers</div>
+          </div>
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{streak.current}</div>
+            <div className="pitch-footer__label">Streak</div>
+          </div>
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{score.toLocaleString("en-US")}</div>
+            <div className="pitch-footer__label">Score</div>
+          </div>
+        </div>
       </div>
     </div>
   );

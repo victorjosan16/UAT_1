@@ -88,9 +88,9 @@ export function App() {
     case "QUIZ":
       if (!runConfig) return null;
       if (runConfig.gameType === "PLAYER_CHAIN") {
-        return <PlayerQuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handlePlayerComplete} />;
+        return <PlayerQuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handlePlayerComplete} onQuit={handleBackToStart} />;
       }
-      return <QuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handleLogoComplete} />;
+      return <QuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handleLogoComplete} onQuit={handleBackToStart} />;
     case "RESULTS":
       if (!lastSummary) return null;
       return <ResultsScreen summary={lastSummary} isNewRecord={isNewRecord} onPlayAgain={handlePlayAgain} onBackToStart={handleBackToStart} />;

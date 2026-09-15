@@ -20,6 +20,7 @@ export interface PlayerQuizSessionState {
   totalQuestions: number;
   currentQuestion: PlayerQuestion | null;
   score: number;
+  correctCount: number;
   streak: StreakState;
   remainingMs: number;
   timeLimitMs: number;
@@ -93,6 +94,7 @@ export class PlayerQuizSession {
       totalQuestions: this.questions.length,
       currentQuestion,
       score: this.scoreEngine.totalScore,
+      correctCount: this.scoreEngine.correctAnswerCount,
       streak: this.streak,
       remainingMs: this.remainingMs,
       timeLimitMs: currentQuestion?.timeLimitMs ?? 0,

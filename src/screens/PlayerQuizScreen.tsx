@@ -12,16 +12,18 @@ export interface PlayerQuizScreenProps {
   seed: string;
   level: number;
   onComplete: (summary: PlayerQuizSummary) => void;
+  onQuit: () => void;
 }
 
-function feedbackText(correct: boolean, timedOut: boolean, correctPlayer: Player): string {
+function feedbackText(correct: boolean, timedOut: boolean, correctPlayer: Player, scoreGained: number): string {
   if (timedOut) return TAGLINES.timesUp;
-  return correct ? TAGLINES.correct : correctPlayer.name.toUpperCase();
+  if (correct) return `${TAGLINES.correct} +${scoreGained.toLocaleString("en-US")}`;
+  return correctPlayer.name.toUpperCase();
 }
 
-export function PlayerQuizScreen({ mode, seed, level, onComplete }: PlayerQuizScreenProps) {
+export function PlayerQuizScreen({ mode, seed, level, onComplete, onQuit }: PlayerQuizScreenProps) {
   const { state, submitAnswer } = usePlayerQuizSession(mode, seed, level, onComplete);
-  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, streakTierReached, questionIndex, totalQuestions } = state;
+  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, questionIndex, totalQuestions, correctCount } = state;
 
   if (!currentQuestion) return null;
 
@@ -30,45 +32,60 @@ export function PlayerQuizScreen({ mode, seed, level, onComplete }: PlayerQuizSc
   const chainClubs = currentQuestion.player.careerClubIds.map((id) => getClubById(id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   return (
-    <div className="quiz-screen" id="player-quiz-screen">
-      <div className="quiz-hud">
-        <span>
-          LEVEL {level > 20 ? `E${level - 20}` : level} · {difficultyGroupForLevel(Math.min(level, 20))} · {questionIndex + 1}/{totalQuestions}
-        </span>
-        <span className={streakTierReached ? "streak-badge streak-badge--visible" : "streak-badge"}>🔥 ×{streak.current}</span>
-        <span className="quiz-hud__score">{score.toLocaleString("en-US")}</span>
-      </div>
+    <div className="pitch-quiz" id="player-quiz-screen">
+      <div className="pitch-stage pitch-stage--player">
+        <div className="pitch-topbar">
+          <button className="pitch-close" onClick={onQuit} aria-label="Quit">×</button>
+          <span className="pitch-level-chip">LEVEL {level > 20 ? `E${level - 20}` : level} · {difficultyGroupForLevel(Math.min(level, 20))}</span>
+        </div>
 
-      <Timer remainingMs={isReveal ? timeLimitMs : remainingMs} timeLimitMs={timeLimitMs} />
+        <div className="player-header">
+          <PlayerSilhouette size={72} />
+          <h2 className="player-header__title">GUESS THE PLAYER</h2>
+        </div>
 
-      <div className="crest-stage" style={{ position: "relative", flexDirection: "column", gap: 14 }}>
-        <PlayerSilhouette size={100} />
         <TransferChain clubs={chainClubs} revealProgress={revealProgress} />
+
+        <Timer remainingMs={isReveal ? timeLimitMs : remainingMs} timeLimitMs={timeLimitMs} />
 
         {isReveal && lastAnswer && (
           <div key={questionIndex} className={`feedback-banner feedback-banner--show ${lastAnswer.correct ? "feedback-banner--correct" : "feedback-banner--wrong"}`}>
-            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, currentQuestion.player)}
-            {lastAnswer.correct && <div className="score-float score-float--show">+{lastAnswer.scoreGained.toLocaleString("en-US")}</div>}
+            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, currentQuestion.player, lastAnswer.scoreGained)}
           </div>
         )}
       </div>
 
-      <p className="question-prompt">Who is this player?</p>
+      <div className="answers-sheet">
+        <div className="answer-pill-list">
+          {currentQuestion.options.map((player) => {
+            let extraClass = "";
+            if (isReveal && lastAnswer) {
+              if (player.id === lastAnswer.playerId) extraClass = " answer-pill--correct";
+              else if (player.id === lastAnswer.selectedPlayerId) extraClass = " answer-pill--wrong";
+              else extraClass = " answer-pill--disabled";
+            }
+            return (
+              <button key={player.id} className={`answer-pill${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(player.id)}>
+                {player.name}
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="answers-grid">
-        {currentQuestion.options.map((player) => {
-          let extraClass = "";
-          if (isReveal && lastAnswer) {
-            if (player.id === lastAnswer.playerId) extraClass = " answer-btn--correct";
-            else if (player.id === lastAnswer.selectedPlayerId) extraClass = " answer-btn--wrong";
-            else extraClass = " answer-btn--disabled";
-          }
-          return (
-            <button key={player.id} className={`answer-btn${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(player.id)}>
-              {player.name}
-            </button>
-          );
-        })}
+        <div className="pitch-footer">
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{correctCount}/{totalQuestions}</div>
+            <div className="pitch-footer__label">Correct answers</div>
+          </div>
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{streak.current}</div>
+            <div className="pitch-footer__label">Streak</div>
+          </div>
+          <div className="pitch-footer__stat">
+            <div className="pitch-footer__value">{score.toLocaleString("en-US")}</div>
+            <div className="pitch-footer__label">Score</div>
+          </div>
+        </div>
       </div>
     </div>
   );
