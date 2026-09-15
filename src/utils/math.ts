@@ -20,3 +20,9 @@ export function roundTo(value: number, decimals: number): number {
 export function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - clamp(t, 0, 1), 3);
 }
+
+/** Accelerating curve — used for the block's fall, mimicking gravity picking up speed. */
+export function easeInQuad(t: number): number {
+  const c = clamp(t, 0, 1);
+  return c * c;
+}

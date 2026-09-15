@@ -3,17 +3,17 @@ import { Camera } from "@/engine/Camera";
 import { InputController } from "@/engine/Input";
 import { EffectsManager } from "@/engine/EffectsManager";
 import { PerformanceMonitor } from "@/engine/PerformanceMonitor";
-import { Tower, computeOverlap } from "@/entities/Tower";
+import { Tower, computeOverlap, type OverlapResult } from "@/entities/Tower";
 import { FallingPiece } from "@/entities/FallingPiece";
 import { getLevel, MAX_LEVEL, BASE_BLOCK_HEIGHT } from "@/levels/levels";
 import type { LevelDefinition } from "@/levels/LevelDefinition";
 import { DifficultyEngine } from "@/levels/DifficultyEngine";
 import { ScoreEngine } from "@/scoring/ScoreEngine";
 import { SeededRandom } from "@/utils/rng";
-import { easeOutCubic } from "@/utils/math";
+import { lerp, easeInQuad } from "@/utils/math";
 import { environmentForHeight } from "@/ui/theme/environment";
 import { DEFAULT_TOWER_SKIN, type TowerSkin } from "@/ui/skins/TowerSkin";
-import { resolveBlockColors } from "@/ui/theme/blockColor";
+import { resolveBlockColors, type ResolvedBlockColor } from "@/ui/theme/blockColor";
 import { GAME_VERSION, RULES_VERSION } from "@/branding";
 import { VFX_CONFIG } from "./VFXConfig";
 import { createInitialState, type GameState } from "./GameState";
@@ -34,9 +34,9 @@ import {
   MOVING_BASE_FREQUENCY_HZ,
   REVERSE_FRACTION_MIN,
   REVERSE_FRACTION_MAX,
-  MOVING_SPAWN_DROP_DISTANCE,
-  MOVING_SPAWN_DURATION_MS,
   CAMERA_LOOKAHEAD,
+  MOVING_TOP_MARGIN,
+  FALL_DURATION_MS,
 } from "./GameConfig";
 import type { Direction, GameMode, Grade, Interval, PlacementResult, RunSummary } from "@/types";
 
@@ -60,6 +60,21 @@ interface MovingBlockState extends Interval {
   passElapsedSeconds: number;
   reverseAtSeconds: number;
   reversedThisPass: boolean;
+  /** Once tapped, the block stops sliding and animates straight down to fallTargetY before the placement resolves. */
+  falling: boolean;
+  fallStartY: number;
+  fallTargetY: number;
+  fallElapsedMs: number;
+}
+
+/** Snapshot of everything needed to resolve a placement, captured at tap time and applied once the fall animation lands. */
+interface PendingPlacement {
+  overlapResult: OverlapResult;
+  previousWidth: number;
+  movingWidth: number;
+  speedAtTap: number;
+  flingDirection: Direction;
+  dropColors: ResolvedBlockColor | null;
 }
 
 const GAME_OVER_STATUS_DELAY_MS = VFX_CONFIG.gameOver.transitionMs;
@@ -96,7 +111,7 @@ export class Game {
   private blocksPlacedInLevel = 0;
   private movingBaseAnchor: Interval | null = null;
   private lastDirection: Direction = 1;
-  private movingSpawnElapsedMs = 0;
+  private pendingPlacement: PendingPlacement | null = null;
   private recordCrossed = false;
   private gameOverAtMs: number | null = null;
   private gameOverSummaryFired = false;
@@ -149,6 +164,7 @@ export class Game {
     this.fallingPieces = [];
     this.blocksPlacedInLevel = 0;
     this.lastDirection = 1;
+    this.pendingPlacement = null;
     this.recordCrossed = false;
     this.gameOverAtMs = null;
     this.gameOverSummaryFired = false;
@@ -191,6 +207,11 @@ export class Game {
     return this.lastDirection;
   }
 
+  /** World Y that renders near the top edge of the current view — where the moving block slides, independent of tower height. */
+  private topOfViewWorldY(): number {
+    return this.camera.renderY + this.renderer.baselineWorldY - MOVING_TOP_MARGIN;
+  }
+
   private spawnNextBlock(width: number): void {
     const top = this.tower.topBlock;
     const def = this.currentLevelDef;
@@ -208,16 +229,19 @@ export class Game {
     this.moving = {
       left: startCenter - half,
       right: startCenter + half,
-      y: top.y + top.height,
+      y: this.topOfViewWorldY(),
       height: BASE_BLOCK_HEIGHT,
       baseCenter: startCenter,
       direction,
       passElapsedSeconds: 0,
       reverseAtSeconds: this.rng.range(REVERSE_FRACTION_MIN, REVERSE_FRACTION_MAX) * 2,
       reversedThisPass: false,
+      falling: false,
+      fallStartY: 0,
+      fallTargetY: 0,
+      fallElapsedMs: 0,
     };
     this.effects.trail.clear();
-    this.movingSpawnElapsedMs = 0;
 
     const speedFactor = Math.min(1, this.currentSpeed / VFX_CONFIG.trail.maxReferenceSpeed);
     this.effects.playSpawnWhoosh(speedFactor);
@@ -266,7 +290,6 @@ export class Game {
     if (this.state.status !== "PLAYING") return;
 
     this.camera.update(realDtSeconds);
-    if (this.movingSpawnElapsedMs < MOVING_SPAWN_DURATION_MS) this.movingSpawnElapsedMs += realDtSeconds * 1000;
 
     const scaledDt = realDtSeconds * this.effects.timeScaleValue;
     for (const piece of this.fallingPieces) piece.update(scaledDt);
@@ -283,6 +306,15 @@ export class Game {
     const moving = this.moving;
     if (!moving) return;
 
+    if (moving.falling) {
+      moving.fallElapsedMs += realDtSeconds * 1000;
+      const t = Math.min(1, moving.fallElapsedMs / FALL_DURATION_MS);
+      moving.y = lerp(moving.fallStartY, moving.fallTargetY, easeInQuad(t));
+      if (t >= 1) this.resolvePendingPlacement();
+      return;
+    }
+
+    moving.y = this.topOfViewWorldY();
     moving.passElapsedSeconds += scaledDt;
     if (this.currentLevelDef.specialModifier === "REVERSE" && !moving.reversedThisPass && moving.passElapsedSeconds >= moving.reverseAtSeconds) {
       moving.direction = moving.direction === 1 ? -1 : 1;
@@ -320,17 +352,13 @@ export class Game {
     if (!this.tower) return;
     const height = this.tower.height;
     const previewColors = this.moving ? resolveBlockColors(this.skin, height + 1) : null;
-    // Purely visual "drops in from above" entrance — the block's real (gameplay) y
-    // never moves, only where it's drawn, so placement/collision math is untouched.
-    const spawnProgress = easeOutCubic(this.movingSpawnElapsedMs / MOVING_SPAWN_DURATION_MS);
-    const spawnDropOffset = (1 - spawnProgress) * MOVING_SPAWN_DROP_DISTANCE;
     const frame: RenderFrame = {
       blocks: this.tower.allBlocks,
       movingBlock: this.moving
         ? {
             left: this.moving.left,
             right: this.moving.right,
-            y: this.moving.y + spawnDropOffset,
+            y: this.moving.y,
             height: this.moving.height,
             isDrifting: this.currentLevelDef?.specialModifier === "WIND",
             speed: this.effectiveSpeed(this.moving.passElapsedSeconds),
@@ -356,36 +384,65 @@ export class Game {
   };
 
   private place(): void {
-    if (this.state.status !== "PLAYING" || !this.moving) return;
+    if (this.state.status !== "PLAYING" || !this.moving || this.moving.falling) return;
 
     const previous = this.tower.topBlock;
     const previousWidth = previous.width;
     const tolerance = this.effectiveTolerance();
     const overlapResult = computeOverlap(previous.toInterval(), { left: this.moving.left, right: this.moving.right }, tolerance);
 
-    const speedAtDrop = this.effectiveSpeed(this.moving.passElapsedSeconds);
+    const speedAtTap = this.effectiveSpeed(this.moving.passElapsedSeconds);
     const flingDirection = this.moving.direction;
-    const dropY = this.moving.y;
-    const dropHeight = this.moving.height;
     const dropColors = resolveBlockColors(this.skin, previous.floor + 1);
 
-    for (const fragment of overlapResult.fallingFragments) {
-      const isRightSide = fragment.left >= (overlapResult.overlap?.right ?? previous.center);
-      const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtDrop * 0.5) + flingDirection * 20;
-      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
-    }
-
     if (!overlapResult.overlap) {
+      // A miss resolves immediately — the whole block becomes cosmetic falling
+      // fragments right away, with real gravity physics carrying them the rest
+      // of the (now much longer, since it starts near the top of the screen) way down.
+      const dropY = this.moving.y;
+      const dropHeight = this.moving.height;
+      for (const fragment of overlapResult.fallingFragments) {
+        const isRightSide = fragment.left >= previous.center;
+        const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtTap * 0.5) + flingDirection * 20;
+        this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
+      }
       this.beginGameOver(worldXToScreenX((this.moving.left + this.moving.right) / 2), dropY);
       return;
     }
 
+    // A successful placement is only scored once the block visibly falls to
+    // the tower — freeze it here and let update()/resolvePendingPlacement()
+    // apply everything once the fall animation lands.
     const movingWidth = this.moving.right - this.moving.left;
-    const placedBlock = this.tower.place(overlapResult.overlap, BASE_BLOCK_HEIGHT, dropColors ?? undefined);
+    this.pendingPlacement = { overlapResult, previousWidth, movingWidth, speedAtTap, flingDirection, dropColors };
+    this.moving.falling = true;
+    this.moving.fallStartY = this.moving.y;
+    this.moving.fallTargetY = previous.y + previous.height;
+    this.moving.fallElapsedMs = 0;
+  }
+
+  private resolvePendingPlacement(): void {
+    const pending = this.pendingPlacement;
+    const moving = this.moving;
+    if (!pending || !moving) return;
+    this.pendingPlacement = null;
+
+    const { overlapResult, previousWidth, movingWidth, speedAtTap, flingDirection, dropColors } = pending;
+    const overlap = overlapResult.overlap!;
+    const dropY = moving.fallTargetY;
+    const dropHeight = moving.height;
+
+    for (const fragment of overlapResult.fallingFragments) {
+      const isRightSide = fragment.left >= overlap.right;
+      const vx = (isRightSide ? 1 : -1) * Math.max(60, speedAtTap * 0.5) + flingDirection * 20;
+      this.fallingPieces.push(new FallingPiece({ ...fragment, y: dropY, height: dropHeight, vx, fillColor: dropColors?.fillColor }));
+    }
+
+    const placedBlock = this.tower.place(overlap, BASE_BLOCK_HEIGHT, dropColors ?? undefined);
     const blockCenterScreenX = worldXToScreenX((placedBlock.left + placedBlock.right) / 2);
 
     const result = this.scoreEngine.place(
-      overlapResult.overlap.right - overlapResult.overlap.left,
+      overlap.right - overlap.left,
       previousWidth,
       placedBlock.floor,
       overlapResult.isPerfect,
@@ -405,7 +462,7 @@ export class Game {
       isPerfect: overlapResult.isPerfect,
       perfectStreak: result.combo.perfectStreak,
       comboMultiplier: result.combo.multiplier,
-      overlapWidth: overlapResult.overlap.right - overlapResult.overlap.left,
+      overlapWidth: overlap.right - overlap.left,
       blockWidthBefore: previousWidth,
       blockWidthAfter: placedBlock.width,
       scoreGained: result.gained,
@@ -428,7 +485,7 @@ export class Game {
       this.camera.punch(VFX_CONFIG.placement.cameraPunch);
 
       if (overlapResult.fallingFragments.length > 0) {
-        const fractionCut = movingWidth === 0 ? 0 : 1 - (overlapResult.overlap.right - overlapResult.overlap.left) / movingWidth;
+        const fractionCut = movingWidth === 0 ? 0 : 1 - (overlap.right - overlap.left) / movingWidth;
         this.effects.handle({ type: "BLOCK_CUT", x: blockCenterScreenX, y: placedBlock.y + placedBlock.height, direction: flingDirection, fractionCut, color: dropColors?.fillColor ?? this.skin.blockFill });
       }
 

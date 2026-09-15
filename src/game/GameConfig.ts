@@ -24,9 +24,18 @@ export const MOVING_BASE_FREQUENCY_HZ = 0.28;
 export const REVERSE_FRACTION_MIN = 0.35;
 export const REVERSE_FRACTION_MAX = 0.65;
 
-/** Purely visual "drops in from above" entrance for each new moving block — see Game.ts renderFrame. */
-export const MOVING_SPAWN_DROP_DISTANCE = 220;
-export const MOVING_SPAWN_DURATION_MS = 380;
-
 /** Extra headroom the camera keeps above the current top block, so the player sees a little more of what's coming. */
 export const CAMERA_LOOKAHEAD = 26;
+
+/**
+ * The moving block slides near the TOP of the current view (not right next
+ * to the tower) — MOVING_TOP_MARGIN is how far below the very top edge of
+ * the canvas it sits (in world units, i.e. before the responsive scale
+ * factor is applied). Large enough to clear the score/floor HUD overlay
+ * so the sliding block is never hidden behind it. On tap, its horizontal
+ * position freezes and it visibly falls straight down to the tower over
+ * FALL_DURATION_MS before the placement is actually resolved (see
+ * Game.ts place()/resolvePendingPlacement()).
+ */
+export const MOVING_TOP_MARGIN = 130;
+export const FALL_DURATION_MS = 260;
