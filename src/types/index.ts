@@ -40,8 +40,8 @@ export interface Category {
   available: boolean;
 }
 
-/** How a question is presented — most are plain text; FLAG additionally renders a FlagIcon built from real, structured flag data (see data/countries.ts), never an AI-generated or trademarked image. */
-export type QuestionRenderKind = "TEXT" | "FLAG";
+/** How a question is presented — most are plain text; FLAG additionally renders a FlagIcon built from real, structured flag data (see data/countries.ts), never an AI-generated or trademarked image. TRUE_FALSE is a plain statement with exactly two options (the answer-pill list already handles any option count, so it needs no dedicated renderer). */
+export type QuestionRenderKind = "TEXT" | "FLAG" | "TRUE_FALSE";
 
 /** How the visual is progressively revealed as the timer runs — ignored for TEXT questions. */
 export type RevealMode = "FULL" | "ZOOM" | "BLUR" | "SILHOUETTE" | "PIECE";

@@ -1,4 +1,5 @@
 import { GENERAL_KNOWLEDGE_QUESTIONS } from "@/data/questions/generalKnowledge";
+import { TRUE_FALSE_QUESTIONS } from "@/data/questions/trueFalse";
 import { GEOGRAPHY_QUESTIONS } from "@/data/questions/geography";
 import { FLAG_QUESTIONS } from "@/data/questions/flags";
 import { CAPITAL_QUESTIONS } from "@/data/questions/capitals";
@@ -19,7 +20,7 @@ import type { CategoryId, QuizQuestionSource } from "@/types";
  * one file here, nothing in the quiz engine changes.
  */
 const QUESTIONS_BY_CATEGORY: Partial<Record<CategoryId, readonly QuizQuestionSource[]>> = {
-  GENERAL_KNOWLEDGE: GENERAL_KNOWLEDGE_QUESTIONS,
+  GENERAL_KNOWLEDGE: [...GENERAL_KNOWLEDGE_QUESTIONS, ...TRUE_FALSE_QUESTIONS],
   GEOGRAPHY: GEOGRAPHY_QUESTIONS,
   FLAGS: FLAG_QUESTIONS,
   CAPITALS: CAPITAL_QUESTIONS,

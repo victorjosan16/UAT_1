@@ -19,11 +19,14 @@ describe("QuestionBank", () => {
     }
   });
 
-  it("every question has at least 3 distractors per language, none equal to the correct answer", () => {
+  it("every question has enough distractors per language, none equal to the correct answer", () => {
+    // TRUE_FALSE has exactly one meaningful distractor (the opposite boolean) — every other
+    // renderKind still needs a real multiple-choice spread of at least 3.
     for (const q of ALL_QUESTIONS) {
+      const minDistractors = q.renderKind === "TRUE_FALSE" ? 1 : 3;
       for (const lang of LANGUAGES) {
         const distractors = q.distractors[lang];
-        expect(distractors.length).toBeGreaterThanOrEqual(3);
+        expect(distractors.length).toBeGreaterThanOrEqual(minDistractors);
         expect(distractors).not.toContain(q.correctAnswer[lang]);
         expect(new Set(distractors).size).toBe(distractors.length);
       }
@@ -55,6 +58,15 @@ describe("QuestionBank", () => {
   it("FLAG questions always carry a flagCountryId", () => {
     for (const q of ALL_QUESTIONS) {
       if (q.renderKind === "FLAG") expect(q.flagCountryId).toBeTruthy();
+    }
+  });
+
+  it("TRUE_FALSE questions always have exactly one distractor (the opposite boolean)", () => {
+    for (const q of ALL_QUESTIONS) {
+      if (q.renderKind !== "TRUE_FALSE") continue;
+      for (const lang of LANGUAGES) {
+        expect(q.distractors[lang]).toHaveLength(1);
+      }
     }
   });
 });
