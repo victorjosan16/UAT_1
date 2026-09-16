@@ -295,6 +295,34 @@ const STRINGS = {
     ru: "Эта ссылка на вызов больше недействительна.",
   },
 
+  "milestone.topN": {
+    en: "TOP {n}",
+    ro: "TOP {n}",
+    es: "TOP {n}",
+    pt: "TOP {n}",
+    hi: "टॉप {n}",
+    id: "TOP {n}",
+    ru: "ТОП {n}",
+  },
+  "milestone.numberOne": {
+    en: "#1",
+    ro: "#1",
+    es: "#1",
+    pt: "#1",
+    hi: "#1",
+    id: "#1",
+    ru: "#1",
+  },
+  "milestone.youMadeIt": {
+    en: "You made it — #{rank}",
+    ro: "Ai reușit — locul #{rank}",
+    es: "Lo lograste — #{rank}",
+    pt: "Você conseguiu — #{rank}",
+    hi: "आपने कर दिखाया — #{rank}",
+    id: "Kamu berhasil — #{rank}",
+    ru: "Вы сделали это — #{rank}",
+  },
+
   "ranking.title": { en: "Ranking", ro: "Clasament", es: "Clasificación", pt: "Classificação", hi: "रैंकिंग", id: "Peringkat", ru: "Рейтинг" },
   "ranking.subtitle": {
     en: "Online leaderboards are coming soon.",

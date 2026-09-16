@@ -31,6 +31,11 @@ class HapticsManager {
   complete(): void {
     this.vibrate([20, 40, 20, 40, 40]);
   }
+
+  /** Stronger than complete() — reserved for a genuine one-time leaderboard milestone. */
+  milestone(): void {
+    this.vibrate([30, 50, 30, 50, 30, 50, 60]);
+  }
 }
 
 export const hapticsManager = new HapticsManager();

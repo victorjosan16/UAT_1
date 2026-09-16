@@ -23,6 +23,7 @@ import { shareResult } from "@/utils/share";
 import { randomId } from "@/utils/rng";
 import { dailySeed, utcDateKey } from "@/utils/dailySeed";
 import { nudgeRating } from "@/quiz/RatingEngine";
+import { MilestoneService, type MilestoneRank } from "@/services/MilestoneService";
 import type { PlacementSummary } from "@/quiz/PlacementEngine";
 import { GAME_VERSION } from "@/branding";
 import type { CategoryId, QuizMode, QuizSummary } from "@/types";
@@ -55,6 +56,8 @@ export function App() {
   const [rating, setRating] = useState(() => LocalStorageService.getRating());
   const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>("ENTRY");
   const [placementSummary, setPlacementSummary] = useState<PlacementSummary | null>(null);
+  const [rankMovement, setRankMovement] = useState<{ from: number; to: number } | null>(null);
+  const [milestone, setMilestone] = useState<{ threshold: MilestoneRank; rank: number } | null>(null);
 
   const [incomingChallengeId] = useState(() => ChallengeService.parseIdFromLocation());
   const [challengeScreenVisible, setChallengeScreenVisible] = useState(() => incomingChallengeId !== null);
@@ -202,8 +205,29 @@ export function App() {
     }
 
     // Fire-and-forget: the leaderboard is a nice-to-have, never a gate on seeing your results.
+    // Rank movement and milestone celebration only ever arrive after this resolves — Results
+    // renders immediately either way and picks them up via a re-render once they land.
+    setRankMovement(null);
+    setMilestone(null);
     if (playerId) {
-      void LeaderboardService.submitScore({ playerId, nickname, score: summary.score, knowledgeIQ: summary.knowledgeIQ });
+      void (async () => {
+        await LeaderboardService.submitScore({ playerId, nickname, score: summary.score, knowledgeIQ: summary.knowledgeIQ });
+        const newRank = await LeaderboardService.getMyRank("allTime", playerId);
+        if (!newRank) return;
+
+        const previousRank = LocalStorageService.getLastKnownRank("allTime");
+        LocalStorageService.setLastKnownRank("allTime", newRank.rank);
+        if (previousRank !== null && previousRank !== newRank.rank) {
+          setRankMovement({ from: previousRank, to: newRank.rank });
+        }
+
+        const celebrated = MilestoneService.checkAndMark("allTime", newRank.rank);
+        if (celebrated !== null) {
+          setMilestone({ threshold: celebrated, rank: newRank.rank });
+          soundManager.playMilestone();
+          hapticsManager.milestone();
+        }
+      })();
     }
 
     // KR drifts a small, capped step toward this run's own implied rating — see RatingEngine.nudgeRating.
@@ -277,6 +301,8 @@ export function App() {
         summary={lastSummary}
         isNewRecord={isNewRecord}
         challengeComparison={challengeComparison}
+        rankMovement={rankMovement}
+        milestone={milestone}
         onPlayAgain={handlePlayAgain}
         onBackToStart={handleBackToHome}
         onChallengeFriend={() => void handleChallengeFriend()}

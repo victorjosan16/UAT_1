@@ -75,6 +75,12 @@ class SoundManager {
     if (!this.isEnabled()) return;
     this.tone(440, 0, 0.05, "square", 0.08);
   }
+
+  /** Reserved for a genuine leaderboard milestone (Top 100/50/10/#1) — a bigger, longer fanfare than playComplete, since this fires at most once per milestone ever. */
+  playMilestone(): void {
+    if (!this.isEnabled()) return;
+    [523, 659, 784, 1046, 1318].forEach((freq, i) => this.tone(freq, i * 0.09, 0.3, "triangle", 0.2));
+  }
 }
 
 export const soundManager = new SoundManager();

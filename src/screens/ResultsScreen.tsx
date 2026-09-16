@@ -1,6 +1,7 @@
 import { knowledgeRankLabel, rankForKnowledgeIQ } from "@/quiz/QuizIQ";
 import { resultMessage } from "@/quiz/resultMessages";
 import { useLanguage } from "@/i18n/LanguageContext";
+import type { MilestoneRank } from "@/services/MilestoneService";
 
 /** Shared shape every mode's summary reduces to — this screen never needs the mode-specific `answers` entries. */
 export interface ResultsSummaryView {
@@ -21,12 +22,14 @@ export interface ResultsScreenProps {
   summary: ResultsSummaryView;
   isNewRecord: boolean;
   challengeComparison?: ChallengeComparison | null;
+  rankMovement?: { from: number; to: number } | null;
+  milestone?: { threshold: MilestoneRank; rank: number } | null;
   onPlayAgain: () => void;
   onBackToStart: () => void;
   onChallengeFriend: () => void;
 }
 
-export function ResultsScreen({ summary, isNewRecord, challengeComparison, onPlayAgain, onBackToStart, onChallengeFriend }: ResultsScreenProps) {
+export function ResultsScreen({ summary, isNewRecord, challengeComparison, rankMovement, milestone, onPlayAgain, onBackToStart, onChallengeFriend }: ResultsScreenProps) {
   const { language, t } = useLanguage();
   const rank = knowledgeRankLabel(rankForKnowledgeIQ(summary.knowledgeIQ), language);
   const isPerfect = summary.correctCount === summary.totalQuestions;
@@ -34,9 +37,17 @@ export function ResultsScreen({ summary, isNewRecord, challengeComparison, onPla
 
   const wonChallenge = challengeComparison ? summary.score > challengeComparison.creatorScore : null;
   const pointsAway = challengeComparison ? Math.abs(summary.score - challengeComparison.creatorScore) : 0;
+  const improved = rankMovement ? rankMovement.to < rankMovement.from : false;
 
   return (
     <div className="results-screen" id="results-screen">
+      {milestone && (
+        <div className="milestone-celebration">
+          <p className="milestone-celebration__title">{t(milestone.threshold === 1 ? "milestone.numberOne" : "milestone.topN", { n: milestone.threshold })}</p>
+          <p className="milestone-celebration__subtitle">{t("milestone.youMadeIt", { rank: milestone.rank })}</p>
+        </div>
+      )}
+
       {isPerfect && <span className="accent-chip accent-amber">{t("results.perfectGame")}</span>}
       {isNewRecord && <span className="accent-chip accent-coral">{t("results.newRecord")}</span>}
 
@@ -47,6 +58,12 @@ export function ResultsScreen({ summary, isNewRecord, challengeComparison, onPla
       </div>
 
       <p style={{ fontWeight: 800, letterSpacing: 0.3, margin: 0 }}>{message}</p>
+
+      {rankMovement && (
+        <p className={`rank-movement${improved ? " rank-movement--up" : " rank-movement--down"}`}>
+          #{rankMovement.from.toLocaleString("en-US")} → #{rankMovement.to.toLocaleString("en-US")} {improved ? "↑" : "↓"}
+        </p>
+      )}
 
       {challengeComparison && (
         <div className="card" style={{ width: "100%", textAlign: "center" }}>

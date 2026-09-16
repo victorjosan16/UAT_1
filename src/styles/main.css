@@ -365,6 +365,57 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.milestone-celebration {
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(135deg, var(--amber), #f4c860);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  margin-bottom: 4px;
+  animation: milestone-pop 0.4s ease-out;
+}
+
+.milestone-celebration__title {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 900;
+  color: #4a2e00;
+  letter-spacing: 0.5px;
+}
+
+.milestone-celebration__subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #4a2e00;
+}
+
+@keyframes milestone-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.rank-movement {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-movement--up {
+  color: var(--emerald-strong);
+}
+
+.rank-movement--down {
+  color: var(--coral);
+}
+
 .milestone-banner {
   text-align: center;
   font-size: 13px;
