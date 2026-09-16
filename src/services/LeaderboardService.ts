@@ -2,8 +2,9 @@ import { collection, doc, getCountFromServer, getDoc, getDocs, limit as fbLimit,
 import { getFirestoreDb } from "./firebase";
 import { utcDateKey } from "@/utils/dailySeed";
 import { isoWeekKey } from "@/utils/isoWeek";
+import { utcMonthKey } from "@/utils/season";
 
-export type LeaderboardScope = "allTime" | "daily" | "weekly";
+export type LeaderboardScope = "allTime" | "daily" | "weekly" | "monthly";
 
 export interface LeaderboardEntry {
   playerId: string;
@@ -48,7 +49,23 @@ const MILESTONE_SAMPLE_SIZE = 100;
 function collectionPathFor(scope: LeaderboardScope): string {
   if (scope === "daily") return `leaderboard_daily/${utcDateKey()}/entries`;
   if (scope === "weekly") return `leaderboard_weekly/${isoWeekKey()}/entries`;
+  if (scope === "monthly") return `leaderboard_monthly/${utcMonthKey()}/entries`;
   return "leaderboard_alltime";
+}
+
+async function rankAtPath(path: string, playerId: string): Promise<MyRank | null> {
+  try {
+    const db = getFirestoreDb();
+    const mine = await getDoc(doc(db, path, playerId));
+    if (!mine.exists()) return null;
+    const score = mine.data().score as number;
+
+    const higherCountQuery = query(collection(db, path), where("score", ">", score));
+    const countSnapshot = await getCountFromServer(higherCountQuery);
+    return { rank: countSnapshot.data().count + 1, score };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -64,7 +81,7 @@ export const LeaderboardService = {
    * a leaderboard should show a player's BEST run, not their latest one.
    */
   async submitScore(input: SubmitScoreInput): Promise<void> {
-    const scopes: LeaderboardScope[] = ["allTime", "daily", "weekly"];
+    const scopes: LeaderboardScope[] = ["allTime", "daily", "weekly", "monthly"];
     await Promise.all(scopes.map((scope) => submitToScope(scope, input)));
   },
 
@@ -87,19 +104,17 @@ export const LeaderboardService = {
 
   /** One-off (not live) — only meaningful to compute when the player's own row isn't already visible in the top N. Returns null if they haven't scored in this scope yet. */
   async getMyRank(scope: LeaderboardScope, playerId: string): Promise<MyRank | null> {
-    try {
-      const db = getFirestoreDb();
-      const path = collectionPathFor(scope);
-      const mine = await getDoc(doc(db, path, playerId));
-      if (!mine.exists()) return null;
-      const score = mine.data().score as number;
+    return rankAtPath(collectionPathFor(scope), playerId);
+  },
 
-      const higherCountQuery = query(collection(db, path), where("score", ">", score));
-      const countSnapshot = await getCountFromServer(higherCountQuery);
-      return { rank: countSnapshot.data().count + 1, score };
-    } catch {
-      return null;
-    }
+  /**
+   * A season just ended (see MASTER PROMPT §20) — the player's final
+   * standing in a specific *past* monthly collection, not the current
+   * one. Historical months are never deleted, so this always has real
+   * data to read as long as the player scored at all that month.
+   */
+  async getSeasonRecap(monthKey: string, playerId: string): Promise<MyRank | null> {
+    return rankAtPath(`leaderboard_monthly/${monthKey}/entries`, playerId);
   },
 
   /**

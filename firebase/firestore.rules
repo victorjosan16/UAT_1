@@ -56,6 +56,12 @@ service cloud.firestore {
       allow write: if isValidLeaderboardEntry(playerId);
     }
 
+    // Monthly = "Season" (see MASTER PROMPT §19) — same shape and trust model as daily/weekly, just windowed by calendar month instead of day/week.
+    match /leaderboard_monthly/{monthKey}/entries/{playerId} {
+      allow read: if true;
+      allow write: if isValidLeaderboardEntry(playerId);
+    }
+
     // Async 1v1: a challenge doc just pins down {mode, seed, options} plus
     // the creator's own already-played score — never a live score source,
     // so it's create-once/immutable rather than merge-updated like the

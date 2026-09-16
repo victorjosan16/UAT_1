@@ -6,6 +6,7 @@ import { PlacementQuizScreen } from "@/screens/PlacementQuizScreen";
 import { PlacementResultScreen } from "@/screens/PlacementResultScreen";
 import { ChallengeScreen } from "@/screens/ChallengeScreen";
 import { ChampionshipScreen } from "@/screens/ChampionshipScreen";
+import { SeasonRecapScreen } from "@/screens/SeasonRecapScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { DiscoverScreen } from "@/screens/DiscoverScreen";
 import { PlayScreen } from "@/screens/PlayScreen";
@@ -24,6 +25,7 @@ import { randomId } from "@/utils/rng";
 import { dailySeed, utcDateKey } from "@/utils/dailySeed";
 import { nudgeRating } from "@/quiz/RatingEngine";
 import { MilestoneService, type MilestoneRank } from "@/services/MilestoneService";
+import { previousMonthKey, utcMonthKey } from "@/utils/season";
 import type { PlacementSummary } from "@/quiz/PlacementEngine";
 import { GAME_VERSION } from "@/branding";
 import type { CategoryId, QuizMode, QuizSummary } from "@/types";
@@ -58,6 +60,7 @@ export function App() {
   const [placementSummary, setPlacementSummary] = useState<PlacementSummary | null>(null);
   const [rankMovement, setRankMovement] = useState<{ from: number; to: number } | null>(null);
   const [milestone, setMilestone] = useState<{ threshold: MilestoneRank; rank: number } | null>(null);
+  const [seasonRecap, setSeasonRecap] = useState<{ monthKey: string; rank: number } | null>(null);
 
   const [incomingChallengeId] = useState(() => ChallengeService.parseIdFromLocation());
   const [challengeScreenVisible, setChallengeScreenVisible] = useState(() => incomingChallengeId !== null);
@@ -79,6 +82,19 @@ export function App() {
     if (!incomingChallengeId) return;
     void ChallengeService.fetch(incomingChallengeId).then(setIncomingChallenge);
   }, [incomingChallengeId]);
+
+  useEffect(() => {
+    if (!nicknameConfirmed || !playerId) return;
+    const currentMonth = utcMonthKey();
+    const lastSeen = LocalStorageService.getLastSeenMonthKey();
+    LocalStorageService.setLastSeenMonthKey(currentMonth);
+    if (!lastSeen || lastSeen === currentMonth) return;
+
+    const endedMonth = previousMonthKey(currentMonth);
+    void LeaderboardService.getSeasonRecap(endedMonth, playerId).then((result) => {
+      if (result) setSeasonRecap({ monthKey: endedMonth, rank: result.rank });
+    });
+  }, [nicknameConfirmed, playerId]);
 
   function handlePlacementComplete(summary: PlacementSummary): void {
     setPlacementSummary(summary);
@@ -285,6 +301,10 @@ export function App() {
   if (challengeScreenVisible) {
     if (incomingChallenge === undefined) return null;
     return <ChallengeScreen challenge={incomingChallenge} onPlay={handlePlayIncomingChallenge} onDismiss={handleDismissChallenge} />;
+  }
+
+  if (seasonRecap) {
+    return <SeasonRecapScreen monthKey={seasonRecap.monthKey} rank={seasonRecap.rank} rating={rating} onContinue={() => setSeasonRecap(null)} />;
   }
 
   if (overlay === "QUIZ" && runConfig) {

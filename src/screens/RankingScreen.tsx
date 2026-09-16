@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { distanceToNextMilestone, LeaderboardService, type AroundMeEntry, type LeaderboardScope, type MilestoneCutoffs } from "@/services/LeaderboardService";
+import { seasonMonthLabel, seasonNumberFor, utcMonthKey } from "@/utils/season";
 import type { LocalBests } from "@/storage/LocalStorage";
 
 const EMPTY_CUTOFFS: MilestoneCutoffs = { top10: null, top50: null, top100: null };
@@ -11,10 +12,11 @@ export interface RankingScreenProps {
   bests: LocalBests;
 }
 
-const SCOPES: readonly { value: LeaderboardScope; key: "ranking.allTime" | "ranking.daily" | "ranking.weekly" }[] = [
+const SCOPES: readonly { value: LeaderboardScope; key: "ranking.allTime" | "ranking.daily" | "ranking.weekly" | "ranking.monthly" }[] = [
   { value: "allTime", key: "ranking.allTime" },
   { value: "daily", key: "ranking.daily" },
   { value: "weekly", key: "ranking.weekly" },
+  { value: "monthly", key: "ranking.monthly" },
 ];
 
 const PODIUM_MEDALS = ["🥇", "🥈", "🥉"];
@@ -26,7 +28,7 @@ const PODIUM_MEDALS = ["🥇", "🥈", "🥉"];
  * only; an empty list is shown honestly rather than with placeholder rows.
  */
 export function RankingScreen({ playerId, bests }: RankingScreenProps) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [scope, setScope] = useState<LeaderboardScope>("allTime");
   const { entries, loading } = useLeaderboard(scope);
   const [aroundMe, setAroundMe] = useState<AroundMeEntry[] | null>(null);
@@ -66,6 +68,12 @@ export function RankingScreen({ playerId, bests }: RankingScreenProps) {
           </button>
         ))}
       </div>
+
+      {scope === "monthly" && (
+        <p className="season-label">
+          {t("ranking.season", { number: String(seasonNumberFor(utcMonthKey())).padStart(2, "0") })} · {seasonMonthLabel(utcMonthKey(), language)}
+        </p>
+      )}
 
       {!loading && entries.length === 0 && (
         <div className="empty-state">

@@ -58,6 +58,7 @@ const KEYS = {
   rating: "q5.rating",
   lastKnownRankPrefix: "q5.lastKnownRank.",
   milestonesReached: "q5.milestonesReached",
+  lastSeenMonthKey: "q5.lastSeenMonthKey",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -212,5 +213,13 @@ export const LocalStorageService = {
     const current = this.getMilestonesReached();
     if (current.includes(key)) return;
     safeSet(KEYS.milestonesReached, JSON.stringify([...current, key]));
+  },
+
+  /** The UTC month key ("2026-09") this client last saw — a mismatch with the real current month means a Season just changed (see MASTER PROMPT §20). Null only before the very first check. */
+  getLastSeenMonthKey(): string | null {
+    return safeGet(KEYS.lastSeenMonthKey);
+  },
+  setLastSeenMonthKey(monthKey: string): void {
+    safeSet(KEYS.lastSeenMonthKey, monthKey);
   },
 };

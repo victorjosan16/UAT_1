@@ -416,6 +416,15 @@ button {
   color: var(--coral);
 }
 
+.season-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--ink-dim);
+  margin: 0 0 12px;
+}
+
 .milestone-banner {
   text-align: center;
   font-size: 13px;
