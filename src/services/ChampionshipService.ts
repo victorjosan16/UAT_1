@@ -37,6 +37,8 @@ export interface ChampionshipPlayer {
   correctCount: number;
   lastAnsweredIndex: number;
   joinedAt: number;
+  /** Knowledge Rating snapshot at the moment this player joined — fixed for the whole match so the post-match rating calc (see RatingEngine.computeArenaRatingChanges) reflects the field as it actually stood at kickoff. */
+  ratingBefore: number;
 }
 
 export const MAX_PLAYERS = 5;
@@ -52,7 +54,7 @@ function playerRef(lobbyId: string, playerId: string) {
   return doc(getFirestoreDb(), "championship_lobbies", lobbyId, "players", playerId);
 }
 
-async function tryJoinLobby(lobbyId: string, playerId: string, nickname: string): Promise<boolean> {
+async function tryJoinLobby(lobbyId: string, playerId: string, nickname: string, ratingBefore: number): Promise<boolean> {
   try {
     const db = getFirestoreDb();
     return await runTransaction(db, async (tx) => {
@@ -64,7 +66,7 @@ async function tryJoinLobby(lobbyId: string, playerId: string, nickname: string)
       const playerSnap = await tx.get(playerRef(lobbyId, playerId));
       if (playerSnap.exists()) return true; // rejoin after a reload — already counted
 
-      tx.set(playerRef(lobbyId, playerId), { nickname, score: 0, correctCount: 0, lastAnsweredIndex: -1, joinedAt: Date.now() });
+      tx.set(playerRef(lobbyId, playerId), { nickname, score: 0, correctCount: 0, lastAnsweredIndex: -1, joinedAt: Date.now(), ratingBefore });
       tx.update(lobbyRef(lobbyId), { playerCount: lobby.playerCount + 1 });
       return true;
     });
@@ -73,7 +75,7 @@ async function tryJoinLobby(lobbyId: string, playerId: string, nickname: string)
   }
 }
 
-async function createLobby(playerId: string, nickname: string, categoryId?: CategoryId): Promise<string> {
+async function createLobby(playerId: string, nickname: string, ratingBefore: number, categoryId?: CategoryId): Promise<string> {
   const lobbyId = randomId(10);
   const payload: ChampionshipLobby = {
     status: "WAITING",
@@ -87,7 +89,7 @@ async function createLobby(playerId: string, nickname: string, categoryId?: Cate
     ...(categoryId ? { categoryId } : {}),
   };
   await setDoc(lobbyRef(lobbyId), payload);
-  await setDoc(playerRef(lobbyId, playerId), { nickname, score: 0, correctCount: 0, lastAnsweredIndex: -1, joinedAt: Date.now() });
+  await setDoc(playerRef(lobbyId, playerId), { nickname, score: 0, correctCount: 0, lastAnsweredIndex: -1, joinedAt: Date.now(), ratingBefore });
   return lobbyId;
 }
 
@@ -98,17 +100,17 @@ async function createLobby(playerId: string, nickname: string, categoryId?: Cate
  * new one and becomes its first player.
  */
 export const ChampionshipService = {
-  async findOrCreateLobby(playerId: string, nickname: string, categoryId?: CategoryId): Promise<string> {
+  async findOrCreateLobby(playerId: string, nickname: string, ratingBefore: number, categoryId?: CategoryId): Promise<string> {
     const db = getFirestoreDb();
     const lobbiesQuery = query(collection(db, "championship_lobbies"), where("status", "==", "WAITING"), orderBy("createdAt", "asc"), fbLimit(10));
     const snapshot = await getDocs(lobbiesQuery);
 
     for (const lobbyDoc of snapshot.docs) {
-      const joined = await tryJoinLobby(lobbyDoc.id, playerId, nickname);
+      const joined = await tryJoinLobby(lobbyDoc.id, playerId, nickname, ratingBefore);
       if (joined) return lobbyDoc.id;
     }
 
-    return createLobby(playerId, nickname, categoryId);
+    return createLobby(playerId, nickname, ratingBefore, categoryId);
   },
 
   subscribeLobby(lobbyId: string, onChange: (lobby: ChampionshipLobby | null) => void): Unsubscribe {

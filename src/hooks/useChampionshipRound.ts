@@ -4,6 +4,9 @@ import { buildStandardQuestionSet, STANDARD_QUESTION_COUNT } from "@/quiz/QuizEn
 import { ScoreEngine } from "@/quiz/ScoreEngine";
 import { advanceStreak, initialStreakState, streakTierReached, type StreakState, type StreakTierLabel } from "@/quiz/StreakSystem";
 import { computeKnowledgeIQ } from "@/quiz/QuizIQ";
+import { computeArenaRatingChanges, placementsFromScores, type ArenaRatingChange } from "@/quiz/RatingEngine";
+import { LocalStorageService } from "@/storage/LocalStorage";
+import { playerService } from "@/services/PlayerService";
 import type { AnswerResult, Language, QuizQuestion } from "@/types";
 
 export type ChampionshipPhase = "LOADING" | ChampionshipStatus;
@@ -25,6 +28,8 @@ export interface ChampionshipRoundState {
   correctCount: number;
   streak: StreakState;
   knowledgeIQ: number;
+  /** This player's own Arena rating change, once computed after the match completes (see RatingEngine.computeArenaRatingChanges) — null until then. */
+  ratingChange: ArenaRatingChange | null;
 }
 
 const TICK_MS = 200;
@@ -57,6 +62,8 @@ export function useChampionshipRound(lobbyId: string, playerId: string, language
   const advanceAttemptedForRef = useRef(-1);
   const playingAttemptedRef = useRef(false);
   const lastWaitAttemptRef = useRef(0);
+  const ratingAppliedRef = useRef(false);
+  const [ratingChange, setRatingChange] = useState<ArenaRatingChange | null>(null);
 
   useEffect(() => {
     const unsubLobby = ChampionshipService.subscribeLobby(lobbyId, setLobby);
@@ -124,6 +131,20 @@ export function useChampionshipRound(lobbyId: string, playerId: string, language
   }
 
   useEffect(() => {
+    if (lobby?.status !== "COMPLETE" || ratingAppliedRef.current || players.length === 0) return;
+    ratingAppliedRef.current = true;
+
+    const placements = placementsFromScores(players.map((p) => ({ playerId: p.playerId, score: p.score })));
+    const changes = computeArenaRatingChanges(players.map((p) => ({ playerId: p.playerId, ratingBefore: p.ratingBefore, placement: placements.get(p.playerId)! })));
+    const mine = changes.find((c) => c.playerId === playerId);
+    if (!mine) return;
+
+    setRatingChange(mine);
+    LocalStorageService.setRating(mine.ratingAfter);
+    void playerService.syncRating(playerId, mine.ratingAfter);
+  }, [lobby?.status, players, playerId]);
+
+  useEffect(() => {
     const id = setInterval(() => {
       if (!lobby) return;
       const now = Date.now();
@@ -189,6 +210,7 @@ export function useChampionshipRound(lobbyId: string, playerId: string, language
     correctCount: scoreEngineRef.current.correctAnswerCount,
     streak: streakRef.current,
     knowledgeIQ: computeKnowledgeIQ(answersRef.current),
+    ratingChange,
   };
 
   return {

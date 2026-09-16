@@ -261,6 +261,15 @@ const STRINGS = {
     id: "Menunggu pertanyaan berikutnya…",
     ru: "Ожидание следующего вопроса…",
   },
+  "championship.krChange": {
+    en: "KR {sign}{delta}",
+    ro: "KR {sign}{delta}",
+    es: "KR {sign}{delta}",
+    pt: "KR {sign}{delta}",
+    hi: "KR {sign}{delta}",
+    id: "KR {sign}{delta}",
+    ru: "KR {sign}{delta}",
+  },
 
   "challenge.heading": {
     en: "{name} challenges you!",

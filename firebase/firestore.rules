@@ -128,12 +128,13 @@ service cloud.firestore {
 
       function isValidChampionshipPlayer() {
         let data = request.resource.data;
-        return data.keys().hasOnly(['nickname', 'score', 'correctCount', 'lastAnsweredIndex', 'joinedAt'])
+        return data.keys().hasOnly(['nickname', 'score', 'correctCount', 'lastAnsweredIndex', 'joinedAt', 'ratingBefore'])
           && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
           && data.score is number && data.score >= 0 && data.score <= 10000000
           && data.correctCount is number && data.correctCount >= 0 && data.correctCount <= 20
           && data.lastAnsweredIndex is number && data.lastAnsweredIndex >= -1 && data.lastAnsweredIndex <= 20
-          && data.joinedAt is number;
+          && data.joinedAt is number
+          && data.ratingBefore is number && data.ratingBefore >= 0 && data.ratingBefore <= 5000;
       }
 
       match /players/{playerId} {

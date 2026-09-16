@@ -5,18 +5,20 @@ import { ChampionshipService, MAX_PLAYERS } from "@/services/ChampionshipService
 import { ChampionshipLobbyScreen } from "@/screens/ChampionshipLobbyScreen";
 import { ChampionshipQuizScreen } from "@/screens/ChampionshipQuizScreen";
 import { ChampionshipResultsScreen } from "@/screens/ChampionshipResultsScreen";
+import { LEGACY_DEFAULT_RATING } from "@/quiz/RatingEngine";
 import { GAME_NAME } from "@/branding";
 import type { CategoryId } from "@/types";
 
 export interface ChampionshipScreenProps {
   playerId: string;
   nickname: string;
+  rating: number | null;
   categoryId?: CategoryId;
   onExit: () => void;
 }
 
 /** Top-level orchestrator: resolves a lobby via matchmaking, then hands off to the round hook and renders whichever phase it reports. */
-export function ChampionshipScreen({ playerId, nickname, categoryId, onExit }: ChampionshipScreenProps) {
+export function ChampionshipScreen({ playerId, nickname, rating, categoryId, onExit }: ChampionshipScreenProps) {
   const { t } = useLanguage();
   const [matchKey, setMatchKey] = useState(0);
   const [lobbyId, setLobbyId] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function ChampionshipScreen({ playerId, nickname, categoryId, onExit }: C
     let cancelled = false;
     setLobbyId(null);
     setMatchmakingFailed(false);
-    ChampionshipService.findOrCreateLobby(playerId, nickname, categoryId)
+    ChampionshipService.findOrCreateLobby(playerId, nickname, rating ?? LEGACY_DEFAULT_RATING, categoryId)
       .then((id) => {
         if (!cancelled) setLobbyId(id);
       })
@@ -36,6 +38,7 @@ export function ChampionshipScreen({ playerId, nickname, categoryId, onExit }: C
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerId, nickname, categoryId, matchKey]);
 
   if (matchmakingFailed) {
@@ -95,5 +98,14 @@ function ChampionshipRound({ lobbyId, playerId, onExit, onRematch }: Championshi
     return <ChampionshipQuizScreen state={state} playerId={playerId} onSubmit={submitAnswer} onQuit={onExit} />;
   }
 
-  return <ChampionshipResultsScreen players={state.players} playerId={playerId} knowledgeIQ={state.knowledgeIQ} onPlayAgain={onRematch} onBackToHome={onExit} />;
+  return (
+    <ChampionshipResultsScreen
+      players={state.players}
+      playerId={playerId}
+      knowledgeIQ={state.knowledgeIQ}
+      ratingChange={state.ratingChange}
+      onPlayAgain={onRematch}
+      onBackToHome={onExit}
+    />
+  );
 }

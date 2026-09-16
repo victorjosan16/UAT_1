@@ -4,10 +4,7 @@ import { LocalStorageService } from "@/storage/LocalStorage";
 import { normalizeNickname } from "@/utils/nickname";
 import { randomId } from "@/utils/rng";
 import { withTimeout } from "@/utils/async";
-import { initialRatingFromIQ } from "@/quiz/RatingEngine";
-
-/** A legacy player (from before Knowledge Rating existed) never played a Placement Quiz — this is a fair, non-punishing mid-ladder default, not a guess at their real skill. */
-const LEGACY_DEFAULT_RATING = 1000;
+import { initialRatingFromIQ, LEGACY_DEFAULT_RATING } from "@/quiz/RatingEngine";
 
 const SIGN_IN_TIMEOUT_MS = 4000;
 

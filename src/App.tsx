@@ -292,7 +292,7 @@ export function App() {
   }
 
   if (overlay === "CHAMPIONSHIP" && playerId) {
-    return <ChampionshipScreen playerId={playerId} nickname={nickname} onExit={handleBackToHome} />;
+    return <ChampionshipScreen playerId={playerId} nickname={nickname} rating={rating} onExit={handleBackToHome} />;
   }
 
   if (overlay === "RESULTS" && lastSummary) {

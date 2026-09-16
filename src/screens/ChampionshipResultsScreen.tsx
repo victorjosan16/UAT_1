@@ -1,18 +1,20 @@
 import { useLanguage } from "@/i18n/LanguageContext";
 import { knowledgeRankLabel, rankForKnowledgeIQ } from "@/quiz/QuizIQ";
+import type { ArenaRatingChange } from "@/quiz/RatingEngine";
 import type { ChampionshipPlayer } from "@/services/ChampionshipService";
 
 export interface ChampionshipResultsScreenProps {
   players: readonly ChampionshipPlayer[];
   playerId: string;
   knowledgeIQ: number;
+  ratingChange: ArenaRatingChange | null;
   onPlayAgain: () => void;
   onBackToHome: () => void;
 }
 
 const PODIUM_MEDALS = ["🥇", "🥈", "🥉"];
 
-export function ChampionshipResultsScreen({ players, playerId, knowledgeIQ, onPlayAgain, onBackToHome }: ChampionshipResultsScreenProps) {
+export function ChampionshipResultsScreen({ players, playerId, knowledgeIQ, ratingChange, onPlayAgain, onBackToHome }: ChampionshipResultsScreenProps) {
   const { language, t } = useLanguage();
   const rank = knowledgeRankLabel(rankForKnowledgeIQ(knowledgeIQ), language);
 
@@ -31,6 +33,12 @@ export function ChampionshipResultsScreen({ players, playerId, knowledgeIQ, onPl
         <p className="results-iq-card__value">{knowledgeIQ}</p>
         <p className="results-iq-card__rank">{rank}</p>
       </div>
+
+      {ratingChange && (
+        <p className={`rank-movement${ratingChange.delta >= 0 ? " rank-movement--up" : " rank-movement--down"}`}>
+          {t("championship.krChange", { sign: ratingChange.delta >= 0 ? "+" : "", delta: ratingChange.delta })}
+        </p>
+      )}
 
       {podium.length === 3 && (
         <div className="podium">
