@@ -12,12 +12,13 @@ describe("COUNTRIES dataset", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it("has both languages filled in for name and capital", () => {
+  it("has all 7 languages filled in for name and capital", () => {
+    const languages = ["en", "ro", "es", "pt", "hi", "id", "ru"] as const;
     for (const country of COUNTRIES) {
-      expect(country.name.en.length).toBeGreaterThan(0);
-      expect(country.name.ro.length).toBeGreaterThan(0);
-      expect(country.capital.en.length).toBeGreaterThan(0);
-      expect(country.capital.ro.length).toBeGreaterThan(0);
+      for (const lang of languages) {
+        expect(country.name[lang].length).toBeGreaterThan(0);
+        expect(country.capital[lang].length).toBeGreaterThan(0);
+      }
     }
   });
 

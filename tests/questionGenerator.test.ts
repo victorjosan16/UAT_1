@@ -8,9 +8,17 @@ const SOURCE: QuizQuestionSource = {
   categoryId: "GENERAL_KNOWLEDGE",
   difficulty: 2,
   renderKind: "TEXT",
-  prompt: { en: "What is 2 + 2?", ro: "Cât fac 2 + 2?" },
-  correctAnswer: { en: "4", ro: "4" },
-  distractors: { en: ["3", "5", "22"], ro: ["3", "5", "22"] },
+  prompt: { en: "What is 2 + 2?", ro: "Cât fac 2 + 2?", es: "¿Cuánto es 2 + 2?", pt: "Quanto é 2 + 2?", hi: "2 + 2 कितना होता है?", id: "Berapa 2 + 2?", ru: "Сколько будет 2 + 2?" },
+  correctAnswer: { en: "4", ro: "4", es: "4", pt: "4", hi: "4", id: "4", ru: "4" },
+  distractors: {
+    en: ["3", "5", "22"],
+    ro: ["3", "5", "22"],
+    es: ["3", "5", "22"],
+    pt: ["3", "5", "22"],
+    hi: ["3", "5", "22"],
+    id: ["3", "5", "22"],
+    ru: ["3", "5", "22"],
+  },
 };
 
 describe("buildQuestion", () => {

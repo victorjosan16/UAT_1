@@ -32,12 +32,12 @@ export function rankForKnowledgeIQ(iq: number): KnowledgeRank {
 }
 
 const RANK_LABELS: Record<KnowledgeRank, Record<Language, string>> = {
-  ROOKIE: { en: "ROOKIE", ro: "ÎNCEPĂTOR" },
-  EXPLORER: { en: "EXPLORER", ro: "EXPLORATOR" },
-  PRO: { en: "PRO", ro: "PRO" },
-  EXPERT: { en: "EXPERT", ro: "EXPERT" },
-  MASTER: { en: "MASTER", ro: "MAESTRU" },
-  GENIUS: { en: "GENIUS", ro: "GENIU" },
+  ROOKIE: { en: "ROOKIE", ro: "ÎNCEPĂTOR", es: "NOVATO", pt: "NOVATO", hi: "नौसिखिया", id: "PEMULA", ru: "НОВИЧОК" },
+  EXPLORER: { en: "EXPLORER", ro: "EXPLORATOR", es: "EXPLORADOR", pt: "EXPLORADOR", hi: "एक्सप्लोरर", id: "PENJELAJAH", ru: "ИССЛЕДОВАТЕЛЬ" },
+  PRO: { en: "PRO", ro: "PRO", es: "PRO", pt: "PRO", hi: "प्रो", id: "PRO", ru: "ПРО" },
+  EXPERT: { en: "EXPERT", ro: "EXPERT", es: "EXPERTO", pt: "EXPERT", hi: "एक्सपर्ट", id: "AHLI", ru: "ЭКСПЕРТ" },
+  MASTER: { en: "MASTER", ro: "MAESTRU", es: "MAESTRO", pt: "MESTRE", hi: "मास्टर", id: "MASTER", ru: "МАСТЕР" },
+  GENIUS: { en: "GENIUS", ro: "GENIU", es: "GENIO", pt: "GÊNIO", hi: "जीनियस", id: "JENIUS", ru: "ГЕНИЙ" },
 };
 
 export function knowledgeRankLabel(rank: KnowledgeRank, language: Language): string {

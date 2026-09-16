@@ -1,31 +1,39 @@
 import { COUNTRIES } from "@/data/countries";
 import { confusableCountriesFor } from "./countryDistractors";
-import type { QuizQuestionSource } from "@/types";
+import type { Language, QuizQuestionSource } from "@/types";
 
-/** "Statele Unite" is the only plural country name in the dataset — needs plural verb agreement in Romanian ("au" not "are"). */
-const PLURAL_NAME_IDS = new Set(["usa"]);
+/**
+ * Phrased as "{country} — what is its capital?" in every language instead
+ * of "What is the capital of {country}?" — the latter needs a per-country,
+ * per-language grammatical form (Romanian genitive "a României" vs "al
+ * Ciadului", Russian genitive "России" vs "Германии", English/Spanish/
+ * Portuguese definite articles for a handful of names like "the United
+ * States"/"the Netherlands") that would need hand-checking for all 38
+ * countries × 7 languages. Naming the country first and asking about "its"
+ * capital keeps the name in its plain, invariant form everywhere.
+ */
+const CAPITAL_QUESTION_SUFFIX: Record<Language, string> = {
+  en: "what is its capital?",
+  ro: "care este capitala sa?",
+  es: "¿cuál es su capital?",
+  pt: "qual é a sua capital?",
+  hi: "इसकी राजधानी क्या है?",
+  id: "apa ibu kotanya?",
+  ru: "какая у неё столица?",
+};
+
+const LANGUAGES: readonly Language[] = ["en", "ro", "es", "pt", "hi", "id", "ru"];
 
 export const CAPITAL_QUESTIONS: readonly QuizQuestionSource[] = COUNTRIES.map((country) => {
   const distractors = confusableCountriesFor(country.id);
-  const roVerb = PLURAL_NAME_IDS.has(country.id) ? "au" : "are";
 
   return {
     id: `capital-${country.id}`,
     categoryId: "CAPITALS",
     difficulty: country.difficulty,
     renderKind: "TEXT",
-    prompt: {
-      en: `What is the capital of ${country.name.en}?`,
-      // Phrased as "What capital does X have?" — sidesteps Romanian genitive
-      // inflection (which would otherwise need a hand-checked form per
-      // country, e.g. "a României" vs "al Ciadului" vs "lui Monaco") while
-      // staying completely natural and grammatically correct.
-      ro: `Ce capitală ${roVerb} ${country.name.ro}?`,
-    },
+    prompt: Object.fromEntries(LANGUAGES.map((lang) => [lang, `${country.name[lang]} — ${CAPITAL_QUESTION_SUFFIX[lang]}`])) as Record<Language, string>,
     correctAnswer: country.capital,
-    distractors: {
-      en: distractors.map((c) => c.capital.en),
-      ro: distractors.map((c) => c.capital.ro),
-    },
+    distractors: Object.fromEntries(LANGUAGES.map((lang) => [lang, distractors.map((c) => c.capital[lang])])) as Record<Language, string[]>,
   };
 });

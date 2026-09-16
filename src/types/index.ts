@@ -2,7 +2,7 @@
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 /** Supported content/UI languages — see docs/GAME_DESIGN.md §Localization. More can be added without touching the quiz engine. */
-export type Language = "en" | "ro";
+export type Language = "en" | "ro" | "es" | "pt" | "hi" | "id" | "ru";
 
 /** A string translated into every supported language, keyed by canonical content id elsewhere (question id, country id, category id). */
 export type LocalizedText = Record<Language, string>;

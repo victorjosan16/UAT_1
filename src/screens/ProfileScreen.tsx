@@ -15,6 +15,11 @@ const BADGE_KEYS: StringKey[] = ["badge.firstWin", "badge.perfect10", "badge.onF
 const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "ro", label: "RO" },
+  { code: "es", label: "ES" },
+  { code: "pt", label: "PT" },
+  { code: "hi", label: "HI" },
+  { code: "id", label: "ID" },
+  { code: "ru", label: "RU" },
 ];
 
 export function ProfileScreen({ nickname, bests }: ProfileScreenProps) {

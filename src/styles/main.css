@@ -520,6 +520,7 @@ button {
 
 .tab-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -529,7 +530,7 @@ button {
   border: none;
   background: var(--surface-sunken);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 800;
   color: var(--ink-dim);

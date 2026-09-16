@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ALL_QUESTIONS, questionsForCategory } from "@/quiz/QuestionBank";
 import { AVAILABLE_CATEGORIES } from "@/data/categories";
 
-const LANGUAGES = ["en", "ro"] as const;
+const LANGUAGES = ["en", "ro", "es", "pt", "hi", "id", "ru"] as const;
 
 describe("QuestionBank", () => {
   it("has no duplicate question ids across the whole bank", () => {
@@ -32,7 +32,9 @@ describe("QuestionBank", () => {
 
   it("has the same distractor count in every language for a given question", () => {
     for (const q of ALL_QUESTIONS) {
-      expect(q.distractors.ro.length).toBe(q.distractors.en.length);
+      for (const lang of LANGUAGES) {
+        expect(q.distractors[lang].length).toBe(q.distractors.en.length);
+      }
     }
   });
 
