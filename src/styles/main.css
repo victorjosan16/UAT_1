@@ -538,6 +538,68 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.podium__slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 14px 8px 12px;
+  text-align: center;
+  min-width: 0;
+}
+
+.podium__slot--1 {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: linear-gradient(180deg, rgba(232, 161, 58, 0.14), var(--surface));
+  border-color: var(--amber);
+  order: 2;
+}
+
+.podium__slot--2 {
+  order: 1;
+}
+
+.podium__slot--3 {
+  order: 3;
+}
+
+.podium__slot--me {
+  box-shadow: inset 0 0 0 2px var(--emerald);
+}
+
+.podium__medal {
+  font-size: 26px;
+}
+
+.podium__name {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.podium__score {
+  font-size: 13px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--emerald-strong);
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -591,6 +653,37 @@ button {
 }
 
 .tab-row button.tab--active {
+  background: var(--emerald);
+  color: #ffffff;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 2px;
+}
+
+.settings-row__label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.toggle-switch {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: var(--surface-sunken);
+  color: var(--ink-dim);
+  cursor: pointer;
+  min-width: 56px;
+}
+
+.toggle-switch--on {
   background: var(--emerald);
   color: #ffffff;
 }

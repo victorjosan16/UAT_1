@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 import type { StringKey } from "@/i18n/strings";
-import type { LocalBests } from "@/storage/LocalStorage";
+import { LocalStorageService, type LocalBests } from "@/storage/LocalStorage";
 import type { Language } from "@/types";
 
 export interface ProfileScreenProps {
@@ -25,9 +26,19 @@ const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
 
 export function ProfileScreen({ nickname, bests, onChangeNickname }: ProfileScreenProps) {
   const { language, setLanguage, t } = useLanguage();
+  const { canInstall, promptInstall } = usePwaInstall();
   const [tab, setTab] = useState<Tab>("STATS");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(nickname);
+  const [preferences, setPreferences] = useState(() => LocalStorageService.getPreferences());
+
+  function toggleSound(): void {
+    setPreferences(LocalStorageService.updatePreferences({ soundEnabled: !preferences.soundEnabled }));
+  }
+
+  function toggleHaptics(): void {
+    setPreferences(LocalStorageService.updatePreferences({ hapticsEnabled: !preferences.hapticsEnabled }));
+  }
 
   function startEditing(): void {
     setDraft(nickname);
@@ -73,6 +84,25 @@ export function ProfileScreen({ nickname, bests, onChangeNickname }: ProfileScre
           </button>
         ))}
       </div>
+
+      <div className="settings-row">
+        <span className="settings-row__label">{t("profile.sound")}</span>
+        <button className={`toggle-switch${preferences.soundEnabled ? " toggle-switch--on" : ""}`} onClick={toggleSound}>
+          {preferences.soundEnabled ? t("common.on") : t("common.off")}
+        </button>
+      </div>
+      <div className="settings-row">
+        <span className="settings-row__label">{t("profile.haptics")}</span>
+        <button className={`toggle-switch${preferences.hapticsEnabled ? " toggle-switch--on" : ""}`} onClick={toggleHaptics}>
+          {preferences.hapticsEnabled ? t("common.on") : t("common.off")}
+        </button>
+      </div>
+
+      {canInstall && (
+        <button className="btn btn--secondary" style={{ marginBottom: 16 }} onClick={() => void promptInstall()}>
+          📲 {t("profile.installApp")}
+        </button>
+      )}
 
       <div className="tab-row">
         <button className={tab === "STATS" ? "tab--active" : ""} onClick={() => setTab("STATS")}>{t("profile.stats")}</button>

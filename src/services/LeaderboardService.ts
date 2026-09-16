@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, limit as fbLimit, onSnapshot, orderBy, query, setDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, doc, getCountFromServer, getDoc, limit as fbLimit, onSnapshot, orderBy, query, setDoc, where, type Unsubscribe } from "firebase/firestore";
 import { getFirestoreDb } from "./firebase";
 import { utcDateKey } from "@/utils/dailySeed";
 import { isoWeekKey } from "@/utils/isoWeek";
@@ -18,6 +18,11 @@ export interface SubmitScoreInput {
   nickname: string;
   score: number;
   knowledgeIQ: number;
+}
+
+export interface MyRank {
+  rank: number;
+  score: number;
 }
 
 const TOP_N = 20;
@@ -60,6 +65,23 @@ export const LeaderboardService = {
         onEntries([]);
       },
     );
+  },
+
+  /** One-off (not live) — only meaningful to compute when the player's own row isn't already visible in the top N. Returns null if they haven't scored in this scope yet. */
+  async getMyRank(scope: LeaderboardScope, playerId: string): Promise<MyRank | null> {
+    try {
+      const db = getFirestoreDb();
+      const path = collectionPathFor(scope);
+      const mine = await getDoc(doc(db, path, playerId));
+      if (!mine.exists()) return null;
+      const score = mine.data().score as number;
+
+      const higherCountQuery = query(collection(db, path), where("score", ">", score));
+      const countSnapshot = await getCountFromServer(higherCountQuery);
+      return { rank: countSnapshot.data().count + 1, score };
+    } catch {
+      return null;
+    }
   },
 };
 

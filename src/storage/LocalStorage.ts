@@ -8,7 +8,7 @@ import type { Language } from "@/types";
  * it is client-controlled and only for local, non-competitive state.
  */
 
-const SUPPORTED_LANGUAGES: readonly Language[] = ["en", "ro"];
+const SUPPORTED_LANGUAGES: readonly Language[] = ["en", "ro", "es", "pt", "hi", "id", "ru"];
 
 function detectDefaultLanguage(): Language {
   try {

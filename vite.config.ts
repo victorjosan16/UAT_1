@@ -27,6 +27,17 @@ export default defineConfig({
     outDir: "firebase/dist",
     emptyOutDir: true,
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Firebase (auth+firestore) is the single largest dependency and
+        // changes far less often than the app's own code — its own chunk
+        // downloads in parallel with the main bundle and stays cached
+        // across app updates that don't touch it.
+        manualChunks: {
+          firebase: ["firebase/app", "firebase/auth", "firebase/firestore"],
+        },
+      },
+    },
   },
   plugins: [
     react(),

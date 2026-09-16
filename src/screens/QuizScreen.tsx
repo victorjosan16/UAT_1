@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import { FlagIcon } from "@/components/FlagIcon";
 import { Timer } from "@/components/Timer";
 import { useQuizEngine } from "@/hooks/useQuizEngine";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getCountryById } from "@/data/countries";
 import { difficultyGroupForLevel } from "@/quiz/LevelDefinition";
+import { soundManager } from "@/services/SoundManager";
+import { hapticsManager } from "@/services/HapticsManager";
 import type { AnswerResult, CategoryId, QuizMode, QuizSummary } from "@/types";
 
 export interface QuizScreenProps {
@@ -18,7 +21,22 @@ export interface QuizScreenProps {
 export function QuizScreen({ mode, seed, level, categoryId, onComplete, onQuit }: QuizScreenProps) {
   const { language, t } = useLanguage();
   const { state, submitAnswer } = useQuizEngine(mode, seed, { level, categoryId, language }, onComplete);
-  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, questionIndex, totalQuestions, correctCount, level: engineLevel } = state;
+  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, streakTierReached, questionIndex, totalQuestions, correctCount, level: engineLevel } = state;
+
+  useEffect(() => {
+    if (!lastAnswer) return;
+    if (streakTierReached) {
+      soundManager.playStreak();
+      hapticsManager.streak();
+    } else if (lastAnswer.correct) {
+      soundManager.playCorrect();
+      hapticsManager.correct();
+    } else {
+      soundManager.playWrong();
+      hapticsManager.wrong();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastAnswer]);
 
   if (!currentQuestion) return null;
 

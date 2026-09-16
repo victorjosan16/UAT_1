@@ -54,6 +54,30 @@ service cloud.firestore {
       allow write: if isValidLeaderboardEntry(playerId);
     }
 
+    // Async 1v1: a challenge doc just pins down {mode, seed, options} plus
+    // the creator's own already-played score — never a live score source,
+    // so it's create-once/immutable rather than merge-updated like the
+    // collections above.
+    function isValidChallenge() {
+      let data = request.resource.data;
+      return request.auth != null
+        && request.auth.uid == data.creatorId
+        && data.keys().hasAll(['creatorId', 'creatorNickname', 'mode', 'seed', 'creatorScore', 'creatorKnowledgeIQ', 'createdAt'])
+        && data.keys().hasOnly(['creatorId', 'creatorNickname', 'mode', 'seed', 'categoryId', 'level', 'creatorScore', 'creatorKnowledgeIQ', 'createdAt'])
+        && data.creatorNickname is string && data.creatorNickname.size() > 0 && data.creatorNickname.size() <= 16
+        && data.mode is string
+        && data.seed is string && data.seed.size() > 0 && data.seed.size() <= 64
+        && data.creatorScore is number && data.creatorScore >= 0 && data.creatorScore <= 10000000
+        && data.creatorKnowledgeIQ is number && data.creatorKnowledgeIQ >= 0 && data.creatorKnowledgeIQ <= 100
+        && data.createdAt is number;
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if request.auth != null;
+      allow create: if isValidChallenge();
+      allow update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
