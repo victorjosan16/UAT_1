@@ -151,6 +151,23 @@ service cloud.firestore {
       }
     }
 
+    // One shared, aggregated counter per day (see MASTER PROMPT §11) —
+    // never a per-player doc, so there is no owner to scope the write to;
+    // any signed-in client may increment it, same trust model as
+    // everything else with no server to re-derive against.
+    function isValidQotdStats() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['correctCount', 'totalCount'])
+        && data.correctCount is number && data.correctCount >= 0
+        && data.totalCount is number && data.totalCount >= 0
+        && data.correctCount <= data.totalCount;
+    }
+
+    match /qotd_stats/{dateKey} {
+      allow read: if true;
+      allow write: if request.auth != null && isValidQotdStats();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

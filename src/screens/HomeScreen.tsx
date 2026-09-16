@@ -15,9 +15,10 @@ export interface HomeScreenProps {
   onPlayLevel: () => void;
   onOpenCategory: (id: CategoryId) => void;
   onOpenDiscover: () => void;
+  onOpenQotd: () => void;
 }
 
-export function HomeScreen({ nickname, bests, rating, currentLevel, onPlayDaily, onPlayQuick, onPlayLevel, onOpenCategory, onOpenDiscover }: HomeScreenProps) {
+export function HomeScreen({ nickname, bests, rating, currentLevel, onPlayDaily, onPlayQuick, onPlayLevel, onOpenCategory, onOpenDiscover, onOpenQotd }: HomeScreenProps) {
   const { language, t } = useLanguage();
 
   function levelLabel(level: number): string {
@@ -61,6 +62,16 @@ export function HomeScreen({ nickname, bests, rating, currentLevel, onPlayDaily,
           {t("home.categories")}
         </button>
       </div>
+
+      <button className="card" style={{ width: "100%", textAlign: "left", cursor: "pointer" }} onClick={onOpenQotd}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>❓ {t("qotd.homeTitle")}</p>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ink-dim)" }}>{t("qotd.homeDesc")}</p>
+          </div>
+          <span className="accent-chip accent-amber">{t("home.hero.cta")}</span>
+        </div>
+      </button>
 
       <div className="section-heading">
         <h2>{t("home.categories")}</h2>

@@ -7,6 +7,7 @@ import { PlacementResultScreen } from "@/screens/PlacementResultScreen";
 import { ChallengeScreen } from "@/screens/ChallengeScreen";
 import { ChampionshipScreen } from "@/screens/ChampionshipScreen";
 import { SeasonRecapScreen } from "@/screens/SeasonRecapScreen";
+import { QuestionOfDayScreen } from "@/screens/QuestionOfDayScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { DiscoverScreen } from "@/screens/DiscoverScreen";
 import { PlayScreen } from "@/screens/PlayScreen";
@@ -31,7 +32,7 @@ import type { PlacementSummary } from "@/quiz/PlacementEngine";
 import { GAME_VERSION } from "@/branding";
 import type { CategoryId, QuizMode, QuizSummary } from "@/types";
 
-type OverlayScreen = "QUIZ" | "RESULTS" | "CHAMPIONSHIP" | null;
+type OverlayScreen = "QUIZ" | "RESULTS" | "CHAMPIONSHIP" | "QOTD" | null;
 
 /** Brand-new players only — see MASTER PROMPT §2-7. A returning player who already confirmed a nickname skips straight past this (see PlayerService's legacy-rating default). */
 type OnboardingStage = "ENTRY" | "PLACEMENT" | "PLACEMENT_RESULT" | "NICKNAME";
@@ -47,7 +48,7 @@ const ONE_DAY_MS = 86_400_000;
 
 export function App() {
   const [tab, setTab] = useState<NavTab>("HOME");
-  const [overlay, setOverlay] = useState<OverlayScreen>(null);
+  const [overlay, setOverlay] = useState<OverlayScreen>(() => (typeof window !== "undefined" && window.location.pathname === "/qotd" ? "QOTD" : null));
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [lastSummary, setLastSummary] = useState<ResultsSummaryView | null>(null);
   const [isNewRecord, setIsNewRecord] = useState(false);
@@ -83,6 +84,12 @@ export function App() {
     if (!incomingChallengeId) return;
     void ChallengeService.fetch(incomingChallengeId).then(setIncomingChallenge);
   }, [incomingChallengeId]);
+
+  useEffect(() => {
+    if (overlay === "QOTD") window.history.replaceState(null, "", "/");
+    // Only ever meaningful on the very first render (a /qotd deep link) — never re-run on later overlay changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!nicknameConfirmed || !playerId) return;
@@ -328,6 +335,10 @@ export function App() {
     return <ChampionshipScreen playerId={playerId} nickname={nickname} rating={rating} onExit={handleBackToHome} />;
   }
 
+  if (overlay === "QOTD") {
+    return <QuestionOfDayScreen dateKey={utcDateKey()} shareUrl={`${window.location.origin}/qotd`} onBack={handleBackToHome} />;
+  }
+
   if (overlay === "RESULTS" && lastSummary) {
     return (
       <ResultsScreen
@@ -357,6 +368,7 @@ export function App() {
             onPlayLevel={handlePlayLevel}
             onOpenCategory={handleOpenCategory}
             onOpenDiscover={() => setTab("DISCOVER")}
+            onOpenQotd={() => setOverlay("QOTD")}
           />
         )}
         {tab === "DISCOVER" && <DiscoverScreen onOpenCategory={handleOpenCategory} />}
