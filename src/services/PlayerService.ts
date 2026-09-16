@@ -4,6 +4,10 @@ import { LocalStorageService } from "@/storage/LocalStorage";
 import { normalizeNickname } from "@/utils/nickname";
 import { randomId } from "@/utils/rng";
 import { withTimeout } from "@/utils/async";
+import { initialRatingFromIQ } from "@/quiz/RatingEngine";
+
+/** A legacy player (from before Knowledge Rating existed) never played a Placement Quiz — this is a fair, non-punishing mid-ladder default, not a guess at their real skill. */
+const LEGACY_DEFAULT_RATING = 1000;
 
 const SIGN_IN_TIMEOUT_MS = 4000;
 
@@ -51,7 +55,26 @@ export class PlayerService {
       LocalStorageService.setNickname(nickname);
     }
 
+    // A returning player who confirmed a nickname before Knowledge Rating existed never played
+    // a Placement Quiz and never will retroactively — give them a fair starting KR instead of
+    // leaving the rating card blank forever.
+    const { nicknameConfirmed, placementCompleted } = LocalStorageService.getPreferences();
+    if (nicknameConfirmed && !placementCompleted && LocalStorageService.getRating() === null) {
+      const bests = LocalStorageService.getLocalBests();
+      LocalStorageService.setRating(bests.bestKnowledgeIQ > 0 ? initialRatingFromIQ(bests.bestKnowledgeIQ) : LEGACY_DEFAULT_RATING);
+    }
+
     return { playerId, nickname };
+  }
+
+  /** Best-effort — the rating still lives locally and keeps working fully offline either way. */
+  async syncRating(playerId: string, rating: number): Promise<void> {
+    try {
+      const db = getFirestoreDb();
+      await setDoc(doc(db, "players", playerId), { rating: Math.round(rating), updatedAt: Date.now() }, { merge: true });
+    } catch {
+      // Offline, unauthenticated (local guest id), or rules-denied.
+    }
   }
 
   /** Updates the nickname locally (instant) and, best-effort, in Firestore so it's tied to this player's identity — see firestore.rules `players/{playerId}`. */
@@ -65,7 +88,7 @@ export class PlayerService {
   private async syncNickname(playerId: string, nickname: string): Promise<void> {
     try {
       const db = getFirestoreDb();
-      await setDoc(doc(db, "players", playerId), { nickname, updatedAt: Date.now() });
+      await setDoc(doc(db, "players", playerId), { nickname, updatedAt: Date.now() }, { merge: true });
     } catch {
       // Offline, unauthenticated (local guest id), or rules-denied — the nickname still works fully offline from localStorage.
     }

@@ -1,12 +1,14 @@
 import { AVAILABLE_CATEGORIES } from "@/data/categories";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { difficultyGroupForLevel, MAX_LEVEL } from "@/quiz/LevelDefinition";
+import { tierForRating } from "@/quiz/RatingEngine";
 import type { LocalBests } from "@/storage/LocalStorage";
 import type { CategoryId } from "@/types";
 
 export interface HomeScreenProps {
   nickname: string;
   bests: LocalBests;
+  rating: number | null;
   currentLevel: number;
   onPlayDaily: () => void;
   onPlayQuick: () => void;
@@ -15,7 +17,7 @@ export interface HomeScreenProps {
   onOpenDiscover: () => void;
 }
 
-export function HomeScreen({ nickname, bests, currentLevel, onPlayDaily, onPlayQuick, onPlayLevel, onOpenCategory, onOpenDiscover }: HomeScreenProps) {
+export function HomeScreen({ nickname, bests, rating, currentLevel, onPlayDaily, onPlayQuick, onPlayLevel, onOpenCategory, onOpenDiscover }: HomeScreenProps) {
   const { language, t } = useLanguage();
 
   function levelLabel(level: number): string {
@@ -30,6 +32,13 @@ export function HomeScreen({ nickname, bests, currentLevel, onPlayDaily, onPlayQ
           <span className="home-header__streak">🔥 {t(bests.dailyStreak === 1 ? "home.dailyStreakDay" : "home.dailyStreakDays", { count: bests.dailyStreak })}</span>
         )}
       </div>
+
+      {rating !== null && (
+        <div className="rank-card">
+          <p className="rank-card__tier">{tierForRating(rating).label}</p>
+          <p className="rank-card__kr">{t("placement.krLabel", { rating: rating.toLocaleString("en-US") })}</p>
+        </div>
+      )}
 
       <div className="hero-card">
         <p className="hero-card__eyebrow">{t("home.hero.eyebrow")}</p>

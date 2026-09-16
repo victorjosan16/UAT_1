@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
+import { tierForRating } from "@/quiz/RatingEngine";
 import type { StringKey } from "@/i18n/strings";
 import { LocalStorageService, type LocalBests } from "@/storage/LocalStorage";
 import type { Language } from "@/types";
@@ -8,6 +9,7 @@ import type { Language } from "@/types";
 export interface ProfileScreenProps {
   nickname: string;
   bests: LocalBests;
+  rating: number | null;
   onChangeNickname: (nickname: string) => void;
 }
 
@@ -24,7 +26,7 @@ const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
   { code: "ru", label: "RU" },
 ];
 
-export function ProfileScreen({ nickname, bests, onChangeNickname }: ProfileScreenProps) {
+export function ProfileScreen({ nickname, bests, rating, onChangeNickname }: ProfileScreenProps) {
   const { language, setLanguage, t } = useLanguage();
   const { canInstall, promptInstall } = usePwaInstall();
   const [tab, setTab] = useState<Tab>("STATS");
@@ -73,6 +75,13 @@ export function ProfileScreen({ nickname, bests, onChangeNickname }: ProfileScre
           </>
         )}
       </div>
+
+      {rating !== null && (
+        <div className="rank-card">
+          <p className="rank-card__tier">{tierForRating(rating).label}</p>
+          <p className="rank-card__kr">{t("placement.krLabel", { rating: rating.toLocaleString("en-US") })}</p>
+        </div>
+      )}
 
       <div className="section-heading">
         <h2>{t("profile.language")}</h2>

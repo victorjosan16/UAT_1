@@ -16,8 +16,10 @@ service cloud.firestore {
       let data = request.resource.data;
       return request.auth != null
         && request.auth.uid == playerId
-        && data.keys().hasOnly(['nickname', 'updatedAt'])
-        && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
+        && data.keys().hasAll(['updatedAt'])
+        && data.keys().hasOnly(['nickname', 'rating', 'updatedAt'])
+        && (!('nickname' in data) || (data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16))
+        && (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5000))
         && data.updatedAt is number;
     }
 

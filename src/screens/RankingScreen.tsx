@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
-import { LeaderboardService, type LeaderboardScope, type MyRank } from "@/services/LeaderboardService";
+import { distanceToNextMilestone, LeaderboardService, type AroundMeEntry, type LeaderboardScope, type MilestoneCutoffs } from "@/services/LeaderboardService";
 import type { LocalBests } from "@/storage/LocalStorage";
+
+const EMPTY_CUTOFFS: MilestoneCutoffs = { top10: null, top50: null, top100: null };
 
 export interface RankingScreenProps {
   playerId: string;
@@ -27,17 +29,26 @@ export function RankingScreen({ playerId, bests }: RankingScreenProps) {
   const { t } = useLanguage();
   const [scope, setScope] = useState<LeaderboardScope>("allTime");
   const { entries, loading } = useLeaderboard(scope);
-  const [myRank, setMyRank] = useState<MyRank | null>(null);
+  const [aroundMe, setAroundMe] = useState<AroundMeEntry[] | null>(null);
+  const [cutoffs, setCutoffs] = useState<MilestoneCutoffs>(EMPTY_CUTOFFS);
 
   const isInVisibleList = entries.some((e) => e.playerId === playerId);
+  const visibleIndex = entries.findIndex((e) => e.playerId === playerId);
 
   useEffect(() => {
-    setMyRank(null);
+    setAroundMe(null);
     if (isInVisibleList || !playerId) return;
-    void LeaderboardService.getMyRank(scope, playerId).then(setMyRank);
+    void LeaderboardService.getAroundMe(scope, playerId).then(setAroundMe);
     // Only re-check when the scope changes or the visible list stops/starts containing us.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope, isInVisibleList, playerId]);
+
+  useEffect(() => {
+    void LeaderboardService.getMilestoneCutoffs(scope).then(setCutoffs);
+  }, [scope]);
+
+  const myEffectiveRank = visibleIndex >= 0 ? visibleIndex + 1 : (aroundMe?.find((e) => e.isMe)?.rank ?? null);
+  const milestone = myEffectiveRank !== null ? distanceToNextMilestone(myEffectiveRank, cutoffs) : null;
 
   const podium = entries.slice(0, 3);
   const rest = entries.slice(3);
@@ -98,12 +109,30 @@ export function RankingScreen({ playerId, bests }: RankingScreenProps) {
         </div>
       )}
 
-      {myRank && (
-        <div className="leaderboard-row leaderboard-row--me" style={{ marginBottom: 18 }}>
-          <span className="leaderboard-row__rank">{myRank.rank}</span>
-          <span className="leaderboard-row__name">{t("ranking.you")}</span>
-          <span className="leaderboard-row__score">{myRank.score.toLocaleString("en-US")}</span>
-        </div>
+      {milestone && (
+        <p className="milestone-banner">
+          {t("ranking.placesToTop", { places: milestone.placesAway, milestone: milestone.milestoneRank })}
+        </p>
+      )}
+
+      {aroundMe && !isInVisibleList && (
+        <>
+          <div className="section-heading">
+            <h2>{t("ranking.aroundYou")}</h2>
+          </div>
+          <div className="leaderboard-list" style={{ marginBottom: 18 }}>
+            {aroundMe.map((entry) => (
+              <div key={entry.playerId} className={`leaderboard-row${entry.isMe ? " leaderboard-row--me" : ""}`}>
+                <span className="leaderboard-row__rank">{entry.rank}</span>
+                <span className="leaderboard-row__name">
+                  {entry.nickname}
+                  {entry.isMe && <span className="accent-chip accent-emerald" style={{ marginLeft: 6 }}>{t("ranking.you")}</span>}
+                </span>
+                <span className="leaderboard-row__score">{entry.score.toLocaleString("en-US")}</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {bests.totalQuizzesPlayed > 0 && (

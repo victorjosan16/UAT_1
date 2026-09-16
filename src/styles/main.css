@@ -338,6 +338,45 @@ button {
   box-shadow: none;
 }
 
+.rank-card {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.rank-card__tier {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: var(--amber);
+}
+
+.rank-card__kr {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.milestone-banner {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--emerald-strong);
+  background: rgba(15, 110, 92, 0.08);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin: 0 0 14px;
+}
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

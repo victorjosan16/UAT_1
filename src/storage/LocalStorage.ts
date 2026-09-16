@@ -27,6 +27,8 @@ export interface Preferences {
   reducedEffects: boolean;
   /** True once the player has explicitly confirmed a nickname (vs. the silent auto-generated default) — gates the one-time nickname prompt. */
   nicknameConfirmed: boolean;
+  /** True once a real Placement Quiz has produced this player's KR — false for a legacy player whose rating was defaulted (see PlayerService). */
+  placementCompleted: boolean;
 }
 
 export interface LocalBests {
@@ -53,6 +55,9 @@ const KEYS = {
   pendingQueue: "q5.pendingQueue",
   currentLevel: "q5.currentLevel",
   language: "q5.language",
+  rating: "q5.rating",
+  lastKnownRankPrefix: "q5.lastKnownRank.",
+  milestonesReached: "q5.milestonesReached",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -61,6 +66,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   tutorialCompleted: false,
   reducedEffects: false,
   nicknameConfirmed: false,
+  placementCompleted: false,
 };
 
 const DEFAULT_BESTS: LocalBests = {
@@ -166,5 +172,45 @@ export const LocalStorageService = {
   },
   setLanguage(language: Language): void {
     safeSet(KEYS.language, language);
+  },
+
+  /** Knowledge Rating (KR) — see quiz/RatingEngine.ts. Null only before a rating has ever been assigned. */
+  getRating(): number | null {
+    const raw = safeGet(KEYS.rating);
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  },
+  setRating(rating: number): void {
+    safeSet(KEYS.rating, String(Math.round(rating)));
+  },
+
+  /** Last leaderboard position seen for a scope — lets the UI show "#184 -> #142" only when a genuine prior snapshot exists (never a fabricated one). */
+  getLastKnownRank(scope: string): number | null {
+    const raw = safeGet(KEYS.lastKnownRankPrefix + scope);
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  },
+  setLastKnownRank(scope: string, rank: number): void {
+    safeSet(KEYS.lastKnownRankPrefix + scope, String(rank));
+  },
+
+  /** One-time milestone celebrations (Top 100/50/10/#1 — see MASTER PROMPT §17/18): each key fires its animation once, ever. */
+  getMilestonesReached(): string[] {
+    const raw = safeGet(KEYS.milestonesReached);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+    } catch {
+      return [];
+    }
+  },
+  hasMilestoneBeenReached(key: string): boolean {
+    return this.getMilestonesReached().includes(key);
+  },
+  markMilestoneReached(key: string): void {
+    const current = this.getMilestonesReached();
+    if (current.includes(key)) return;
+    safeSet(KEYS.milestonesReached, JSON.stringify([...current, key]));
   },
 };

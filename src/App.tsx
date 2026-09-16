@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { BottomNav, type NavTab } from "@/components/BottomNav";
 import { WelcomeScreen } from "@/screens/WelcomeScreen";
+import { EntryScreen } from "@/screens/EntryScreen";
+import { PlacementQuizScreen } from "@/screens/PlacementQuizScreen";
+import { PlacementResultScreen } from "@/screens/PlacementResultScreen";
 import { ChallengeScreen } from "@/screens/ChallengeScreen";
 import { ChampionshipScreen } from "@/screens/ChampionshipScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
@@ -19,10 +22,15 @@ import { hapticsManager } from "@/services/HapticsManager";
 import { shareResult } from "@/utils/share";
 import { randomId } from "@/utils/rng";
 import { dailySeed, utcDateKey } from "@/utils/dailySeed";
+import { nudgeRating } from "@/quiz/RatingEngine";
+import type { PlacementSummary } from "@/quiz/PlacementEngine";
 import { GAME_VERSION } from "@/branding";
 import type { CategoryId, QuizMode, QuizSummary } from "@/types";
 
 type OverlayScreen = "QUIZ" | "RESULTS" | "CHAMPIONSHIP" | null;
+
+/** Brand-new players only — see MASTER PROMPT §2-7. A returning player who already confirmed a nickname skips straight past this (see PlayerService's legacy-rating default). */
+type OnboardingStage = "ENTRY" | "PLACEMENT" | "PLACEMENT_RESULT" | "NICKNAME";
 
 interface RunConfig {
   mode: QuizMode;
@@ -44,6 +52,9 @@ export function App() {
   const [nicknameConfirmed, setNicknameConfirmed] = useState(() => LocalStorageService.getPreferences().nicknameConfirmed);
   const [bests, setBests] = useState(() => LocalStorageService.getLocalBests());
   const [currentLevel, setCurrentLevelState] = useState(() => LocalStorageService.getCurrentLevel());
+  const [rating, setRating] = useState(() => LocalStorageService.getRating());
+  const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>("ENTRY");
+  const [placementSummary, setPlacementSummary] = useState<PlacementSummary | null>(null);
 
   const [incomingChallengeId] = useState(() => ChallengeService.parseIdFromLocation());
   const [challengeScreenVisible, setChallengeScreenVisible] = useState(() => incomingChallengeId !== null);
@@ -56,6 +67,8 @@ export function App() {
     void playerService.ensureIdentity().then((identity) => {
       setPlayerId(identity.playerId);
       setNickname(identity.nickname);
+      // A legacy player's rating may have just been defaulted for the first time inside ensureIdentity — pick it up.
+      setRating(LocalStorageService.getRating());
     });
   }, []);
 
@@ -64,11 +77,28 @@ export function App() {
     void ChallengeService.fetch(incomingChallengeId).then(setIncomingChallenge);
   }, [incomingChallengeId]);
 
+  function handlePlacementComplete(summary: PlacementSummary): void {
+    setPlacementSummary(summary);
+    setOnboardingStage("PLACEMENT_RESULT");
+  }
+
+  function handleClaimPlacement(): void {
+    setOnboardingStage("NICKNAME");
+  }
+
   function handleConfirmNickname(raw: string): void {
     const trimmed = playerService.setNickname(playerId, raw);
     setNickname(trimmed);
     setNicknameConfirmed(true);
-    LocalStorageService.updatePreferences({ nicknameConfirmed: true });
+    LocalStorageService.updatePreferences({ nicknameConfirmed: true, placementCompleted: placementSummary !== null });
+
+    if (placementSummary) {
+      LocalStorageService.setRating(placementSummary.startingRating);
+      setRating(placementSummary.startingRating);
+      LocalStorageService.setLocalBests({ ...LocalStorageService.getLocalBests(), bestKnowledgeIQ: Math.max(LocalStorageService.getLocalBests().bestKnowledgeIQ, placementSummary.knowledgeIQ) });
+      setBests(LocalStorageService.getLocalBests());
+      if (playerId) void playerService.syncRating(playerId, placementSummary.startingRating);
+    }
   }
 
   function handleChangeNickname(raw: string): void {
@@ -176,6 +206,15 @@ export function App() {
       void LeaderboardService.submitScore({ playerId, nickname, score: summary.score, knowledgeIQ: summary.knowledgeIQ });
     }
 
+    // KR drifts a small, capped step toward this run's own implied rating — see RatingEngine.nudgeRating.
+    const currentRating = rating ?? LocalStorageService.getRating();
+    if (currentRating !== null) {
+      const nextRating = nudgeRating(currentRating, summary.knowledgeIQ);
+      LocalStorageService.setRating(nextRating);
+      setRating(nextRating);
+      if (playerId) void playerService.syncRating(playerId, nextRating);
+    }
+
     soundManager.playComplete(summary.correctCount === summary.totalQuestions);
     hapticsManager.complete();
 
@@ -211,6 +250,11 @@ export function App() {
   }
 
   if (!nicknameConfirmed) {
+    if (onboardingStage === "ENTRY") return <EntryScreen onStart={() => setOnboardingStage("PLACEMENT")} />;
+    if (onboardingStage === "PLACEMENT") return <PlacementQuizScreen onComplete={handlePlacementComplete} />;
+    if (onboardingStage === "PLACEMENT_RESULT" && placementSummary) {
+      return <PlacementResultScreen summary={placementSummary} onContinue={handleClaimPlacement} />;
+    }
     return <WelcomeScreen initialNickname={nickname} onConfirm={handleConfirmNickname} />;
   }
 
@@ -247,6 +291,7 @@ export function App() {
           <HomeScreen
             nickname={nickname}
             bests={bests}
+            rating={rating}
             currentLevel={currentLevel}
             onPlayDaily={handlePlayDaily}
             onPlayQuick={handlePlayQuick}
@@ -267,7 +312,7 @@ export function App() {
           />
         )}
         {tab === "RANKING" && <RankingScreen playerId={playerId} bests={bests} />}
-        {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} onChangeNickname={handleChangeNickname} />}
+        {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} rating={rating} onChangeNickname={handleChangeNickname} />}
       </div>
       <BottomNav active={tab} onNavigate={setTab} />
     </div>
