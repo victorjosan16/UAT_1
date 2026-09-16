@@ -6,6 +6,9 @@ import { HISTORY_QUESTIONS } from "@/data/questions/history";
 import { SCIENCE_QUESTIONS } from "@/data/questions/science";
 import { SPACE_QUESTIONS } from "@/data/questions/space";
 import { ANIMALS_QUESTIONS } from "@/data/questions/animals";
+import { TECHNOLOGY_QUESTIONS } from "@/data/questions/technology";
+import { ART_QUESTIONS } from "@/data/questions/art";
+import { HUMAN_BODY_QUESTIONS } from "@/data/questions/humanBody";
 import type { CategoryId, QuizQuestionSource } from "@/types";
 
 /**
@@ -24,6 +27,9 @@ const QUESTIONS_BY_CATEGORY: Partial<Record<CategoryId, readonly QuizQuestionSou
   SCIENCE: SCIENCE_QUESTIONS,
   SPACE: SPACE_QUESTIONS,
   ANIMALS: ANIMALS_QUESTIONS,
+  TECHNOLOGY: TECHNOLOGY_QUESTIONS,
+  ART: ART_QUESTIONS,
+  HUMAN_BODY: HUMAN_BODY_QUESTIONS,
 };
 
 export const ALL_QUESTIONS: readonly QuizQuestionSource[] = Object.values(QUESTIONS_BY_CATEGORY).flat();

@@ -75,7 +75,7 @@ export const CATEGORIES: readonly Category[] = [
     label: { en: "Technology", ro: "Tehnologie", es: "Tecnología", pt: "Tecnologia", hi: "प्रौद्योगिकी", id: "Teknologi", ru: "Технологии" },
     emoji: "💻",
     accent: "cyan",
-    available: false,
+    available: true,
   },
   {
     id: "INVENTIONS",
@@ -89,7 +89,7 @@ export const CATEGORIES: readonly Category[] = [
     label: { en: "Art", ro: "Artă", es: "Arte", pt: "Arte", hi: "कला", id: "Seni", ru: "Искусство" },
     emoji: "🎨",
     accent: "coral",
-    available: false,
+    available: true,
   },
   {
     id: "ARCHITECTURE",
@@ -103,7 +103,7 @@ export const CATEGORIES: readonly Category[] = [
     label: { en: "Human Body", ro: "Corpul Uman", es: "Cuerpo Humano", pt: "Corpo Humano", hi: "मानव शरीर", id: "Tubuh Manusia", ru: "Тело человека" },
     emoji: "🫀",
     accent: "coral",
-    available: false,
+    available: true,
   },
   {
     id: "MATHEMATICS",
