@@ -1,5 +1,5 @@
 import { clamp, roundTo } from "@/utils/math";
-import type { ClubDifficulty, RevealMode } from "@/types";
+import type { Difficulty, RevealMode } from "@/types";
 import { QUESTIONS_PER_LEVEL, MAX_LEVEL, type QuizLevelDefinition } from "./LevelDefinition";
 
 export { QUESTIONS_PER_LEVEL, MAX_LEVEL };
@@ -23,8 +23,8 @@ export function getLevel(level: number): QuizLevelDefinition {
   const progress = (clamped - 1) / (MAX_LEVEL - 1); // 0 (level 1) .. 1 (level 20)
 
   const timeLimitMs = Math.round(10000 - progress * 5000); // 10.0s -> 5.0s
-  const minDifficulty = clamp(1 + Math.floor(progress * 3), 1, 5) as ClubDifficulty;
-  const maxDifficulty = clamp(2 + Math.floor(progress * 4), 2, 5) as ClubDifficulty;
+  const minDifficulty = clamp(1 + Math.floor(progress * 3), 1, 5) as Difficulty;
+  const maxDifficulty = clamp(2 + Math.floor(progress * 4), 2, 5) as Difficulty;
   const scoreMultiplier = roundTo(1 + progress * 0.5, 2); // 1.0x -> 1.5x
 
   return {

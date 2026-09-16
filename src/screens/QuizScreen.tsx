@@ -1,74 +1,78 @@
-import { ClubCrest } from "@/components/ClubCrest";
+import { FlagIcon } from "@/components/FlagIcon";
 import { Timer } from "@/components/Timer";
-import { useQuizSession } from "@/hooks/useQuizSession";
+import { useQuizEngine } from "@/hooks/useQuizEngine";
+import { getCountryById } from "@/data/countries";
 import { difficultyGroupForLevel } from "@/quiz/LevelDefinition";
 import { TAGLINES } from "@/branding";
-import type { Club, QuizMode, QuizSummary } from "@/types";
+import type { CategoryId, QuizMode, QuizQuestionSource, QuizSummary } from "@/types";
 
 export interface QuizScreenProps {
   mode: QuizMode;
   seed: string;
-  level: number;
+  level?: number;
+  categoryId?: CategoryId;
   onComplete: (summary: QuizSummary) => void;
   onQuit: () => void;
 }
 
-function feedbackText(correct: boolean, timedOut: boolean, correctClub: Club, scoreGained: number): string {
+function feedbackText(correct: boolean, timedOut: boolean, source: QuizQuestionSource, scoreGained: number): string {
   if (timedOut) return TAGLINES.timesUp;
   if (correct) return `${TAGLINES.correct} +${scoreGained.toLocaleString("en-US")}`;
-  return correctClub.name.toUpperCase();
+  return source.correctAnswer.toUpperCase();
 }
 
-export function QuizScreen({ mode, seed, level, onComplete, onQuit }: QuizScreenProps) {
-  const { state, submitAnswer } = useQuizSession(mode, seed, level, onComplete);
-  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, questionIndex, totalQuestions, correctCount } = state;
+export function QuizScreen({ mode, seed, level, categoryId, onComplete, onQuit }: QuizScreenProps) {
+  const { state, submitAnswer } = useQuizEngine(mode, seed, { level, categoryId }, onComplete);
+  const { currentQuestion, status, score, streak, remainingMs, timeLimitMs, lastAnswer, questionIndex, totalQuestions, correctCount, level: engineLevel } = state;
 
   if (!currentQuestion) return null;
 
   const isReveal = status === "REVEAL";
   const revealProgress = 1 - Math.min(1, Math.max(0, remainingMs / timeLimitMs));
-
-  const crestClass = isReveal ? (lastAnswer?.correct ? "crest-stage__inner crest-stage__inner--correct" : "crest-stage__inner crest-stage__inner--wrong") : "crest-stage__inner";
+  const source = currentQuestion.source;
+  const country = source.flagCountryId ? getCountryById(source.flagCountryId) : undefined;
 
   return (
     <div className="pitch-quiz" id="quiz-screen">
       <div className="pitch-stage">
         <div className="pitch-topbar">
           <button className="pitch-close" onClick={onQuit} aria-label="Quit">×</button>
-          <span className="pitch-level-chip">LEVEL {level > 20 ? `E${level - 20}` : level} · {difficultyGroupForLevel(Math.min(level, 20))}</span>
+          {mode === "LEVEL" || mode === "ENDLESS" ? (
+            <span className="pitch-level-chip">LEVEL {engineLevel > 20 ? `E${engineLevel - 20}` : engineLevel} · {difficultyGroupForLevel(Math.min(engineLevel, 20))}</span>
+          ) : (
+            <span className="pitch-level-chip">{questionIndex + 1} / {totalQuestions}</span>
+          )}
         </div>
 
         <p className="pitch-eyebrow">Question {questionIndex + 1} of {totalQuestions}</p>
 
-        <div style={{ position: "relative" }}>
-          <div className={crestClass}>
-            <ClubCrest club={currentQuestion.club} size={110} revealMode={isReveal ? "FULL" : currentQuestion.revealMode} revealProgress={isReveal ? 1 : revealProgress} />
-          </div>
-        </div>
+        {country && (
+          <FlagIcon pattern={country.flag} countryName={country.name} width={150} revealMode={isReveal ? "FULL" : currentQuestion.revealMode} revealProgress={isReveal ? 1 : revealProgress} />
+        )}
 
-        <p className="pitch-question">Which club is this?</p>
+        <p className="pitch-question">{source.prompt}</p>
 
         <Timer remainingMs={isReveal ? timeLimitMs : remainingMs} timeLimitMs={timeLimitMs} />
 
         {isReveal && lastAnswer && (
           <div key={questionIndex} className={`feedback-banner feedback-banner--show ${lastAnswer.correct ? "feedback-banner--correct" : "feedback-banner--wrong"}`}>
-            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, currentQuestion.club, lastAnswer.scoreGained)}
+            {lastAnswer.correct ? "✓" : "✕"} {feedbackText(lastAnswer.correct, lastAnswer.timedOut, source, lastAnswer.scoreGained)}
           </div>
         )}
       </div>
 
       <div className="answers-sheet">
         <div className="answer-pill-list">
-          {currentQuestion.options.map((club) => {
+          {currentQuestion.options.map((option) => {
             let extraClass = "";
             if (isReveal && lastAnswer) {
-              if (club.id === lastAnswer.clubId) extraClass = " answer-pill--correct";
-              else if (club.id === lastAnswer.selectedClubId) extraClass = " answer-pill--wrong";
+              if (option === source.correctAnswer) extraClass = " answer-pill--correct";
+              else if (option === lastAnswer.selectedAnswer) extraClass = " answer-pill--wrong";
               else extraClass = " answer-pill--disabled";
             }
             return (
-              <button key={club.id} className={`answer-pill${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(club.id)}>
-                {club.name}
+              <button key={option} className={`answer-pill${extraClass}`} disabled={isReveal} onClick={() => submitAnswer(option)}>
+                {option}
               </button>
             );
           })}

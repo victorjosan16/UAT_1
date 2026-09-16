@@ -1,11 +1,11 @@
-import type { ClubDifficulty, RevealMode } from "@/types";
+import type { Difficulty, RevealMode } from "@/types";
 
 export interface QuizLevelDefinition {
   level: number;
   questionCount: number;
   timeLimitMs: number;
-  minDifficulty: ClubDifficulty;
-  maxDifficulty: ClubDifficulty;
+  minDifficulty: Difficulty;
+  maxDifficulty: Difficulty;
   revealMode: RevealMode;
   scoreMultiplier: number;
 }

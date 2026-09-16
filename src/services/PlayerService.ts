@@ -14,7 +14,7 @@ export interface PlayerIdentity {
 
 export interface PlayerStats {
   bestScore: number;
-  bestFootballIQ: number;
+  bestKnowledgeIQ: number;
   bestStreak: number;
   totalQuizzesPlayed: number;
   dailyStreak: number;

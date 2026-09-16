@@ -1,100 +1,148 @@
-import { useState } from "react";
-import { StartScreen } from "@/screens/StartScreen";
+import { useEffect, useState } from "react";
+import { BottomNav, type NavTab } from "@/components/BottomNav";
+import { HomeScreen } from "@/screens/HomeScreen";
+import { DiscoverScreen } from "@/screens/DiscoverScreen";
+import { PlayScreen } from "@/screens/PlayScreen";
+import { RankingScreen } from "@/screens/RankingScreen";
+import { ProfileScreen } from "@/screens/ProfileScreen";
 import { QuizScreen } from "@/screens/QuizScreen";
-import { PlayerQuizScreen } from "@/screens/PlayerQuizScreen";
 import { ResultsScreen, type ResultsSummaryView } from "@/screens/ResultsScreen";
 import { LocalStorageService } from "@/storage/LocalStorage";
+import { playerService } from "@/services/PlayerService";
 import { randomId } from "@/utils/rng";
-import type { PlayerQuizSummary, QuizGameType, QuizMode, QuizSummary } from "@/types";
+import { dailySeed, utcDateKey } from "@/utils/dailySeed";
+import { GAME_VERSION } from "@/branding";
+import type { CategoryId, QuizMode, QuizSummary } from "@/types";
 
-type Screen = "START" | "QUIZ" | "RESULTS";
+type OverlayScreen = "QUIZ" | "RESULTS" | null;
 
 interface RunConfig {
-  gameType: QuizGameType;
   mode: QuizMode;
   seed: string;
-  level: number;
+  level?: number;
+  categoryId?: CategoryId;
 }
 
+const ONE_DAY_MS = 86_400_000;
+
 export function App() {
-  const [screen, setScreen] = useState<Screen>("START");
+  const [tab, setTab] = useState<NavTab>("HOME");
+  const [overlay, setOverlay] = useState<OverlayScreen>(null);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [lastSummary, setLastSummary] = useState<ResultsSummaryView | null>(null);
   const [isNewRecord, setIsNewRecord] = useState(false);
+  const [nickname, setNickname] = useState(() => LocalStorageService.getNickname() ?? "Player");
+  const [bests, setBests] = useState(() => LocalStorageService.getLocalBests());
+  const [currentLevel, setCurrentLevelState] = useState(() => LocalStorageService.getCurrentLevel());
 
-  function startRun(gameType: QuizGameType, level: number): void {
-    setRunConfig({ gameType, mode: "QUICK", seed: `${gameType}:${randomId(10)}`, level });
-    setScreen("QUIZ");
+  useEffect(() => {
+    // Never blocks Home from rendering immediately — identity resolves in the background (see PlayerService).
+    void playerService.ensureIdentity().then((identity) => setNickname(identity.nickname));
+  }, []);
+
+  function startRun(mode: QuizMode, options: { seed?: string; level?: number; categoryId?: CategoryId } = {}): void {
+    setRunConfig({ mode, seed: options.seed ?? `${mode}:${randomId(10)}`, level: options.level, categoryId: options.categoryId });
+    setOverlay("QUIZ");
   }
 
-  function handlePlayLogoQuiz(): void {
-    startRun("LOGO", LocalStorageService.getCurrentLevel());
+  function handlePlayQuick(): void {
+    startRun("QUICK");
   }
 
-  function handlePlayGuessThePlayer(): void {
-    startRun("PLAYER_CHAIN", LocalStorageService.getCurrentPlayerLevel());
+  function handlePlayDaily(): void {
+    startRun("DAILY", { seed: dailySeed(utcDateKey(), GAME_VERSION) });
   }
 
-  function recordCompletion(summary: QuizSummary | PlayerQuizSummary): boolean {
-    const bests = LocalStorageService.getLocalBests();
-    const newRecord = summary.score > bests.bestScore && bests.totalQuizzesPlayed > 0;
-
-    LocalStorageService.setLocalBests({
-      ...bests,
-      bestScore: Math.max(bests.bestScore, summary.score),
-      bestFootballIQ: Math.max(bests.bestFootballIQ, summary.footballIQ),
-      bestStreak: Math.max(bests.bestStreak, summary.bestStreak),
-      totalQuizzesPlayed: bests.totalQuizzesPlayed + 1,
-    });
-
-    return newRecord;
+  function handlePlayLevel(): void {
+    startRun("LEVEL", { level: currentLevel });
   }
 
-  function handleLogoComplete(summary: QuizSummary): void {
-    const newRecord = recordCompletion(summary);
-    const currentLevel = LocalStorageService.getCurrentLevel();
-    if (runConfig && runConfig.level === currentLevel) {
-      LocalStorageService.setCurrentLevel(currentLevel + 1);
+  function handleOpenCategory(categoryId: CategoryId): void {
+    startRun("CATEGORY", { categoryId });
+  }
+
+  function handleComplete(summary: QuizSummary): void {
+    const previous = LocalStorageService.getLocalBests();
+    const newRecord = summary.score > previous.bestScore && previous.totalQuizzesPlayed > 0;
+
+    const updated = {
+      ...previous,
+      bestScore: Math.max(previous.bestScore, summary.score),
+      bestKnowledgeIQ: Math.max(previous.bestKnowledgeIQ, summary.knowledgeIQ),
+      bestStreak: Math.max(previous.bestStreak, summary.bestStreak),
+      totalQuizzesPlayed: previous.totalQuizzesPlayed + 1,
+    };
+
+    if (summary.mode === "DAILY") {
+      const today = utcDateKey();
+      if (updated.lastDailyDateKey !== today) {
+        const yesterday = utcDateKey(new Date(Date.now() - ONE_DAY_MS));
+        updated.dailyStreak = updated.lastDailyDateKey === yesterday ? updated.dailyStreak + 1 : 1;
+        updated.lastDailyDateKey = today;
+      }
     }
+
+    LocalStorageService.setLocalBests(updated);
+    setBests(updated);
+
+    if ((summary.mode === "LEVEL" || summary.mode === "ENDLESS") && runConfig?.level === currentLevel) {
+      const nextLevel = currentLevel + 1;
+      LocalStorageService.setCurrentLevel(nextLevel);
+      setCurrentLevelState(nextLevel);
+    }
+
     setIsNewRecord(newRecord);
     setLastSummary(summary);
-    setScreen("RESULTS");
-  }
-
-  function handlePlayerComplete(summary: PlayerQuizSummary): void {
-    const newRecord = recordCompletion(summary);
-    const currentLevel = LocalStorageService.getCurrentPlayerLevel();
-    if (runConfig && runConfig.level === currentLevel) {
-      LocalStorageService.setCurrentPlayerLevel(currentLevel + 1);
-    }
-    setIsNewRecord(newRecord);
-    setLastSummary(summary);
-    setScreen("RESULTS");
+    setOverlay("RESULTS");
   }
 
   function handlePlayAgain(): void {
     if (!runConfig) return;
-    // Replays the level/mode the player just finished, not whatever they've since progressed to.
-    startRun(runConfig.gameType, runConfig.level);
+    if (runConfig.mode === "LEVEL" || runConfig.mode === "ENDLESS") {
+      startRun("LEVEL", { level: currentLevel });
+      return;
+    }
+    if (runConfig.mode === "DAILY") {
+      startRun("DAILY", { seed: runConfig.seed });
+      return;
+    }
+    startRun(runConfig.mode, { categoryId: runConfig.categoryId });
   }
 
-  function handleBackToStart(): void {
-    setScreen("START");
+  function handleBackToHome(): void {
+    setOverlay(null);
+    setTab("HOME");
   }
 
-  switch (screen) {
-    case "START":
-      return <StartScreen onPlayLogoQuiz={handlePlayLogoQuiz} onPlayGuessThePlayer={handlePlayGuessThePlayer} />;
-    case "QUIZ":
-      if (!runConfig) return null;
-      if (runConfig.gameType === "PLAYER_CHAIN") {
-        return <PlayerQuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handlePlayerComplete} onQuit={handleBackToStart} />;
-      }
-      return <QuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} onComplete={handleLogoComplete} onQuit={handleBackToStart} />;
-    case "RESULTS":
-      if (!lastSummary) return null;
-      return <ResultsScreen summary={lastSummary} isNewRecord={isNewRecord} onPlayAgain={handlePlayAgain} onBackToStart={handleBackToStart} />;
-    default:
-      return null;
+  if (overlay === "QUIZ" && runConfig) {
+    return <QuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} categoryId={runConfig.categoryId} onComplete={handleComplete} onQuit={handleBackToHome} />;
   }
+
+  if (overlay === "RESULTS" && lastSummary) {
+    return <ResultsScreen summary={lastSummary} isNewRecord={isNewRecord} onPlayAgain={handlePlayAgain} onBackToStart={handleBackToHome} />;
+  }
+
+  return (
+    <div className="app-shell">
+      <div className="app-shell__content">
+        {tab === "HOME" && (
+          <HomeScreen
+            nickname={nickname}
+            bests={bests}
+            currentLevel={currentLevel}
+            onPlayDaily={handlePlayDaily}
+            onPlayQuick={handlePlayQuick}
+            onPlayLevel={handlePlayLevel}
+            onOpenCategory={handleOpenCategory}
+            onOpenDiscover={() => setTab("DISCOVER")}
+          />
+        )}
+        {tab === "DISCOVER" && <DiscoverScreen onOpenCategory={handleOpenCategory} />}
+        {tab === "PLAY" && <PlayScreen onPlayQuick={handlePlayQuick} onPlayDaily={handlePlayDaily} onPlayLevel={handlePlayLevel} onOpenDiscover={() => setTab("DISCOVER")} />}
+        {tab === "RANKING" && <RankingScreen bests={bests} />}
+        {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} />}
+      </div>
+      <BottomNav active={tab} onNavigate={setTab} />
+    </div>
+  );
 }

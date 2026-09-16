@@ -46,7 +46,7 @@ export default defineConfig({
       manifest: {
         name: `${GAME_NAME} — ${GAME_SUBTITLE}`,
         short_name: GAME_NAME,
-        description: `${GAME_NAME}: how fast can you name the club?`,
+        description: `${GAME_NAME}: fast quiz rounds across flags, geography, science and more.`,
         theme_color: THEME_COLOR,
         background_color: BACKGROUND_COLOR,
         display: "standalone",

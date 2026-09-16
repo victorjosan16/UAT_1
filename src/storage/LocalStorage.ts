@@ -17,7 +17,7 @@ export interface Preferences {
 
 export interface LocalBests {
   bestScore: number;
-  bestFootballIQ: number;
+  bestKnowledgeIQ: number;
   bestStreak: number;
   totalQuizzesPlayed: number;
   dailyStreak: number;
@@ -32,13 +32,12 @@ export interface PendingSubmission {
 }
 
 const KEYS = {
-  playerId: "flc.playerId",
-  nickname: "flc.nickname",
-  preferences: "flc.preferences",
-  localBests: "flc.localBests",
-  pendingQueue: "flc.pendingQueue",
-  currentLevel: "flc.currentLevel",
-  currentPlayerLevel: "flc.currentPlayerLevel",
+  playerId: "q5.playerId",
+  nickname: "q5.nickname",
+  preferences: "q5.preferences",
+  localBests: "q5.localBests",
+  pendingQueue: "q5.pendingQueue",
+  currentLevel: "q5.currentLevel",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -51,7 +50,7 @@ const DEFAULT_PREFERENCES: Preferences = {
 
 const DEFAULT_BESTS: LocalBests = {
   bestScore: 0,
-  bestFootballIQ: 0,
+  bestKnowledgeIQ: 0,
   bestStreak: 0,
   totalQuizzesPlayed: 0,
   dailyStreak: 0,
@@ -117,7 +116,7 @@ export const LocalStorageService = {
     safeSet(KEYS.localBests, JSON.stringify(bests));
   },
 
-  /** Which of the 20 curriculum levels (or beyond, for Endless) the player is currently on. */
+  /** Which of the 20 curriculum levels (or beyond, for Endless) the player is currently on in Level Journey. */
   getCurrentLevel(): number {
     const raw = safeGet(KEYS.currentLevel);
     const parsed = raw ? Number.parseInt(raw, 10) : 1;
@@ -125,16 +124,6 @@ export const LocalStorageService = {
   },
   setCurrentLevel(level: number): void {
     safeSet(KEYS.currentLevel, String(level));
-  },
-
-  /** Same idea as getCurrentLevel, tracked separately for "Guess the Player" mode. */
-  getCurrentPlayerLevel(): number {
-    const raw = safeGet(KEYS.currentPlayerLevel);
-    const parsed = raw ? Number.parseInt(raw, 10) : 1;
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-  },
-  setCurrentPlayerLevel(level: number): void {
-    safeSet(KEYS.currentPlayerLevel, String(level));
   },
 
   getPendingQueue(): PendingSubmission[] {

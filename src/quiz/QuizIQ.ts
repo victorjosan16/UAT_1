@@ -1,33 +1,33 @@
 import { roundTo } from "@/utils/math";
-import type { ClubDifficulty } from "@/types";
+import type { Difficulty } from "@/types";
 
-/** The subset of AnswerResult/PlayerAnswerResult this needs — works for either mode's answer log. */
+/** The subset of AnswerResult this needs — works for every quiz mode's answer log. */
 export interface IQSignal {
   correct: boolean;
   responseTimeMs: number;
   timeLimitMs: number;
-  difficulty: ClubDifficulty;
+  difficulty: Difficulty;
 }
 
 /**
- * FOOTBALL IQ (0-100) is an in-game performance rating, not a real
- * intelligence measurement — see docs/GAME_DESIGN.md. It's derived purely
- * from this run's own answers: accuracy, the difficulty of what was
- * answered correctly, response speed, and timing consistency. Never a
- * random or fabricated number.
+ * Q5 IQ (0-100) is an in-game performance rating, not a real intelligence
+ * measurement — see docs/GAME_DESIGN.md. It's derived purely from this
+ * run's own answers: accuracy, the difficulty of what was answered
+ * correctly, response speed, and timing consistency. Never a random or
+ * fabricated number.
  */
-export type FootballIQRank = "ROOKIE" | "FAN" | "PRO" | "EXPERT" | "MASTER" | "LEGEND";
+export type KnowledgeRank = "ROOKIE" | "EXPLORER" | "PRO" | "EXPERT" | "MASTER" | "GENIUS";
 
-const RANK_THRESHOLDS: readonly { min: number; rank: FootballIQRank }[] = [
-  { min: 95, rank: "LEGEND" },
+const RANK_THRESHOLDS: readonly { min: number; rank: KnowledgeRank }[] = [
+  { min: 95, rank: "GENIUS" },
   { min: 85, rank: "MASTER" },
   { min: 70, rank: "EXPERT" },
   { min: 50, rank: "PRO" },
-  { min: 30, rank: "FAN" },
+  { min: 30, rank: "EXPLORER" },
   { min: 0, rank: "ROOKIE" },
 ];
 
-export function rankForFootballIQ(iq: number): FootballIQRank {
+export function rankForKnowledgeIQ(iq: number): KnowledgeRank {
   return RANK_THRESHOLDS.find((t) => iq >= t.min)?.rank ?? "ROOKIE";
 }
 
@@ -44,7 +44,7 @@ function stdDev(values: readonly number[]): number {
 }
 
 /** Pure and deterministic given the run's own answers — no Date/Math.random. */
-export function computeFootballIQ(answers: readonly IQSignal[]): number {
+export function computeKnowledgeIQ(answers: readonly IQSignal[]): number {
   if (answers.length === 0) return 0;
 
   const correct = answers.filter((a) => a.correct);

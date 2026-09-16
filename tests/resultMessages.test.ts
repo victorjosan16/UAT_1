@@ -13,7 +13,7 @@ function makeSummary(overrides: Partial<QuizSummary>): QuizSummary {
     totalQuestions: 10,
     bestStreak: 3,
     averageResponseMs: 3000,
-    footballIQ: 60,
+    knowledgeIQ: 60,
     answers: [],
     durationMs: 30000,
     ...overrides,

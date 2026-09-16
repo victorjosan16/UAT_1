@@ -1,7 +1,7 @@
 import { GAME_NAME } from "@/branding";
 
 export interface ShareCardData {
-  footballIQ: number;
+  knowledgeIQ: number;
   correctCount: number;
   totalQuestions: number;
   score: number;
@@ -14,7 +14,7 @@ export function buildShareText(data: ShareCardData): string {
   const lines = [
     GAME_NAME,
     "",
-    `FOOTBALL IQ ${data.footballIQ}`,
+    `Q5 IQ ${data.knowledgeIQ}`,
     `${data.correctCount}/${data.totalQuestions}`,
     `${data.score.toLocaleString("en-US")} POINTS`,
   ];

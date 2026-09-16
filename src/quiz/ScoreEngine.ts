@@ -1,5 +1,5 @@
 import { roundTo } from "@/utils/math";
-import type { ClubDifficulty } from "@/types";
+import type { Difficulty } from "@/types";
 
 export const BASE_SCORE = 500;
 const MAX_SPEED_BONUS = 500;
@@ -12,7 +12,7 @@ export interface AnswerScoreInput {
   /** Time from question shown to answer submitted; ignored (treated as the full time limit) when timed out. */
   responseTimeMs: number;
   timeLimitMs: number;
-  difficulty: ClubDifficulty;
+  difficulty: Difficulty;
   /** The streak count AFTER this answer (0 if wrong/timeout, else previous streak + 1). */
   streakAfter: number;
 }
@@ -34,7 +34,7 @@ export function speedFractionFor(responseTimeMs: number, timeLimitMs: number): n
   return Math.min(1, Math.max(0, 1 - responseTimeMs / timeLimitMs));
 }
 
-export function difficultyBonusFor(difficulty: ClubDifficulty): number {
+export function difficultyBonusFor(difficulty: Difficulty): number {
   return Math.round((MAX_DIFFICULTY_BONUS * (difficulty - 1)) / 4);
 }
 

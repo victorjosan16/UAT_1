@@ -1,55 +1,42 @@
 import { describe, expect, it } from "vitest";
 import { SeededRandom } from "@/utils/rng";
-import { CLUBS } from "@/data/clubs";
-import { ANSWER_COUNT, buildQuestion, pickDistractors } from "@/quiz/questionGenerator";
+import { buildQuestion } from "@/quiz/questionGenerator";
+import type { QuizQuestionSource } from "@/types";
 
-const arsenal = CLUBS.find((c) => c.id === "arsenal")!;
-
-describe("pickDistractors", () => {
-  it("never includes the target club itself", () => {
-    const rng = new SeededRandom("distractor-1");
-    const distractors = pickDistractors(arsenal, CLUBS, rng);
-    expect(distractors.every((c) => c.id !== arsenal.id)).toBe(true);
-  });
-
-  it("never produces duplicate distractors", () => {
-    const rng = new SeededRandom("distractor-2");
-    const distractors = pickDistractors(arsenal, CLUBS, rng);
-    expect(new Set(distractors.map((c) => c.id)).size).toBe(distractors.length);
-  });
-
-  it("returns the requested count when the pool is large enough", () => {
-    const rng = new SeededRandom("distractor-3");
-    const distractors = pickDistractors(arsenal, CLUBS, rng, 3);
-    expect(distractors).toHaveLength(3);
-  });
-
-  it("prefers same-league clubs when enough are available", () => {
-    const rng = new SeededRandom("distractor-4");
-    const distractors = pickDistractors(arsenal, CLUBS, rng, 3);
-    expect(distractors.every((c) => c.league === arsenal.league)).toBe(true);
-  });
-});
+const SOURCE: QuizQuestionSource = {
+  id: "q-1",
+  categoryId: "GENERAL_KNOWLEDGE",
+  difficulty: 2,
+  renderKind: "TEXT",
+  prompt: "What is 2 + 2?",
+  correctAnswer: "4",
+  distractors: ["3", "5", "22"],
+};
 
 describe("buildQuestion", () => {
-  it("produces ANSWER_COUNT options including the correct club exactly once", () => {
-    const rng = new SeededRandom("question-1");
-    const question = buildQuestion(0, arsenal, CLUBS, rng, "FULL", 8000);
-    expect(question.options).toHaveLength(ANSWER_COUNT);
-    const matches = question.options.filter((c) => c.id === arsenal.id);
-    expect(matches).toHaveLength(1);
+  it("includes the correct answer exactly once among 4 options", () => {
+    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-1"), "FULL", 8000);
+    expect(question.options).toHaveLength(4);
+    expect(question.options.filter((o) => o === SOURCE.correctAnswer)).toHaveLength(1);
   });
 
-  it("correctIndex points at the target club in the final option order", () => {
-    const rng = new SeededRandom("question-2");
-    const question = buildQuestion(0, arsenal, CLUBS, rng, "FULL", 8000);
-    expect(question.options[question.correctIndex]?.id).toBe(arsenal.id);
+  it("correctIndex points at the correct answer in the final option order", () => {
+    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-2"), "FULL", 8000);
+    expect(question.options[question.correctIndex]).toBe(SOURCE.correctAnswer);
   });
 
   it("is deterministic for the same seed", () => {
-    const q1 = buildQuestion(0, arsenal, CLUBS, new SeededRandom("same-seed"), "FULL", 8000);
-    const q2 = buildQuestion(0, arsenal, CLUBS, new SeededRandom("same-seed"), "FULL", 8000);
-    expect(q1.options.map((c) => c.id)).toEqual(q2.options.map((c) => c.id));
+    const q1 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000);
+    const q2 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000);
+    expect(q1.options).toEqual(q2.options);
     expect(q1.correctIndex).toBe(q2.correctIndex);
+  });
+
+  it("carries through the given reveal mode and time limit", () => {
+    const question = buildQuestion(2, SOURCE, new SeededRandom("q-seed-3"), "BLUR", 5000);
+    expect(question.index).toBe(2);
+    expect(question.revealMode).toBe("BLUR");
+    expect(question.timeLimitMs).toBe(5000);
+    expect(question.source).toBe(SOURCE);
   });
 });
