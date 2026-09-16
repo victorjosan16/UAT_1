@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
+import type { StringKey } from "@/i18n/strings";
 import type { LocalBests } from "@/storage/LocalStorage";
+import type { Language } from "@/types";
 
 export interface ProfileScreenProps {
   nickname: string;
@@ -8,9 +11,14 @@ export interface ProfileScreenProps {
 
 type Tab = "STATS" | "BADGES";
 
-const BADGE_SLOTS = ["FIRST WIN", "PERFECT 10", "ON FIRE", "7 DAY STREAK", "1000 QUESTIONS", "CHAMPION"];
+const BADGE_KEYS: StringKey[] = ["badge.firstWin", "badge.perfect10", "badge.onFire", "badge.sevenDayStreak", "badge.thousandQuestions", "badge.champion"];
+const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "ro", label: "RO" },
+];
 
 export function ProfileScreen({ nickname, bests }: ProfileScreenProps) {
+  const { language, setLanguage, t } = useLanguage();
   const [tab, setTab] = useState<Tab>("STATS");
 
   return (
@@ -18,34 +26,45 @@ export function ProfileScreen({ nickname, bests }: ProfileScreenProps) {
       <div className="profile-header">
         <div className="profile-avatar">{nickname.slice(0, 1).toUpperCase()}</div>
         <h1 className="page-title" style={{ marginBottom: 0 }}>{nickname}</h1>
-        <p className="page-subtitle" style={{ marginBottom: 0 }}>Guest player</p>
+        <p className="page-subtitle" style={{ marginBottom: 0 }}>{t("profile.guestPlayer")}</p>
+      </div>
+
+      <div className="section-heading">
+        <h2>{t("profile.language")}</h2>
+      </div>
+      <div className="tab-row">
+        {LANGUAGE_OPTIONS.map((option) => (
+          <button key={option.code} className={language === option.code ? "tab--active" : ""} onClick={() => setLanguage(option.code)}>
+            {option.label}
+          </button>
+        ))}
       </div>
 
       <div className="tab-row">
-        <button className={tab === "STATS" ? "tab--active" : ""} onClick={() => setTab("STATS")}>Stats</button>
-        <button className={tab === "BADGES" ? "tab--active" : ""} onClick={() => setTab("BADGES")}>Badges</button>
+        <button className={tab === "STATS" ? "tab--active" : ""} onClick={() => setTab("STATS")}>{t("profile.stats")}</button>
+        <button className={tab === "BADGES" ? "tab--active" : ""} onClick={() => setTab("BADGES")}>{t("profile.badges")}</button>
       </div>
 
       {tab === "STATS" && (
         <div className="stat-grid">
           <div className="stat-card">
-            <div className="stat-card__label">Runs Played</div>
+            <div className="stat-card__label">{t("profile.runsPlayed")}</div>
             <div className="stat-card__value">{bests.totalQuizzesPlayed}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__label">Best Score</div>
+            <div className="stat-card__label">{t("profile.bestScore")}</div>
             <div className="stat-card__value">{bests.bestScore.toLocaleString("en-US")}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__label">Best Streak</div>
+            <div className="stat-card__label">{t("profile.bestStreak")}</div>
             <div className="stat-card__value">🔥 ×{bests.bestStreak}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__label">Best Q5 IQ</div>
+            <div className="stat-card__label">{t("profile.bestIQ")}</div>
             <div className="stat-card__value">{bests.bestKnowledgeIQ}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__label">Daily Streak</div>
+            <div className="stat-card__label">{t("profile.dailyStreak")}</div>
             <div className="stat-card__value">🔥 {bests.dailyStreak}</div>
           </div>
         </div>
@@ -53,11 +72,11 @@ export function ProfileScreen({ nickname, bests }: ProfileScreenProps) {
 
       {tab === "BADGES" && (
         <div className="category-grid">
-          {BADGE_SLOTS.map((label) => (
-            <div key={label} className="category-card category-card--locked">
-              <span className="category-card__badge">Locked</span>
+          {BADGE_KEYS.map((key) => (
+            <div key={key} className="category-card category-card--locked">
+              <span className="category-card__badge">{t("profile.locked")}</span>
               <span className="category-card__emoji">🔒</span>
-              <span className="category-card__label">{label}</span>
+              <span className="category-card__label">{t(key)}</span>
             </div>
           ))}
         </div>

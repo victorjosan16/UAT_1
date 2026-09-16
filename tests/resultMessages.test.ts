@@ -22,23 +22,27 @@ function makeSummary(overrides: Partial<QuizSummary>): QuizSummary {
 
 describe("resultMessage", () => {
   it("celebrates a perfect round distinctly", () => {
-    expect(resultMessage(makeSummary({ correctCount: 10, totalQuestions: 10 }))).toBe("PERFECT KNOWLEDGE.");
+    expect(resultMessage(makeSummary({ correctCount: 10, totalQuestions: 10 }), "en")).toBe("PERFECT KNOWLEDGE.");
   });
 
   it("calls out being one away from perfect", () => {
-    expect(resultMessage(makeSummary({ correctCount: 9, totalQuestions: 10 }))).toBe("ONE AWAY FROM PERFECT.");
+    expect(resultMessage(makeSummary({ correctCount: 9, totalQuestions: 10 }), "en")).toBe("ONE AWAY FROM PERFECT.");
   });
 
   it("never claims a stat the run didn't actually have", () => {
     // A slow, low-accuracy run should never get "LIGHTNING FAST" or a streak callout it didn't earn.
     const summary = makeSummary({ correctCount: 2, totalQuestions: 10, averageResponseMs: 7500, bestStreak: 1 });
-    const message = resultMessage(summary);
+    const message = resultMessage(summary, "en");
     expect(message).not.toContain("LIGHTNING FAST");
     expect(message).not.toContain("ON FIRE");
   });
 
   it("is a pure function of the summary", () => {
     const summary = makeSummary({});
-    expect(resultMessage(summary)).toBe(resultMessage(summary));
+    expect(resultMessage(summary, "en")).toBe(resultMessage(summary, "en"));
+  });
+
+  it("renders the same content in Romanian", () => {
+    expect(resultMessage(makeSummary({ correctCount: 10, totalQuestions: 10 }), "ro")).toBe("CUNOȘTINȚE PERFECTE.");
   });
 });

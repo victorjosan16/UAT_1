@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/LanguageContext";
+
 export interface PlayScreenProps {
   onPlayQuick: () => void;
   onPlayDaily: () => void;
@@ -6,56 +8,58 @@ export interface PlayScreenProps {
 }
 
 export function PlayScreen({ onPlayQuick, onPlayDaily, onPlayLevel, onOpenDiscover }: PlayScreenProps) {
+  const { t } = useLanguage();
+
   return (
     <div id="play-screen">
-      <h1 className="page-title">Play</h1>
-      <p className="page-subtitle">Choose how you want to play.</p>
+      <h1 className="page-title">{t("play.title")}</h1>
+      <p className="page-subtitle">{t("play.subtitle")}</p>
 
       <button className="mode-card" onClick={onPlayQuick}>
         <div className="mode-card__icon accent-emerald">⚡</div>
         <div>
-          <p className="mode-card__title">Quick Play</p>
-          <p className="mode-card__desc">10 mixed questions, straight in.</p>
+          <p className="mode-card__title">{t("play.quickPlay.title")}</p>
+          <p className="mode-card__desc">{t("play.quickPlay.desc")}</p>
         </div>
       </button>
 
       <button className="mode-card" onClick={onOpenDiscover}>
         <div className="mode-card__icon accent-cyan">🧭</div>
         <div>
-          <p className="mode-card__title">Category Quiz</p>
-          <p className="mode-card__desc">Pick a topic and test it in depth.</p>
+          <p className="mode-card__title">{t("play.category.title")}</p>
+          <p className="mode-card__desc">{t("play.category.desc")}</p>
         </div>
       </button>
 
       <button className="mode-card" onClick={onPlayDaily}>
         <div className="mode-card__icon accent-amber">📅</div>
         <div>
-          <p className="mode-card__title">Daily Challenge</p>
-          <p className="mode-card__desc">Same 10 questions for everyone today.</p>
+          <p className="mode-card__title">{t("play.daily.title")}</p>
+          <p className="mode-card__desc">{t("play.daily.desc")}</p>
         </div>
       </button>
 
       <button className="mode-card" onClick={onPlayLevel}>
         <div className="mode-card__icon accent-violet">🗺️</div>
         <div>
-          <p className="mode-card__title">Level Journey</p>
-          <p className="mode-card__desc">20 levels, Rookie to Genius, then Endless.</p>
+          <p className="mode-card__title">{t("play.level.title")}</p>
+          <p className="mode-card__desc">{t("play.level.desc")}</p>
         </div>
       </button>
 
       <button className="mode-card mode-card--locked" disabled>
         <div className="mode-card__icon accent-coral">🏆</div>
         <div>
-          <p className="mode-card__title">5-Player Championship</p>
-          <p className="mode-card__desc">Live multiplayer — coming soon.</p>
+          <p className="mode-card__title">{t("play.championship.title")}</p>
+          <p className="mode-card__desc">{t("play.championship.desc")}</p>
         </div>
       </button>
 
       <button className="mode-card mode-card--locked" disabled>
         <div className="mode-card__icon accent-emerald">🤝</div>
         <div>
-          <p className="mode-card__title">Challenge a Friend</p>
-          <p className="mode-card__desc">Async 1v1 — coming soon.</p>
+          <p className="mode-card__title">{t("play.friend.title")}</p>
+          <p className="mode-card__desc">{t("play.friend.desc")}</p>
         </div>
       </button>
     </div>

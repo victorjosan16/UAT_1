@@ -1,6 +1,12 @@
 /** 1 = very easy/well-known, 5 = obscure / easily confused with a similar answer. */
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
+/** Supported content/UI languages — see docs/GAME_DESIGN.md §Localization. More can be added without touching the quiz engine. */
+export type Language = "en" | "ro";
+
+/** A string translated into every supported language, keyed by canonical content id elsewhere (question id, country id, category id). */
+export type LocalizedText = Record<Language, string>;
+
 export type CategoryId =
   | "GENERAL_KNOWLEDGE"
   | "GEOGRAPHY"
@@ -27,7 +33,7 @@ export type CategoryAccent = "emerald" | "violet" | "amber" | "cyan" | "coral";
 
 export interface Category {
   id: CategoryId;
-  label: string;
+  label: LocalizedText;
   emoji: string;
   accent: CategoryAccent;
   /** Has real, reviewed question content wired up yet — false renders as "Coming soon" in Discover. */
@@ -51,19 +57,21 @@ export interface QuizQuestionSource {
   categoryId: CategoryId;
   difficulty: Difficulty;
   renderKind: QuestionRenderKind;
-  prompt: string;
-  correctAnswer: string;
-  /** At least 3 plausible wrong answers. */
-  distractors: string[];
+  prompt: LocalizedText;
+  correctAnswer: LocalizedText;
+  /** At least 3 plausible wrong answers, in every supported language, same order across languages. */
+  distractors: Record<Language, string[]>;
   /** Set when renderKind is "FLAG" — id into COUNTRIES (see data/countries.ts). */
   flagCountryId?: string;
-  explanation?: string;
 }
 
 export interface QuizQuestion {
   index: number;
+  /** Raw, still-localized authored content — id/category/difficulty/flagCountryId. Display text is already resolved below. */
   source: QuizQuestionSource;
-  /** 4 options including the correct one, in final display order. */
+  /** Resolved in the language the run was built with. */
+  prompt: string;
+  /** 4 options including the correct one, in final display order, resolved in the run's language. */
   options: string[];
   correctIndex: number;
   revealMode: RevealMode;

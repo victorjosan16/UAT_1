@@ -7,7 +7,7 @@ import { computeKnowledgeIQ } from "./QuizIQ";
 import { getLevel, MAX_LEVEL, QUESTIONS_PER_LEVEL } from "./levels";
 import { DifficultyEngine } from "./DifficultyEngine";
 import { GAME_VERSION, RULES_VERSION } from "@/branding";
-import type { AnswerResult, CategoryId, Difficulty, QuizMode, QuizQuestion, QuizQuestionSource, QuizSummary } from "@/types";
+import type { AnswerResult, CategoryId, Difficulty, Language, QuizMode, QuizQuestion, QuizQuestionSource, QuizSummary } from "@/types";
 
 export type QuizEngineStatus = "PLAYING" | "REVEAL" | "COMPLETE";
 
@@ -24,6 +24,8 @@ export interface QuizEngineOptions {
   level?: number;
   /** Required for CATEGORY mode. */
   categoryId?: CategoryId;
+  /** Which language's prompt/answers to resolve questions into. Defaults to "en". */
+  language?: Language;
 }
 
 export interface QuizEngineState {
@@ -66,6 +68,7 @@ export class QuizEngine {
   private readonly questions: QuizQuestion[] = [];
   private readonly answers: AnswerResult[] = [];
   private readonly level: number;
+  private readonly language: Language;
   private streak: StreakState = initialStreakState;
   private status: QuizEngineStatus = "PLAYING";
   private questionIndex = 0;
@@ -83,6 +86,7 @@ export class QuizEngine {
   ) {
     this.rng = new SeededRandom(seed);
     this.level = options.level ?? 1;
+    this.language = options.language ?? "en";
     this.startedAtMs = Date.now();
     this.buildQuestions();
     this.remainingMs = this.questions[0]?.timeLimitMs ?? 0;
@@ -113,14 +117,14 @@ export class QuizEngine {
       const effectivePool = filtered.length >= def.questionCount ? filtered : pool;
       const targets = this.rng.shuffle(effectivePool).slice(0, def.questionCount);
       targets.forEach((source, i) => {
-        this.questions.push(buildQuestion(i, source, this.rng, def.revealMode, def.timeLimitMs));
+        this.questions.push(buildQuestion(i, source, this.rng, def.revealMode, def.timeLimitMs, this.language));
       });
       return;
     }
 
     const targets = this.rng.shuffle(pool).slice(0, Math.min(STANDARD_QUESTION_COUNT, pool.length));
     targets.forEach((source, i) => {
-      this.questions.push(buildQuestion(i, source, this.rng, "FULL", standardTimeLimitFor(source.difficulty)));
+      this.questions.push(buildQuestion(i, source, this.rng, "FULL", standardTimeLimitFor(source.difficulty), this.language));
     });
   }
 
@@ -180,7 +184,7 @@ export class QuizEngine {
     const question = this.questions[this.questionIndex];
     if (!question) return;
 
-    const correct = answer !== null && answer === question.source.correctAnswer;
+    const correct = answer !== null && answer === question.options[question.correctIndex];
     const timedOut = answer === null;
     const responseTimeMs = question.timeLimitMs - this.remainingMs;
     const nextStreak = advanceStreak(this.streak, correct);

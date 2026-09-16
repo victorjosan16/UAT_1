@@ -1,5 +1,5 @@
 import { roundTo } from "@/utils/math";
-import type { Difficulty } from "@/types";
+import type { Difficulty, Language } from "@/types";
 
 /** The subset of AnswerResult this needs — works for every quiz mode's answer log. */
 export interface IQSignal {
@@ -29,6 +29,19 @@ const RANK_THRESHOLDS: readonly { min: number; rank: KnowledgeRank }[] = [
 
 export function rankForKnowledgeIQ(iq: number): KnowledgeRank {
   return RANK_THRESHOLDS.find((t) => iq >= t.min)?.rank ?? "ROOKIE";
+}
+
+const RANK_LABELS: Record<KnowledgeRank, Record<Language, string>> = {
+  ROOKIE: { en: "ROOKIE", ro: "ÎNCEPĂTOR" },
+  EXPLORER: { en: "EXPLORER", ro: "EXPLORATOR" },
+  PRO: { en: "PRO", ro: "PRO" },
+  EXPERT: { en: "EXPERT", ro: "EXPERT" },
+  MASTER: { en: "MASTER", ro: "MAESTRU" },
+  GENIUS: { en: "GENIUS", ro: "GENIU" },
+};
+
+export function knowledgeRankLabel(rank: KnowledgeRank, language: Language): string {
+  return RANK_LABELS[rank][language];
 }
 
 function mean(values: readonly number[]): number {

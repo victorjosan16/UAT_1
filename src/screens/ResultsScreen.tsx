@@ -1,5 +1,6 @@
-import { rankForKnowledgeIQ } from "@/quiz/QuizIQ";
+import { knowledgeRankLabel, rankForKnowledgeIQ } from "@/quiz/QuizIQ";
 import { resultMessage } from "@/quiz/resultMessages";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 /** Shared shape every mode's summary reduces to — this screen never needs the mode-specific `answers` entries. */
 export interface ResultsSummaryView {
@@ -19,14 +20,15 @@ export interface ResultsScreenProps {
 }
 
 export function ResultsScreen({ summary, isNewRecord, onPlayAgain, onBackToStart }: ResultsScreenProps) {
-  const rank = rankForKnowledgeIQ(summary.knowledgeIQ);
+  const { language, t } = useLanguage();
+  const rank = knowledgeRankLabel(rankForKnowledgeIQ(summary.knowledgeIQ), language);
   const isPerfect = summary.correctCount === summary.totalQuestions;
-  const message = resultMessage(summary);
+  const message = resultMessage(summary, language);
 
   return (
     <div className="results-screen" id="results-screen">
-      {isPerfect && <span className="accent-chip accent-amber">PERFECT GAME</span>}
-      {isNewRecord && <span className="accent-chip accent-coral">NEW RECORD!</span>}
+      {isPerfect && <span className="accent-chip accent-amber">{t("results.perfectGame")}</span>}
+      {isNewRecord && <span className="accent-chip accent-coral">{t("results.newRecord")}</span>}
 
       <div className="results-iq-card">
         <p className="results-iq-card__label">Q5 IQ</p>
@@ -38,25 +40,25 @@ export function ResultsScreen({ summary, isNewRecord, onPlayAgain, onBackToStart
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-card__label">CORRECT</div>
+          <div className="stat-card__label">{t("results.correct")}</div>
           <div className="stat-card__value">{summary.correctCount} / {summary.totalQuestions}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">POINTS</div>
+          <div className="stat-card__label">{t("results.points")}</div>
           <div className="stat-card__value">{summary.score.toLocaleString("en-US")}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">BEST STREAK</div>
+          <div className="stat-card__label">{t("results.bestStreak")}</div>
           <div className="stat-card__value">🔥 ×{summary.bestStreak}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">AVG RESPONSE</div>
+          <div className="stat-card__label">{t("results.avgResponse")}</div>
           <div className="stat-card__value">{(summary.averageResponseMs / 1000).toFixed(1)}s</div>
         </div>
       </div>
 
-      <button className="btn btn--primary" onClick={onPlayAgain}>PLAY AGAIN</button>
-      <button className="btn btn--ghost" onClick={onBackToStart}>BACK TO HOME</button>
+      <button className="btn btn--primary" onClick={onPlayAgain}>{t("results.playAgain")}</button>
+      <button className="btn btn--ghost" onClick={onBackToStart}>{t("results.backToHome")}</button>
     </div>
   );
 }

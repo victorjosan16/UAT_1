@@ -1,3 +1,5 @@
+import type { Language } from "@/types";
+
 /**
  * Storage abstraction: every localStorage read/write in the app goes
  * through here, both so preferences have a typed schema in one place and
@@ -5,6 +7,18 @@
  * NEVER treat anything stored here as authoritative for leaderboards —
  * it is client-controlled and only for local, non-competitive state.
  */
+
+const SUPPORTED_LANGUAGES: readonly Language[] = ["en", "ro"];
+
+function detectDefaultLanguage(): Language {
+  try {
+    const nav = typeof navigator !== "undefined" ? navigator.language.toLowerCase() : "";
+    if (nav.startsWith("ro")) return "ro";
+  } catch {
+    // navigator unavailable (SSR/tests) — fall through to the default below.
+  }
+  return "en";
+}
 
 export interface Preferences {
   soundEnabled: boolean;
@@ -38,6 +52,7 @@ const KEYS = {
   localBests: "q5.localBests",
   pendingQueue: "q5.pendingQueue",
   currentLevel: "q5.currentLevel",
+  language: "q5.language",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -142,5 +157,14 @@ export const LocalStorageService = {
     const queue = this.getPendingQueue();
     queue.push(item);
     this.setPendingQueue(queue);
+  },
+
+  /** Falls back to the browser's own language on first launch (Romanian if it starts with "ro", else English), then remembers whatever the player picks. */
+  getLanguage(): Language {
+    const raw = safeGet(KEYS.language);
+    return raw && (SUPPORTED_LANGUAGES as readonly string[]).includes(raw) ? (raw as Language) : detectDefaultLanguage();
+  },
+  setLanguage(language: Language): void {
+    safeSet(KEYS.language, language);
   },
 };

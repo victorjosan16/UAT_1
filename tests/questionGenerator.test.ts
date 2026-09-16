@@ -8,32 +8,38 @@ const SOURCE: QuizQuestionSource = {
   categoryId: "GENERAL_KNOWLEDGE",
   difficulty: 2,
   renderKind: "TEXT",
-  prompt: "What is 2 + 2?",
-  correctAnswer: "4",
-  distractors: ["3", "5", "22"],
+  prompt: { en: "What is 2 + 2?", ro: "Cât fac 2 + 2?" },
+  correctAnswer: { en: "4", ro: "4" },
+  distractors: { en: ["3", "5", "22"], ro: ["3", "5", "22"] },
 };
 
 describe("buildQuestion", () => {
   it("includes the correct answer exactly once among 4 options", () => {
-    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-1"), "FULL", 8000);
+    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-1"), "FULL", 8000, "en");
     expect(question.options).toHaveLength(4);
-    expect(question.options.filter((o) => o === SOURCE.correctAnswer)).toHaveLength(1);
+    expect(question.options.filter((o) => o === SOURCE.correctAnswer.en)).toHaveLength(1);
   });
 
   it("correctIndex points at the correct answer in the final option order", () => {
-    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-2"), "FULL", 8000);
-    expect(question.options[question.correctIndex]).toBe(SOURCE.correctAnswer);
+    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-2"), "FULL", 8000, "en");
+    expect(question.options[question.correctIndex]).toBe(SOURCE.correctAnswer.en);
   });
 
   it("is deterministic for the same seed", () => {
-    const q1 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000);
-    const q2 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000);
+    const q1 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000, "en");
+    const q2 = buildQuestion(0, SOURCE, new SeededRandom("same-seed"), "FULL", 8000, "en");
     expect(q1.options).toEqual(q2.options);
     expect(q1.correctIndex).toBe(q2.correctIndex);
   });
 
+  it("resolves the prompt and options in the requested language", () => {
+    const question = buildQuestion(0, SOURCE, new SeededRandom("q-seed-ro"), "FULL", 8000, "ro");
+    expect(question.prompt).toBe("Cât fac 2 + 2?");
+    expect(question.options[question.correctIndex]).toBe("4");
+  });
+
   it("carries through the given reveal mode and time limit", () => {
-    const question = buildQuestion(2, SOURCE, new SeededRandom("q-seed-3"), "BLUR", 5000);
+    const question = buildQuestion(2, SOURCE, new SeededRandom("q-seed-3"), "BLUR", 5000, "en");
     expect(question.index).toBe(2);
     expect(question.revealMode).toBe("BLUR");
     expect(question.timeLimitMs).toBe(5000);

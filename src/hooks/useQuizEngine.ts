@@ -25,7 +25,7 @@ export function useQuizEngine(mode: QuizMode, seed: string, options: QuizEngineO
       onComplete: (summary) => onCompleteRef.current(summary),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, seed, options.level, options.categoryId]);
+  }, [mode, seed, options.level, options.categoryId, options.language]);
 
   useEffect(() => {
     engine.start();
