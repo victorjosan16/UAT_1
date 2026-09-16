@@ -135,6 +135,8 @@ export function useChampionshipRound(lobbyId: string, playerId: string, language
     ratingAppliedRef.current = true;
 
     const placements = placementsFromScores(players.map((p) => ({ playerId: p.playerId, score: p.score })));
+    if (placements.get(playerId) === 1) LocalStorageService.incrementArenaWins();
+
     const changes = computeArenaRatingChanges(players.map((p) => ({ playerId: p.playerId, ratingBefore: p.ratingBefore, placement: placements.get(p.playerId)! })));
     const mine = changes.find((c) => c.playerId === playerId);
     if (!mine) return;

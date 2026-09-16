@@ -449,12 +449,21 @@ const STRINGS = {
   "results.challengeFriend": { en: "CHALLENGE A FRIEND", ro: "PROVOACĂ UN PRIETEN", es: "DESAFIAR A UN AMIGO", pt: "DESAFIAR UM AMIGO", hi: "किसी मित्र को चुनौती दें", id: "TANTANG TEMAN", ru: "БРОСИТЬ ВЫЗОВ ДРУГУ" },
   "results.linkCopied": { en: "Link copied!", ro: "Link copiat!", es: "¡Enlace copiado!", pt: "Link copiado!", hi: "लिंक कॉपी हो गया!", id: "Tautan disalin!", ru: "Ссылка скопирована!" },
 
-  "badge.firstWin": { en: "FIRST WIN", ro: "PRIMA VICTORIE", es: "PRIMERA VICTORIA", pt: "PRIMEIRA VITÓRIA", hi: "पहली जीत", id: "KEMENANGAN PERTAMA", ru: "ПЕРВАЯ ПОБЕДА" },
+  "badge.firstQuiz": { en: "FIRST QUIZ", ro: "PRIMUL QUIZ", es: "PRIMER QUIZ", pt: "PRIMEIRO QUIZ", hi: "पहला क्विज़", id: "KUIS PERTAMA", ru: "ПЕРВЫЙ КВИЗ" },
   "badge.perfect10": { en: "PERFECT 10", ro: "10 PERFECT", es: "10 PERFECTO", pt: "10 PERFEITO", hi: "परफेक्ट 10", id: "10 SEMPURNA", ru: "ИДЕАЛЬНЫЕ 10" },
-  "badge.onFire": { en: "ON FIRE", ro: "ÎN FLĂCĂRI", es: "EN LLAMAS", pt: "PEGANDO FOGO", hi: "ऑन फायर", id: "SEDANG PANAS", ru: "В УДАРЕ" },
-  "badge.sevenDayStreak": { en: "7 DAY STREAK", ro: "SERIE DE 7 ZILE", es: "RACHA DE 7 DÍAS", pt: "SEQUÊNCIA DE 7 DIAS", hi: "7 दिन की स्ट्रीक", id: "RENTETAN 7 HARI", ru: "СЕРИЯ 7 ДНЕЙ" },
-  "badge.thousandQuestions": { en: "1000 QUESTIONS", ro: "1000 DE ÎNTREBĂRI", es: "1000 PREGUNTAS", pt: "1000 PERGUNTAS", hi: "1000 प्रश्न", id: "1000 PERTANYAAN", ru: "1000 ВОПРОСОВ" },
-  "badge.champion": { en: "CHAMPION", ro: "CAMPION", es: "CAMPEÓN", pt: "CAMPEÃO", hi: "चैंपियन", id: "JUARA", ru: "ЧЕМПИОН" },
+  "badge.onFire10": { en: "ON FIRE ×10", ro: "ÎN FLĂCĂRI ×10", es: "EN LLAMAS ×10", pt: "PEGANDO FOGO ×10", hi: "ऑन फायर ×10", id: "SEDANG PANAS ×10", ru: "В УДАРЕ ×10" },
+  "badge.streak7": { en: "7 DAY STREAK", ro: "SERIE DE 7 ZILE", es: "RACHA DE 7 DÍAS", pt: "SEQUÊNCIA DE 7 DIAS", hi: "7 दिन की स्ट्रीक", id: "RENTETAN 7 HARI", ru: "СЕРИЯ 7 ДНЕЙ" },
+  "badge.streak30": { en: "30 DAY STREAK", ro: "SERIE DE 30 DE ZILE", es: "RACHA DE 30 DÍAS", pt: "SEQUÊNCIA DE 30 DIAS", hi: "30 दिन की स्ट्रीक", id: "RENTETAN 30 HARI", ru: "СЕРИЯ 30 ДНЕЙ" },
+  "badge.firstArenaWin": { en: "FIRST ARENA WIN", ro: "PRIMA VICTORIE ÎN ARENĂ", es: "PRIMERA VICTORIA EN ARENA", pt: "PRIMEIRA VITÓRIA NA ARENA", hi: "पहली एरिना जीत", id: "KEMENANGAN ARENA PERTAMA", ru: "ПЕРВАЯ ПОБЕДА В АРЕНЕ" },
+  "badge.arenaWins10": { en: "10 ARENA WINS", ro: "10 VICTORII ÎN ARENĂ", es: "10 VICTORIAS EN ARENA", pt: "10 VITÓRIAS NA ARENA", hi: "10 एरिना जीत", id: "10 KEMENANGAN ARENA", ru: "10 ПОБЕД В АРЕНЕ" },
+  "badge.top100": { en: "TOP 100", ro: "TOP 100", es: "TOP 100", pt: "TOP 100", hi: "टॉप 100", id: "TOP 100", ru: "ТОП 100" },
+  "badge.top50": { en: "TOP 50", ro: "TOP 50", es: "TOP 50", pt: "TOP 50", hi: "टॉप 50", id: "TOP 50", ru: "ТОП 50" },
+  "badge.top10": { en: "TOP 10", ro: "TOP 10", es: "TOP 10", pt: "TOP 10", hi: "टॉप 10", id: "TOP 10", ru: "ТОП 10" },
+  "badge.numberOne": { en: "#1", ro: "#1", es: "#1", pt: "#1", hi: "#1", id: "#1", ru: "#1" },
+  "badge.geographyMaster": { en: "GEOGRAPHY MASTER", ro: "MAESTRU GEOGRAFIE", es: "MAESTRO DE GEOGRAFÍA", pt: "MESTRE EM GEOGRAFIA", hi: "भूगोल मास्टर", id: "MASTER GEOGRAFI", ru: "МАСТЕР ГЕОГРАФИИ" },
+  "badge.flagMaster": { en: "FLAG MASTER", ro: "MAESTRU STEAGURI", es: "MAESTRO DE BANDERAS", pt: "MESTRE EM BANDEIRAS", hi: "फ्लैग मास्टर", id: "MASTER BENDERA", ru: "МАСТЕР ФЛАГОВ" },
+  "badge.seasonTop100": { en: "SEASON TOP 100", ro: "SEZON TOP 100", es: "TEMPORADA TOP 100", pt: "TEMPORADA TOP 100", hi: "सीज़न टॉप 100", id: "MUSIM TOP 100", ru: "СЕЗОН ТОП 100" },
+  "badge.seasonTop10": { en: "SEASON TOP 10", ro: "SEZON TOP 10", es: "TEMPORADA TOP 10", pt: "TEMPORADA TOP 10", hi: "सीज़न टॉप 10", id: "MUSIM TOP 10", ru: "СЕЗОН ТОП 10" },
 } as const satisfies Record<string, Record<Language, string>>;
 
 export type StringKey = keyof typeof STRINGS;

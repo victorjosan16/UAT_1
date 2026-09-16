@@ -25,6 +25,7 @@ import { randomId } from "@/utils/rng";
 import { dailySeed, utcDateKey } from "@/utils/dailySeed";
 import { nudgeRating } from "@/quiz/RatingEngine";
 import { MilestoneService, type MilestoneRank } from "@/services/MilestoneService";
+import { BADGE_FLAG } from "@/services/BadgeService";
 import { previousMonthKey, utcMonthKey } from "@/utils/season";
 import type { PlacementSummary } from "@/quiz/PlacementEngine";
 import { GAME_VERSION } from "@/branding";
@@ -214,6 +215,13 @@ export function App() {
     LocalStorageService.setLocalBests(updated);
     setBests(updated);
 
+    // One-time badge flags (see BadgeService) — cheap to check every run, only ever written once.
+    if (summary.correctCount === summary.totalQuestions) LocalStorageService.markMilestoneReached(BADGE_FLAG.perfect10);
+    if (summary.bestStreak >= 10) LocalStorageService.markMilestoneReached(BADGE_FLAG.onFire10);
+    if (summary.mode === "CATEGORY" && runConfig?.categoryId && summary.correctCount === summary.totalQuestions) {
+      LocalStorageService.markMilestoneReached(BADGE_FLAG.categoryMastered(runConfig.categoryId));
+    }
+
     if ((summary.mode === "LEVEL" || summary.mode === "ENDLESS") && runConfig?.level === currentLevel) {
       const nextLevel = currentLevel + 1;
       LocalStorageService.setCurrentLevel(nextLevel);
@@ -243,6 +251,11 @@ export function App() {
           soundManager.playMilestone();
           hapticsManager.milestone();
         }
+
+        // Season (monthly) milestones unlock the SEASON_TOP_100/SEASON_TOP_10 badges — tracked
+        // silently here; the loud celebration above stays reserved for the all-time ladder.
+        const monthlyRank = await LeaderboardService.getMyRank("monthly", playerId);
+        if (monthlyRank) MilestoneService.checkAndMark("monthly", monthlyRank.rank);
       })();
     }
 

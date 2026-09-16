@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { tierForRating } from "@/quiz/RatingEngine";
-import type { StringKey } from "@/i18n/strings";
+import { BADGE_DEFINITIONS, computeEarnedBadges } from "@/services/BadgeService";
 import { LocalStorageService, type LocalBests } from "@/storage/LocalStorage";
 import type { Language } from "@/types";
 
@@ -14,8 +14,6 @@ export interface ProfileScreenProps {
 }
 
 type Tab = "STATS" | "BADGES";
-
-const BADGE_KEYS: StringKey[] = ["badge.firstWin", "badge.perfect10", "badge.onFire", "badge.sevenDayStreak", "badge.thousandQuestions", "badge.champion"];
 const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "ro", label: "RO" },
@@ -33,6 +31,12 @@ export function ProfileScreen({ nickname, bests, rating, onChangeNickname }: Pro
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(nickname);
   const [preferences, setPreferences] = useState(() => LocalStorageService.getPreferences());
+  const earnedBadges = computeEarnedBadges({
+    totalQuizzesPlayed: bests.totalQuizzesPlayed,
+    dailyStreak: bests.dailyStreak,
+    arenaWins: LocalStorageService.getArenaWins(),
+    reachedFlags: new Set(LocalStorageService.getMilestonesReached()),
+  });
 
   function toggleSound(): void {
     setPreferences(LocalStorageService.updatePreferences({ soundEnabled: !preferences.soundEnabled }));
@@ -145,13 +149,16 @@ export function ProfileScreen({ nickname, bests, rating, onChangeNickname }: Pro
 
       {tab === "BADGES" && (
         <div className="category-grid">
-          {BADGE_KEYS.map((key) => (
-            <div key={key} className="category-card category-card--locked">
-              <span className="category-card__badge">{t("profile.locked")}</span>
-              <span className="category-card__emoji">🔒</span>
-              <span className="category-card__label">{t(key)}</span>
-            </div>
-          ))}
+          {BADGE_DEFINITIONS.map((badge) => {
+            const earned = earnedBadges.has(badge.id);
+            return (
+              <div key={badge.id} className={`category-card${earned ? "" : " category-card--locked"}`}>
+                <span className="category-card__badge">{earned ? "✓" : t("profile.locked")}</span>
+                <span className="category-card__emoji">{earned ? badge.emoji : "🔒"}</span>
+                <span className="category-card__label">{t(badge.labelKey)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

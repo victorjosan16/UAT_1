@@ -59,6 +59,7 @@ const KEYS = {
   lastKnownRankPrefix: "q5.lastKnownRank.",
   milestonesReached: "q5.milestonesReached",
   lastSeenMonthKey: "q5.lastSeenMonthKey",
+  arenaWins: "q5.arenaWins",
 } as const;
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -221,5 +222,17 @@ export const LocalStorageService = {
   },
   setLastSeenMonthKey(monthKey: string): void {
     safeSet(KEYS.lastSeenMonthKey, monthKey);
+  },
+
+  /** Total Arena (Championship) match wins — see BadgeService's FIRST_ARENA_WIN / ARENA_WINS_10. */
+  getArenaWins(): number {
+    const raw = safeGet(KEYS.arenaWins);
+    const parsed = raw ? Number.parseInt(raw, 10) : 0;
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  },
+  incrementArenaWins(): number {
+    const next = this.getArenaWins() + 1;
+    safeSet(KEYS.arenaWins, String(next));
+    return next;
   },
 };
