@@ -78,6 +78,70 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Live 5-player match, same trust model as everything above (no Cloud
+    // Functions re-derivation): any signed-in client may create/join a
+    // lobby or advance its shared phase, guarded only by shape/type checks
+    // and a few monotonicity constraints (status only moves forward,
+    // currentQuestionIndex only steps forward by at most one at a time) —
+    // enough to block an obviously malformed write, not to stop a
+    // determined player from skipping ahead in their own match.
+    function isValidLobbyShape(data) {
+      return data.keys().hasAll(['status', 'seed', 'maxPlayers', 'playerCount', 'currentQuestionIndex', 'questionStartAt', 'countdownStartAt', 'createdAt'])
+        && data.keys().hasOnly(['status', 'seed', 'categoryId', 'maxPlayers', 'playerCount', 'currentQuestionIndex', 'questionStartAt', 'countdownStartAt', 'createdAt'])
+        && data.status in ['WAITING', 'COUNTDOWN', 'PLAYING', 'COMPLETE']
+        && data.seed is string && data.seed.size() > 0 && data.seed.size() <= 64
+        && data.maxPlayers is number && data.maxPlayers == 5
+        && data.playerCount is number && data.playerCount >= 0 && data.playerCount <= 5
+        && data.currentQuestionIndex is number && data.currentQuestionIndex >= 0 && data.currentQuestionIndex <= 20
+        && (data.questionStartAt == null || data.questionStartAt is number)
+        && (data.countdownStartAt == null || data.countdownStartAt is number)
+        && data.createdAt is number;
+    }
+
+    function isValidStatusTransition(prevStatus, nextStatus) {
+      return (prevStatus == 'WAITING' && (nextStatus == 'WAITING' || nextStatus == 'COUNTDOWN'))
+        || (prevStatus == 'COUNTDOWN' && (nextStatus == 'COUNTDOWN' || nextStatus == 'PLAYING'))
+        || (prevStatus == 'PLAYING' && (nextStatus == 'PLAYING' || nextStatus == 'COMPLETE'))
+        || (prevStatus == 'COMPLETE' && nextStatus == 'COMPLETE');
+    }
+
+    match /championship_lobbies/{lobbyId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && isValidLobbyShape(request.resource.data)
+        && request.resource.data.status == 'WAITING'
+        && request.resource.data.playerCount == 1
+        && request.resource.data.currentQuestionIndex == 0
+        && request.resource.data.questionStartAt == null
+        && request.resource.data.countdownStartAt == null;
+      allow update: if request.auth != null
+        && isValidLobbyShape(request.resource.data)
+        && isValidStatusTransition(resource.data.status, request.resource.data.status)
+        && request.resource.data.seed == resource.data.seed
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.maxPlayers == resource.data.maxPlayers
+        && request.resource.data.currentQuestionIndex >= resource.data.currentQuestionIndex
+        && request.resource.data.currentQuestionIndex <= resource.data.currentQuestionIndex + 1;
+      allow delete: if false;
+
+      function isValidChampionshipPlayer() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['nickname', 'score', 'correctCount', 'lastAnsweredIndex', 'joinedAt'])
+          && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
+          && data.score is number && data.score >= 0 && data.score <= 10000000
+          && data.correctCount is number && data.correctCount >= 0 && data.correctCount <= 20
+          && data.lastAnsweredIndex is number && data.lastAnsweredIndex >= -1 && data.lastAnsweredIndex <= 20
+          && data.joinedAt is number;
+      }
+
+      match /players/{playerId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && request.auth.uid == playerId && isValidChampionshipPlayer();
+        allow update: if request.auth != null && request.auth.uid == playerId && isValidChampionshipPlayer();
+        allow delete: if request.auth != null && request.auth.uid == playerId;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

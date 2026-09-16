@@ -6,9 +6,10 @@ export interface PlayScreenProps {
   onPlayLevel: () => void;
   onOpenDiscover: () => void;
   onChallengeFriend: () => void;
+  onPlayChampionship: () => void;
 }
 
-export function PlayScreen({ onPlayQuick, onPlayDaily, onPlayLevel, onOpenDiscover, onChallengeFriend }: PlayScreenProps) {
+export function PlayScreen({ onPlayQuick, onPlayDaily, onPlayLevel, onOpenDiscover, onChallengeFriend, onPlayChampionship }: PlayScreenProps) {
   const { t } = useLanguage();
 
   return (
@@ -48,7 +49,7 @@ export function PlayScreen({ onPlayQuick, onPlayDaily, onPlayLevel, onOpenDiscov
         </div>
       </button>
 
-      <button className="mode-card mode-card--locked" disabled>
+      <button className="mode-card" onClick={onPlayChampionship}>
         <div className="mode-card__icon accent-coral">🏆</div>
         <div>
           <p className="mode-card__title">{t("play.championship.title")}</p>

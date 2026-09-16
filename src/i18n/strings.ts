@@ -169,6 +169,15 @@ const STRINGS = {
   "championship.matchComplete": { en: "CHAMPIONSHIP COMPLETE", ro: "CAMPIONAT ÎNCHEIAT", es: "CAMPEONATO TERMINADO", pt: "CAMPEONATO CONCLUÍDO", hi: "चैंपियनशिप समाप्त", id: "KEJUARAAN SELESAI", ru: "ЧЕМПИОНАТ ЗАВЕРШЁН" },
   "championship.newMatch": { en: "NEW CHAMPIONSHIP", ro: "CAMPIONAT NOU", es: "NUEVO CAMPEONATO", pt: "NOVO CAMPEONATO", hi: "नई चैंपियनशिप", id: "KEJUARAAN BARU", ru: "НОВЫЙ ЧЕМПИОНАТ" },
   "championship.answerLocked": { en: "ANSWER LOCKED", ro: "RĂSPUNS BLOCAT", es: "RESPUESTA BLOQUEADA", pt: "RESPOSTA TRAVADA", hi: "उत्तर लॉक", id: "JAWABAN TERKUNCI", ru: "ОТВЕТ ЗАФИКСИРОВАН" },
+  "championship.notFound": {
+    en: "Couldn't find a match right now. Try again in a moment.",
+    ro: "Nu am putut găsi un meci acum. Încearcă din nou peste puțin timp.",
+    es: "No se pudo encontrar una partida ahora. Inténtalo de nuevo en un momento.",
+    pt: "Não foi possível encontrar uma partida agora. Tente novamente em instantes.",
+    hi: "अभी कोई मैच नहीं मिल सका। कृपया थोड़ी देर बाद फिर से प्रयास करें।",
+    id: "Tidak dapat menemukan pertandingan sekarang. Coba lagi sebentar lagi.",
+    ru: "Не удалось найти матч прямо сейчас. Попробуйте ещё раз через минуту.",
+  },
   "championship.waitingForNext": {
     en: "Waiting for the next question…",
     ro: "Se așteaptă următoarea întrebare…",

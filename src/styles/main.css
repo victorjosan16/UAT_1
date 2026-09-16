@@ -600,6 +600,75 @@ button {
   color: var(--emerald-strong);
 }
 
+.championship-countdown {
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--emerald-strong);
+  margin: 24px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.championship-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.championship-player-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 72px;
+}
+
+.championship-player-chip--empty {
+  opacity: 0.35;
+}
+
+.championship-player-chip__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.championship-players-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.championship-player-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.championship-player-pill--me {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.championship-player-pill--answered {
+  box-shadow: inset 0 0 0 1px var(--emerald);
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BottomNav, type NavTab } from "@/components/BottomNav";
 import { WelcomeScreen } from "@/screens/WelcomeScreen";
 import { ChallengeScreen } from "@/screens/ChallengeScreen";
+import { ChampionshipScreen } from "@/screens/ChampionshipScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { DiscoverScreen } from "@/screens/DiscoverScreen";
 import { PlayScreen } from "@/screens/PlayScreen";
@@ -21,7 +22,7 @@ import { dailySeed, utcDateKey } from "@/utils/dailySeed";
 import { GAME_VERSION } from "@/branding";
 import type { CategoryId, QuizMode, QuizSummary } from "@/types";
 
-type OverlayScreen = "QUIZ" | "RESULTS" | null;
+type OverlayScreen = "QUIZ" | "RESULTS" | "CHAMPIONSHIP" | null;
 
 interface RunConfig {
   mode: QuizMode;
@@ -94,6 +95,10 @@ export function App() {
 
   function handleOpenCategory(categoryId: CategoryId): void {
     startRun("CATEGORY", { categoryId });
+  }
+
+  function handlePlayChampionship(): void {
+    setOverlay("CHAMPIONSHIP");
   }
 
   function handlePlayIncomingChallenge(): void {
@@ -218,6 +223,10 @@ export function App() {
     return <QuizScreen mode={runConfig.mode} seed={runConfig.seed} level={runConfig.level} categoryId={runConfig.categoryId} onComplete={handleComplete} onQuit={handleBackToHome} />;
   }
 
+  if (overlay === "CHAMPIONSHIP" && playerId) {
+    return <ChampionshipScreen playerId={playerId} nickname={nickname} onExit={handleBackToHome} />;
+  }
+
   if (overlay === "RESULTS" && lastSummary) {
     return (
       <ResultsScreen
@@ -248,7 +257,14 @@ export function App() {
         )}
         {tab === "DISCOVER" && <DiscoverScreen onOpenCategory={handleOpenCategory} />}
         {tab === "PLAY" && (
-          <PlayScreen onPlayQuick={handlePlayQuick} onPlayDaily={handlePlayDaily} onPlayLevel={handlePlayLevel} onOpenDiscover={() => setTab("DISCOVER")} onChallengeFriend={handlePlayQuick} />
+          <PlayScreen
+            onPlayQuick={handlePlayQuick}
+            onPlayDaily={handlePlayDaily}
+            onPlayLevel={handlePlayLevel}
+            onOpenDiscover={() => setTab("DISCOVER")}
+            onChallengeFriend={handlePlayQuick}
+            onPlayChampionship={handlePlayChampionship}
+          />
         )}
         {tab === "RANKING" && <RankingScreen playerId={playerId} bests={bests} />}
         {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} onChangeNickname={handleChangeNickname} />}

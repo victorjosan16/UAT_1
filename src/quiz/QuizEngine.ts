@@ -12,11 +12,24 @@ import type { AnswerResult, CategoryId, Difficulty, Language, QuizMode, QuizQues
 export type QuizEngineStatus = "PLAYING" | "REVEAL" | "COMPLETE";
 
 const REVEAL_DURATION_MS = 1400;
-const STANDARD_QUESTION_COUNT = QUESTIONS_PER_LEVEL;
+export const STANDARD_QUESTION_COUNT = QUESTIONS_PER_LEVEL;
 
 /** Default per-question timer: 20s at difficulty 1, down to 16s at difficulty 5 — see MASTER PROMPT §18/19. */
 function standardTimeLimitFor(difficulty: Difficulty): number {
   return 20000 - (difficulty - 1) * 1000;
+}
+
+/**
+ * The exact question sequence QUICK/CATEGORY modes build — factored out so
+ * Championship (every player independently builds the identical set from
+ * the same seed/category, then only synchronizes pacing over Firestore,
+ * never question content) doesn't duplicate this logic.
+ */
+export function buildStandardQuestionSet(seed: string, categoryId: CategoryId | undefined, language: Language): QuizQuestion[] {
+  const rng = new SeededRandom(seed);
+  const pool = categoryId ? questionsForCategory(categoryId) : ALL_QUESTIONS;
+  const targets = rng.shuffle(pool).slice(0, Math.min(STANDARD_QUESTION_COUNT, pool.length));
+  return targets.map((source, i) => buildQuestion(i, source, rng, "FULL", standardTimeLimitFor(source.difficulty), language));
 }
 
 export interface QuizEngineOptions {
@@ -109,9 +122,8 @@ export class QuizEngine {
   }
 
   private buildQuestions(): void {
-    const pool = this.pool();
-
     if (this.isLeveled()) {
+      const pool = this.pool();
       const def = this.levelDefinition();
       const filtered = pool.filter((q) => q.difficulty >= def.minDifficulty && q.difficulty <= def.maxDifficulty);
       const effectivePool = filtered.length >= def.questionCount ? filtered : pool;
@@ -122,10 +134,10 @@ export class QuizEngine {
       return;
     }
 
-    const targets = this.rng.shuffle(pool).slice(0, Math.min(STANDARD_QUESTION_COUNT, pool.length));
-    targets.forEach((source, i) => {
-      this.questions.push(buildQuestion(i, source, this.rng, "FULL", standardTimeLimitFor(source.difficulty), this.language));
-    });
+    if (this.mode === "CATEGORY" && !this.options.categoryId) {
+      throw new Error("QuizEngine: CATEGORY mode requires options.categoryId");
+    }
+    this.questions.push(...buildStandardQuestionSet(this.seed, this.mode === "CATEGORY" ? this.options.categoryId : undefined, this.language));
   }
 
   private emit(): void {
