@@ -8,6 +8,27 @@ import type { Language } from "@/types";
  * shared template.
  */
 const STRINGS = {
+  "welcome.heading": {
+    en: "Choose your nickname",
+    ro: "Alege-ți numele de jucător",
+    es: "Elige tu apodo",
+    pt: "Escolha seu apelido",
+    hi: "अपना उपनाम चुनें",
+    id: "Pilih nama panggilanmu",
+    ru: "Выберите свой никнейм",
+  },
+  "welcome.subtitle": {
+    en: "This is how you'll appear on the leaderboard.",
+    ro: "Așa vei apărea în clasament.",
+    es: "Así aparecerás en la clasificación.",
+    pt: "É assim que você aparecerá na classificação.",
+    hi: "आप लीडरबोर्ड पर इसी तरह दिखेंगे।",
+    id: "Begini kamu akan muncul di papan peringkat.",
+    ru: "Так вы будете отображаться в рейтинге.",
+  },
+  "welcome.placeholder": { en: "Your nickname", ro: "Numele tău", es: "Tu apodo", pt: "Seu apelido", hi: "आपका उपनाम", id: "Nama panggilanmu", ru: "Ваш никнейм" },
+  "welcome.cta": { en: "START", ro: "ÎNCEPE", es: "EMPEZAR", pt: "COMEÇAR", hi: "शुरू करें", id: "MULAI", ru: "НАЧАТЬ" },
+
   "nav.home": { en: "Home", ro: "Acasă", es: "Inicio", pt: "Início", hi: "होम", id: "Beranda", ru: "Главная" },
   "nav.discover": { en: "Discover", ro: "Descoperă", es: "Descubrir", pt: "Descobrir", hi: "खोजें", id: "Jelajahi", ru: "Обзор" },
   "nav.play": { en: "Play", ro: "Joacă", es: "Jugar", pt: "Jogar", hi: "खेलें", id: "Main", ru: "Играть" },
@@ -163,6 +184,19 @@ const STRINGS = {
   "ranking.bestIQ": { en: "Best Q5 IQ", ro: "Q5 IQ Maxim", es: "Mejor Q5 IQ", pt: "Melhor Q5 IQ", hi: "सर्वश्रेष्ठ Q5 IQ", id: "Q5 IQ Terbaik", ru: "Лучший Q5 IQ" },
   "ranking.bestStreak": { en: "Best Streak", ro: "Serie Maximă", es: "Mejor Racha", pt: "Melhor Sequência", hi: "सर्वश्रेष्ठ स्ट्रीक", id: "Rentetan Terbaik", ru: "Лучшая серия" },
   "ranking.runsPlayed": { en: "Runs Played", ro: "Jocuri Jucate", es: "Partidas Jugadas", pt: "Partidas Jogadas", hi: "खेले गए गेम", id: "Permainan Dimainkan", ru: "Сыграно игр" },
+  "ranking.allTime": { en: "All-time", ro: "Din totdeauna", es: "General", pt: "Geral", hi: "सर्वकालिक", id: "Sepanjang Masa", ru: "За все время" },
+  "ranking.daily": { en: "Daily", ro: "Zilnic", es: "Diario", pt: "Diário", hi: "दैनिक", id: "Harian", ru: "За день" },
+  "ranking.weekly": { en: "Weekly", ro: "Săptămânal", es: "Semanal", pt: "Semanal", hi: "साप्ताहिक", id: "Mingguan", ru: "За неделю" },
+  "ranking.you": { en: "You", ro: "Tu", es: "Tú", pt: "Você", hi: "आप", id: "Kamu", ru: "Вы" },
+  "ranking.emptyLive": {
+    en: "No scores yet — be the first!",
+    ro: "Încă niciun scor — fii primul!",
+    es: "Aún no hay puntuaciones — ¡sé el primero!",
+    pt: "Ainda não há pontuações — seja o primeiro!",
+    hi: "अभी तक कोई स्कोर नहीं — पहले बनें!",
+    id: "Belum ada skor — jadilah yang pertama!",
+    ru: "Пока нет результатов — будь первым!",
+  },
 
   "profile.guestPlayer": { en: "Guest player", ro: "Jucător invitat", es: "Jugador invitado", pt: "Jogador convidado", hi: "अतिथि खिलाड़ी", id: "Pemain tamu", ru: "Гость" },
   "profile.stats": { en: "Stats", ro: "Statistici", es: "Estadísticas", pt: "Estatísticas", hi: "आँकड़े", id: "Statistik", ru: "Статистика" },
@@ -174,6 +208,9 @@ const STRINGS = {
   "profile.dailyStreak": { en: "Daily Streak", ro: "Serie Zilnică", es: "Racha Diaria", pt: "Sequência Diária", hi: "दैनिक स्ट्रीक", id: "Rentetan Harian", ru: "Ежедневная серия" },
   "profile.locked": { en: "Locked", ro: "Blocată", es: "Bloqueado", pt: "Bloqueado", hi: "लॉक्ड", id: "Terkunci", ru: "Заблокировано" },
   "profile.language": { en: "Language", ro: "Limbă", es: "Idioma", pt: "Idioma", hi: "भाषा", id: "Bahasa", ru: "Язык" },
+  "profile.editNickname": { en: "Edit nickname", ro: "Editează numele", es: "Editar apodo", pt: "Editar apelido", hi: "उपनाम संपादित करें", id: "Edit nama panggilan", ru: "Изменить никнейм" },
+  "profile.save": { en: "Save", ro: "Salvează", es: "Guardar", pt: "Salvar", hi: "सहेजें", id: "Simpan", ru: "Сохранить" },
+  "profile.cancel": { en: "Cancel", ro: "Anulează", es: "Cancelar", pt: "Cancelar", hi: "रद्द करें", id: "Batal", ru: "Отмена" },
 
   "quiz.questionOf": {
     en: "Question {index} of {total}",

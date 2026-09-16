@@ -47,6 +47,6 @@ describe("DifficultyEngine (Endless)", () => {
   it("never lets the time limit go below the configured floor", () => {
     const engine = new DifficultyEngine();
     const farRound = engine.definitionForRound(10000);
-    expect(farRound.timeLimitMs).toBeGreaterThanOrEqual(3500);
+    expect(farRound.timeLimitMs).toBeGreaterThanOrEqual(7000);
   });
 });

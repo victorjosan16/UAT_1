@@ -1,7 +1,8 @@
 import { roundTo } from "@/utils/math";
 import { QUESTIONS_PER_LEVEL, MAX_LEVEL, type QuizLevelDefinition } from "./LevelDefinition";
 
-const ENDLESS_MIN_TIME_LIMIT_MS = 3500;
+const ENDLESS_START_TIME_LIMIT_MS = 10000;
+const ENDLESS_MIN_TIME_LIMIT_MS = 7000;
 const ENDLESS_TIME_DECAY_MS_PER_ROUND = 40;
 const ENDLESS_MULTIPLIER_GROWTH_PER_ROUND = 0.015;
 
@@ -12,7 +13,7 @@ const ENDLESS_MULTIPLIER_GROWTH_PER_ROUND = 0.015;
  */
 export class DifficultyEngine {
   definitionForRound(roundIndex: number): QuizLevelDefinition {
-    const timeLimitMs = Math.max(ENDLESS_MIN_TIME_LIMIT_MS, Math.round(5000 - roundIndex * ENDLESS_TIME_DECAY_MS_PER_ROUND));
+    const timeLimitMs = Math.max(ENDLESS_MIN_TIME_LIMIT_MS, Math.round(ENDLESS_START_TIME_LIMIT_MS - roundIndex * ENDLESS_TIME_DECAY_MS_PER_ROUND));
     const scoreMultiplier = roundTo(1.5 + roundIndex * ENDLESS_MULTIPLIER_GROWTH_PER_ROUND, 2);
 
     return {

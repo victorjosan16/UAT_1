@@ -14,9 +14,9 @@ export type QuizEngineStatus = "PLAYING" | "REVEAL" | "COMPLETE";
 const REVEAL_DURATION_MS = 1400;
 const STANDARD_QUESTION_COUNT = QUESTIONS_PER_LEVEL;
 
-/** Default per-question timer: 10s at difficulty 1, down to 6s at difficulty 5 — see MASTER PROMPT §18/19. */
+/** Default per-question timer: 20s at difficulty 1, down to 16s at difficulty 5 — see MASTER PROMPT §18/19. */
 function standardTimeLimitFor(difficulty: Difficulty): number {
-  return 10000 - (difficulty - 1) * 1000;
+  return 20000 - (difficulty - 1) * 1000;
 }
 
 export interface QuizEngineOptions {

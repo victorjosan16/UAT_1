@@ -1,5 +1,5 @@
-import { apiClient, ApiError, type ApiClient } from "./ApiClient";
-import { ensureSignedIn } from "./firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { ensureSignedIn, getFirestoreDb } from "./firebase";
 import { LocalStorageService } from "@/storage/LocalStorage";
 import { normalizeNickname } from "@/utils/nickname";
 import { randomId } from "@/utils/rng";
@@ -12,25 +12,15 @@ export interface PlayerIdentity {
   nickname: string;
 }
 
-export interface PlayerStats {
-  bestScore: number;
-  bestKnowledgeIQ: number;
-  bestStreak: number;
-  totalQuizzesPlayed: number;
-  dailyStreak: number;
-}
-
 /**
  * Guest-first identity: Firebase Anonymous Auth creates a stable uid on
  * first launch (no interruption before first play), which Firebase
  * persists across reloads — the same device keeps the same player. The
- * uid *is* the player id everywhere (client and server); nicknames are
- * the only thing the player chooses. Upgrading to a real account later
- * only means linking a credential to this same uid.
+ * uid *is* the player id everywhere (client and leaderboard); nicknames
+ * are the only thing the player chooses. Upgrading to a real account
+ * later only means linking a credential to this same uid.
  */
 export class PlayerService {
-  constructor(private readonly api: ApiClient = apiClient) {}
-
   /**
    * Never lets a broken/slow/unconfigured Firebase project block the
    * start screen — gameplay must be instant regardless of backend state
@@ -61,32 +51,23 @@ export class PlayerService {
       LocalStorageService.setNickname(nickname);
     }
 
-    // Fire-and-forget registration; gameplay never waits on this.
-    void this.registerRemote(nickname);
-
     return { playerId, nickname };
   }
 
-  private async registerRemote(nickname: string): Promise<void> {
-    try {
-      await this.api.post("/player", { nickname });
-    } catch (error) {
-      if (!(error instanceof ApiError)) throw error;
-      // Offline or backend unavailable — local guest identity still works fully offline.
-    }
-  }
-
-  setNickname(nickname: string): void {
+  /** Updates the nickname locally (instant) and, best-effort, in Firestore so it's tied to this player's identity — see firestore.rules `players/{playerId}`. */
+  setNickname(playerId: string, nickname: string): string {
     const trimmed = normalizeNickname(nickname);
     LocalStorageService.setNickname(trimmed);
-    void this.api.post("/player", { nickname: trimmed }).catch(() => undefined);
+    void this.syncNickname(playerId, trimmed);
+    return trimmed;
   }
 
-  async fetchStats(): Promise<PlayerStats | null> {
+  private async syncNickname(playerId: string, nickname: string): Promise<void> {
     try {
-      return await this.api.get<PlayerStats>("/player/stats");
+      const db = getFirestoreDb();
+      await setDoc(doc(db, "players", playerId), { nickname, updatedAt: Date.now() });
     } catch {
-      return null;
+      // Offline, unauthenticated (local guest id), or rules-denied — the nickname still works fully offline from localStorage.
     }
   }
 }

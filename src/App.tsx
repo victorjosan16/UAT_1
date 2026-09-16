@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BottomNav, type NavTab } from "@/components/BottomNav";
+import { WelcomeScreen } from "@/screens/WelcomeScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { DiscoverScreen } from "@/screens/DiscoverScreen";
 import { PlayScreen } from "@/screens/PlayScreen";
@@ -9,6 +10,7 @@ import { QuizScreen } from "@/screens/QuizScreen";
 import { ResultsScreen, type ResultsSummaryView } from "@/screens/ResultsScreen";
 import { LocalStorageService } from "@/storage/LocalStorage";
 import { playerService } from "@/services/PlayerService";
+import { LeaderboardService } from "@/services/LeaderboardService";
 import { randomId } from "@/utils/rng";
 import { dailySeed, utcDateKey } from "@/utils/dailySeed";
 import { GAME_VERSION } from "@/branding";
@@ -31,14 +33,31 @@ export function App() {
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [lastSummary, setLastSummary] = useState<ResultsSummaryView | null>(null);
   const [isNewRecord, setIsNewRecord] = useState(false);
+  const [playerId, setPlayerId] = useState(() => LocalStorageService.getPlayerId() ?? "");
   const [nickname, setNickname] = useState(() => LocalStorageService.getNickname() ?? "Player");
+  const [nicknameConfirmed, setNicknameConfirmed] = useState(() => LocalStorageService.getPreferences().nicknameConfirmed);
   const [bests, setBests] = useState(() => LocalStorageService.getLocalBests());
   const [currentLevel, setCurrentLevelState] = useState(() => LocalStorageService.getCurrentLevel());
 
   useEffect(() => {
-    // Never blocks Home from rendering immediately — identity resolves in the background (see PlayerService).
-    void playerService.ensureIdentity().then((identity) => setNickname(identity.nickname));
+    // Never blocks Home (or the nickname prompt) from rendering immediately — identity resolves in the background (see PlayerService).
+    void playerService.ensureIdentity().then((identity) => {
+      setPlayerId(identity.playerId);
+      setNickname(identity.nickname);
+    });
   }, []);
+
+  function handleConfirmNickname(raw: string): void {
+    const trimmed = playerService.setNickname(playerId, raw);
+    setNickname(trimmed);
+    setNicknameConfirmed(true);
+    LocalStorageService.updatePreferences({ nicknameConfirmed: true });
+  }
+
+  function handleChangeNickname(raw: string): void {
+    const trimmed = playerService.setNickname(playerId, raw);
+    setNickname(trimmed);
+  }
 
   function startRun(mode: QuizMode, options: { seed?: string; level?: number; categoryId?: CategoryId } = {}): void {
     setRunConfig({ mode, seed: options.seed ?? `${mode}:${randomId(10)}`, level: options.level, categoryId: options.categoryId });
@@ -91,6 +110,11 @@ export function App() {
       setCurrentLevelState(nextLevel);
     }
 
+    // Fire-and-forget: the leaderboard is a nice-to-have, never a gate on seeing your results.
+    if (playerId) {
+      void LeaderboardService.submitScore({ playerId, nickname, score: summary.score, knowledgeIQ: summary.knowledgeIQ });
+    }
+
     setIsNewRecord(newRecord);
     setLastSummary(summary);
     setOverlay("RESULTS");
@@ -112,6 +136,10 @@ export function App() {
   function handleBackToHome(): void {
     setOverlay(null);
     setTab("HOME");
+  }
+
+  if (!nicknameConfirmed) {
+    return <WelcomeScreen initialNickname={nickname} onConfirm={handleConfirmNickname} />;
   }
 
   if (overlay === "QUIZ" && runConfig) {
@@ -139,8 +167,8 @@ export function App() {
         )}
         {tab === "DISCOVER" && <DiscoverScreen onOpenCategory={handleOpenCategory} />}
         {tab === "PLAY" && <PlayScreen onPlayQuick={handlePlayQuick} onPlayDaily={handlePlayDaily} onPlayLevel={handlePlayLevel} onOpenDiscover={() => setTab("DISCOVER")} />}
-        {tab === "RANKING" && <RankingScreen bests={bests} />}
-        {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} />}
+        {tab === "RANKING" && <RankingScreen playerId={playerId} bests={bests} />}
+        {tab === "PROFILE" && <ProfileScreen nickname={nickname} bests={bests} onChangeNickname={handleChangeNickname} />}
       </div>
       <BottomNav active={tab} onNavigate={setTab} />
     </div>

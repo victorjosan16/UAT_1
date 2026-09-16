@@ -7,6 +7,7 @@ import type { Language } from "@/types";
 export interface ProfileScreenProps {
   nickname: string;
   bests: LocalBests;
+  onChangeNickname: (nickname: string) => void;
 }
 
 type Tab = "STATS" | "BADGES";
@@ -22,16 +23,44 @@ const LANGUAGE_OPTIONS: readonly { code: Language; label: string }[] = [
   { code: "ru", label: "RU" },
 ];
 
-export function ProfileScreen({ nickname, bests }: ProfileScreenProps) {
+export function ProfileScreen({ nickname, bests, onChangeNickname }: ProfileScreenProps) {
   const { language, setLanguage, t } = useLanguage();
   const [tab, setTab] = useState<Tab>("STATS");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(nickname);
+
+  function startEditing(): void {
+    setDraft(nickname);
+    setEditing(true);
+  }
+
+  function handleSave(e: React.FormEvent): void {
+    e.preventDefault();
+    onChangeNickname(draft);
+    setEditing(false);
+  }
 
   return (
     <div id="profile-screen">
       <div className="profile-header">
         <div className="profile-avatar">{nickname.slice(0, 1).toUpperCase()}</div>
-        <h1 className="page-title" style={{ marginBottom: 0 }}>{nickname}</h1>
-        <p className="page-subtitle" style={{ marginBottom: 0 }}>{t("profile.guestPlayer")}</p>
+        {editing ? (
+          <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "100%" }}>
+            <input className="input" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={16} autoFocus />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="submit" className="btn btn--primary" style={{ width: "auto", padding: "10px 20px" }}>{t("profile.save")}</button>
+              <button type="button" className="btn btn--ghost" style={{ width: "auto" }} onClick={() => setEditing(false)}>{t("profile.cancel")}</button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <h1 className="page-title" style={{ marginBottom: 0 }}>{nickname}</h1>
+            <p className="page-subtitle" style={{ marginBottom: 0 }}>{t("profile.guestPlayer")}</p>
+            <button className="btn--ghost" style={{ background: "none", border: "none", fontWeight: 800, fontSize: 12, color: "var(--emerald)", cursor: "pointer", padding: 0 }} onClick={startEditing}>
+              {t("profile.editNickname")}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="section-heading">

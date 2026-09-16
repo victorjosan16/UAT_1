@@ -1,25 +1,41 @@
 rules_version = '2';
 
-// Cloud Functions (Admin SDK, bypasses these rules) is the intended write
-// path for everything, but it needs the Blaze plan and isn't deployed —
-// see docs/SECURITY.md. Until then, the leaderboard is written directly
-// from the client (LeaderboardService.submitScore), so THESE rules are the
-// only validation those writes get: signed-in, own uid only, one
-// bounded-shape doc per player per window. This is a deliberate, accepted
-// tradeoff (no server-side score re-derivation) — a determined client could
-// still write a fake-but-plausible score. Everything else (players,
-// sessions, challenges, daily stats) stays Functions-only/locked down.
+// Cloud Functions (Admin SDK, bypasses these rules) would be the ideal write
+// path for everything, but that needs the Blaze plan and isn't deployed —
+// see docs/SECURITY.md. Until then, the leaderboard and player profile are
+// written directly from the client (LeaderboardService/PlayerService), so
+// THESE rules are the only validation those writes get: signed-in, own uid
+// only, one bounded-shape doc per player per collection. This is a
+// deliberate, accepted tradeoff (no server-side score re-derivation) — a
+// determined client could still write a fake-but-plausible score. Everything
+// else stays locked down.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isValidPlayerProfile(playerId) {
+      let data = request.resource.data;
+      return request.auth != null
+        && request.auth.uid == playerId
+        && data.keys().hasOnly(['nickname', 'updatedAt'])
+        && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
+        && data.updatedAt is number;
+    }
+
+    // Nickname only — never a score source. Private to the owning player;
+    // every leaderboard entry carries its own nickname copy for display.
+    match /players/{playerId} {
+      allow read: if request.auth != null && request.auth.uid == playerId;
+      allow write: if isValidPlayerProfile(playerId);
+    }
 
     function isValidLeaderboardEntry(playerId) {
       let data = request.resource.data;
       return request.auth != null
         && request.auth.uid == playerId
-        && data.keys().hasOnly(['nickname', 'score', 'height', 'updatedAt'])
+        && data.keys().hasOnly(['nickname', 'score', 'knowledgeIQ', 'updatedAt'])
         && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 16
         && data.score is number && data.score >= 0 && data.score <= 10000000
-        && data.height is number && data.height >= 0 && data.height <= 100000
+        && data.knowledgeIQ is number && data.knowledgeIQ >= 0 && data.knowledgeIQ <= 100
         && data.updatedAt is number;
     }
 

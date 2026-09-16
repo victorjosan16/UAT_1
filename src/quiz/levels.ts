@@ -22,7 +22,7 @@ export function getLevel(level: number): QuizLevelDefinition {
   const clamped = clamp(level, 1, MAX_LEVEL);
   const progress = (clamped - 1) / (MAX_LEVEL - 1); // 0 (level 1) .. 1 (level 20)
 
-  const timeLimitMs = Math.round(10000 - progress * 5000); // 10.0s -> 5.0s
+  const timeLimitMs = Math.round(20000 - progress * 10000); // 20.0s -> 10.0s
   const minDifficulty = clamp(1 + Math.floor(progress * 3), 1, 5) as Difficulty;
   const maxDifficulty = clamp(2 + Math.floor(progress * 4), 2, 5) as Difficulty;
   const scoreMultiplier = roundTo(1 + progress * 0.5, 2); // 1.0x -> 1.5x
