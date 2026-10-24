@@ -55,7 +55,7 @@ namespace QuarryEmpire
         {
             if (!IsShowing) return;
             _timeLeft -= Time.unscaledDeltaTime;
-            _countdown.Text = $"RECLAMĂ DE TEST\n\nRecompensa vine în {Mathf.CeilToInt(Mathf.Max(0f, _timeLeft))}…";
+            _countdown.Text = Loc.F("RECLAMĂ DE TEST\n\nRecompensa vine în {0}…", Mathf.CeilToInt(Mathf.Max(0f, _timeLeft)));
             if (_timeLeft <= 0f) Finish(true);
         }
 
@@ -84,7 +84,7 @@ namespace QuarryEmpire
             _countdown = UiFactory.CreateText("Countdown", overlay.transform, "", 56);
             UiFactory.Place(_countdown.RectTransform, new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 300f));
 
-            var close = UiFactory.CreateButton("Close", overlay.transform, "ÎNCHIDE (fără recompensă)",
+            var close = UiFactory.CreateButton("Close", overlay.transform, Loc.T("ÎNCHIDE (fără recompensă)"),
                 UiRoot.Theme.NegativeColor, () => Finish(false), 34);
             UiFactory.Place((RectTransform)close.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 160f), new Vector2(660f, 120f));

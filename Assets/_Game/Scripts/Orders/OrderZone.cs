@@ -73,12 +73,12 @@ namespace QuarryEmpire
             label.SetVisible(true);
             if (!active)
             {
-                label.SetText("COMENZI\nAșteaptă un camion…");
+                label.SetText(Loc.T("COMENZI\nAșteaptă un camion…"));
                 label.SetFill(0f);
                 return;
             }
             OrderSystem.ActiveOrder order = orders.Current;
-            label.SetText($"COMANDĂ: {order.Required} × {order.Resource.DisplayName}\n{order.Delivered}/{order.Required} · {Mathf.CeilToInt(order.TimeLeft)}s · {NumberFormat.Money(order.Reward)}");
+            label.SetText(Loc.F("COMANDĂ: {0} × {1}\n{2}/{3} · {4}s · {5}", order.Required, Loc.T(order.Resource.DisplayName), order.Delivered, order.Required, Mathf.CeilToInt(order.TimeLeft), NumberFormat.Money(order.Reward)));
             label.SetFill(order.TimeLimit > 0f ? order.TimeLeft / order.TimeLimit : 0f);
         }
     }

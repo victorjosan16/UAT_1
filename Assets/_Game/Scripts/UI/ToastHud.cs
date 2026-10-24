@@ -43,7 +43,7 @@ namespace QuarryEmpire
         private void OnStackFull(ResourceStack stack)
         {
             if (PlayerRoot.Instance != null && stack == PlayerRoot.Instance.Stack)
-                Show("Stivă plină! Mergi la zona VINDE.");
+                Show(Loc.T("Stivă plină! Mergi la zona VINDE."));
         }
 
         private void Show(string message)

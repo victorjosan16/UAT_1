@@ -23,6 +23,8 @@ namespace QuarryEmpire
         [SerializeField] private int pileColumns = 4;
         [SerializeField] private int pileRows = 3;
         [SerializeField] private float pileSpacing = 0.32f;
+        [Tooltip("Cheie în salvare pentru minereul în lucru și lingourile gata.")]
+        [SerializeField] private string saveKey = "refinery";
 
         private readonly Queue<ResourceData> _queue = new();
         private readonly List<(ResourceData data, GameObject visual)> _output = new();
@@ -35,6 +37,42 @@ namespace QuarryEmpire
         private float _lastFullWarning = -100f;
 
         private int Pending => _queue.Count + _incoming + (_current != null ? 1 : 0);
+        private readonly List<string> _saveBuffer = new();
+        private bool _dirty;
+
+        private void Start()
+        {
+            if (SaveSystem.Instance == null) return;
+            List<string> queued = SaveData.GetList(SaveSystem.Instance.Data.stacks, saveKey + "_queue");
+            if (queued != null)
+                foreach (string id in queued)
+                {
+                    ResourceData resource = ResourceCatalog.Find(id);
+                    if (resource != null && resource.CanBeRefined) _queue.Enqueue(resource);
+                }
+            List<string> ready = SaveData.GetList(SaveSystem.Instance.Data.stacks, saveKey + "_output");
+            if (ready != null)
+                foreach (string id in new List<string>(ready))
+                {
+                    ResourceData resource = ResourceCatalog.Find(id);
+                    if (resource != null) AddOutput(resource);
+                }
+        }
+
+        /// <summary>Scrie în salvare minereul în lucru (inclusiv bucata curentă) și lingourile gata.</summary>
+        private void Persist()
+        {
+            if (!_dirty || SaveSystem.Instance == null) return;
+            _dirty = false;
+            _saveBuffer.Clear();
+            if (_current != null) _saveBuffer.Add(_current.Id);
+            foreach (ResourceData resource in _queue) _saveBuffer.Add(resource.Id);
+            SaveData.SetList(SaveSystem.Instance.Data.stacks, saveKey + "_queue", _saveBuffer);
+            _saveBuffer.Clear();
+            foreach (var item in _output) _saveBuffer.Add(item.data.Id);
+            SaveData.SetList(SaveSystem.Instance.Data.stacks, saveKey + "_output", _saveBuffer);
+            SaveSystem.Instance.MarkDirty();
+        }
 
         private void Update()
         {
@@ -51,6 +89,7 @@ namespace QuarryEmpire
             {
                 _labelTimer = 0.2f;
                 RefreshLabel();
+                Persist();
             }
         }
 
@@ -67,6 +106,7 @@ namespace QuarryEmpire
             {
                 _incoming--;
                 _queue.Enqueue(data);
+                _dirty = true;
             });
         }
 
@@ -86,6 +126,7 @@ namespace QuarryEmpire
             _current = null;
             _progress = 0f;
             AddOutput(result);
+            _dirty = true;
             GameEvents.RaiseItemRefined(result);
         }
 
@@ -109,6 +150,7 @@ namespace QuarryEmpire
             int last = _output.Count - 1;
             (ResourceData data, GameObject visual) = _output[last];
             _output.RemoveAt(last);
+            _dirty = true;
             Vector3 from = visual != null ? visual.transform.position : outputPile.position;
             if (visual != null) ObjectPool.Instance.Despawn(visual);
 
@@ -141,7 +183,7 @@ namespace QuarryEmpire
         private void RefreshLabel()
         {
             if (label == null) return;
-            label.SetText($"RAFINĂRIE\nÎn lucru: {Pending} · Gata: {_output.Count}");
+            label.SetText(Loc.F("RAFINĂRIE\nÎn lucru: {0} · Gata: {1}", Pending, _output.Count));
             label.SetFill(_current != null ? _progress : 0f);
         }
     }

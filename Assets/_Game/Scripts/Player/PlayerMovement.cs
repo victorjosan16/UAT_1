@@ -16,6 +16,10 @@ namespace QuarryEmpire
         [SerializeField] private float gravity = -25f;
         [Tooltip("Sub această valoare a joystick-ului considerăm că jucătorul stă pe loc.")]
         [SerializeField, Range(0f, 0.5f)] private float deadZone = 0.1f;
+        [Tooltip("Cât de repede ajunge la viteza maximă (m/s²). Mai mare = pornire mai bruscă.")]
+        [SerializeField] private float acceleration = 38f;
+        [Tooltip("Cât de repede se oprește (m/s²).")]
+        [SerializeField] private float deceleration = 55f;
 
         public bool IsMoving { get; private set; }
         public Vector3 Velocity { get; private set; }
@@ -57,7 +61,10 @@ namespace QuarryEmpire
             if (_controller.isGrounded && _verticalVelocity < 0f) _verticalVelocity = -2f;
             _verticalVelocity += gravity * Time.deltaTime;
 
-            Velocity = moveDirection * stats.MoveSpeed;
+            // Accelerație și frânare scurte: mișcarea pare „moale”, dar rămâne foarte responsivă.
+            Vector3 desired = moveDirection * stats.MoveSpeed;
+            float rate = desired.sqrMagnitude >= Velocity.sqrMagnitude ? acceleration : deceleration;
+            Velocity = Vector3.MoveTowards(Velocity, desired, rate * Time.deltaTime);
             _controller.Move((Velocity + Vector3.up * _verticalVelocity) * Time.deltaTime);
 
             UpdateRotation(moveDirection);

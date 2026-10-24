@@ -130,6 +130,13 @@ namespace QuarryEmpire
             return false;
         }
 
+        /// <summary>Copiază resursele din stivă (de jos în sus) în lista dată (pentru salvare).</summary>
+        public void GetContents(List<ResourceData> output)
+        {
+            output.Clear();
+            foreach (var entry in _items) output.Add(entry.Data);
+        }
+
         public int CountOf(ResourceData data)
         {
             int count = 0;

@@ -12,7 +12,7 @@ namespace QuarryEmpire
         private int Level => UpgradeManager.Instance != null ? UpgradeManager.Instance.GetLevel(upgrade) : 0;
 
         protected override string SaveKey => "upg_" + upgrade.Id;
-        protected override string Title => $"{upgrade.DisplayName} · Nv.{Level}";
+        protected override string Title => Loc.F("{0} · Nv.{1}", Loc.T(upgrade.DisplayName), Level);
         protected override long Cost => upgrade.CostForLevel(Level);
         protected override bool IsAvailable => upgrade != null && Level < upgrade.MaxLevel;
 

@@ -26,6 +26,9 @@ namespace QuarryEmpire
         /// <summary>Blocul s-a spart. Anunțat înainte ca blocul să dispară.</summary>
         public event Action<MineBlock> Broken;
 
+        /// <summary>Blocul a primit un tip nou (Init). Folosit de componentele vizuale.</summary>
+        public event Action<MineBlock> Initialized;
+
         public BlockData Data => data;
         public float Health { get; private set; }
         public float MaxHealth { get; private set; }
@@ -62,6 +65,7 @@ namespace QuarryEmpire
             _healthMultiplier = Mathf.Max(0.1f, healthMultiplier);
             ApplyVisual();
             ResetHealth();
+            Initialized?.Invoke(this);
         }
 
         /// <summary>Poate fi spart de o unealtă cu acest nivel?</summary>

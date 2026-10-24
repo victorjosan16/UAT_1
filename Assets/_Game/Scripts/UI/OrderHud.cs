@@ -22,7 +22,7 @@ namespace QuarryEmpire
             UiTheme theme = UiRoot.Theme;
             Image card = UiFactory.CreatePanel("MissionCard", transform, theme.PanelLightColor);
             var rect = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -196f), new Vector2(760f, 128f));
+                new Vector2(0f, -146f), new Vector2(740f, 124f));
             _punch = card.gameObject.AddComponent<PunchScale>();
 
             Image iconBack = UiFactory.CreateImage("IconBack", rect, theme.Circle, theme.AccentColor);
@@ -63,16 +63,25 @@ namespace QuarryEmpire
             {
                 OrderSystem.ActiveOrder order = orders.Current;
                 _icon.sprite = ProceduralSprites.Crate;
-                _title.Text = $"Livrează {order.Required} × {order.Resource.DisplayName}";
-                _detail.Text = $"{order.Delivered}/{order.Required} · {Mathf.CeilToInt(order.TimeLeft)}s · bonus {NumberFormat.Money(order.Reward)}";
+                _title.Text = Loc.F("Livrează {0} × {1}", order.Required, Loc.T(order.Resource.DisplayName));
+                _detail.Text = Loc.F("{0}/{1} · {2}s · bonus {3}", order.Delivered, order.Required, Mathf.CeilToInt(order.TimeLeft), NumberFormat.Money(order.Reward));
                 _time.SetValue(order.TimeLimit > 0f ? order.TimeLeft / order.TimeLimit : 0f);
+                return;
+            }
+
+            TutorialGuide tutorial = TutorialGuide.Instance;
+            if (tutorial != null && tutorial.IsActive)
+            {
+                _icon.sprite = ProceduralSprites.ArrowUp;
+                _title.Text = tutorial.Title;
+                _detail.Text = tutorial.Detail;
                 return;
             }
 
             LayerGenerator layers = LayerGenerator.Instance;
             _icon.sprite = ProceduralSprites.Gem;
-            _title.Text = "Curăță stratul";
-            _detail.Text = layers != null ? $"Mai sunt {layers.RemainingBlocks} blocuri până coborâm" : "";
+            _title.Text = Loc.T("Curăță stratul");
+            _detail.Text = layers != null ? Loc.F("Mai sunt {0} blocuri până coborâm", layers.RemainingBlocks) : "";
         }
     }
 }

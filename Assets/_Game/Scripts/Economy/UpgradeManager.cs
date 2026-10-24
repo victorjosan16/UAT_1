@@ -38,7 +38,7 @@ namespace QuarryEmpire
             SaveData.SetInt(SaveSystem.Instance.Data.upgradeLevels, upgrade.Id, level);
             SaveSystem.Instance.MarkDirty();
             GameEvents.RaiseUpgraded(upgrade, level);
-            GameEvents.RaiseToast($"{upgrade.DisplayName} → nivel {level}");
+            GameEvents.RaiseToast(Loc.F("{0} → nivel {1}", Loc.T(upgrade.DisplayName), level));
         }
 
         /// <summary>Suma bonusurilor pentru un tip (toate upgrade-urile de acel tip).</summary>

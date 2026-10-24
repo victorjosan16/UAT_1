@@ -87,6 +87,8 @@ namespace QuarryEmpire.EditorTools
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
 
+            SetupIconAndSplash();
+
             // Active Input Handling = Input System Package (New). Nu are API public, deci îl setăm direct.
             Object[] projectSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
             if (projectSettings.Length == 0) return;
@@ -97,6 +99,39 @@ namespace QuarryEmpire.EditorTools
                 inputHandler.intValue = 1;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
+        }
+
+        /// <summary>Iconița aplicației (Art/Icon/AppIcon.png) și ecranul de pornire cu logo-ul jocului.</summary>
+        private static void SetupIconAndSplash()
+        {
+            const string iconPath = Root + "/Art/Icon/AppIcon.png";
+            const string squarePath = Root + "/Art/Icon/AppIconSquare.png";
+            ConfigureTexture(iconPath, TextureImporterType.Sprite);
+            ConfigureTexture(squarePath, TextureImporterType.Default);
+
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+            var square = AssetDatabase.LoadAssetAtPath<Texture2D>(squarePath);
+            var logo = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+            if (icon != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+            // iOS nu acceptă transparență în iconiță: folosim varianta pătrată.
+            if (square != null) PlayerSettings.SetIcons(NamedBuildTarget.iOS, new[] { square }, IconKind.Any);
+
+            PlayerSettings.SplashScreen.show = true;
+            PlayerSettings.SplashScreen.showUnityLogo = false; // permis în Unity 6 Personal; altfel Unity îl afișează oricum
+            PlayerSettings.SplashScreen.backgroundColor = new Color(0.95f, 0.55f, 0.24f);
+            PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
+            if (logo != null) PlayerSettings.SplashScreen.logos = new[] { PlayerSettings.SplashScreenLogo.Create(1.5f, logo) };
+        }
+
+        private static void ConfigureTexture(string path, TextureImporterType type)
+        {
+            if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) return;
+            if (importer.textureType == type && !importer.mipmapEnabled && importer.alphaIsTransparency) return;
+            importer.textureType = type;
+            importer.mipmapEnabled = false;
+            importer.alphaIsTransparency = true;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
         }
     }
 }

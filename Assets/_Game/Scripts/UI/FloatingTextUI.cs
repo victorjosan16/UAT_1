@@ -48,7 +48,7 @@ namespace QuarryEmpire
         private void OnUpgraded(UpgradeDefinition upgrade, int level)
         {
             if (PlayerRoot.Instance == null) return;
-            Show($"{upgrade.DisplayName.ToUpperInvariant()} NV.{level}!", PlayerRoot.Instance.Position + Vector3.up * 2.6f,
+            Show(Loc.F("{0} NV.{1}!", Loc.T(upgrade.DisplayName).ToUpperInvariant(), level), PlayerRoot.Instance.Position + Vector3.up * 2.6f,
                 UiRoot.Theme.PositiveColor, 1.3f);
         }
 

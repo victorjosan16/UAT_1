@@ -26,9 +26,9 @@ namespace QuarryEmpire
 
         public string LevelName => Current switch
         {
-            Level.High => "ÎNALTĂ",
-            Level.Balanced => "ECHILIBRATĂ",
-            _ => "ECONOMIC (30 FPS)",
+            Level.High => Loc.T("ÎNALTĂ"),
+            Level.Balanced => Loc.T("ECHILIBRATĂ"),
+            _ => Loc.T("ECONOMIC (30 FPS)"),
         };
 
         private void Awake()

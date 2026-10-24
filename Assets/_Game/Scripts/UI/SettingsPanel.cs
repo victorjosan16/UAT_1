@@ -1,17 +1,20 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace QuarryEmpire
 {
     /// <summary>
-    /// Butonul de pauză (dreapta sus) și panoul de setări: sunet, vibrații, calitate grafică, resetare progres.
+    /// Butonul de pauză (dreapta sus) și panoul de setări: sunet, muzică, vibrații, grafică, limbă, resetare progres.
     /// </summary>
     public class SettingsPanel : MonoBehaviour
     {
         private GameObject _panel;
         private UiLabel _soundLabel;
+        private UiLabel _musicLabel;
         private UiLabel _vibrationLabel;
         private UiLabel _qualityLabel;
+        private UiLabel _languageLabel;
         private UiLabel _resetLabel;
         private float _resetConfirmUntil;
 
@@ -28,26 +31,28 @@ namespace QuarryEmpire
             _panel = dim.gameObject;
 
             Image box = UiFactory.CreatePanel("SettingsBox", dim.transform, theme.PanelLightColor);
-            var boxRect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(780f, 1040f));
+            var boxRect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(780f, 1300f));
             box.gameObject.AddComponent<CanvasGroup>();
             box.gameObject.AddComponent<PopIn>();
 
-            UiLabel title = UiFactory.CreateText("Title", boxRect, "PAUZĂ", 72, TextAnchor.MiddleCenter, theme.TextDarkColor);
-            UiFactory.Place(title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -36f), new Vector2(600f, 100f));
+            UiLabel title = UiFactory.CreateText("Title", boxRect, Loc.T("PAUZĂ"), 72, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(600f, 100f));
 
-            _soundLabel = AddButton(boxRect, "Sound", -170f, ToggleSound, theme.AdColor);
-            _vibrationLabel = AddButton(boxRect, "Vibration", -320f, ToggleVibration, theme.AdColor);
-            _qualityLabel = AddButton(boxRect, "Quality", -470f, CycleQuality, theme.AdColor);
-            _resetLabel = AddButton(boxRect, "Reset", -620f, ResetProgress, theme.NegativeColor);
-            AddButton(boxRect, "Resume", -840f, Close, theme.PositiveColor).Text = "CONTINUĂ";
+            _soundLabel = AddButton(boxRect, "Sound", -150f, ToggleSound, theme.AdColor);
+            _musicLabel = AddButton(boxRect, "Music", -285f, ToggleMusic, theme.AdColor);
+            _vibrationLabel = AddButton(boxRect, "Vibration", -420f, ToggleVibration, theme.AdColor);
+            _qualityLabel = AddButton(boxRect, "Quality", -555f, CycleQuality, theme.AdColor);
+            _languageLabel = AddButton(boxRect, "Language", -690f, ToggleLanguage, theme.AdColor);
+            _resetLabel = AddButton(boxRect, "Reset", -860f, ResetProgress, theme.NegativeColor);
+            AddButton(boxRect, "Resume", -1100f, Close, theme.PositiveColor).Text = Loc.T("CONTINUĂ");
 
             _panel.SetActive(false);
         }
 
         private static UiLabel AddButton(RectTransform parent, string name, float y, System.Action onClick, Color color)
         {
-            Button button = UiFactory.CreateButton(name, parent, "", color, onClick, 40);
-            UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(620f, 124f));
+            Button button = UiFactory.CreateButton(name, parent, "", color, onClick, 38);
+            UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(620f, 116f));
             return UiFactory.GetButtonLabel(button);
         }
 
@@ -82,6 +87,14 @@ namespace QuarryEmpire
             Refresh();
         }
 
+        private void ToggleMusic()
+        {
+            SaveData data = SaveSystem.Instance.Data;
+            data.musicOn = !data.musicOn;
+            SaveSystem.Instance.MarkDirty();
+            Refresh();
+        }
+
         private void ToggleVibration()
         {
             SaveData data = SaveSystem.Instance.Data;
@@ -95,6 +108,15 @@ namespace QuarryEmpire
         {
             if (QualityProfile.Instance != null) QualityProfile.Instance.CycleLevel();
             Refresh();
+        }
+
+        private void ToggleLanguage()
+        {
+            Loc.Set(Loc.Current == Loc.Language.Romanian ? Loc.Language.English : Loc.Language.Romanian);
+            // Interfața e construită o singură dată, la pornire: salvăm și repornim scena ca textele să se schimbe.
+            SaveSystem.Instance.Save();
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
         private void ResetProgress()
@@ -113,10 +135,12 @@ namespace QuarryEmpire
         {
             if (SaveSystem.Instance == null) return;
             SaveData data = SaveSystem.Instance.Data;
-            _soundLabel.Text = data.soundOn ? "SUNET: PORNIT" : "SUNET: OPRIT";
-            _vibrationLabel.Text = data.vibrationOn ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE";
-            _qualityLabel.Text = QualityProfile.Instance != null ? "GRAFICĂ: " + QualityProfile.Instance.LevelName : "GRAFICĂ";
-            _resetLabel.Text = _resetConfirmUntil > Time.unscaledTime ? "SIGUR? APASĂ IAR" : "RESETEAZĂ PROGRESUL";
+            _soundLabel.Text = Loc.T(data.soundOn ? "SUNET: PORNIT" : "SUNET: OPRIT");
+            _musicLabel.Text = Loc.T(data.musicOn ? "MUZICĂ: PORNITĂ" : "MUZICĂ: OPRITĂ");
+            _vibrationLabel.Text = Loc.T(data.vibrationOn ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE");
+            _qualityLabel.Text = Loc.F("GRAFICĂ: {0}", QualityProfile.Instance != null ? QualityProfile.Instance.LevelName : "");
+            _languageLabel.Text = Loc.T("LIMBA: ROMÂNĂ");
+            _resetLabel.Text = Loc.T(_resetConfirmUntil > Time.unscaledTime ? "SIGUR? APASĂ IAR" : "RESETEAZĂ PROGRESUL");
         }
     }
 }

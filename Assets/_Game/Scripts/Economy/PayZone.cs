@@ -23,7 +23,7 @@ namespace QuarryEmpire
         protected abstract string Title { get; }
         protected abstract long Cost { get; }
         protected virtual bool IsAvailable => true;
-        protected virtual string UnavailableText => "MAX";
+        protected virtual string UnavailableText => Loc.T("MAX");
         protected abstract void OnFullyPaid();
 
         private float _insideTime;
@@ -70,7 +70,7 @@ namespace QuarryEmpire
                 if (!_warnedNoMoney)
                 {
                     _warnedNoMoney = true;
-                    GameEvents.RaiseToast("Nu ai destui bani");
+                    GameEvents.RaiseToast(Loc.T("Nu ai destui bani"));
                 }
                 return;
             }

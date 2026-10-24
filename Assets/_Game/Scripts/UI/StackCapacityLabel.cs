@@ -20,7 +20,7 @@ namespace QuarryEmpire
             if (label == null) return;
             label.SetVisible(stack.Count > 0);
             bool full = stack.Count >= stack.Capacity;
-            label.SetText(full ? "PLIN" : $"{stack.Count}/{stack.Capacity}");
+            label.SetText(full ? Loc.T("PLIN") : $"{stack.Count}/{stack.Capacity}");
             label.SetTextColor(full ? new Color(1f, 0.35f, 0.3f) : Color.white);
         }
     }

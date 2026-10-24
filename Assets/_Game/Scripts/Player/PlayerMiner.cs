@@ -104,7 +104,7 @@ namespace QuarryEmpire
             if (best == null && foundTooHard && Time.time - _lastTooHardMessage > tooHardMessageCooldown)
             {
                 _lastTooHardMessage = Time.time;
-                GameEvents.RaiseToast("Prea dur! Îmbunătățește târnăcopul sau folosește burghiul.");
+                GameEvents.RaiseToast(Loc.T("Prea dur! Îmbunătățește târnăcopul sau folosește burghiul."));
             }
             return best;
         }

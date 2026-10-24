@@ -17,7 +17,7 @@ namespace QuarryEmpire
         public string Id => id;
 
         protected override string SaveKey => "buy_" + id;
-        protected override string Title => title;
+        protected override string Title => Loc.T(title);
         protected override long Cost => cost;
 
         private void Awake()
@@ -44,7 +44,7 @@ namespace QuarryEmpire
             if (announce)
             {
                 GameEvents.RaisePurchased(id, title);
-                GameEvents.RaiseToast($"Deblocat: {title}!");
+                GameEvents.RaiseToast(Loc.F("Deblocat: {0}!", Loc.T(title)));
             }
             gameObject.SetActive(false);
         }

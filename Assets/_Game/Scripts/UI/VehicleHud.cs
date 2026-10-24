@@ -11,7 +11,7 @@ namespace QuarryEmpire
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
-            Button button = UiFactory.CreateButton("ExitVehicle", transform, "COBOARĂ", theme.NegativeColor, OnExitClicked, 40);
+            Button button = UiFactory.CreateButton("ExitVehicle", transform, Loc.T("COBOARĂ"), theme.NegativeColor, OnExitClicked, 40);
             UiFactory.Place((RectTransform)button.transform, new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(30f, 250f), new Vector2(280f, 116f));
             _button = button.gameObject;
@@ -33,7 +33,7 @@ namespace QuarryEmpire
         private void OnEntered(Vehicle vehicle)
         {
             _button.SetActive(true);
-            GameEvents.RaiseToast($"Conduci: {vehicle.Definition.DisplayName}");
+            GameEvents.RaiseToast(Loc.F("Conduci: {0}", Loc.T(vehicle.Definition.DisplayName)));
         }
 
         private void OnExited(Vehicle _) => _button.SetActive(false);

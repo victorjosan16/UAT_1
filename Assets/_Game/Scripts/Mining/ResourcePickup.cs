@@ -23,20 +23,21 @@ namespace QuarryEmpire
         [Tooltip("Cât stă pe jos înainte să poată fi colectată (să se vadă că a căzut).")]
         [SerializeField, Min(0f)] private float restDelay = 0.2f;
         [SerializeField] private float spinSpeed = 90f;
-        [Tooltip("După atâtea secunde pe jos, bucata dispare (ca să nu se adune la infinit).")]
-        [SerializeField] private float maxLifetime = 120f;
+        [Tooltip("Câte bucăți pot sta pe jos în același timp; peste limită dispar cele mai vechi.")]
+        [SerializeField] private int maxOnGround = 90;
 
         [Header("Zbor spre stivă")]
         [SerializeField] private float flyStartSpeed = 6f;
         [SerializeField] private float flyAcceleration = 30f;
         [SerializeField] private float arriveDistance = 0.3f;
 
+        private static readonly System.Collections.Generic.List<ResourcePickup> OnGround = new();
+
         public ResourceData Data { get; private set; }
         public bool CanBeCollected => _state == State.Resting && _timer >= restDelay && Data != null;
 
         private State _state;
         private float _timer;
-        private float _age;
         private Vector3 _from;
         private Vector3 _to;
         private ResourceStack _targetStack;
@@ -89,9 +90,7 @@ namespace QuarryEmpire
 
                 case State.Resting:
                     _timer += dt;
-                    _age += dt;
                     transform.Rotate(0f, spinSpeed * dt, 0f, Space.World);
-                    if (_age >= maxLifetime) ReturnToPool();
                     break;
 
                 case State.Flying:
@@ -129,9 +128,23 @@ namespace QuarryEmpire
         {
             _state = State.Popping;
             _timer = 0f;
-            _age = 0f;
             _targetStack = null;
+            OnGround.Add(this);
+            if (OnGround.Count > maxOnGround) RemoveOldestResting();
         }
+
+        private static void RemoveOldestResting()
+        {
+            foreach (ResourcePickup pickup in OnGround)
+            {
+                if (pickup._state != State.Resting) continue;
+                pickup.ReturnToPool();
+                return;
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => OnGround.Clear();
 
         public void OnDespawned()
         {
@@ -139,6 +152,7 @@ namespace QuarryEmpire
             if (_targetStack != null) _targetStack.CancelReservation();
             _targetStack = null;
             Data = null;
+            OnGround.Remove(this);
         }
     }
 }

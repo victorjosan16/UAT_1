@@ -17,6 +17,12 @@ namespace QuarryEmpire
         [SerializeField] private VehicleTool tool;
         [SerializeField] private float gravity = -25f;
         [SerializeField, Range(0f, 0.5f)] private float deadZone = 0.1f;
+        [Tooltip("Viteza minimă (procent) cât încă virează: utilajul înaintează în timp ce se întoarce.")]
+        [SerializeField, Range(0f, 1f)] private float minTurnSpeed = 0.35f;
+        [Tooltip("Dacă joystick-ul e tras aproape opus direcției utilajului, merge înapoi (fără să se întoarcă).")]
+        [SerializeField, Range(-1f, 0f)] private float reverseThreshold = -0.7f;
+        [SerializeField, Range(0.1f, 1f)] private float reverseSpeed = 0.5f;
+        [SerializeField] private float acceleration = 12f;
 
         public VehicleDefinition Definition => definition;
         public Transform Seat => seat;
@@ -28,6 +34,7 @@ namespace QuarryEmpire
         private PlayerInputReader _input;
         private Transform _camera;
         private float _verticalVelocity;
+        private Vector3 _velocity;
 
         private void Awake()
         {
@@ -44,6 +51,7 @@ namespace QuarryEmpire
         public void EndDriving()
         {
             _input = null;
+            _velocity = Vector3.zero;
             IsMoving = false;
             if (tool != null) tool.SetActive(false);
         }
@@ -59,14 +67,26 @@ namespace QuarryEmpire
                 IsMoving = direction.sqrMagnitude > 0f;
                 if (IsMoving)
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, definition.TurnSpeed * dt);
-                    // Înaintează mai încet cât încă se întoarce (ca un utilaj greu).
-                    float alignment = Mathf.Clamp01(Vector3.Dot(transform.forward, direction.normalized));
-                    horizontal = transform.forward * (definition.MoveSpeed * direction.magnitude * alignment);
+                    float alignment = Vector3.Dot(transform.forward, direction.normalized);
+                    if (alignment <= reverseThreshold)
+                    {
+                        // Mers înapoi: nu se întoarce, doar dă cu spatele.
+                        horizontal = -transform.forward * (definition.MoveSpeed * reverseSpeed * direction.magnitude);
+                    }
+                    else
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, definition.TurnSpeed * dt);
+                        // Virează în timp ce înaintează; încetinește doar la viraje strânse.
+                        float speedFactor = Mathf.Lerp(minTurnSpeed, 1f, Mathf.Clamp01(alignment));
+                        horizontal = transform.forward * (definition.MoveSpeed * direction.magnitude * speedFactor);
+                    }
                 }
                 if (tool != null) tool.Tick(dt);
             }
+
+            _velocity = Vector3.MoveTowards(_velocity, horizontal, acceleration * dt);
+            horizontal = _velocity;
 
             if (_controller.isGrounded && _verticalVelocity < 0f) _verticalVelocity = -2f;
             _verticalVelocity += gravity * dt;

@@ -14,6 +14,8 @@ namespace QuarryEmpire
         [SerializeField] private Transform parkPoint;
         [Tooltip("Punctul din interiorul zonei SELL unde oprește camionul.")]
         [SerializeField] private Transform sellPoint;
+        [Tooltip("Puncte intermediare de la parcare spre vânzare (pe drum, ocolind zonele). La întoarcere se parcurg invers.")]
+        [SerializeField] private Transform[] route;
         [SerializeField] private WorldLabel label;
         [SerializeField] private float speed = 6f;
         [SerializeField] private float turnSpeed = 240f;
@@ -27,6 +29,7 @@ namespace QuarryEmpire
 
         private State _state;
         private float _timer;
+        private int _waypoint;
         private float _labelTimer;
 
         private void OnEnable()
@@ -44,11 +47,14 @@ namespace QuarryEmpire
                 case State.Parked:
                     _timer = stack.IsEmpty ? 0f : _timer + dt;
                     if (stack.Count >= departThreshold || (!stack.IsEmpty && _timer >= maxWaitWithCargo) || (stack.IsFull && !stack.IsEmpty))
+                    {
                         _state = State.ToSell;
+                        _waypoint = 0;
+                    }
                     break;
 
                 case State.ToSell:
-                    if (DriveTowards(sellPoint.position, dt))
+                    if (DriveRoute(forward: true, sellPoint.position, dt))
                     {
                         _state = State.Selling;
                         _timer = 0f;
@@ -58,11 +64,15 @@ namespace QuarryEmpire
                 case State.Selling:
                     // Zona SELL golește automat stiva camionului.
                     _timer += dt;
-                    if (stack.IsEmpty || _timer >= maxSellTime) _state = State.Returning;
+                    if (stack.IsEmpty || _timer >= maxSellTime)
+                    {
+                        _state = State.Returning;
+                        _waypoint = 0;
+                    }
                     break;
 
                 case State.Returning:
-                    if (DriveTowards(parkPoint.position, dt))
+                    if (DriveRoute(forward: false, parkPoint.position, dt))
                     {
                         transform.rotation = parkPoint.rotation;
                         _state = State.Parked;
@@ -77,6 +87,19 @@ namespace QuarryEmpire
                 _labelTimer = 0.25f;
                 RefreshLabel();
             }
+        }
+
+        /// <summary>Parcurge traseul (înainte sau invers) și apoi destinația; întoarce true la final.</summary>
+        private bool DriveRoute(bool forward, Vector3 destination, float dt)
+        {
+            int count = route != null ? route.Length : 0;
+            if (_waypoint < count)
+            {
+                Transform point = route[forward ? _waypoint : count - 1 - _waypoint];
+                if (point == null || DriveTowards(point.position, dt)) _waypoint++;
+                return false;
+            }
+            return DriveTowards(destination, dt);
         }
 
         /// <summary>Merge spre punct; întoarce true când a ajuns.</summary>
@@ -97,12 +120,12 @@ namespace QuarryEmpire
             if (label == null) return;
             string status = _state switch
             {
-                State.Parked => stack.IsEmpty ? "Încarcă-mă!" : "Se încarcă",
-                State.ToSell => "Spre vânzare",
-                State.Selling => "Vinde",
-                _ => "Se întoarce",
+                State.Parked => stack.IsEmpty ? Loc.T("Încarcă-mă!") : Loc.T("Se încarcă"),
+                State.ToSell => Loc.T("Spre vânzare"),
+                State.Selling => Loc.T("Vinde"),
+                _ => Loc.T("Se întoarce"),
             };
-            label.SetText($"CAMION {stack.Count}/{stack.Capacity}\n{status}");
+            label.SetText(Loc.F("CAMION {0}/{1}\n{2}", stack.Count, stack.Capacity, status));
             label.SetFill(stack.Capacity > 0 ? (float)stack.Count / stack.Capacity : 0f);
         }
     }

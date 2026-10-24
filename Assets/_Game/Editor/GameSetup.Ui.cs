@@ -1,7 +1,6 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.OnScreen;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -34,14 +33,16 @@ namespace QuarryEmpire.EditorTools
             // Textele plutitoare stau sub HUD (în lume), restul HUD-ului în zona sigură (fără notch / bara de gesturi).
             UiChild(canvas, "FloatingText", typeof(FloatingTextUI));
             Transform safe = UiChild(canvas, "SafeArea", typeof(SafeAreaFitter));
+            // Joystick-ul flotant e primul: zona lui mare de atingere stă sub butoane, care primesc atingerile primele.
+            BuildJoystick(safe);
             UiChild(safe, "LayerHud", typeof(LayerHud));
             UiChild(safe, "MoneyHud", typeof(MoneyHud));
             UiChild(safe, "OrderHud", typeof(OrderHud));
             UiChild(safe, "RewardedOffers", typeof(RewardedOffersHud));
             UiChild(safe, "VehicleHud", typeof(VehicleHud));
-            BuildJoystick(safe);
             UiChild(safe, "Toast", typeof(ToastHud));
             UiChild(canvas, "CoinFly", typeof(CoinFlyUI));
+            UiChild(canvas, "LayerTransition", typeof(LayerTransitionUI));
             UiChild(safe, "Settings", typeof(SettingsPanel));
             UiChild(safe, "OfflinePopup", typeof(OfflinePopup));
             UiChild(canvas, "MainMenu", typeof(MainMenu));
@@ -61,26 +62,45 @@ namespace QuarryEmpire.EditorTools
             return rect;
         }
 
-        private static void BuildJoystick(Transform canvas)
+        /// <summary>
+        /// Joystick flotant: o zonă transparentă pe jumătatea de jos a ecranului; inelul apare unde pui degetul.
+        /// Trimite direcția ca stick-ul stâng al unui gamepad (la fel ca vechiul OnScreenStick).
+        /// </summary>
+        private static void BuildJoystick(Transform parent)
         {
-            // Joystick: fundal + mâner. OnScreenStick simulează stick-ul stâng al unui gamepad.
+            var areaGo = new GameObject("JoystickArea", typeof(RectTransform)) { layer = UiLayer };
+            var area = (RectTransform)areaGo.transform;
+            area.SetParent(parent, false);
+            area.anchorMin = Vector2.zero;
+            area.anchorMax = new Vector2(1f, 0.55f);
+            area.offsetMin = Vector2.zero;
+            area.offsetMax = Vector2.zero;
+            var touchSurface = areaGo.AddComponent<Image>();
+            touchSurface.color = new Color(1f, 1f, 1f, 0f); // invizibilă, dar primește atingerile
+            touchSurface.raycastTarget = true;
+
             var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-            RectTransform background = UiImage("JoystickBG", canvas, knob, new Color(1f, 1f, 1f, 0.3f), 300f);
+            RectTransform background = UiImage("JoystickBG", area, knob, new Color(1f, 1f, 1f, 0.3f), 260f);
             background.anchorMin = background.anchorMax = new Vector2(0.5f, 0f);
             background.anchoredPosition = new Vector2(0f, 300f);
+            background.GetComponent<Image>().raycastTarget = false;
 
-            RectTransform handle = UiImage("JoystickHandle", background, knob, Color.white, 130f);
+            RectTransform handle = UiImage("JoystickHandle", background, knob, Color.white, 120f);
+            handle.GetComponent<Image>().raycastTarget = false;
 
-            // Aspectul (inel + buton cu umbră) se aplică la rulare, fără să atingă OnScreenStick.
-            var skin = background.gameObject.AddComponent<JoystickSkin>();
-            Set(skin, "background", background.GetComponent<Image>());
-            Set(skin, "handle", handle.GetComponent<Image>());
-            var stick = handle.gameObject.AddComponent<OnScreenStick>();
-            Edit(stick, so =>
+            var joystick = areaGo.AddComponent<FloatingJoystick>();
+            Edit(joystick, so =>
             {
                 P(so, "m_ControlPath").stringValue = "<Gamepad>/leftStick";
-                P(so, "m_MovementRange").floatValue = 100f;
+                P(so, "background").objectReferenceValue = background;
+                P(so, "handle").objectReferenceValue = handle;
+                P(so, "radius").floatValue = 110f;
             });
+
+            // Aspectul (inel + buton cu umbră) se aplică la rulare.
+            var skin = areaGo.AddComponent<JoystickSkin>();
+            Set(skin, "background", background.GetComponent<Image>());
+            Set(skin, "handle", handle.GetComponent<Image>());
         }
 
         private static RectTransform UiImage(string name, Transform parent, Sprite sprite, Color color, float size)

@@ -4,65 +4,72 @@ using UnityEngine.UI;
 namespace QuarryEmpire
 {
     /// <summary>
-    /// Nivelul (stratul) în insigna din stânga sus și progresul stratului în bara de sub bani.
+    /// Insigna stratului (stânga sus): numărul stratului, adâncimea și un inel care se umple
+    /// pe măsură ce spargi blocurile din strat.
     /// </summary>
     public class LayerHud : MonoBehaviour
     {
         private UiLabel _level;
         private UiLabel _depth;
-        private UiLabel _progressText;
-        private UiProgressBar _progress;
+        private Image _progressRing;
         private PunchScale _badgePunch;
         private int _shownLayer = -1;
+        private float _shownProgress;
         private float _timer;
 
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
 
-            // Insigna rotundă: inel auriu + număr.
             RectTransform badge = UiFactory.CreateRect("LevelBadge", transform);
-            UiFactory.Place(badge, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -16f), new Vector2(124f, 124f));
+            UiFactory.Place(badge, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(20f, -14f), new Vector2(140f, 140f));
             Image disc = UiFactory.CreateImage("Disc", badge, theme.Circle, theme.PanelColor);
-            UiFactory.Stretch((RectTransform)disc.transform);
-            Image ring = UiFactory.CreateImage("Ring", badge, ProceduralSprites.Ring, theme.AccentColor);
-            UiFactory.Stretch((RectTransform)ring.transform);
-            UiLabel caption = UiFactory.CreateText("Caption", badge, "STRAT", 22, TextAnchor.MiddleCenter, theme.AccentColor);
-            UiFactory.Place(caption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 26f), new Vector2(110f, 30f));
-            _level = UiFactory.CreateText("Level", badge, "1", 56);
-            UiFactory.Place(_level.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(110f, 70f));
+            UiFactory.Stretch((RectTransform)disc.transform, 8f);
+
+            // Inel de fundal + inel de progres (umplere radială).
+            Image track = UiFactory.CreateImage("RingTrack", badge, ProceduralSprites.Ring, new Color(1f, 1f, 1f, 0.18f));
+            UiFactory.Stretch((RectTransform)track.transform);
+            _progressRing = UiFactory.CreateImage("RingProgress", badge, ProceduralSprites.Ring, theme.AccentColor);
+            UiFactory.Stretch((RectTransform)_progressRing.transform);
+            _progressRing.type = Image.Type.Filled;
+            _progressRing.fillMethod = Image.FillMethod.Radial360;
+            _progressRing.fillOrigin = 2; // sus
+            _progressRing.fillClockwise = true;
+            _progressRing.fillAmount = 0f;
+
+            UiLabel caption = UiFactory.CreateText("Caption", badge, Loc.T("STRAT"), 20, TextAnchor.MiddleCenter, theme.AccentColor);
+            UiFactory.Place(caption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 34f), new Vector2(110f, 28f));
+            _level = UiFactory.CreateText("Level", badge, "1", 54);
+            UiFactory.Place(_level.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(110f, 64f));
+            _depth = UiFactory.CreateText("Depth", badge, "", 22, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.8f));
+            UiFactory.Place(_depth.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -36f), new Vector2(110f, 28f));
             _badgePunch = badge.gameObject.AddComponent<PunchScale>();
-
-            _depth = UiFactory.CreateText("Depth", transform, "", 26, TextAnchor.MiddleCenter, theme.TextColor);
-            UiFactory.Place(_depth.RectTransform, new Vector2(0f, 1f), new Vector2(0.5f, 1f), new Vector2(86f, -144f), new Vector2(160f, 36f));
-
-            // Bara de progres a stratului, sub bani.
-            _progress = UiFactory.CreateProgressBar("LayerProgress", transform, theme.AccentColor);
-            UiFactory.Place((RectTransform)_progress.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -142f), new Vector2(560f, 40f));
-            _progressText = UiFactory.CreateText("Text", _progress.transform, "", 24, TextAnchor.MiddleCenter, theme.TextColor);
-            UiFactory.Stretch(_progressText.RectTransform);
         }
 
         private void Update()
         {
+            LayerGenerator layers = LayerGenerator.Instance;
+            if (layers == null || layers.CurrentLayer == null) return;
+
+            float progress = layers.TotalBlocks > 0 ? 1f - (float)layers.RemainingBlocks / layers.TotalBlocks : 0f;
+            _shownProgress = Mathf.MoveTowards(_shownProgress, progress, Time.unscaledDeltaTime * 0.8f);
+            _progressRing.fillAmount = _shownProgress;
+
             _timer -= Time.unscaledDeltaTime;
             if (_timer > 0f) return;
             _timer = 0.2f;
 
-            LayerGenerator layers = LayerGenerator.Instance;
-            if (layers == null || layers.CurrentLayer == null) return;
-
             if (layers.CurrentLayerIndex != _shownLayer)
             {
-                if (_shownLayer >= 0) _badgePunch.Punch(2f);
+                if (_shownLayer >= 0)
+                {
+                    _badgePunch.Punch(2f);
+                    _shownProgress = 0f;
+                }
                 _shownLayer = layers.CurrentLayerIndex;
                 _level.Text = (_shownLayer + 1).ToString();
             }
             _depth.Text = $"{layers.DepthMeters} m";
-            int mined = layers.TotalBlocks - layers.RemainingBlocks;
-            _progressText.Text = $"{mined}/{layers.TotalBlocks} blocuri";
-            _progress.SetValue(layers.TotalBlocks > 0 ? (float)mined / layers.TotalBlocks : 0f);
         }
     }
 }

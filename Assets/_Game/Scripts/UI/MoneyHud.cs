@@ -40,7 +40,7 @@ namespace QuarryEmpire
 
             Image chip = UiFactory.CreatePanel("BoostChip", transform, theme.PositiveColor);
             UiFactory.Place((RectTransform)chip.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -340f), new Vector2(300f, 64f));
+                new Vector2(0f, -284f), new Vector2(300f, 60f));
             _boost = UiFactory.CreateText("Text", chip.transform, "", 34);
             UiFactory.Stretch(_boost.RectTransform);
             _boostChip = chip.gameObject;
@@ -66,7 +66,7 @@ namespace QuarryEmpire
 
             bool boosted = money.BoostTimeLeft > 0f;
             if (_boostChip.activeSelf != boosted) _boostChip.SetActive(boosted);
-            if (boosted) _boost.Text = $"BANI x2 · {Mathf.CeilToInt(money.BoostTimeLeft)}s";
+            if (boosted) _boost.Text = Loc.F("BANI x2 · {0}s", Mathf.CeilToInt(money.BoostTimeLeft));
         }
     }
 }

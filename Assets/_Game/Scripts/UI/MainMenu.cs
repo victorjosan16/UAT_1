@@ -28,14 +28,14 @@ namespace QuarryEmpire
             UiLabel title = UiFactory.CreateText("Text", _title, "QUARRY\nEMPIRE", 150, TextAnchor.MiddleCenter, theme.AccentColor);
             UiFactory.Stretch(title.RectTransform);
 
-            UiLabel subtitle = UiFactory.CreateText("Subtitle", background.transform, "Sapă. Vinde. Construiește-ți imperiul.", 42);
+            UiLabel subtitle = UiFactory.CreateText("Subtitle", background.transform, Loc.T("Sapă. Vinde. Construiește-ți imperiul."), 42);
             UiFactory.Place(subtitle.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000f, 80f));
 
-            Button play = UiFactory.CreateButton("Play", background.transform, "JOACĂ", theme.PositiveColor, OnPlay, 72);
+            Button play = UiFactory.CreateButton("Play", background.transform, Loc.T("JOACĂ"), theme.PositiveColor, OnPlay, 72);
             UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0.32f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560f, 180f));
 
             UiLabel hint = UiFactory.CreateText("Hint", background.transform,
-                "Mișcă-te cu joystick-ul. Minerul lovește singur blocurile din jur.", 32, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.75f));
+                Loc.T("Mișcă-te cu joystick-ul. Minerul lovește singur blocurile din jur."), 32, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.75f));
             UiFactory.Place(hint.RectTransform, new Vector2(0.5f, 0.18f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 100f));
 
             UiLabel version = UiFactory.CreateText("Version", background.transform, "v" + Application.version, 26,

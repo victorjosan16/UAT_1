@@ -21,6 +21,11 @@ namespace QuarryEmpire.EditorTools
         private static readonly Vector3 SellPosition = new(-6f, 0f, -3f);
         private static readonly Vector3 CameraOffset = new(-8.2f, 13.8f, -8.2f);
         private const float LabelHeight = 2.3f;
+        /// <summary>Jumătate din latura inelului de roci din jurul carierei (grila maximă are 10×10 blocuri).</summary>
+        private const float RimHalf = 6.9f;
+        /// <summary>Poarta carierei (spre sud), în coordonate locale față de centrul carierei.</summary>
+        private static readonly Vector3 GateInsideLocal = new(0f, 0f, -5.7f);
+        private static readonly Vector3 GateOutsideLocal = new(0f, 0f, -8.2f);
 
         private static void BuildScene(Scene scene, Materials m, GameData data, Prefabs prefabs)
         {
@@ -29,7 +34,8 @@ namespace QuarryEmpire.EditorTools
             BuildQuarry(m, data, prefabs);
             Transform player = BuildPlayer(m, data, out Transform playerModel);
             BuildSystems(m, data, prefabs, playerModel);
-            BuildZones(m, data);
+            ZoneRefs zones = BuildZones(m, data);
+            BuildTutorial(m, zones);
             BuildCamera(player);
             BuildUi(data.Theme);
 
@@ -111,9 +117,12 @@ namespace QuarryEmpire.EditorTools
             Primitive(PrimitiveType.Cylinder, "Plaza", paths, new Vector3(0f, 0.012f, -2.5f), new Vector3(6.5f, 0.01f, 6.5f), m["PathStone"]);
             Box("PathEastWest", paths, new Vector3(0f, 0.015f, -5.4f), new Vector3(20f, 0.03f, 2f), m["PathStone"], 0.012f, castShadows: false);
             Box("PathSouth", paths, new Vector3(0f, 0.016f, -10.5f), new Vector3(2f, 0.03f, 9f), m["PathStone"], 0.012f, castShadows: false);
-            Box("PathQuarry", paths, new Vector3(0f, 0.017f, 1.6f), new Vector3(3.6f, 0.03f, 3.4f), m["PathStone"], 0.012f, castShadows: false);
-            Box("PathRefinery", paths, new Vector3(6.5f, 0.018f, -1f), new Vector3(3f, 0.03f, 6f), m["PathStone"], 0.012f, castShadows: false);
-            Box("PathOrders", paths, new Vector3(-7.5f, 0.018f, 3f), new Vector3(2f, 0.03f, 8f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathQuarry", paths, new Vector3(0f, 0.017f, 1.2f), new Vector3(4f, 0.03f, 4.2f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathRefinery", paths, new Vector3(7.6f, 0.018f, -2.2f), new Vector3(3f, 0.03f, 4f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathOrders", paths, new Vector3(-8.5f, 0.018f, 3.2f), new Vector3(2f, 0.03f, 8.6f), m["PathStone"], 0.012f, castShadows: false);
+            // Drumul camionului: parcare → sud → est → nord → zona VINDE.
+            Box("TruckRoadSouth", paths, new Vector3(4.6f, 0.014f, -17.2f), new Vector3(11.2f, 0.03f, 2.2f), m["PathStone"], 0.012f, castShadows: false);
+            Box("TruckRoadEast", paths, new Vector3(9.2f, 0.015f, -11.3f), new Vector3(2.2f, 0.03f, 13.8f), m["PathStone"], 0.012f, castShadows: false);
         }
 
         /// <summary>Marginea carierei: un inel de roci neregulate, cu intrare spre jucător (sud).</summary>
@@ -121,13 +130,13 @@ namespace QuarryEmpire.EditorTools
         {
             Transform rim = Empty("QuarryRim", parent, QuarryCenter).transform;
             var random = new System.Random(11);
-            const float half = 6.4f;
-            for (float t = -half; t <= half; t += 1.15f)
+            const float half = RimHalf;
+            for (float t = -half; t <= half + 0.01f; t += 1.15f)
             {
                 PlaceRimRock(rim, m, random, new Vector3(t, 0f, half));   // nord
                 PlaceRimRock(rim, m, random, new Vector3(-half, 0f, t));  // vest
                 PlaceRimRock(rim, m, random, new Vector3(half, 0f, t));   // est
-                if (Mathf.Abs(t) > 2.2f) PlaceRimRock(rim, m, random, new Vector3(t, 0f, -half)); // sud, cu intrare
+                if (Mathf.Abs(t) > 2.4f) PlaceRimRock(rim, m, random, new Vector3(t, 0f, -half)); // sud, cu poartă
             }
         }
 
@@ -137,8 +146,10 @@ namespace QuarryEmpire.EditorTools
             float sy = 0.5f + (float)random.NextDouble() * 0.6f;
             float sz = 0.8f + (float)random.NextDouble() * 0.6f;
             position.y = sy * 0.4f;
-            ScaledRock("RimRock", parent, position, new Vector3(sx, sy, sz),
+            GameObject rock = ScaledRock("RimRock", parent, position, new Vector3(sx, sy, sz),
                 random.NextDouble() < 0.5 ? m["Rock1"] : m["Rock2"], (float)random.NextDouble() * 360f);
+            // Collider: nu se mai trece prin margine; în carieră se intră doar prin poartă.
+            rock.AddComponent<BoxCollider>().size = new Vector3(1f, 3f, 1f);
         }
 
         private static void BuildDecor(Transform parent, Materials m, System.Random random)
@@ -154,7 +165,7 @@ namespace QuarryEmpire.EditorTools
             foreach (Vector3 position in trees)
             {
                 Transform tree = Empty("Tree", decor, position, (float)random.NextDouble() * 360f).transform;
-                Primitive(PrimitiveType.Cylinder, "Trunk", tree, new Vector3(0f, 0.8f, 0f), new Vector3(0.35f, 0.8f, 0.35f), m["Trunk"]);
+                Primitive(PrimitiveType.Cylinder, "Trunk", tree, new Vector3(0f, 0.8f, 0f), new Vector3(0.35f, 0.8f, 0.35f), m["Trunk"], keepCollider: true);
                 Primitive(PrimitiveType.Sphere, "Crown", tree, new Vector3(0f, 2.2f, 0f), new Vector3(2f, 1.7f, 2f), m["Leaves"]);
                 Primitive(PrimitiveType.Sphere, "CrownTop", tree, new Vector3(0.3f, 3f, 0.2f), new Vector3(1.3f, 1.1f, 1.3f), m["LeavesDark"]);
             }
@@ -165,25 +176,26 @@ namespace QuarryEmpire.EditorTools
                 Vector3 position = RandomOutside(random, 27f, 19f);
                 float size = 0.8f + (float)random.NextDouble() * 1.6f;
                 position.y = size * 0.3f;
-                ScaledRock("Boulder", decor, position, new Vector3(size * 1.3f, size * 0.8f, size),
+                GameObject boulder = ScaledRock("Boulder", decor, position, new Vector3(size * 1.3f, size * 0.8f, size),
                     i % 2 == 0 ? m["Rock1"] : m["Rock2"], (float)random.NextDouble() * 360f);
+                boulder.AddComponent<BoxCollider>();
             }
 
             // Lăzi și butoaie lângă rafinărie și magazin.
-            var crates = new[] { new Vector3(12.8f, 0f, -2.2f), new Vector3(13.4f, 0f, -1f), new Vector3(-8.8f, 0f, -14.5f), new Vector3(8.6f, 0f, -14.8f) };
+            var crates = new[] { new Vector3(14.6f, 0f, -2.4f), new Vector3(15.2f, 0f, -1.2f), new Vector3(-8.8f, 0f, -14.5f), new Vector3(12f, 0f, -14.8f) };
             foreach (Vector3 position in crates)
                 Box("Crate", decor, position + Vector3.up * 0.35f, new Vector3(0.7f, 0.7f, 0.7f), m["Wood"], 0.08f,
-                    new Vector3(0f, (float)random.NextDouble() * 40f, 0f));
-            var barrels = new[] { new Vector3(12.6f, 0f, 3.6f), new Vector3(-12.6f, 0f, 7f), new Vector3(-8.2f, 0f, -15.6f) };
+                    new Vector3(0f, (float)random.NextDouble() * 40f, 0f), collider: true);
+            var barrels = new[] { new Vector3(14.4f, 0f, 3.8f), new Vector3(-13.6f, 0f, 8.5f), new Vector3(-8.2f, 0f, -15.6f) };
             foreach (Vector3 position in barrels)
-                Primitive(PrimitiveType.Cylinder, "Barrel", decor, position + Vector3.up * 0.45f, new Vector3(0.6f, 0.45f, 0.6f), m["Barrel"]);
+                Primitive(PrimitiveType.Cylinder, "Barrel", decor, position + Vector3.up * 0.45f, new Vector3(0.6f, 0.45f, 0.6f), m["Barrel"], keepCollider: true);
 
-            // Felinare în jurul piațetei.
-            var lamps = new[] { new Vector3(-3.2f, 0f, -5.4f), new Vector3(3.2f, 0f, -5.4f), new Vector3(-3.2f, 0f, 0.4f), new Vector3(3.2f, 0f, 0.4f) };
+            // Felinare în jurul piațetei (în afara drumului camionului).
+            var lamps = new[] { new Vector3(-3.4f, 0f, -4.1f), new Vector3(3.4f, 0f, -4.1f), new Vector3(-3.4f, 0f, 0.6f), new Vector3(3.4f, 0f, 0.6f) };
             foreach (Vector3 position in lamps)
             {
                 Transform lamp = Empty("Lamp", decor, position).transform;
-                Primitive(PrimitiveType.Cylinder, "Pole", lamp, new Vector3(0f, 1.1f, 0f), new Vector3(0.12f, 1.1f, 0.12f), m["Dark"]);
+                Primitive(PrimitiveType.Cylinder, "Pole", lamp, new Vector3(0f, 1.1f, 0f), new Vector3(0.12f, 1.1f, 0.12f), m["Dark"], keepCollider: true);
                 Primitive(PrimitiveType.Sphere, "Bulb", lamp, new Vector3(0f, 2.3f, 0f), Vector3.one * 0.38f, m["Lamp"]);
             }
         }
@@ -200,6 +212,8 @@ namespace QuarryEmpire.EditorTools
         {
             Transform systems = new GameObject("_Systems").transform;
             AddSystem(systems, "SaveSystem", typeof(SaveSystem));
+            var catalog = AddSystem(systems, "ResourceCatalog", typeof(ResourceCatalog));
+            SetArray(catalog, "resources", new System.Collections.Generic.List<ResourceData>(data.Resources.Values).ToArray());
             AddSystem(systems, "GameManager", typeof(GameManager));
             AddSystem(systems, "QualityProfile", typeof(QualityProfile));
             AddSystem(systems, "PerformanceGovernor", typeof(PerformanceGovernor));
@@ -228,6 +242,7 @@ namespace QuarryEmpire.EditorTools
 
             AddSystem(systems, "AudioManager", typeof(AudioManager));
             AddSystem(systems, "GameSfx", typeof(GameSfx));
+            AddSystem(systems, "MusicPlayer", typeof(MusicPlayer));
 
             GameObject feedbackGo = Empty("GameFeedback", systems, Vector3.zero);
             var impulse = feedbackGo.AddComponent<CinemachineImpulseSource>();
@@ -266,8 +281,16 @@ namespace QuarryEmpire.EditorTools
         private static void BuildQuarry(Materials m, GameData data, Prefabs prefabs)
         {
             GameObject quarry = Empty("Quarry", null, QuarryCenter);
-            GameObject floor = Box("QuarryFloor", quarry.transform, new Vector3(0f, 0.01f, 0f), new Vector3(11.4f, 0.02f, 11.4f),
+            GameObject floor = Box("QuarryFloor", quarry.transform, new Vector3(0f, 0.01f, 0f), new Vector3(RimHalf * 2f - 0.6f, 0.02f, RimHalf * 2f - 0.6f),
                 m["QuarryFloor"], 0.009f, castShadows: false);
+
+            // Poarta carierei: muncitorii intră și ies pe aici (rocile de pe margine au collidere).
+            GameObject gateInside = Empty("GateInside", quarry.transform, GateInsideLocal);
+            GameObject gateOutside = Empty("GateOutside", quarry.transform, GateOutsideLocal);
+            var navigation = quarry.AddComponent<QuarryNavigation>();
+            Set(navigation, "halfSize", new Vector2(RimHalf - 0.3f, RimHalf - 0.3f));
+            Set(navigation, "gateInside", gateInside.transform);
+            Set(navigation, "gateOutside", gateOutside.transform);
 
             var generator = quarry.AddComponent<LayerGenerator>();
             Set(generator, "blockPrefab", prefabs.Block);
@@ -374,8 +397,10 @@ namespace QuarryEmpire.EditorTools
 
             var controller = player.AddComponent<CharacterController>();
             controller.center = new Vector3(0f, 1f, 0f);
-            controller.radius = 0.4f;
+            controller.radius = 0.36f;
             controller.height = 2f;
+            controller.skinWidth = 0.04f;
+            controller.stepOffset = 0.3f;
 
             MinerRig rig = BuildMiner(player.transform, m["Player"], m, 1f);
             model = rig.Model;
@@ -430,15 +455,40 @@ namespace QuarryEmpire.EditorTools
             var bounce = player.AddComponent<StackBounce>();
             Set(bounce, "stack", stack);
 
+            AddPersistence(player, stack, "player");
+
             var capacityLabel = player.AddComponent<StackCapacityLabel>();
             Set(capacityLabel, "stack", stack);
             Set(capacityLabel, "label", stackLabel);
             return player.transform;
         }
 
+        private static void AddPersistence(GameObject go, ResourceStack stack, string key)
+        {
+            var persistence = go.AddComponent<StackPersistence>();
+            Set(persistence, "stack", stack);
+            Set(persistence, "saveKey", key);
+        }
+
         // ------------------------------------------------------------ Zone
 
-        private enum PadIcon { None, Coin, ArrowUp, Plus, Crate, Ingot, ArrowDown }
+        private enum PadIcon { None, Coin, ArrowUp, Plus, Crate, Ingot, ArrowDown, Pickaxe, Bolt, Boot, Backpack, Gem }
+
+        /// <summary>Obiecte din scenă de care are nevoie tutorialul.</summary>
+        private struct ZoneRefs
+        {
+            public Transform Sell, FirstUpgrade, QuarryGate;
+        }
+
+        private static PadIcon IconFor(UpgradeType type) => type switch
+        {
+            UpgradeType.MiningPower => PadIcon.Pickaxe,
+            UpgradeType.MiningSpeed => PadIcon.Bolt,
+            UpgradeType.MoveSpeed => PadIcon.Boot,
+            UpgradeType.Capacity => PadIcon.Backpack,
+            UpgradeType.PickaxeTier => PadIcon.Gem,
+            _ => PadIcon.ArrowUp,
+        };
 
         /// <summary>
         /// Placă de zonă cu semnalizare 3D: bordură colorată, interior deschis, iconiță plutitoare
@@ -492,16 +542,42 @@ namespace QuarryEmpire.EditorTools
                 case PadIcon.Ingot:
                     Box("Ingot", holder, Vector3.zero, new Vector3(0.6f, 0.22f, 0.32f), m["GoldIngot"], 0.06f);
                     break;
+                case PadIcon.Pickaxe:
+                    Box("Handle", holder, new Vector3(0f, -0.05f, 0f), new Vector3(0.09f, 0.7f, 0.09f), m["Pickaxe"], 0.035f, new Vector3(0f, 0f, -25f));
+                    Box("Head", holder, new Vector3(0.12f, 0.28f, 0f), new Vector3(0.6f, 0.12f, 0.12f), m["Metal"], 0.05f, new Vector3(0f, 0f, -25f));
+                    break;
+                case PadIcon.Bolt:
+                    Box("BoltTop", holder, new Vector3(0.06f, 0.16f, 0f), new Vector3(0.16f, 0.4f, 0.12f), m["Arrow"], 0.05f, new Vector3(0f, 0f, -25f));
+                    Box("BoltMid", holder, new Vector3(0f, 0f, 0f), new Vector3(0.34f, 0.12f, 0.12f), m["Arrow"], 0.05f);
+                    Box("BoltLow", holder, new Vector3(-0.06f, -0.16f, 0f), new Vector3(0.16f, 0.4f, 0.12f), m["Arrow"], 0.05f, new Vector3(0f, 0f, -25f));
+                    break;
+                case PadIcon.Boot:
+                    Box("Shaft", holder, new Vector3(-0.08f, 0.1f, 0f), new Vector3(0.24f, 0.42f, 0.22f), m["Boots"], 0.08f);
+                    Box("Foot", holder, new Vector3(0.06f, -0.14f, 0f), new Vector3(0.5f, 0.18f, 0.24f), m["Boots"], 0.08f);
+                    Box("Sole", holder, new Vector3(0.06f, -0.24f, 0f), new Vector3(0.52f, 0.05f, 0.26f), m["Dark"], 0.02f);
+                    break;
+                case PadIcon.Backpack:
+                    Box("Bag", holder, Vector3.zero, new Vector3(0.46f, 0.52f, 0.26f), m["Backpack"], 0.12f);
+                    Box("Flap", holder, new Vector3(0f, 0.2f, 0.02f), new Vector3(0.48f, 0.16f, 0.28f), m["Gloves"], 0.06f);
+                    Box("Pocket", holder, new Vector3(0f, -0.1f, 0.14f), new Vector3(0.28f, 0.2f, 0.06f), m["Gloves"], 0.03f);
+                    break;
+                case PadIcon.Gem:
+                    Box("Gem", holder, Vector3.zero, new Vector3(0.36f, 0.36f, 0.36f), m["Diamond"], 0.08f, new Vector3(45f, 0f, 45f));
+                    break;
             }
             foreach (Renderer r in holder.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
             return holder.gameObject.AddComponent<FloatingBob>();
         }
 
-        private static void BuildZones(Materials m, GameData data)
+        private static ZoneRefs BuildZones(Materials m, GameData data)
         {
+            var refs = new ZoneRefs();
+
             // VINDE
             GameObject sell = Pad("SellZone", null, SellPosition, new Vector2(3.2f, 3.2f), m["PadSell"], m, PadIcon.Coin);
-            AddLabel(sell, "VINDE", LabelHeight, false, new Vector2(260f, 90f), 56);
+            WorldLabel sellLabel = AddLabel(sell, "VINDE", LabelHeight, false, new Vector2(260f, 90f), 56);
+            Set(sellLabel, "alwaysVisible", true);
+            refs.Sell = sell.transform;
             GameObject sellPoint = Empty("CollectPoint", sell.transform, new Vector3(0f, 0.3f, 0f));
             var sellZone = sell.AddComponent<SellZone>();
             Set(sellZone, "area", sell.GetComponent<ZoneArea>());
@@ -513,7 +589,8 @@ namespace QuarryEmpire.EditorTools
             {
                 UpgradeDefinition upgrade = data.Upgrades[i];
                 GameObject padGo = Pad("Upgrade_" + upgrade.Id, upgradesRoot, new Vector3(-6f + i * 3f, 0f, -8f),
-                    new Vector2(2.4f, 2.4f), m["PadUpgrade"], m, PadIcon.ArrowUp);
+                    new Vector2(2.4f, 2.4f), m["PadUpgrade"], m, IconFor(upgrade.Type));
+                if (i == 0) refs.FirstUpgrade = padGo.transform;
                 WorldLabel label = AddLabel(padGo, upgrade.DisplayName, LabelHeight, true, new Vector2(290f, 130f), 30);
                 var pad = padGo.AddComponent<UpgradePad>();
                 Set(pad, "area", padGo.GetComponent<ZoneArea>());
@@ -525,6 +602,9 @@ namespace QuarryEmpire.EditorTools
             BuildOrders(m);
             BuildWorkers(m, data);
             BuildMachineShop(m, data);
+
+            refs.QuarryGate = GameObject.Find("Quarry/GateInside")?.transform;
+            return refs;
         }
 
         private static PurchaseZone Purchase(string id, string title, long cost, Vector3 position, Materials m,
@@ -544,7 +624,7 @@ namespace QuarryEmpire.EditorTools
 
         private static void BuildRefinery(Materials m)
         {
-            GameObject refinery = Empty("Refinery", null, new Vector3(9.5f, 0f, 1f));
+            GameObject refinery = Empty("Refinery", null, new Vector3(10.5f, 0f, 1f));
             Transform r = refinery.transform;
             Box("Building", r, new Vector3(1.2f, 1.2f, 0f), new Vector3(3f, 2.4f, 3f), m["Building"], 0.18f, collider: true);
             Box("Roof", r, new Vector3(1.2f, 2.5f, 0f), new Vector3(3.3f, 0.25f, 3.3f), m["Roof"], 0.1f);
@@ -568,12 +648,12 @@ namespace QuarryEmpire.EditorTools
             Set(zone, "label", label);
 
             refinery.SetActive(false);
-            Purchase("refinery", "Rafinărie", 400, new Vector3(7.9f, 0f, 1f), m, refinery);
+            Purchase("refinery", "Rafinărie", 250, new Vector3(8.9f, 0f, 1f), m, refinery);
         }
 
         private static void BuildOrders(Materials m)
         {
-            GameObject orders = Pad("OrderZone", null, new Vector3(-9f, 0f, 8f), new Vector2(3f, 3f), m["PadOrder"], m, PadIcon.Crate);
+            GameObject orders = Pad("OrderZone", null, new Vector3(-10f, 0f, 8f), new Vector2(3f, 3f), m["PadOrder"], m, PadIcon.Crate);
             GameObject truck = BuildTruckModel("OrderTruck", orders.transform, new Vector3(-2.8f, 0f, 0f), 90f, m["OrderTruck"], m);
             GameObject dropPoint = Empty("DropPoint", truck.transform, new Vector3(0f, 1.2f, -0.6f));
             WorldLabel label = AddLabel(orders, "COMENZI", 2.5f, true, new Vector2(560f, 150f), 34);
@@ -606,7 +686,7 @@ namespace QuarryEmpire.EditorTools
         private static void BuildWorkers(Materials m, GameData data)
         {
             var positions = new[] { new Vector3(-10.5f, 0f, 0f), new Vector3(-10.5f, 0f, -3.5f), new Vector3(-10.5f, 0f, -7f) };
-            var costs = new long[] { 600, 2000, 6000 };
+            var costs = new long[] { 450, 1600, 4500 };
 
             // Construim de la ultimul la primul, ca fiecare zonă să poată debloca zona următoare.
             GameObject nextZone = null;
@@ -655,6 +735,7 @@ namespace QuarryEmpire.EditorTools
             Set(ai, "collector", collector);
 
             AddAnimator(rig, ai, stack, null, data.Worker.MoveSpeed);
+            AddPersistence(root, stack, name.ToLowerInvariant());
             return root;
         }
 
@@ -668,7 +749,7 @@ namespace QuarryEmpire.EditorTools
 
             GameObject drill = BuildDrill(new Vector3(5f, 0f, -13.5f), m, data.Drill);
             drill.SetActive(false);
-            Purchase("drill", "Burghiu", 5000, new Vector3(5f, 0f, -13f), m, drill);
+            Purchase("drill", "Burghiu", 4000, new Vector3(5f, 0f, -13f), m, drill);
 
             BuildTransportTruck(m);
         }
@@ -774,11 +855,22 @@ namespace QuarryEmpire.EditorTools
                 P(so, "itemSpacing").vector3Value = new Vector3(0.3f, 0.28f, 0.3f);
             });
             WorldLabel label = AddLabel(truck, "CAMION", 3f, true, new Vector2(400f, 140f), 34);
+            // Traseul pe drum (ocolește upgrade-urile, utilajele și piațeta).
+            Transform route = new GameObject("TruckRoute").transform;
+            var waypoints = new[]
+            {
+                Empty("W1", route, new Vector3(0f, 0f, -17.2f)).transform,
+                Empty("W2", route, new Vector3(9.2f, 0f, -17.2f)).transform,
+                Empty("W3", route, new Vector3(9.2f, 0f, -5.4f)).transform,
+                Empty("W4", route, new Vector3(-3.6f, 0f, -5.4f)).transform,
+            };
             var controller = truck.AddComponent<Truck>();
             Set(controller, "stack", stack);
             Set(controller, "parkPoint", park.transform);
             Set(controller, "sellPoint", sellPoint.transform);
             Set(controller, "label", label);
+            SetArray(controller, "route", waypoints);
+            AddPersistence(truck, stack, "truck");
 
             GameObject load = Pad("TruckLoad", null, new Vector3(0f, 0f, -11.5f), new Vector2(2.4f, 2.4f), m["PadLoad"], m, PadIcon.Crate);
             AddLabel(load, "ÎNCARCĂ\nCAMIONUL", 2.1f, false, new Vector2(300f, 110f), 32);
@@ -789,7 +881,33 @@ namespace QuarryEmpire.EditorTools
 
             truck.SetActive(false);
             load.SetActive(false);
-            Purchase("truck", "Camion", 2500, new Vector3(0f, 0f, -11.5f), m, truck, load);
+            Purchase("truck", "Camion", 1800, new Vector3(0f, 0f, -11.5f), m, truck, load);
+        }
+
+        // ------------------------------------------------------------ Tutorial
+
+        /// <summary>Săgeata de pe sol (lângă jucător) și marcajul care sare deasupra țintei.</summary>
+        private static void BuildTutorial(Materials m, ZoneRefs zones)
+        {
+            GameObject root = new GameObject("Tutorial");
+            var guide = root.AddComponent<TutorialGuide>();
+
+            Transform arrow = Empty("GroundArrow", root.transform, Vector3.zero).transform;
+            Box("Shaft", arrow, new Vector3(0f, 0f, -0.15f), new Vector3(0.18f, 0.06f, 0.5f), m["Arrow"], 0.025f, castShadows: false);
+            Box("HeadL", arrow, new Vector3(-0.13f, 0f, 0.16f), new Vector3(0.16f, 0.06f, 0.44f), m["Arrow"], 0.025f, new Vector3(0f, -40f, 0f), castShadows: false);
+            Box("HeadR", arrow, new Vector3(0.13f, 0f, 0.16f), new Vector3(0.16f, 0.06f, 0.44f), m["Arrow"], 0.025f, new Vector3(0f, 40f, 0f), castShadows: false);
+
+            Transform marker = Empty("TargetMarker", root.transform, Vector3.zero).transform;
+            Box("Shaft", marker, new Vector3(0f, 0.3f, 0f), new Vector3(0.22f, 0.5f, 0.22f), m["Arrow"], 0.08f, castShadows: false);
+            Box("HeadL", marker, new Vector3(-0.14f, -0.02f, 0f), new Vector3(0.2f, 0.46f, 0.2f), m["Arrow"], 0.08f, new Vector3(0f, 0f, 45f), castShadows: false);
+            Box("HeadR", marker, new Vector3(0.14f, -0.02f, 0f), new Vector3(0.2f, 0.46f, 0.2f), m["Arrow"], 0.08f, new Vector3(0f, 0f, -45f), castShadows: false);
+            marker.gameObject.AddComponent<FloatingBob>();
+
+            Set(guide, "quarryTarget", zones.QuarryGate);
+            Set(guide, "sellTarget", zones.Sell);
+            Set(guide, "upgradeTarget", zones.FirstUpgrade);
+            Set(guide, "groundArrow", arrow);
+            Set(guide, "targetMarker", marker);
         }
 
         // ------------------------------------------------------------ Cameră
@@ -828,6 +946,9 @@ namespace QuarryEmpire.EditorTools
             follow.TrackerSettings = tracker;
 
             vcamGo.AddComponent<CinemachineImpulseListener>();
+            var zoom = vcamGo.AddComponent<CameraZoom>();
+            Set(zoom, "follow", follow);
+            Set(zoom, "baseOffset", CameraOffset);
             var switcher = vcamGo.AddComponent<CameraTargetSwitcher>();
             Set(switcher, "virtualCamera", vcam);
             Set(switcher, "player", player);

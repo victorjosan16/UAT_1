@@ -59,7 +59,7 @@ namespace QuarryEmpire
             Current = null;
             _cooldown = settings.TimeBetweenOrders;
             GameEvents.RaiseOrderFailed();
-            GameEvents.RaiseToast("Comanda a expirat. Camionul a plecat.");
+            GameEvents.RaiseToast(Loc.T("Comanda a expirat. Camionul a plecat."));
             GameEvents.RaiseOrderChanged();
         }
 
@@ -84,7 +84,7 @@ namespace QuarryEmpire
                 reward = MoneyManager.Instance.AddIncome(reward, position, true);
             }
             GameEvents.RaiseOrderCompleted(reward);
-            GameEvents.RaiseToast($"Comandă livrată! +{NumberFormat.Money(reward)}");
+            GameEvents.RaiseToast(Loc.F("Comandă livrată! +{0}", NumberFormat.Money(reward)));
             GameEvents.RaiseOrderChanged();
         }
 
@@ -112,7 +112,7 @@ namespace QuarryEmpire
                 TimeLeft = limit,
                 Reward = (long)Mathf.Round(amount * chosen.resource.SellPrice * settings.RewardMultiplier),
             };
-            GameEvents.RaiseToast($"Comandă nouă: {amount} × {chosen.resource.DisplayName}!");
+            GameEvents.RaiseToast(Loc.F("Comandă nouă: {0} × {1}!", amount, Loc.T(chosen.resource.DisplayName)));
             GameEvents.RaiseOrderChanged();
         }
     }

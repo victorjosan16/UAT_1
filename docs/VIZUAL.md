@@ -67,3 +67,45 @@ Materiale: `M_Particle` (alpha clip — fără amestec transparent, deci fără 
 ## iOS
 Același Bundle ID (`com.victorjosan.quarryempire`), portret, zona sigură tratată de `SafeAreaFitter`.
 Build-ul iOS cere un cont Apple Developer; în Unity Build Automation se adaugă o configurație iOS separată.
+
+---
+
+# Îmbunătățiri (runda 2)
+
+## Funcționalitate
+| Ce | Script / unde |
+|---|---|
+| Stivele (jucător, camion, muncitori) se salvează | `StackPersistence` (cheie: `player`, `truck`, `worker1..3`) + `ResourceCatalog` în `_Systems` |
+| Rafinăria își salvează minereul în lucru și lingourile gata | `RefineZone` → `Save Key` |
+| Stratul curent nu se mai regenerează la repornire | `LayerGenerator` (seed + celulele sparte în salvare) |
+| Cariera are margine solidă și o poartă la sud; muncitorii trec prin ea | `QuarryNavigation` pe **Quarry** (`Half Size`, `GateInside`, `GateOutside`) |
+| Camionul merge pe drum, nu prin obiecte | `Truck` → `Route` (W1–W4 în **TruckRoute**) |
+| Resursele de pe jos nu mai dispar după timp (max. 90 pe jos) | `ResourcePickup` → `Max On Ground` |
+| Tutorial în 3 pași (sparge → vinde → upgrade) | `TutorialGuide` pe **Tutorial**; textul apare în cardul de misiune |
+| Lacăt pe blocurile prea dure + bară de viață după prima lovitură | `BlockStatusVisual` pe prefab-ul **Block** |
+| Tranziție între straturi („Coborâm…” → „STRATUL 3”) + blocurile „răsar” în val | `LayerTransitionUI` (Canvas) + `BlockSpawnPop` (Block) |
+| Muzică de fundal (generată din cod) | `MusicPlayer` în `_Systems` (`Music Clip` = piesa ta, opțional) |
+| Engleză + română (după limba telefonului; Pauză → LIMBA) | `Loc` (`Scripts/Core/Loc.cs` — dicționarul de traduceri) |
+| Economie reglată cu o simulare | prețuri în `GameSetup.Data.cs`, costuri în `GameSetup.Scene.cs` |
+
+## Design
+| Ce | Unde |
+|---|---|
+| Etichetele 3D depărtate se micșorează și dispar (mai puțină aglomerație) | `WorldLabel` → `Full Detail Distance`, `Hide Distance`, `Always Visible` |
+| Blocurile cu minereu: rocă + pepite colorate | `BlockOreVisual` + materialele `M_Rock*` |
+| Iconiță aplicație + ecran de pornire | `Art/Icon/AppIcon.png` (+ varianta pătrată pentru iOS), `GameSetup.Project.cs → SetupIconAndSplash` |
+| Iconițe 3D diferite pe plăcile de upgrade (târnăcop, fulger, gheată, rucsac, diamant) | `GameSetup.Scene.cs → IconFor()` |
+| Partea de sus mai aerisită: progresul stratului e inelul din insignă | `LayerHud` |
+
+## Mișcare
+| Ce | Unde |
+|---|---|
+| Joystick flotant (apare unde pui degetul, jumătatea de jos a ecranului) | `FloatingJoystick` pe **JoystickArea** (`Radius`, `Idle Alpha`) |
+| Accelerație/frânare lină | `PlayerMovement` → `Acceleration`, `Deceleration` |
+| Utilajele virează în mers și dau înapoi | `Vehicle` → `Min Turn Speed`, `Reverse Threshold`, `Reverse Speed`, `Acceleration` |
+| Camera se depărtează în utilaj / cu stiva plină | `CameraZoom` pe **CinemachineCamera** |
+| Jucătorul nu se mai agață în colțuri | CharacterController: rază 0.36, Step Offset 0.3 |
+
+## Ce nu s-a putut face aici
+- **Modele Kenney (D4):** site-ul kenney.nl nu e accesibil din mediul meu de lucru, iar pachetele de pe GitHub sunt glTF
+  (ar cere pachetul `com.unity.cloud.gltfast`). Modelele rămân construite din forme rotunjite; pot fi înlocuite ulterior.

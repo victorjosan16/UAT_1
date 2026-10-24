@@ -53,6 +53,9 @@ namespace QuarryEmpire.EditorTools
                 ("Coin", "#FFC83D", 0.55f), ("PadInner", "#F6EBD9", 0.05f),
                 ("PadSell", "#3DC46A", 0.1f), ("PadUpgrade", "#9B6BF0", 0.1f), ("PadBuy", "#F59A3D", 0.1f),
                 ("PadRefine", "#4DC3F0", 0.1f), ("PadOrder", "#3D8FE0", 0.1f), ("PadLoad", "#6FCF97", 0.1f),
+                // Corpul blocurilor cu minereu (rocă nuanțată; minereul se vede ca pepite colorate)
+                ("RockCopper", "#A88C78", 0.06f), ("RockIron", "#7F8796", 0.06f), ("RockGold", "#B0A27A", 0.06f),
+                ("RockDiamond", "#5F6878", 0.08f), ("Lock", "#3A3A42", 0.3f), ("Arrow", "#FFD23F", 0.2f),
                 // Resurse brute
                 ("Stone", "#9A9CA3", 0.08f), ("Copper", "#D07A3E", 0.2f), ("Iron", "#667A96", 0.2f),
                 ("Gold", "#F7C531", 0.4f), ("Diamond", "#62E3F2", 0.6f),
@@ -116,25 +119,26 @@ namespace QuarryEmpire.EditorTools
             var data = new GameData();
 
             // Resurse rafinate (create primele, ca să le putem lega de cele brute).
-            Resource(data, m, "Brick", "brick", "Cărămidă", 3, null, 1f);
-            Resource(data, m, "CopperIngot", "copper_ingot", "Lingou de cupru", 8, null, 1f);
-            Resource(data, m, "IronIngot", "iron_ingot", "Lingou de fier", 16, null, 1f);
-            Resource(data, m, "GoldIngot", "gold_ingot", "Lingou de aur", 40, null, 1f);
-            Resource(data, m, "CutDiamond", "cut_diamond", "Diamant șlefuit", 140, null, 1f);
+            // Prețuri reglate cu o simulare a progresului (prima deblocare ~6 min, utilajele ~17–27 min).
+            Resource(data, m, "Brick", "brick", "Cărămidă", 5, null, 1f);
+            Resource(data, m, "CopperIngot", "copper_ingot", "Lingou de cupru", 13, null, 1f);
+            Resource(data, m, "IronIngot", "iron_ingot", "Lingou de fier", 26, null, 1f);
+            Resource(data, m, "GoldIngot", "gold_ingot", "Lingou de aur", 65, null, 1f);
+            Resource(data, m, "CutDiamond", "cut_diamond", "Diamant șlefuit", 220, null, 1f);
 
             // Resurse brute: preț, în ce se rafinează, secunde de rafinare.
-            Resource(data, m, "Stone", "stone", "Piatră", 1, data.Resources["Brick"], 1.2f);
-            Resource(data, m, "Copper", "copper", "Cupru", 3, data.Resources["CopperIngot"], 2f);
-            Resource(data, m, "Iron", "iron", "Fier", 6, data.Resources["IronIngot"], 2.5f);
-            Resource(data, m, "Gold", "gold", "Aur", 15, data.Resources["GoldIngot"], 3f);
-            Resource(data, m, "Diamond", "diamond", "Diamant", 50, data.Resources["CutDiamond"], 4f);
+            Resource(data, m, "Stone", "stone", "Piatră", 2, data.Resources["Brick"], 1.2f);
+            Resource(data, m, "Copper", "copper", "Cupru", 5, data.Resources["CopperIngot"], 2f);
+            Resource(data, m, "Iron", "iron", "Fier", 10, data.Resources["IronIngot"], 2.5f);
+            Resource(data, m, "Gold", "gold", "Aur", 25, data.Resources["GoldIngot"], 3f);
+            Resource(data, m, "Diamond", "diamond", "Diamant", 80, data.Resources["CutDiamond"], 4f);
 
-            // Blocuri: viață, duritate, drop minim/maxim.
-            Block(data, m, "Stone", "Bloc de piatră", 3f, 1, 1, 2);
-            Block(data, m, "Copper", "Bloc de cupru", 5f, 1, 1, 2);
-            Block(data, m, "Iron", "Bloc de fier", 8f, 2, 1, 2);
-            Block(data, m, "Gold", "Bloc de aur", 12f, 2, 1, 3);
-            Block(data, m, "Diamond", "Bloc de diamant", 20f, 3, 1, 1);
+            // Blocuri: material corp, viață, duritate, drop minim/maxim.
+            Block(data, m, "Stone", "Stone", "Bloc de piatră", 3f, 1, 1, 2);
+            Block(data, m, "Copper", "RockCopper", "Bloc de cupru", 5f, 1, 1, 2);
+            Block(data, m, "Iron", "RockIron", "Bloc de fier", 8f, 2, 1, 2);
+            Block(data, m, "Gold", "RockGold", "Bloc de aur", 12f, 2, 1, 3);
+            Block(data, m, "Diamond", "RockDiamond", "Bloc de diamant", 20f, 3, 1, 1);
 
             // Straturi: nume, adâncime, mărime grilă, multiplicator viață, culoare podea, ponderi blocuri.
             Layer(data, 1, "Suprafață", 10, 8, 1f, "#8A6E50", ("Stone", 10f), ("Copper", 4f), ("Iron", 1f));
@@ -203,14 +207,14 @@ namespace QuarryEmpire.EditorTools
             data.Resources[key] = asset;
         }
 
-        private static void Block(GameData data, Materials m, string key, string displayName, float health,
+        private static void Block(GameData data, Materials m, string key, string bodyMaterial, string displayName, float health,
             int hardness, int minDrops, int maxDrops)
         {
             var asset = LoadOrCreate<BlockData>($"{DataDir}/Block_{key}.asset");
             Edit(asset, so =>
             {
                 P(so, "DisplayName").stringValue = displayName;
-                P(so, "BlockMaterial").objectReferenceValue = m[key];
+                P(so, "BlockMaterial").objectReferenceValue = m[bodyMaterial];
                 P(so, "MaxHealth").floatValue = health;
                 P(so, "Hardness").intValue = hardness;
                 P(so, "DroppedResource").objectReferenceValue = data.Resources[key];

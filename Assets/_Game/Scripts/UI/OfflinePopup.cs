@@ -47,9 +47,9 @@ namespace QuarryEmpire
 
         private void Show(long amount)
         {
-            _message.Text = $"Bine ai revenit!\nCât ai lipsit, muncitorii au câștigat\n{NumberFormat.Money(amount)}";
-            _claimLabel.Text = $"IA {NumberFormat.Money(amount)}";
-            _doubleLabel.Text = $"IA {NumberFormat.Money(amount * 2)} (reclamă)";
+            _message.Text = Loc.F("Bine ai revenit!\nCât ai lipsit, muncitorii au câștigat\n{0}", NumberFormat.Money(amount));
+            _claimLabel.Text = Loc.F("IA {0}", NumberFormat.Money(amount));
+            _doubleLabel.Text = Loc.F("IA {0} (reclamă)", NumberFormat.Money(amount * 2));
             _root.SetActive(true);
         }
 

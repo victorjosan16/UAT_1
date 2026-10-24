@@ -62,7 +62,7 @@ namespace QuarryEmpire
             bool boostActive = money != null && money.BoostTimeLeft > 0f;
             _boostButton.interactable = !boostActive;
             _boostGroup.alpha = boostActive ? 0.55f : 1f;
-            _boostLabel.Text = boostActive ? $"{Mathf.CeilToInt(money.BoostTimeLeft)}s" : "BANI x2";
+            _boostLabel.Text = boostActive ? $"{Mathf.CeilToInt(money.BoostTimeLeft)}s" : Loc.T("BANI x2");
 
             float wait = _bonusReadyAt - Time.unscaledTime;
             _bonusButton.interactable = wait <= 0f;

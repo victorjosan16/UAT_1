@@ -163,6 +163,8 @@ namespace QuarryEmpire
         /// <summary>Direcția de mers spre țintă; dacă stă pe loc prea mult, încearcă un ocol lateral.</summary>
         private Vector3 Steer(Vector3 target, float dt)
         {
+            // Prin poarta carierei, dacă trebuie să intre sau să iasă.
+            if (QuarryNavigation.Instance != null) target = QuarryNavigation.Instance.NextWaypoint(transform.position, target);
             Vector3 direction = target - transform.position;
             direction.y = 0f;
             direction.Normalize();
