@@ -173,6 +173,12 @@ namespace SugarDrop
         }
 
         public void Bounce() => _bounceT = 0f;
+
+        /// <summary>Capacul atins cu degetul se ridică puțin (doar vizual).</summary>
+        public void SetSelected(bool selected) => _selected = selected;
+
+        private bool _selected;
+        private float _lift;
         public void Wiggle() => _wiggleT = 0f;
 
         private void Update()
@@ -224,6 +230,14 @@ namespace SugarDrop
                 // Capacele speciale „respiră” și curcubeul se rotește, ca să atragă privirea.
                 if (IsSpecial) scale *= 1f + Mathf.Sin(Time.time * 4f + _phase) * 0.04f;
                 if (IsRainbow) _overlay.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 90f);
+            }
+
+            // Selecția: capacul crește ușor și umbra coboară, ca și cum ar fi ridicat de pe tablă.
+            _lift = Mathf.MoveTowards(_lift, _selected && _popT < 0f ? 1f : 0f, dt * 9f);
+            if (_lift > 0f)
+            {
+                scale *= 1f + 0.12f * _lift;
+                _shadow.transform.localPosition = new Vector3(0f, -_size * (0.06f + 0.08f * _lift), 0f);
             }
 
             _visual.localScale = Vector3.one * scale;

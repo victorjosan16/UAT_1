@@ -14,6 +14,8 @@ namespace SugarDrop
         private UiLabel _logo;
         private UiLabel _tagline;
         private UiLabel _playLabel;
+        private RectTransform _playRect;
+        private float _enterT = -1f;
         private RectTransform[] _floaters;
         private Vector2[] _floaterBase;
 
@@ -49,6 +51,13 @@ namespace SugarDrop
                 }
             }
 
+            // Sclipiri care plutesc peste fundal.
+            RectTransform sparkleLayer = UiFactory.CreateRect("Sparkles", _root.transform);
+            UiFactory.Stretch(sparkleLayer, 300f);
+            UIParticleController sparkles = sparkleLayer.gameObject.AddComponent<UIParticleController>();
+            sparkles.Initialize(30, SugarSprites.Sparkle, new[] { Color.white, new Color(1f, 0.9f, 0.6f), new Color(1f, 0.75f, 0.85f) }, 4f);
+            sparkles.SetAmbientSize(16f, 36f);
+
             _logo = SugarUi.Outlined("Logo", _root.transform, SugarUi.Logo("Sugar Drop"), 170, Color.white, 7f);
             UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 420f), new Vector2(1060f, 240f));
             _tagline = SugarUi.Outlined("Tagline", _root.transform, "", 44, Color.white, 3f);
@@ -69,13 +78,14 @@ namespace SugarDrop
                 UiFactory.Place(eye.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(e * 60f, -90f), new Vector2(40f, 40f));
             }
 
-            Button play = UiFactory.CreateButton("Play", _root.transform, "", theme.PositiveColor, () =>
+            Button play = SugarUi.Button("Play", _root.transform, "", theme.PositiveColor, () =>
             {
                 SugarUi.Click();
                 PlayClicked?.Invoke();
             }, 64);
             UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -480f), new Vector2(600f, 180f));
             _playLabel = UiFactory.GetButtonLabel(play);
+            _playRect = (RectTransform)play.transform;
 
             _root.SetActive(false);
         }
@@ -85,6 +95,7 @@ namespace SugarDrop
             _tagline.Text = SugarLoc.T("Aliniază 3 capace la fel ca să eliberezi bomboanele!");
             _playLabel.Text = SugarLoc.T("JOACĂ");
             _root.SetActive(true);
+            _enterT = 0f;
         }
 
         public void Hide() => _root.SetActive(false);
@@ -100,6 +111,17 @@ namespace SugarDrop
             }
             _logo.RectTransform.localScale = Vector3.one * (1f + Mathf.Sin(time * 2f) * 0.03f);
             _logo.RectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(time * 1.3f) * 2f);
+
+            // Intrarea: logo-ul cade de sus cu „boing”, butonul urcă de jos.
+            if (_enterT >= 0f)
+            {
+                _enterT += Time.unscaledDeltaTime;
+                float logoT = Mathf.Clamp01(_enterT / 0.6f);
+                float playT = Mathf.Clamp01((_enterT - 0.25f) / 0.5f);
+                _logo.RectTransform.anchoredPosition = new Vector2(0f, 420f + (1f - UiEase.OutBack(logoT, 2f)) * 600f);
+                _playRect.anchoredPosition = new Vector2(0f, -480f - (1f - UiEase.OutBack(playT, 1.6f)) * 500f);
+                if (_enterT > 0.8f) _enterT = -1f;
+            }
         }
     }
 }

@@ -20,14 +20,15 @@ namespace SugarDrop
         private readonly UiLabel[] _buttonLabels = new UiLabel[3];
         private readonly Image[] _buttonFaces = new Image[3];
         private readonly Action[] _actions = new Action[3];
-        private int _starCount;
-        private float _starTime = -1f;
+        private LevelCompleteAnimator _animator;
+        private float _lockedUntil;
 
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
             _root = SugarUi.Dim(transform).gameObject;
             RectTransform box = SugarUi.Box(_root.transform, new Vector2(820f, 1000f));
+            var holder = (RectTransform)box.parent;
 
             for (int i = 0; i < 3; i++)
             {
@@ -52,8 +53,11 @@ namespace SugarDrop
             for (int i = 0; i < 3; i++)
             {
                 int index = i;
-                _buttons[i] = UiFactory.CreateButton("Action" + i, box, "", theme.PositiveColor, () =>
+                _buttons[i] = SugarUi.Button("Action" + i, box, "", theme.PositiveColor, () =>
                 {
+                    // Un singur buton contează pe fereastră: apăsările rapide repetate sunt ignorate.
+                    if (Time.unscaledTime < _lockedUntil) return;
+                    _lockedUntil = Time.unscaledTime + 0.6f;
                     SugarUi.Click();
                     _actions[index]?.Invoke();
                 }, i == 0 ? 52 : 42);
@@ -63,27 +67,27 @@ namespace SugarDrop
                 _buttonLabels[i] = UiFactory.GetButtonLabel(_buttons[i]);
             }
 
+            UIParticleController particles = UiFactory.CreateRect("Sparkles", box).gameObject.AddComponent<UIParticleController>();
+            UiFactory.Stretch((RectTransform)particles.transform);
+            particles.Initialize(40, SugarSprites.Sparkle, null, 0f);
+            _animator = holder.gameObject.AddComponent<LevelCompleteAnimator>();
+            _animator.Bind(holder, _stars, _coins, particles, theme.AccentColor, new Color(0.86f, 0.82f, 0.82f));
+
             Hide();
         }
 
         public void ShowWin(int level, int stars, int coins, Action onNext)
         {
             UiTheme theme = UiRoot.Theme;
-            for (int i = 0; i < 3; i++)
-            {
-                _stars[i].gameObject.SetActive(true);
-                _stars[i].color = new Color(0.86f, 0.82f, 0.82f);
-                _stars[i].rectTransform.localScale = Vector3.one;
-            }
-            _starCount = stars;
-            _starTime = 0f;
+            foreach (Image star in _stars) star.gameObject.SetActive(true);
             _title.Text = SugarLoc.T("BRAVO!");
             _title.Color = theme.AccentColor;
             _subtitle.Text = SugarLoc.F("Nivelul {0} terminat", level);
             _coins.gameObject.SetActive(true);
-            _coins.Text = SugarLoc.F("+{0} monede", coins);
             SetButtons(new DialogButton(SugarLoc.T("CONTINUĂ"), theme.PositiveColor, onNext));
+            _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
+            _animator.PlayWin(stars, coins, SugarLoc.T("+{0} monede"));
         }
 
         /// <param name="onAdMoves">Null dacă nu se mai poate continua cu reclamă.</param>
@@ -91,7 +95,6 @@ namespace SugarDrop
         {
             UiTheme theme = UiRoot.Theme;
             foreach (Image star in _stars) star.gameObject.SetActive(false);
-            _starTime = -1f;
             _title.Text = SugarLoc.T("AULEU!");
             _title.Color = theme.NegativeColor;
             _subtitle.Text = SugarLoc.F("Ai strâns {0} din {1} bomboane.", collected, goal);
@@ -103,13 +106,15 @@ namespace SugarDrop
             else
                 SetButtons(new DialogButton(SugarLoc.T("REÎNCEARCĂ"), theme.AccentColor, onRetry),
                     new DialogButton(SugarLoc.T("HARTA"), theme.PanelColor, onMap));
+            _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
+            _animator.PlayLose();
         }
 
         public void Hide()
         {
             _root.SetActive(false);
-            _starTime = -1f;
+            if (_animator != null) _animator.Stop();
         }
 
         public bool IsOpen => _root.activeSelf;
@@ -126,27 +131,6 @@ namespace SugarDrop
                 _buttonFaces[i].color = buttons[i].Color;
                 _buttons[i].transform.Find("Shadow").GetComponent<Image>().color = UiFactory.Darken(buttons[i].Color, 0.35f);
             }
-        }
-
-        private void Update()
-        {
-            if (_starTime < 0f) return;
-            // Stelele câștigate „pocnesc” pe rând.
-            float previous = _starTime;
-            _starTime += Time.unscaledDeltaTime;
-            for (int i = 0; i < _starCount; i++)
-            {
-                float start = 0.35f + i * 0.3f;
-                if (previous < start && _starTime >= start)
-                {
-                    _stars[i].color = UiRoot.Theme.AccentColor;
-                    if (SugarAudio.Instance != null) SugarAudio.Instance.Play(SugarSound.Star, 1f, 1f + i * 0.12f);
-                    SugarAudio.Buzz(0);
-                }
-                float t = Mathf.Clamp01((_starTime - start) / 0.3f);
-                if (_starTime >= start) _stars[i].rectTransform.localScale = Vector3.one * (1f + Mathf.Sin(t * Mathf.PI) * 0.35f);
-            }
-            if (_starTime > 0.35f + _starCount * 0.3f + 0.3f) _starTime = -1f;
         }
     }
 }

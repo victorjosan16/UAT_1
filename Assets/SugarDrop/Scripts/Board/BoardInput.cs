@@ -28,7 +28,11 @@ namespace SugarDrop
         private Vector2Int _startCell;
         private Vector2 _startWorld;
 
-        private void OnDisable() => _tracking = false;
+        private void OnDisable()
+        {
+            _tracking = false;
+            if (board != null) board.Select(null);
+        }
 
         private void Update()
         {
@@ -44,6 +48,7 @@ namespace SugarDrop
                 if (_pressOnUi) return;
                 _tracking = board.TryGetCell(world, out _startCell);
                 _startWorld = world;
+                if (_tracking && !board.Busy) board.Select(_startCell);
                 Touched?.Invoke();
             }
             if (_pressOnUi) return;
@@ -56,7 +61,11 @@ namespace SugarDrop
                     TapTarget = null;
                     target(cell);
                 }
-                if (pointer.press.wasReleasedThisFrame) _tracking = false;
+                if (pointer.press.wasReleasedThisFrame)
+                {
+                    _tracking = false;
+                    board.Select(null);
+                }
                 return;
             }
 
@@ -68,12 +77,17 @@ namespace SugarDrop
                     Vector2Int direction = Mathf.Abs(delta.x) > Mathf.Abs(delta.y)
                         ? new Vector2Int(delta.x > 0f ? 1 : -1, 0)
                         : new Vector2Int(0, delta.y > 0f ? 1 : -1);
+                    board.Select(null);
                     board.TrySwap(_startCell, _startCell + direction);
                     _tracking = false;
                 }
             }
 
-            if (pointer.press.wasReleasedThisFrame) _tracking = false;
+            if (pointer.press.wasReleasedThisFrame)
+            {
+                _tracking = false;
+                board.Select(null);
+            }
         }
     }
 }

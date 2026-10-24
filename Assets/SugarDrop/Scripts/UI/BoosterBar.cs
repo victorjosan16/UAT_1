@@ -29,7 +29,7 @@ namespace SugarDrop
             for (int i = 0; i < 3; i++)
             {
                 var booster = (Booster)i;
-                Button button = UiFactory.CreateIconButton(booster.ToString(), transform, icons[i] != null ? icons[i] : UiFactory.WhiteSprite, colors[i],
+                Button button = SugarUi.IconButton(booster.ToString(), transform, icons[i] != null ? icons[i] : UiFactory.WhiteSprite, colors[i],
                     () => Clicked?.Invoke(booster), i == 0 ? 0.7f : 0.55f);
                 var rect = (RectTransform)button.transform;
                 UiFactory.Place(rect, Vector2.zero, new Vector2(0.5f, 0.5f), new Vector2(120f, 110f + i * 170f), new Vector2(140f, 140f));

@@ -17,7 +17,10 @@ namespace SugarDrop
             }
         }
 
-        public static string T(string ro) => IsEnglish && English.TryGetValue(ro, out string en) ? en : ro;
+        public static string T(string ro) => Translate(ro, IsEnglish);
+
+        /// <summary>Traducerea pură (pentru teste): textul românesc sau echivalentul englezesc, dacă există.</summary>
+        public static string Translate(string ro, bool english) => english && English.TryGetValue(ro, out string en) ? en : ro;
         public static string F(string roFormat, params object[] args) => string.Format(T(roFormat), args);
 
         private static readonly Dictionary<string, string> English = new()

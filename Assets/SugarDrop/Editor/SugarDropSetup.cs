@@ -228,6 +228,8 @@ namespace SugarDrop.EditorTools
                 Menu = UiComponent<MainMenu>(canvasGo.transform, "Menu"),
                 Dialog = UiComponent<DialogPanel>(canvasGo.transform, "Dialog"),
             };
+            // Tranziția dintre ecrane: deasupra ferestrelor, sub reclame.
+            UiComponent<UITransitionController>(canvasGo.transform, "Transition");
             // Reclamele de test: ultimul copil, deasupra tuturor.
             UiChild(canvasGo.transform, "AdService", typeof(AdService));
             return ui;

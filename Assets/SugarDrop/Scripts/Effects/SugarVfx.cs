@@ -38,6 +38,7 @@ namespace SugarDrop
 
         private readonly List<Particle> _particles = new();
         private int _cursor;
+        private int _activeCount;
         private Vector3 _cameraBase;
         private float _shake;
 
@@ -343,6 +344,7 @@ namespace SugarDrop
                 _cursor = (_cursor + 1) % _particles.Count;
             }
 
+            if (!p.Active) _activeCount++;
             p.Active = true;
             p.Motion = Motion.Ballistic;
             p.Position = position;
@@ -369,6 +371,8 @@ namespace SugarDrop
         private void Update()
         {
             float dt = Time.deltaTime;
+            // Nicio particulă activă: sărim bucla (doar tremurul camerei, dacă e cazul).
+            if (_activeCount > 0)
             for (int i = 0; i < _particles.Count; i++)
             {
                 Particle p = _particles[i];
@@ -385,6 +389,7 @@ namespace SugarDrop
                 if (t >= 1f)
                 {
                     p.Active = false;
+                    _activeCount--;
                     p.Transform.gameObject.SetActive(false);
                     continue;
                 }

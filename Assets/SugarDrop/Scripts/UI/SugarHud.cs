@@ -63,7 +63,7 @@ namespace SugarDrop
             _movesCaption = UiFactory.CreateText("Caption", movesDisc.transform, "", 22, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Place(_movesCaption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -32f), new Vector2(110f, 30f));
 
-            Button pause = UiFactory.CreateIconButton("Pause", transform, ProceduralSprites.Pause, theme.PanelColor,
+            Button pause = SugarUi.IconButton("Pause", transform, ProceduralSprites.Pause, theme.PanelColor,
                 () =>
                 {
                     SugarUi.Click();

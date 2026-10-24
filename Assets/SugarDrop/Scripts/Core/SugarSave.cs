@@ -71,22 +71,14 @@ namespace SugarDrop
         public static void UpdateLives()
         {
             SugarSaveData data = Data;
-            if (data.lives >= MaxLives)
-            {
-                data.lifeTimestamp = Now;
-                return;
-            }
-            long elapsed = Now - data.lifeTimestamp;
-            if (elapsed < LifeRegenSeconds) return;
-            int gained = (int)(elapsed / LifeRegenSeconds);
-            data.lives = Mathf.Min(MaxLives, data.lives + gained);
-            data.lifeTimestamp += gained * (long)LifeRegenSeconds;
-            Save();
+            int before = data.lives;
+            (data.lives, data.lifeTimestamp) = LifeClock.Regenerate(data.lives, data.lifeTimestamp, Now, MaxLives, LifeRegenSeconds);
+            if (data.lives != before) Save();
         }
 
         /// <summary>Secunde până la următoarea viață (0 dacă viețile sunt pline).</summary>
         public static int SecondsToNextLife =>
-            Data.lives >= MaxLives ? 0 : Mathf.Max(0, (int)(LifeRegenSeconds - (Now - Data.lifeTimestamp)));
+            LifeClock.SecondsToNext(Data.lives, Data.lifeTimestamp, Now, MaxLives, LifeRegenSeconds);
 
         public static void LoseLife()
         {

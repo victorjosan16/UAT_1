@@ -48,7 +48,24 @@ Notele aromelor sunt din gama pentatonică și urcă pe parcursul unei mutări: 
 - Fizica bomboanelor: `CandySpawner` + `Data/CandyPhysics`; pâlnia și borcanul: `Playfield`
 - Efectele vizuale: `Scripts/Effects/SugarVfx.cs`; sunetele: `Scripts/Effects/SugarAudio.cs`
 - Grafica (desenată din cod): `Scripts/Visual/SugarSprites.cs`; mascota: `Scripts/Visual/Mascot.cs`
-- Fluxul jocului, monede, ajutoare: `Scripts/Core/SugarDropGame.cs`; tema UI: `Data/SugarTheme.asset`
+- Fluxul jocului, monede, ajutoare: `Scripts/Game/SugarDropGame.cs`; tema UI: `Data/SugarTheme.asset`
+
+## Harta și animațiile interfeței
+- Harta (`UI/MapScreen.cs`) se derulează, se centrează pe nivelul curent și are 3 straturi de adâncime (paralaxă).
+  După o victorie, drumul se aprinde până la nivelul nou, Bobo „merge” acolo și nodul se deblochează animat.
+  Nivelurile trecute se pot rejuca (pentru mai multe stele); cele încuiate doar tremură.
+- Componente refolosibile (`UI/Motion/`): `UIButtonPressAnimator` (1 → 0,94 → 1 cu săritură), `LevelNodeAnimator`,
+  `UIParticleController` (particule UI din pool), `UITransitionController` (tranziții care blochează apăsările repetate),
+  `LevelCompleteAnimator` (stele pe rând, monede numărate), `LevelMapScrollController` (centrare lină + paralaxă).
+- Butonul „Înapoi” de pe Android: închide fereastra deschisă → pauză în nivel → din hartă în meniu → iese din meniu.
+
+## Teste
+- Codul pur (reguli de aliniere, niveluri, vieți, hartă, traduceri) e în asamblarea `SugarDrop.Core` (`Scripts/Core`).
+- **EditMode** (`Tests/EditMode`): regulile alinierilor și ale capacelor speciale, echilibrul nivelurilor, regenerarea vieților,
+  geometria hărții, traducerile.
+- **PlayMode** (`Tests/PlayMode`): pe scena reală, meniu → hartă → nivel → pauză → hartă, cu apăsări rapide repetate,
+  și un nivel încuiat care nu pornește. Salvarea jucătorului e pusă la loc după test.
+- În Unity: `Sugar Drop → Construiește jocul`, apoi `Window → General → Test Runner`.
 
 ## Build în cloud (Unity Build Automation)
 Configurație nouă (separată de Quarry Empire):

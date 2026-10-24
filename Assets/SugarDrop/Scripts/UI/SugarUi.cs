@@ -1,6 +1,7 @@
 using QuarryEmpire;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace SugarDrop
 {
@@ -71,6 +72,27 @@ namespace SugarDrop
                 builder.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(color)).Append('>').Append(c).Append("</color>");
             }
             return builder.ToString();
+        }
+
+        /// <summary>Buton „3D” al jocului, cu animația de apăsare Sugar Drop (în locul celei generice).</summary>
+        public static Button Button(string name, Transform parent, string text, Color color, System.Action onClick, float fontSize = 40f)
+        {
+            Button button = UiFactory.CreateButton(name, parent, text, color, onClick, fontSize);
+            SwapPressAnimation(button.gameObject);
+            return button;
+        }
+
+        public static Button IconButton(string name, Transform parent, Sprite icon, Color color, System.Action onClick, float iconScale = 0.5f)
+        {
+            Button button = UiFactory.CreateIconButton(name, parent, icon, color, onClick, iconScale);
+            SwapPressAnimation(button.gameObject);
+            return button;
+        }
+
+        private static void SwapPressAnimation(GameObject go)
+        {
+            if (go.TryGetComponent(out PressScale generic)) Object.Destroy(generic);
+            go.AddComponent<UIButtonPressAnimator>();
         }
 
         public static void Click()

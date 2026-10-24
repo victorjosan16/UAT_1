@@ -43,6 +43,9 @@ namespace SugarDrop
 
         public bool IsOpen => _root != null && _root.activeSelf;
 
+        /// <summary>Ce se întâmplă la butonul „Înapoi” al telefonului (setat după Show; null = doar închide).</summary>
+        public Action DismissAction { get; set; }
+
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
@@ -59,6 +62,7 @@ namespace SugarDrop
 
         public void Show(string title, string message, Func<string> liveMessage, params DialogButton[] buttons)
         {
+            DismissAction = null;
             foreach (GameObject button in _buttons) Destroy(button);
             _buttons.Clear();
 
@@ -75,7 +79,7 @@ namespace SugarDrop
             for (int i = 0; i < buttons.Length; i++)
             {
                 DialogButton data = buttons[i];
-                Button button = UiFactory.CreateButton("Button" + i, _box, data.Label, data.Color, () =>
+                Button button = SugarUi.Button("Button" + i, _box, data.Label, data.Color, () =>
                 {
                     SugarUi.Click();
                     if (data.Closes) Hide();
@@ -88,6 +92,14 @@ namespace SugarDrop
 
             // Repornim animația de apariție doar la prima deschidere (nu la reîmprospătarea unui comutator).
             if (!_root.activeSelf) _root.SetActive(true);
+        }
+
+        /// <summary>Închide dialogul ca și cum jucătorul ar fi renunțat (butonul „Înapoi”).</summary>
+        public void Dismiss()
+        {
+            Action action = DismissAction;
+            Hide();
+            action?.Invoke();
         }
 
         public void Hide()

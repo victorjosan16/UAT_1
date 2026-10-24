@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SugarDrop
 {
@@ -90,8 +91,9 @@ namespace SugarDrop
             hud.PauseClicked += ShowPause;
             boosters.Clicked += OnBooster;
             map.PlayClicked += TryPlay;
+            map.LevelClicked += TryPlayLevel;
             map.SettingsClicked += ShowMapSettings;
-            menu.PlayClicked += OpenMap;
+            menu.PlayClicked += OpenMapAnimated;
         }
 
         private void OnDisable()
@@ -111,8 +113,9 @@ namespace SugarDrop
             hud.PauseClicked -= ShowPause;
             boosters.Clicked -= OnBooster;
             map.PlayClicked -= TryPlay;
+            map.LevelClicked -= TryPlayLevel;
             map.SettingsClicked -= ShowMapSettings;
-            menu.PlayClicked -= OpenMap;
+            menu.PlayClicked -= OpenMapAnimated;
         }
 
         private void Start()
@@ -122,8 +125,21 @@ namespace SugarDrop
             result.Hide();
             map.Hide();
             menu.Show();
+            SetGameplayUi(false);
             RefreshBoosters();
         }
+
+        /// <summary>HUD-ul și ajutoarele se ascund cât timp meniul sau harta acoperă ecranul (mai puțin de desenat).</summary>
+        private void SetGameplayUi(bool visible)
+        {
+            hud.gameObject.SetActive(visible);
+            boosters.gameObject.SetActive(visible);
+        }
+
+        /// <summary>Schimbă ecranul sub o tranziție (care blochează și apăsările repetate).</summary>
+        private static void Go(System.Action action) => UITransitionController.Run(action);
+
+        private void OpenMapAnimated() => Go(OpenMap);
 
         private void OnApplicationPause(bool paused)
         {
@@ -140,19 +156,34 @@ namespace SugarDrop
             CancelBomb();
             menu.Hide();
             result.Hide();
+            dialog.Hide();
             hintGuide.Hide();
+            SetGameplayUi(false);
+            mascot.SetIdle();
             map.Show();
         }
 
-        private void TryPlay()
+        private void OpenMenu()
         {
+            _state = State.Menu;
+            map.Hide();
+            menu.Show();
+        }
+
+        private void TryPlay() => TryPlayLevel(Mathf.Max(1, Data.level));
+
+        /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
+        private void TryPlayLevel(int level)
+        {
+            if (_state != State.Map || dialog.IsOpen) return;
+            level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
             {
                 ShowNoLives();
                 return;
             }
-            StartLevel(Mathf.Max(1, Data.level));
+            Go(() => StartLevel(level));
         }
 
         private void ShowNoLives()
@@ -208,6 +239,7 @@ namespace SugarDrop
             map.Hide();
             result.Hide();
             dialog.Hide();
+            SetGameplayUi(true);
             hud.HideTransient();
             hud.SetLevel(_level, _config.IsBoss);
             hud.SetMoves(_moves, false);
@@ -248,6 +280,10 @@ namespace SugarDrop
 
         private void Update()
         {
+            // Butonul „Înapoi” de pe Android (în Input System apare ca tasta Escape).
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) OnBack();
+
             if (_state != State.Playing) return;
             float dt = Time.deltaTime;
 
@@ -274,6 +310,24 @@ namespace SugarDrop
             if (!outOfMoves || board.Busy) return;
             _quietTime += dt;
             if (_quietTime >= settleTime) Lose();
+        }
+
+        private void OnBack()
+        {
+            if (UITransitionController.Instance != null && UITransitionController.Instance.IsBusy) return;
+            if (QuarryEmpire.AdService.Instance != null && QuarryEmpire.AdService.Instance.IsShowing) return;
+            if (dialog.IsOpen)
+            {
+                dialog.Dismiss();
+                return;
+            }
+            switch (_state)
+            {
+                case State.Playing: ShowPause(); break;
+                case State.Map: Go(OpenMenu); break;
+                case State.Menu: Application.Quit(); break;
+                case State.Result: break; // fereastra de final are butoanele ei
+            }
         }
 
         private void Win()
@@ -305,7 +359,7 @@ namespace SugarDrop
             mascot.SetHappy();
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
             if (_config.IsBoss) hud.ShowBanner(SugarLoc.T("Boss învins! +1 la fiecare ajutor"));
-            result.ShowWin(_level, stars, coins, OpenMap);
+            result.ShowWin(_level, stars, coins, () => Go(OpenMap));
         }
 
         private void Lose()
@@ -318,7 +372,7 @@ namespace SugarDrop
             mascot.SetSad();
             bool canContinue = !_continuedWithAd && !board.Stuck;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
-            result.ShowLose(jar.Count, jar.Goal, RetryLevel, onAd, LeaveToMap);
+            result.ShowLose(jar.Count, jar.Goal, () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
         }
 
         private void ContinueWithMoves()
@@ -358,12 +412,12 @@ namespace SugarDrop
                 buttons.Add(new DialogButton(SugarLoc.T("RELUARE NIVEL"), accent, () =>
                 {
                     Time.timeScale = 1f;
-                    RetryLevel();
+                    Go(RetryLevel);
                 }));
                 buttons.Add(new DialogButton(SugarLoc.T("ÎNAPOI LA HARTĂ"), accent, () =>
                 {
                     Time.timeScale = 1f;
-                    LeaveToMap();
+                    Go(LeaveToMap);
                 }));
             }
             buttons.Add(Toggle(Data.sound ? "SUNET: PORNIT" : "SUNET: OPRIT", () => Data.sound = !Data.sound, inGame));
@@ -382,6 +436,7 @@ namespace SugarDrop
 
             string message = inGame ? SugarLoc.T("Nivelul costă o viață.") : null;
             dialog.Show(SugarLoc.T(inGame ? "PAUZĂ" : "SETĂRI"), message, buttons.ToArray());
+            if (inGame) dialog.DismissAction = Resume;
         }
 
         private DialogButton Toggle(string label, System.Action change, bool inGame) =>

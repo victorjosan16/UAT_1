@@ -18,19 +18,6 @@ namespace SugarDrop
         private static readonly Vector2Int[] Neighbours = { Vector2Int.right, Vector2Int.up };
         private static readonly Vector2Int[] FourWay = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
-        private struct Run
-        {
-            public List<Vector2Int> Cells;
-            public bool Horizontal;
-        }
-
-        private class Group
-        {
-            public readonly HashSet<Vector2Int> Cells = new();
-            public readonly List<Run> Runs = new();
-            public int Color;
-        }
-
         [SerializeField] private float cellSize = 0.95f;
         [SerializeField] private float swapDuration = 0.14f;
         [SerializeField] private float popDuration = 0.24f;
@@ -66,6 +53,7 @@ namespace SugarDrop
         public float Bottom => _bottomCenter.y;
 
         private Tile[,] _grid;
+        private Func<Vector2Int, int> _matchColor;
         private Vector2 _bottomCenter;
         private int _colors;
         private int _clearedThisMove;
@@ -75,6 +63,7 @@ namespace SugarDrop
 
         public void Build(LevelConfig config, Vector2 bottomCenter)
         {
+            _matchColor ??= MatchColor;
             Clear();
             Columns = config.Columns;
             Rows = config.Rows;
@@ -183,6 +172,20 @@ namespace SugarDrop
             }
         }
 
+        // ------------------------------------------------------------ Selecție (doar vizual)
+
+        private Tile _selected;
+
+        /// <summary>Evidențiază capacul de sub deget (null = niciunul). Nu schimbă regulile.</summary>
+        public void Select(Vector2Int? cell)
+        {
+            Tile tile = cell.HasValue ? At(cell.Value) : null;
+            if (tile == _selected) return;
+            if (_selected != null) _selected.SetSelected(false);
+            _selected = tile;
+            if (_selected != null) _selected.SetSelected(true);
+        }
+
         // ------------------------------------------------------------ Schimb
 
         public void TrySwap(Vector2Int a, Vector2Int b)
@@ -229,7 +232,7 @@ namespace SugarDrop
                 yield break;
             }
 
-            List<Group> groups = FindGroups();
+            List<MatchGroup> groups = FindGroups();
             if (groups.Count == 0)
             {
                 // Schimb fără aliniere: se întoarce înapoi și nu consumă mutarea.
@@ -273,82 +276,23 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Alinieri și capace speciale
 
-        private List<Group> FindGroups()
+        /// <summary>Culoarea pentru reguli: -1 dacă celula e goală sau capacul nu se poate alinia.</summary>
+        private int MatchColor(Vector2Int cell)
         {
-            var runs = new List<Run>();
-            for (int y = 0; y < Rows; y++) ScanLine(new Vector2Int(0, y), Vector2Int.right, Columns, true, runs);
-            for (int x = 0; x < Columns; x++) ScanLine(new Vector2Int(x, 0), Vector2Int.up, Rows, false, runs);
-
-            // Șirurile care au celule comune (L, T, +) formează un singur grup.
-            var groups = new List<Group>();
-            foreach (Run run in runs)
-            {
-                Group target = null;
-                foreach (Group group in groups)
-                {
-                    if (group.Color != At(run.Cells[0]).ColorIndex) continue;
-                    foreach (Vector2Int cell in run.Cells)
-                        if (group.Cells.Contains(cell)) { target = group; break; }
-                    if (target != null) break;
-                }
-                if (target == null)
-                {
-                    target = new Group { Color = At(run.Cells[0]).ColorIndex };
-                    groups.Add(target);
-                }
-                target.Runs.Add(run);
-                foreach (Vector2Int cell in run.Cells) target.Cells.Add(cell);
-            }
-            return groups;
+            Tile tile = At(cell);
+            return tile != null && tile.CanMatch ? tile.ColorIndex : -1;
         }
 
-        private void ScanLine(Vector2Int start, Vector2Int step, int length, bool horizontal, List<Run> runs)
-        {
-            int i = 0;
-            while (i < length)
-            {
-                Tile first = At(start + step * i);
-                if (first == null || !first.CanMatch)
-                {
-                    i++;
-                    continue;
-                }
-                int run = 1;
-                while (i + run < length && SameColor(At(start + step * (i + run)), first.ColorIndex)) run++;
-                if (run >= 3)
-                {
-                    var cells = new List<Vector2Int>();
-                    for (int k = 0; k < run; k++) cells.Add(start + step * (i + k));
-                    runs.Add(new Run { Cells = cells, Horizontal = horizontal });
-                }
-                i += run;
-            }
-        }
+        private List<MatchGroup> FindGroups() => BoardRules.FindGroups(Columns, Rows, _matchColor);
 
-        private static TileKind SpecialFor(Group group)
-        {
-            int longest = 0;
-            bool horizontal = false, vertical = false;
-            foreach (Run run in group.Runs)
-            {
-                if (run.Cells.Count > longest) longest = run.Cells.Count;
-                if (run.Horizontal) horizontal = true;
-                else vertical = true;
-            }
-            if (longest >= 5) return TileKind.Rainbow;
-            if (horizontal && vertical) return TileKind.Wrapped;
-            if (longest == 4) return horizontal ? TileKind.StripedRow : TileKind.StripedColumn;
-            return TileKind.Normal;
-        }
-
-        private IEnumerator ResolveGroups(List<Group> groups, Vector2Int swapA, Vector2Int swapB)
+        private IEnumerator ResolveGroups(List<MatchGroup> groups, Vector2Int swapA, Vector2Int swapB)
         {
             var toClear = new HashSet<Vector2Int>();
             var toCreate = new List<(Vector2Int cell, TileKind kind, int color)>();
 
-            foreach (Group group in groups)
+            foreach (MatchGroup group in groups)
             {
-                TileKind special = SpecialFor(group);
+                TileKind special = BoardRules.SpecialFor(group);
                 Vector2Int keep = new(-1, -1);
                 if (special != TileKind.Normal)
                 {
@@ -371,20 +315,20 @@ namespace SugarDrop
             yield return ClearRoutine(toClear, toCreate);
         }
 
-        private Vector2Int PickSpecialCell(Group group, Vector2Int swapA, Vector2Int swapB)
+        private Vector2Int PickSpecialCell(MatchGroup group, Vector2Int swapA, Vector2Int swapB)
         {
             foreach (Vector2Int preferred in new[] { swapA, swapB })
                 if (group.Cells.Contains(preferred) && At(preferred) != null && !At(preferred).Frozen) return preferred;
             // Celula comună a unui L/T, altfel mijlocul celui mai lung șir.
-            foreach (Run a in group.Runs)
-            foreach (Run b in group.Runs)
+            foreach (MatchRun a in group.Runs)
+            foreach (MatchRun b in group.Runs)
             {
                 if (a.Horizontal == b.Horizontal) continue;
                 foreach (Vector2Int cell in a.Cells)
                     if (b.Cells.Contains(cell) && !At(cell).Frozen) return cell;
             }
-            Run longest = group.Runs[0];
-            foreach (Run run in group.Runs)
+            MatchRun longest = group.Runs[0];
+            foreach (MatchRun run in group.Runs)
                 if (run.Cells.Count > longest.Cells.Count) longest = run;
             Vector2Int middle = longest.Cells[longest.Cells.Count / 2];
             return At(middle) != null && !At(middle).Frozen ? middle : new Vector2Int(-1, -1);
@@ -561,26 +505,7 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Mutări posibile, indicii, amestecare
 
-        private bool MatchAt(Vector2Int cell)
-        {
-            Tile tile = At(cell);
-            if (tile == null || !tile.CanMatch) return false;
-            int color = tile.ColorIndex;
-            return Count(cell, Vector2Int.left, color) + Count(cell, Vector2Int.right, color) >= 2
-                   || Count(cell, Vector2Int.down, color) + Count(cell, Vector2Int.up, color) >= 2;
-        }
-
-        private int Count(Vector2Int from, Vector2Int direction, int color)
-        {
-            int count = 0;
-            Vector2Int p = from + direction;
-            while (SameColor(At(p), color))
-            {
-                count++;
-                p += direction;
-            }
-            return count;
-        }
+        private bool MatchAt(Vector2Int cell) => BoardRules.IsMatchAt(cell, _matchColor);
 
         private bool IsValidMove(Vector2Int a, Vector2Int b)
         {
