@@ -11,7 +11,7 @@ namespace QuarryEmpire.EditorTools
     {
         private static void EnsureFolders()
         {
-            foreach (var path in new[] { MaterialsDir, DataDir, PrefabsDir, ScenesDir, SettingsDir })
+            foreach (var path in new[] { MaterialsDir, MeshesDir, FontsDir, ResourcesDir, DataDir, PrefabsDir, ScenesDir, SettingsDir })
                 EnsureFolder(path);
         }
 
@@ -26,7 +26,11 @@ namespace QuarryEmpire.EditorTools
 
         private static void SetupRenderPipeline()
         {
-            if (GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset) return;
+            if (GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset existing)
+            {
+                ConfigurePipeline(existing);
+                return;
+            }
 
             string assetPath = SettingsDir + "/URP_Asset.asset";
             var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(assetPath);
@@ -47,7 +51,22 @@ namespace QuarryEmpire.EditorTools
                 AssetDatabase.CreateAsset(pipeline, assetPath);
             }
 
+            ConfigurePipeline(pipeline);
             GraphicsSettings.defaultRenderPipeline = pipeline;
+        }
+
+        /// <summary>
+        /// Setări URP potrivite pentru mobil (valorile de pornire; QualityProfile le ajustează la rulare):
+        /// fără HDR, o singură cascadă de umbre, distanță de umbre mică, MSAA 2x.
+        /// </summary>
+        private static void ConfigurePipeline(UniversalRenderPipelineAsset pipeline)
+        {
+            pipeline.supportsHDR = false;
+            pipeline.shadowCascadeCount = 1;
+            pipeline.shadowDistance = 30f;
+            pipeline.msaaSampleCount = 2;
+            pipeline.renderScale = 1f;
+            EditorUtility.SetDirty(pipeline);
         }
 
         private static void SetupPlayerSettings()
@@ -60,6 +79,13 @@ namespace QuarryEmpire.EditorTools
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+
+            // iOS: același identificator; jocul e doar în portret (zona sigură e tratată de SafeAreaFitter).
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, "com.victorjosan.quarryempire");
+            PlayerSettings.allowedAutorotateToPortrait = true;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = false;
+            PlayerSettings.allowedAutorotateToLandscapeRight = false;
 
             // Active Input Handling = Input System Package (New). Nu are API public, deci îl setăm direct.
             Object[] projectSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");

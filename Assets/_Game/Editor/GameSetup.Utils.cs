@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace QuarryEmpire.EditorTools
@@ -107,14 +109,61 @@ namespace QuarryEmpire.EditorTools
             return label;
         }
 
-        /// <summary>O zonă pe sol: obiect rădăcină + placă colorată + ZoneArea.</summary>
-        private static GameObject Pad(string name, Transform parent, Vector3 position, Vector2 size, Material material)
+        // ------------------------------------------------------------ Mesh-uri rotunjite
+
+        private static readonly Dictionary<string, Mesh> RoundedMeshes = new();
+
+        /// <summary>Mesh rotunjit pentru o anumită mărime, salvat ca asset (refolosit de toate obiectele de aceeași mărime).</summary>
+        private static Mesh RoundedMesh(Vector3 size, float radius)
         {
-            GameObject root = Empty(name, parent, position);
-            Primitive(PrimitiveType.Cube, "Pad", root.transform, new Vector3(0f, 0.03f, 0f),
-                new Vector3(size.x, 0.06f, size.y), material);
-            AddZone(root, new Vector3(size.x, 4f, size.y));
-            return root;
+            string key = $"{size.x:0.###}x{size.y:0.###}x{size.z:0.###}_r{radius:0.###}";
+            if (RoundedMeshes.TryGetValue(key, out Mesh cached) && cached != null) return cached;
+
+            string path = $"{MeshesDir}/RB_{key}.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh == null)
+            {
+                mesh = RoundedBoxMesh.Create(size, radius, 3, "RB_" + key);
+                AssetDatabase.CreateAsset(mesh, path);
+            }
+            RoundedMeshes[key] = mesh;
+            return mesh;
+        }
+
+        /// <summary>Cutie cu muchii rotunjite, de mărimea exactă dată (fără scară, deci rotunjirea nu se deformează).</summary>
+        private static GameObject Box(string name, Transform parent, Vector3 localPosition, Vector3 size, Material material,
+            float radius = 0.08f, Vector3 localEuler = default, bool collider = false, bool castShadows = true)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.Euler(localEuler);
+            go.AddComponent<MeshFilter>().sharedMesh = RoundedMesh(size, radius);
+            var meshRenderer = go.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = material;
+            meshRenderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            if (collider) go.AddComponent<BoxCollider>().size = size;
+            return go;
+        }
+
+        /// <summary>Cutie rotunjită de mărime 1, scalată (pentru roci neregulate unde deformarea e chiar dorită).</summary>
+        private static GameObject ScaledRock(string name, Transform parent, Vector3 localPosition, Vector3 scale, Material material, float yRotation)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
+            go.transform.localScale = scale;
+            go.AddComponent<MeshFilter>().sharedMesh = RoundedMesh(Vector3.one, 0.22f);
+            go.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return go;
+        }
+
+        /// <summary>Marchează decorul ca static: Unity îl unește la build (static batching), deci mai puține draw calls.</summary>
+        private static void MarkStatic(GameObject root)
+        {
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+                GameObjectUtility.SetStaticEditorFlags(child.gameObject, StaticEditorFlags.BatchingStatic);
         }
     }
 }

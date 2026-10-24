@@ -16,6 +16,9 @@ namespace QuarryEmpire.EditorTools
     {
         private const string Root = "Assets/_Game";
         private const string MaterialsDir = Root + "/Art/Materials";
+        private const string MeshesDir = Root + "/Art/Meshes";
+        private const string FontsDir = Root + "/Art/Fonts";
+        private const string ResourcesDir = Root + "/Resources";
         private const string DataDir = Root + "/Data";
         private const string PrefabsDir = Root + "/Prefabs";
         private const string ScenesDir = Root + "/Scenes";

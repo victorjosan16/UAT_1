@@ -43,6 +43,7 @@ namespace QuarryEmpire.EditorTools
             go.layer = ResourceLayer;
             go.transform.localScale = Vector3.one * 0.3f;
             go.GetComponent<BoxCollider>().isTrigger = true;
+            go.GetComponent<MeshFilter>().sharedMesh = RoundedMesh(Vector3.one, 0.22f);
             var meshRenderer = go.GetComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = material;
             meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -57,6 +58,7 @@ namespace QuarryEmpire.EditorTools
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "StackItem";
             Object.DestroyImmediate(go.GetComponent<Collider>());
+            go.GetComponent<MeshFilter>().sharedMesh = RoundedMesh(Vector3.one, 0.22f);
             go.transform.localScale = Vector3.one * 0.26f;
             var meshRenderer = go.GetComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = material;
@@ -69,6 +71,7 @@ namespace QuarryEmpire.EditorTools
             GameObject go = GameObject.CreatePrimitive(type);
             go.name = name;
             Object.DestroyImmediate(go.GetComponent<Collider>());
+            if (type == PrimitiveType.Cube) go.GetComponent<MeshFilter>().sharedMesh = RoundedMesh(Vector3.one, 0.22f);
             go.transform.localScale = scale;
             var meshRenderer = go.GetComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = material;
@@ -83,7 +86,8 @@ namespace QuarryEmpire.EditorTools
             var root = new GameObject("Block") { layer = BlockLayer };
             root.AddComponent<BoxCollider>();
 
-            GameObject visual = Primitive(PrimitiveType.Cube, "Visual", root.transform, Vector3.zero, Vector3.one * 0.98f, material);
+            // Cub cu muchii rotunjite: arată „premium”, iar mesh-ul e comun pentru toate blocurile (un singur asset).
+            GameObject visual = Box("Visual", root.transform, Vector3.zero, Vector3.one * 0.97f, material, 0.14f);
             var visualRenderer = visual.GetComponent<MeshRenderer>();
 
             var block = root.AddComponent<MineBlock>();

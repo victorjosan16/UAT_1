@@ -20,23 +20,15 @@ namespace QuarryEmpire.EditorTools
         private static readonly Vector3 QuarryCenter = new(0f, 0f, 9f);
         private static readonly Vector3 SellPosition = new(-6f, 0f, -3f);
         private static readonly Vector3 CameraOffset = new(-8.2f, 13.8f, -8.2f);
+        private const float LabelHeight = 2.3f;
 
         private static void BuildScene(Scene scene, Materials m, GameData data, Prefabs prefabs)
         {
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.62f, 0.62f, 0.68f);
-
-            var sun = new GameObject("Directional Light");
-            var light = sun.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.shadows = LightShadows.Soft;
-            light.intensity = 1.15f;
-            sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
+            BuildLighting();
             BuildWorld(m);
-            BuildSystems(m, data, prefabs);
             BuildQuarry(m, data, prefabs);
-            Transform player = BuildPlayer(m, data);
+            Transform player = BuildPlayer(m, data, out Transform playerModel);
+            BuildSystems(m, data, prefabs, playerModel);
             BuildZones(m, data);
             BuildCamera(player);
             BuildUi(data.Theme);
@@ -45,29 +37,154 @@ namespace QuarryEmpire.EditorTools
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         }
 
+        // ------------------------------------------------------------ Lumină
+
+        private static void BuildLighting()
+        {
+            // Lumină caldă de după-amiază, umbre moi; ambient în trei tonuri (cer / orizont / sol).
+            var sun = new GameObject("Directional Light");
+            var light = sun.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.color = new Color(1f, 0.94f, 0.84f);
+            light.intensity = 1.25f;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.65f;
+            sun.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
+            RenderSettings.sun = light;
+
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.72f, 0.8f, 0.92f);
+            RenderSettings.ambientEquatorColor = new Color(0.86f, 0.8f, 0.7f);
+            RenderSettings.ambientGroundColor = new Color(0.55f, 0.48f, 0.4f);
+
+            // Ceață liniară discretă: dă adâncime și ascunde marginea hărții (aproape gratis pe mobil).
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogColor = Hex("#A9D6EE");
+            RenderSettings.fogStartDistance = 30f;
+            RenderSettings.fogEndDistance = 70f;
+        }
+
         // ------------------------------------------------------------ Lume
 
         private static void BuildWorld(Materials m)
         {
-            var world = new GameObject("World").transform;
-            Primitive(PrimitiveType.Plane, "Ground", world, Vector3.zero, new Vector3(6f, 1f, 6f), m["Ground"], keepCollider: true);
+            GameObject world = new GameObject("World");
+            Transform w = world.transform;
+            Primitive(PrimitiveType.Plane, "Ground", w, Vector3.zero, new Vector3(6f, 1f, 6f), m["Ground"], keepCollider: true);
+
+            // Pete de nisip în tonuri apropiate, ca solul să nu fie uniform.
+            var random = new System.Random(7);
+            for (int i = 0; i < 16; i++)
+            {
+                Vector3 position = RandomOutside(random, 24f, 7f);
+                float radius = 2f + (float)random.NextDouble() * 3.5f;
+                Primitive(PrimitiveType.Cylinder, "SandPatch", w, new Vector3(position.x, 0.004f + i * 0.0004f, position.z),
+                    new Vector3(radius, 0.002f, radius * 0.8f), i % 2 == 0 ? m["SandDark"] : m["SandLight"]);
+            }
+
+            BuildPaths(w, m);
+            BuildQuarryRim(w, m);
+            BuildDecor(w, m, random);
 
             // Pereți invizibili la marginea hărții.
-            AddWall(world, new Vector3(0f, 1f, 30f), new Vector3(60f, 2f, 1f));
-            AddWall(world, new Vector3(0f, 1f, -30f), new Vector3(60f, 2f, 1f));
-            AddWall(world, new Vector3(30f, 1f, 0f), new Vector3(1f, 2f, 60f));
-            AddWall(world, new Vector3(-30f, 1f, 0f), new Vector3(1f, 2f, 60f));
+            AddWall(w, new Vector3(0f, 1f, 30f), new Vector3(60f, 2f, 1f));
+            AddWall(w, new Vector3(0f, 1f, -30f), new Vector3(60f, 2f, 1f));
+            AddWall(w, new Vector3(30f, 1f, 0f), new Vector3(1f, 2f, 60f));
+            AddWall(w, new Vector3(-30f, 1f, 0f), new Vector3(1f, 2f, 60f));
 
-            // Bolovani decorativi în jurul hărții.
-            var random = new System.Random(42);
-            for (int i = 0; i < 18; i++)
+            MarkStatic(world);
+        }
+
+        /// <summary>Punct aleator pe hartă, dar nu în zona centrală de joc.</summary>
+        private static Vector3 RandomOutside(System.Random random, float maxRadius, float minRadius)
+        {
+            float angle = (float)random.NextDouble() * Mathf.PI * 2f;
+            float radius = Mathf.Lerp(minRadius, maxRadius, (float)random.NextDouble());
+            return new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+        }
+
+        private static void BuildPaths(Transform parent, Materials m)
+        {
+            Transform paths = Empty("Paths", parent, Vector3.zero).transform;
+            // Piațeta de start și drumurile spre zone (plăci joase, rotunjite).
+            Primitive(PrimitiveType.Cylinder, "Plaza", paths, new Vector3(0f, 0.012f, -2.5f), new Vector3(6.5f, 0.01f, 6.5f), m["PathStone"]);
+            Box("PathEastWest", paths, new Vector3(0f, 0.015f, -5.4f), new Vector3(20f, 0.03f, 2f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathSouth", paths, new Vector3(0f, 0.016f, -10.5f), new Vector3(2f, 0.03f, 9f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathQuarry", paths, new Vector3(0f, 0.017f, 1.6f), new Vector3(3.6f, 0.03f, 3.4f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathRefinery", paths, new Vector3(6.5f, 0.018f, -1f), new Vector3(3f, 0.03f, 6f), m["PathStone"], 0.012f, castShadows: false);
+            Box("PathOrders", paths, new Vector3(-7.5f, 0.018f, 3f), new Vector3(2f, 0.03f, 8f), m["PathStone"], 0.012f, castShadows: false);
+        }
+
+        /// <summary>Marginea carierei: un inel de roci neregulate, cu intrare spre jucător (sud).</summary>
+        private static void BuildQuarryRim(Transform parent, Materials m)
+        {
+            Transform rim = Empty("QuarryRim", parent, QuarryCenter).transform;
+            var random = new System.Random(11);
+            const float half = 6.4f;
+            for (float t = -half; t <= half; t += 1.15f)
             {
-                float angle = i / 18f * Mathf.PI * 2f;
-                float radius = 21f + (float)random.NextDouble() * 6f;
-                float size = 1f + (float)random.NextDouble() * 2f;
-                Primitive(PrimitiveType.Sphere, "Boulder", world,
-                    new Vector3(Mathf.Cos(angle) * radius, size * 0.3f, Mathf.Sin(angle) * radius),
-                    new Vector3(size * 1.3f, size * 0.8f, size), m["Wall"], localEuler: new Vector3(0f, i * 37f, 0f));
+                PlaceRimRock(rim, m, random, new Vector3(t, 0f, half));   // nord
+                PlaceRimRock(rim, m, random, new Vector3(-half, 0f, t));  // vest
+                PlaceRimRock(rim, m, random, new Vector3(half, 0f, t));   // est
+                if (Mathf.Abs(t) > 2.2f) PlaceRimRock(rim, m, random, new Vector3(t, 0f, -half)); // sud, cu intrare
+            }
+        }
+
+        private static void PlaceRimRock(Transform parent, Materials m, System.Random random, Vector3 position)
+        {
+            float sx = 0.9f + (float)random.NextDouble() * 0.7f;
+            float sy = 0.5f + (float)random.NextDouble() * 0.6f;
+            float sz = 0.8f + (float)random.NextDouble() * 0.6f;
+            position.y = sy * 0.4f;
+            ScaledRock("RimRock", parent, position, new Vector3(sx, sy, sz),
+                random.NextDouble() < 0.5 ? m["Rock1"] : m["Rock2"], (float)random.NextDouble() * 360f);
+        }
+
+        private static void BuildDecor(Transform parent, Materials m, System.Random random)
+        {
+            Transform decor = Empty("Decor", parent, Vector3.zero).transform;
+
+            // Copaci stilizați la marginea hărții.
+            var trees = new[]
+            {
+                new Vector3(-17f, 0f, 14f), new Vector3(16f, 0f, 15f), new Vector3(-19f, 0f, -6f), new Vector3(19f, 0f, -4f),
+                new Vector3(-14f, 0f, -18f), new Vector3(13f, 0f, -19f), new Vector3(-22f, 0f, 4f), new Vector3(22f, 0f, 8f),
+            };
+            foreach (Vector3 position in trees)
+            {
+                Transform tree = Empty("Tree", decor, position, (float)random.NextDouble() * 360f).transform;
+                Primitive(PrimitiveType.Cylinder, "Trunk", tree, new Vector3(0f, 0.8f, 0f), new Vector3(0.35f, 0.8f, 0.35f), m["Trunk"]);
+                Primitive(PrimitiveType.Sphere, "Crown", tree, new Vector3(0f, 2.2f, 0f), new Vector3(2f, 1.7f, 2f), m["Leaves"]);
+                Primitive(PrimitiveType.Sphere, "CrownTop", tree, new Vector3(0.3f, 3f, 0.2f), new Vector3(1.3f, 1.1f, 1.3f), m["LeavesDark"]);
+            }
+
+            // Bolovani decorativi.
+            for (int i = 0; i < 14; i++)
+            {
+                Vector3 position = RandomOutside(random, 27f, 19f);
+                float size = 0.8f + (float)random.NextDouble() * 1.6f;
+                position.y = size * 0.3f;
+                ScaledRock("Boulder", decor, position, new Vector3(size * 1.3f, size * 0.8f, size),
+                    i % 2 == 0 ? m["Rock1"] : m["Rock2"], (float)random.NextDouble() * 360f);
+            }
+
+            // Lăzi și butoaie lângă rafinărie și magazin.
+            var crates = new[] { new Vector3(12.8f, 0f, -2.2f), new Vector3(13.4f, 0f, -1f), new Vector3(-8.8f, 0f, -14.5f), new Vector3(8.6f, 0f, -14.8f) };
+            foreach (Vector3 position in crates)
+                Box("Crate", decor, position + Vector3.up * 0.35f, new Vector3(0.7f, 0.7f, 0.7f), m["Wood"], 0.08f,
+                    new Vector3(0f, (float)random.NextDouble() * 40f, 0f));
+            var barrels = new[] { new Vector3(12.6f, 0f, 3.6f), new Vector3(-12.6f, 0f, 7f), new Vector3(-8.2f, 0f, -15.6f) };
+            foreach (Vector3 position in barrels)
+                Primitive(PrimitiveType.Cylinder, "Barrel", decor, position + Vector3.up * 0.45f, new Vector3(0.6f, 0.45f, 0.6f), m["Barrel"]);
+
+            // Felinare în jurul piațetei.
+            var lamps = new[] { new Vector3(-3.2f, 0f, -5.4f), new Vector3(3.2f, 0f, -5.4f), new Vector3(-3.2f, 0f, 0.4f), new Vector3(3.2f, 0f, 0.4f) };
+            foreach (Vector3 position in lamps)
+            {
+                Transform lamp = Empty("Lamp", decor, position).transform;
+                Primitive(PrimitiveType.Cylinder, "Pole", lamp, new Vector3(0f, 1.1f, 0f), new Vector3(0.12f, 1.1f, 0.12f), m["Dark"]);
+                Primitive(PrimitiveType.Sphere, "Bulb", lamp, new Vector3(0f, 2.3f, 0f), Vector3.one * 0.38f, m["Lamp"]);
             }
         }
 
@@ -79,11 +196,13 @@ namespace QuarryEmpire.EditorTools
 
         // ------------------------------------------------------------ Sisteme
 
-        private static void BuildSystems(Materials m, GameData data, Prefabs prefabs)
+        private static void BuildSystems(Materials m, GameData data, Prefabs prefabs, Transform playerModel)
         {
             Transform systems = new GameObject("_Systems").transform;
             AddSystem(systems, "SaveSystem", typeof(SaveSystem));
             AddSystem(systems, "GameManager", typeof(GameManager));
+            AddSystem(systems, "QualityProfile", typeof(QualityProfile));
+            AddSystem(systems, "PerformanceGovernor", typeof(PerformanceGovernor));
 
             var pool = (ObjectPool)AddSystem(systems, "ObjectPool", typeof(ObjectPool));
             var prewarm = new (GameObject prefab, int count)[]
@@ -115,8 +234,18 @@ namespace QuarryEmpire.EditorTools
             var feedback = feedbackGo.AddComponent<GameFeedback>();
             Set(feedback, "impulseSource", impulse);
 
-            var particles = (BlockBreakParticles)AddSystem(systems, "BlockBreakParticles", typeof(BlockBreakParticles));
-            Set(particles, "particleMaterial", m["Particle"]);
+            // Efecte vizuale (toate folosesc ObjectPool).
+            Transform vfx = Empty("Vfx", systems, Vector3.zero).transform;
+            var breakFx = (BlockBreakParticles)AddSystem(vfx, "BlockBreak", typeof(BlockBreakParticles));
+            Set(breakFx, "particleMaterial", m["Particle"]);
+            Set(breakFx, "chunkMaterial", m["ParticleSolid"]);
+            Set(breakFx, "chunkMesh", RoundedMesh(Vector3.one, 0.22f));
+            Set(AddSystem(vfx, "Impact", typeof(ImpactVfx)), "particleMaterial", m["Particle"]);
+            Set(AddSystem(vfx, "Collect", typeof(CollectVfx)), "particleMaterial", m["Particle"]);
+            Set(AddSystem(vfx, "Sell", typeof(SellVfx)), "particleMaterial", m["Particle"]);
+            var upgradeFx = AddSystem(vfx, "Upgrade", typeof(UpgradeVfx));
+            Set(upgradeFx, "particleMaterial", m["Particle"]);
+            Set(upgradeFx, "playerModel", playerModel);
 
             AddSystem(systems, "MoneyManager", typeof(MoneyManager));
             var upgrades = (UpgradeManager)AddSystem(systems, "UpgradeManager", typeof(UpgradeManager));
@@ -137,8 +266,8 @@ namespace QuarryEmpire.EditorTools
         private static void BuildQuarry(Materials m, GameData data, Prefabs prefabs)
         {
             GameObject quarry = Empty("Quarry", null, QuarryCenter);
-            GameObject floor = Primitive(PrimitiveType.Cube, "QuarryFloor", quarry.transform, new Vector3(0f, 0.005f, 0f),
-                new Vector3(11f, 0.01f, 11f), m["QuarryFloor"]);
+            GameObject floor = Box("QuarryFloor", quarry.transform, new Vector3(0f, 0.01f, 0f), new Vector3(11.4f, 0.02f, 11.4f),
+                m["QuarryFloor"], 0.009f, castShadows: false);
 
             var generator = quarry.AddComponent<LayerGenerator>();
             Set(generator, "blockPrefab", prefabs.Block);
@@ -146,9 +275,99 @@ namespace QuarryEmpire.EditorTools
             Set(generator, "quarryFloor", floor.GetComponent<MeshRenderer>());
         }
 
+        // ------------------------------------------------------------ Personaje
+
+        /// <summary>Oasele unui personaj construit de BuildMiner.</summary>
+        private struct MinerRig
+        {
+            public Transform Model, Hips, Torso, Head, LegLeft, LegRight, ArmLeft, ArmRight;
+        }
+
+        /// <summary>
+        /// Miner stilizat din forme rotunjite: cască cu lanternă, cămașă, salopetă, mănuși, bocanci,
+        /// rucsac și târnăcop în mâna dreaptă. Toate piesele stau sub „Model”, deci colliderul rămâne neatins.
+        /// </summary>
+        private static MinerRig BuildMiner(Transform parent, Material shirt, Materials m, float scale)
+        {
+            var rig = new MinerRig();
+            rig.Model = Empty("Model", parent, Vector3.zero).transform;
+            rig.Model.localScale = Vector3.one * scale;
+
+            rig.Hips = Empty("Hips", rig.Model, new Vector3(0f, 0.95f, 0f)).transform;
+            Box("Pelvis", rig.Hips, new Vector3(0f, -0.02f, 0f), new Vector3(0.5f, 0.28f, 0.32f), m["Overalls"], 0.1f);
+
+            rig.LegLeft = BuildLeg("LegL", rig.Hips, -0.13f, m);
+            rig.LegRight = BuildLeg("LegR", rig.Hips, 0.13f, m);
+
+            rig.Torso = Empty("Torso", rig.Hips, new Vector3(0f, 0.12f, 0f)).transform;
+            Box("Chest", rig.Torso, new Vector3(0f, 0.3f, 0f), new Vector3(0.6f, 0.56f, 0.38f), shirt, 0.15f);
+            Box("Bib", rig.Torso, new Vector3(0f, 0.2f, 0.19f), new Vector3(0.42f, 0.3f, 0.05f), m["Overalls"], 0.02f);
+            Box("StrapL", rig.Torso, new Vector3(-0.15f, 0.45f, 0.19f), new Vector3(0.07f, 0.24f, 0.04f), m["Overalls"], 0.015f);
+            Box("StrapR", rig.Torso, new Vector3(0.15f, 0.45f, 0.19f), new Vector3(0.07f, 0.24f, 0.04f), m["Overalls"], 0.015f);
+            Box("Belt", rig.Torso, new Vector3(0f, 0.04f, 0f), new Vector3(0.62f, 0.08f, 0.4f), m["Gloves"], 0.035f);
+            Box("Backpack", rig.Torso, new Vector3(0f, 0.32f, -0.3f), new Vector3(0.46f, 0.5f, 0.24f), m["Backpack"], 0.1f);
+            Box("BackpackFlap", rig.Torso, new Vector3(0f, 0.56f, -0.3f), new Vector3(0.48f, 0.12f, 0.26f), m["Gloves"], 0.05f);
+
+            rig.Head = Empty("Head", rig.Torso, new Vector3(0f, 0.6f, 0f)).transform;
+            Primitive(PrimitiveType.Sphere, "Face", rig.Head, new Vector3(0f, 0.2f, 0f), Vector3.one * 0.42f, m["Skin"]);
+            Primitive(PrimitiveType.Sphere, "Nose", rig.Head, new Vector3(0f, 0.17f, 0.21f), Vector3.one * 0.09f, m["Skin"]);
+            Primitive(PrimitiveType.Sphere, "EyeL", rig.Head, new Vector3(-0.08f, 0.25f, 0.18f), Vector3.one * 0.06f, m["Eyes"]);
+            Primitive(PrimitiveType.Sphere, "EyeR", rig.Head, new Vector3(0.08f, 0.25f, 0.18f), Vector3.one * 0.06f, m["Eyes"]);
+            Primitive(PrimitiveType.Sphere, "HelmetDome", rig.Head, new Vector3(0f, 0.33f, 0f), new Vector3(0.48f, 0.32f, 0.48f), m["Helmet"]);
+            Primitive(PrimitiveType.Cylinder, "HelmetBrim", rig.Head, new Vector3(0f, 0.3f, 0.02f), new Vector3(0.56f, 0.015f, 0.56f), m["Helmet"]);
+            Primitive(PrimitiveType.Cylinder, "HeadLamp", rig.Head, new Vector3(0f, 0.36f, 0.24f), new Vector3(0.11f, 0.03f, 0.11f),
+                m["Lamp"], localEuler: new Vector3(90f, 0f, 0f));
+
+            rig.ArmLeft = BuildArm("ArmL", rig.Torso, -0.37f, shirt, m);
+            rig.ArmRight = BuildArm("ArmR", rig.Torso, 0.37f, shirt, m);
+
+            // Târnăcopul, în mâna dreaptă: coada spre înainte, capul metalic la capăt.
+            Transform grip = Empty("PickaxeGrip", rig.ArmRight, new Vector3(0f, -0.5f, 0.02f)).transform;
+            Box("Handle", grip, new Vector3(0f, 0f, 0.3f), new Vector3(0.07f, 0.07f, 0.72f), m["Pickaxe"], 0.03f);
+            Box("PickHead", grip, new Vector3(0f, 0.04f, 0.64f), new Vector3(0.09f, 0.56f, 0.1f), m["Metal"], 0.04f);
+            return rig;
+        }
+
+        private static Transform BuildLeg(string name, Transform hips, float x, Materials m)
+        {
+            Transform leg = Empty(name, hips, new Vector3(x, -0.08f, 0f)).transform;
+            Box("Thigh", leg, new Vector3(0f, -0.33f, 0f), new Vector3(0.2f, 0.62f, 0.22f), m["Overalls"], 0.09f);
+            Box("Boot", leg, new Vector3(0f, -0.74f, 0.05f), new Vector3(0.24f, 0.16f, 0.36f), m["Boots"], 0.07f);
+            return leg;
+        }
+
+        private static Transform BuildArm(string name, Transform torso, float x, Material shirt, Materials m)
+        {
+            Transform arm = Empty(name, torso, new Vector3(x, 0.5f, 0f)).transform;
+            Box("Sleeve", arm, new Vector3(0f, -0.22f, 0f), new Vector3(0.17f, 0.5f, 0.17f), shirt, 0.08f);
+            Primitive(PrimitiveType.Sphere, "Glove", arm, new Vector3(0f, -0.5f, 0f), Vector3.one * 0.2f, m["Gloves"]);
+            return arm;
+        }
+
+        private static CharacterAnimator AddAnimator(MinerRig rig, MonoBehaviour swingSource, ResourceStack stack,
+            PlayerVehicleDriver driver, float fullSpeed)
+        {
+            var animator = rig.Model.gameObject.AddComponent<CharacterAnimator>();
+            Edit(animator, so =>
+            {
+                P(so, "hips").objectReferenceValue = rig.Hips;
+                P(so, "torso").objectReferenceValue = rig.Torso;
+                P(so, "head").objectReferenceValue = rig.Head;
+                P(so, "legLeft").objectReferenceValue = rig.LegLeft;
+                P(so, "legRight").objectReferenceValue = rig.LegRight;
+                P(so, "armLeft").objectReferenceValue = rig.ArmLeft;
+                P(so, "armRight").objectReferenceValue = rig.ArmRight;
+                P(so, "swingSource").objectReferenceValue = swingSource;
+                P(so, "stack").objectReferenceValue = stack;
+                P(so, "driver").objectReferenceValue = driver;
+                P(so, "fullSpeed").floatValue = fullSpeed;
+            });
+            return animator;
+        }
+
         // ------------------------------------------------------------ Jucător
 
-        private static Transform BuildPlayer(Materials m, GameData data)
+        private static Transform BuildPlayer(Materials m, GameData data, out Transform model)
         {
             var player = new GameObject("Player") { tag = "Player" };
             player.transform.position = PlayerStart;
@@ -158,11 +377,12 @@ namespace QuarryEmpire.EditorTools
             controller.radius = 0.4f;
             controller.height = 2f;
 
-            Transform pivot = BuildHumanoid(player.transform, m["Player"], null, m);
-            GameObject anchor = Empty("StackAnchor", player.transform, new Vector3(0f, 0.75f, -0.6f));
+            MinerRig rig = BuildMiner(player.transform, m["Player"], m, 1f);
+            model = rig.Model;
+            GameObject anchor = Empty("StackAnchor", player.transform, new Vector3(0f, 1.15f, -0.55f));
 
             GameObject labelGo = Empty("StackLabel", player.transform, Vector3.zero);
-            WorldLabel stackLabel = AddLabel(labelGo, "", 2.6f, false, new Vector2(200f, 70f), 44);
+            WorldLabel stackLabel = AddLabel(labelGo, "", 2.9f, false, new Vector2(200f, 70f), 44);
 
             var root = player.AddComponent<PlayerRoot>();
             var input = player.AddComponent<PlayerInputReader>();
@@ -196,10 +416,6 @@ namespace QuarryEmpire.EditorTools
             Set(miner, "movement", movement);
             Set(miner, "blockLayer", 1 << BlockLayer);
 
-            var swing = player.AddComponent<PickaxeSwing>();
-            Set(swing, "swingSource", miner);
-            Set(swing, "pivot", pivot);
-
             var driver = player.AddComponent<PlayerVehicleDriver>();
             Set(driver, "characterController", controller);
             Set(driver, "movement", movement);
@@ -210,35 +426,82 @@ namespace QuarryEmpire.EditorTools
             Set(root, "driver", driver);
             Set(root, "stats", stats);
 
+            AddAnimator(rig, miner, stack, driver, data.PlayerStats.MoveSpeed);
+            var bounce = player.AddComponent<StackBounce>();
+            Set(bounce, "stack", stack);
+
             var capacityLabel = player.AddComponent<StackCapacityLabel>();
             Set(capacityLabel, "stack", stack);
             Set(capacityLabel, "label", stackLabel);
             return player.transform;
         }
 
-        /// <summary>Un personaj din primitive (corp, nas, cască opțională, târnăcop). Întoarce pivotul târnăcopului.</summary>
-        private static Transform BuildHumanoid(Transform parent, Material body, Material helmet, Materials m)
-        {
-            Primitive(PrimitiveType.Capsule, "Body", parent, new Vector3(0f, 1f, 0f), Vector3.one, body);
-            Primitive(PrimitiveType.Cube, "Nose", parent, new Vector3(0f, 1.55f, 0.45f), Vector3.one * 0.18f, m["Skin"]);
-            if (helmet != null)
-                Primitive(PrimitiveType.Cylinder, "Helmet", parent, new Vector3(0f, 2.02f, 0f), new Vector3(0.75f, 0.07f, 0.75f), helmet);
+        // ------------------------------------------------------------ Zone
 
-            Transform pivot = Empty("PickaxePivot", parent, new Vector3(0.4f, 1.25f, 0.1f)).transform;
-            GameObject handle = Primitive(PrimitiveType.Cube, "Pickaxe", pivot, new Vector3(0f, 0.45f, 0f),
-                new Vector3(0.08f, 0.9f, 0.08f), m["Pickaxe"]);
-            Primitive(PrimitiveType.Cube, "Head", handle.transform, new Vector3(0f, 0.5f, 0f),
-                new Vector3(1.25f, 0.09f, 6.25f), m["Metal"]);
-            return pivot;
+        private enum PadIcon { None, Coin, ArrowUp, Plus, Crate, Ingot, ArrowDown }
+
+        /// <summary>
+        /// Placă de zonă cu semnalizare 3D: bordură colorată, interior deschis, iconiță plutitoare
+        /// și efect de „puls” când jucătorul stă pe ea.
+        /// </summary>
+        private static GameObject Pad(string name, Transform parent, Vector3 position, Vector2 size, Material accent,
+            Materials m, PadIcon icon)
+        {
+            GameObject root = Empty(name, parent, position);
+            GameObject border = Box("Border", root.transform, new Vector3(0f, 0.04f, 0f), new Vector3(size.x, 0.08f, size.y),
+                accent, 0.035f, castShadows: false);
+            Box("Inner", root.transform, new Vector3(0f, 0.055f, 0f), new Vector3(size.x - 0.32f, 0.08f, size.y - 0.32f),
+                m["PadInner"], 0.035f, castShadows: false);
+            ZoneArea area = AddZone(root, new Vector3(size.x, 4f, size.y));
+
+            FloatingBob bob = BuildPadIcon(root.transform, icon, accent, m);
+            var highlight = root.AddComponent<ZoneHighlight>();
+            Set(highlight, "area", area);
+            Set(highlight, "border", border.transform);
+            if (bob != null) Set(highlight, "icon", bob);
+            return root;
         }
 
-        // ------------------------------------------------------------ Zone
+        private static FloatingBob BuildPadIcon(Transform parent, PadIcon icon, Material accent, Materials m)
+        {
+            if (icon == PadIcon.None) return null;
+            Transform holder = Empty("Icon", parent, new Vector3(0f, 1.05f, 0f)).transform;
+            switch (icon)
+            {
+                case PadIcon.Coin:
+                    Primitive(PrimitiveType.Cylinder, "Coin", holder, Vector3.zero, new Vector3(0.6f, 0.06f, 0.6f), m["Coin"],
+                        localEuler: new Vector3(90f, 0f, 0f));
+                    break;
+                case PadIcon.ArrowUp:
+                case PadIcon.ArrowDown:
+                    float direction = icon == PadIcon.ArrowUp ? 1f : -1f;
+                    Box("Shaft", holder, new Vector3(0f, -0.1f * direction, 0f), new Vector3(0.18f, 0.42f, 0.18f), accent, 0.06f);
+                    Box("HeadL", holder, new Vector3(-0.12f, 0.16f * direction, 0f), new Vector3(0.16f, 0.4f, 0.16f), accent, 0.06f,
+                        new Vector3(0f, 0f, -45f * direction));
+                    Box("HeadR", holder, new Vector3(0.12f, 0.16f * direction, 0f), new Vector3(0.16f, 0.4f, 0.16f), accent, 0.06f,
+                        new Vector3(0f, 0f, 45f * direction));
+                    break;
+                case PadIcon.Plus:
+                    Box("PlusV", holder, Vector3.zero, new Vector3(0.18f, 0.6f, 0.18f), m["Coin"], 0.06f);
+                    Box("PlusH", holder, Vector3.zero, new Vector3(0.6f, 0.18f, 0.18f), m["Coin"], 0.06f);
+                    break;
+                case PadIcon.Crate:
+                    Box("Crate", holder, Vector3.zero, new Vector3(0.55f, 0.55f, 0.55f), m["Wood"], 0.07f);
+                    Box("Band", holder, Vector3.zero, new Vector3(0.58f, 0.1f, 0.58f), m["Dark"], 0.03f);
+                    break;
+                case PadIcon.Ingot:
+                    Box("Ingot", holder, Vector3.zero, new Vector3(0.6f, 0.22f, 0.32f), m["GoldIngot"], 0.06f);
+                    break;
+            }
+            foreach (Renderer r in holder.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+            return holder.gameObject.AddComponent<FloatingBob>();
+        }
 
         private static void BuildZones(Materials m, GameData data)
         {
             // VINDE
-            GameObject sell = Pad("SellZone", null, SellPosition, new Vector2(3.2f, 3.2f), m["PadSell"]);
-            AddLabel(sell, "VINDE", 1.2f, false, new Vector2(260f, 90f), 56);
+            GameObject sell = Pad("SellZone", null, SellPosition, new Vector2(3.2f, 3.2f), m["PadSell"], m, PadIcon.Coin);
+            AddLabel(sell, "VINDE", LabelHeight, false, new Vector2(260f, 90f), 56);
             GameObject sellPoint = Empty("CollectPoint", sell.transform, new Vector3(0f, 0.3f, 0f));
             var sellZone = sell.AddComponent<SellZone>();
             Set(sellZone, "area", sell.GetComponent<ZoneArea>());
@@ -250,8 +513,8 @@ namespace QuarryEmpire.EditorTools
             {
                 UpgradeDefinition upgrade = data.Upgrades[i];
                 GameObject padGo = Pad("Upgrade_" + upgrade.Id, upgradesRoot, new Vector3(-6f + i * 3f, 0f, -8f),
-                    new Vector2(2.4f, 2.4f), m["PadUpgrade"]);
-                WorldLabel label = AddLabel(padGo, upgrade.DisplayName, 1.3f, true, new Vector2(290f, 130f), 30);
+                    new Vector2(2.4f, 2.4f), m["PadUpgrade"], m, PadIcon.ArrowUp);
+                WorldLabel label = AddLabel(padGo, upgrade.DisplayName, LabelHeight, true, new Vector2(290f, 130f), 30);
                 var pad = padGo.AddComponent<UpgradePad>();
                 Set(pad, "area", padGo.GetComponent<ZoneArea>());
                 Set(pad, "label", label);
@@ -267,8 +530,8 @@ namespace QuarryEmpire.EditorTools
         private static PurchaseZone Purchase(string id, string title, long cost, Vector3 position, Materials m,
             params GameObject[] targets)
         {
-            GameObject root = Pad("Buy_" + id, null, position, new Vector2(2.6f, 2.6f), m["PadBuy"]);
-            WorldLabel label = AddLabel(root, title, 1.4f, true, new Vector2(360f, 140f), 36);
+            GameObject root = Pad("Buy_" + id, null, position, new Vector2(2.6f, 2.6f), m["PadBuy"], m, PadIcon.Plus);
+            WorldLabel label = AddLabel(root, title, LabelHeight, true, new Vector2(360f, 140f), 36);
             var zone = root.AddComponent<PurchaseZone>();
             Set(zone, "area", root.GetComponent<ZoneArea>());
             Set(zone, "label", label);
@@ -282,19 +545,21 @@ namespace QuarryEmpire.EditorTools
         private static void BuildRefinery(Materials m)
         {
             GameObject refinery = Empty("Refinery", null, new Vector3(9.5f, 0f, 1f));
-            Primitive(PrimitiveType.Cube, "Building", refinery.transform, new Vector3(1.2f, 1.2f, 0f),
-                new Vector3(3f, 2.4f, 3f), m["Building"], keepCollider: true);
-            Primitive(PrimitiveType.Cylinder, "Chimney", refinery.transform, new Vector3(2f, 2.9f, 0.8f),
-                new Vector3(0.5f, 1f, 0.5f), m["Dark"]);
-            GameObject machinePoint = Empty("MachinePoint", refinery.transform, new Vector3(1.2f, 2.5f, 0f));
+            Transform r = refinery.transform;
+            Box("Building", r, new Vector3(1.2f, 1.2f, 0f), new Vector3(3f, 2.4f, 3f), m["Building"], 0.18f, collider: true);
+            Box("Roof", r, new Vector3(1.2f, 2.5f, 0f), new Vector3(3.3f, 0.25f, 3.3f), m["Roof"], 0.1f);
+            Box("Window", r, new Vector3(-0.31f, 1.4f, 0f), new Vector3(0.05f, 0.7f, 1.4f), m["Glass"], 0.02f);
+            Primitive(PrimitiveType.Cylinder, "Chimney", r, new Vector3(2f, 3.2f, 0.8f), new Vector3(0.5f, 0.8f, 0.5f), m["Dark"]);
+            Box("Hopper", r, new Vector3(-0.1f, 2.1f, -0.9f), new Vector3(0.8f, 0.5f, 0.8f), m["Metal"], 0.08f);
+            GameObject machinePoint = Empty("MachinePoint", r, new Vector3(-0.1f, 2.4f, -0.9f));
 
-            GameObject input = Pad("RefineInput", refinery.transform, new Vector3(-1.6f, 0f, -2.2f), new Vector2(2.4f, 2.4f), m["PadRefine"]);
-            AddLabel(input, "MINEREU", 1f, false, new Vector2(240f, 70f), 36);
-            GameObject output = Pad("RefineOutput", refinery.transform, new Vector3(-1.6f, 0f, 2.2f), new Vector2(2.4f, 2.4f), m["PadRefine"]);
-            AddLabel(output, "LINGOURI", 1f, false, new Vector2(240f, 70f), 36);
-            GameObject pile = Empty("OutputPile", refinery.transform, new Vector3(1.2f, 0.15f, 2.6f));
+            GameObject input = Pad("RefineInput", r, new Vector3(-1.6f, 0f, -2.2f), new Vector2(2.4f, 2.4f), m["PadRefine"], m, PadIcon.ArrowDown);
+            AddLabel(input, "MINEREU", 1.9f, false, new Vector2(240f, 70f), 36);
+            GameObject output = Pad("RefineOutput", r, new Vector3(-1.6f, 0f, 2.2f), new Vector2(2.4f, 2.4f), m["PadRefine"], m, PadIcon.Ingot);
+            AddLabel(output, "LINGOURI", 1.9f, false, new Vector2(240f, 70f), 36);
+            GameObject pile = Empty("OutputPile", r, new Vector3(1.2f, 0.15f, 2.6f));
 
-            WorldLabel label = AddLabel(refinery, "RAFINĂRIE", 3.3f, true, new Vector2(460f, 140f), 36);
+            WorldLabel label = AddLabel(refinery, "RAFINĂRIE", 3.6f, true, new Vector2(460f, 140f), 36);
             var zone = refinery.AddComponent<RefineZone>();
             Set(zone, "inputArea", input.GetComponent<ZoneArea>());
             Set(zone, "outputArea", output.GetComponent<ZoneArea>());
@@ -308,10 +573,10 @@ namespace QuarryEmpire.EditorTools
 
         private static void BuildOrders(Materials m)
         {
-            GameObject orders = Pad("OrderZone", null, new Vector3(-9f, 0f, 8f), new Vector2(3f, 3f), m["PadOrder"]);
+            GameObject orders = Pad("OrderZone", null, new Vector3(-9f, 0f, 8f), new Vector2(3f, 3f), m["PadOrder"], m, PadIcon.Crate);
             GameObject truck = BuildTruckModel("OrderTruck", orders.transform, new Vector3(-2.8f, 0f, 0f), 90f, m["OrderTruck"], m);
             GameObject dropPoint = Empty("DropPoint", truck.transform, new Vector3(0f, 1.2f, -0.6f));
-            WorldLabel label = AddLabel(orders, "COMENZI", 1.6f, true, new Vector2(560f, 150f), 34);
+            WorldLabel label = AddLabel(orders, "COMENZI", 2.5f, true, new Vector2(560f, 150f), 34);
 
             var zone = orders.AddComponent<OrderZone>();
             Set(zone, "area", orders.GetComponent<ZoneArea>());
@@ -326,12 +591,14 @@ namespace QuarryEmpire.EditorTools
         {
             GameObject root = Empty(name, parent, localPosition, yRotation);
             Transform t = root.transform;
-            Primitive(PrimitiveType.Cube, "Cab", t, new Vector3(0f, 0.95f, 1.05f), new Vector3(1.8f, 1.4f, 1.1f), body);
-            Primitive(PrimitiveType.Cube, "Window", t, new Vector3(0f, 1.3f, 1.62f), new Vector3(1.5f, 0.5f, 0.05f), m["Metal"]);
-            Primitive(PrimitiveType.Cube, "Bed", t, new Vector3(0f, 0.6f, -0.6f), new Vector3(1.9f, 0.5f, 2.2f), m["Dark"]);
+            Box("Cab", t, new Vector3(0f, 1f, 1.05f), new Vector3(1.8f, 1.4f, 1.15f), body, 0.22f);
+            Box("Window", t, new Vector3(0f, 1.3f, 1.63f), new Vector3(1.45f, 0.5f, 0.04f), m["Glass"], 0.02f);
+            Box("Chassis", t, new Vector3(0f, 0.45f, -0.1f), new Vector3(1.7f, 0.25f, 3.2f), m["Dark"], 0.08f);
+            Box("Bed", t, new Vector3(0f, 0.75f, -0.65f), new Vector3(1.9f, 0.45f, 2.2f), body, 0.12f);
+            Box("BedInner", t, new Vector3(0f, 0.82f, -0.65f), new Vector3(1.6f, 0.36f, 1.9f), m["Dark"], 0.06f);
             foreach (float x in new[] { -0.95f, 0.95f })
             foreach (float z in new[] { -1.1f, 1f })
-                Primitive(PrimitiveType.Cylinder, "Wheel", t, new Vector3(x, 0.35f, z), new Vector3(0.7f, 0.12f, 0.7f),
+                Primitive(PrimitiveType.Cylinder, "Wheel", t, new Vector3(x, 0.38f, z), new Vector3(0.76f, 0.14f, 0.76f),
                     m["Dark"], localEuler: new Vector3(0f, 0f, 90f));
             return root;
         }
@@ -365,10 +632,8 @@ namespace QuarryEmpire.EditorTools
             controller.radius = 0.35f;
             controller.height = 1.7f;
 
-            GameObject model = Empty("Model", root.transform, Vector3.zero);
-            model.transform.localScale = Vector3.one * 0.85f;
-            Transform pivot = BuildHumanoid(model.transform, m["Worker"], m["Helmet"], m);
-            GameObject anchor = Empty("StackAnchor", root.transform, new Vector3(0f, 0.65f, -0.5f));
+            MinerRig rig = BuildMiner(root.transform, m["Worker"], m, 0.85f);
+            GameObject anchor = Empty("StackAnchor", root.transform, new Vector3(0f, 0.95f, -0.48f));
 
             var stack = root.AddComponent<ResourceStack>();
             Edit(stack, so =>
@@ -389,9 +654,7 @@ namespace QuarryEmpire.EditorTools
             Set(ai, "stack", stack);
             Set(ai, "collector", collector);
 
-            var swing = root.AddComponent<PickaxeSwing>();
-            Set(swing, "swingSource", ai);
-            Set(swing, "pivot", pivot);
+            AddAnimator(rig, ai, stack, null, data.Worker.MoveSpeed);
             return root;
         }
 
@@ -425,26 +688,27 @@ namespace QuarryEmpire.EditorTools
 
         private static void AddVehicleSeat(GameObject root, Vehicle vehicle, Materials m)
         {
-            GameObject seatZone = Empty("SeatZone", root.transform, new Vector3(-1.75f, 0f, 0f));
-            Primitive(PrimitiveType.Cube, "Pad", seatZone.transform, new Vector3(0f, 0.03f, 0f), new Vector3(1.4f, 0.06f, 1.4f), m["PadLoad"]);
-            AddLabel(seatZone, "URCĂ", 0.9f, false, new Vector2(160f, 60f), 34);
-            ZoneArea area = AddZone(seatZone, new Vector3(1.5f, 4f, 1.5f));
+            GameObject seatZone = Pad("SeatZone", root.transform, new Vector3(-1.75f, 0f, 0f), new Vector2(1.5f, 1.5f), m["PadLoad"], m, PadIcon.ArrowDown);
+            AddLabel(seatZone, "URCĂ", 1.8f, false, new Vector2(160f, 60f), 34);
             var seat = seatZone.AddComponent<VehicleSeat>();
             Set(seat, "vehicle", vehicle);
-            Set(seat, "area", area);
+            Set(seat, "area", seatZone.GetComponent<ZoneArea>());
         }
 
         private static GameObject BuildBulldozer(Vector3 position, Materials m, VehicleDefinition definition)
         {
             GameObject root = BuildVehicleBase("Bulldozer", position, out Transform seat, out Transform exit);
             Transform t = root.transform;
-            Primitive(PrimitiveType.Cube, "Body", t, new Vector3(0f, 0.75f, 0f), new Vector3(1.6f, 0.9f, 2f), m["Bulldozer"]);
-            Primitive(PrimitiveType.Cube, "SeatBlock", t, new Vector3(0f, 1.25f, -0.45f), new Vector3(0.7f, 0.2f, 0.7f), m["Dark"]);
-            Primitive(PrimitiveType.Cube, "TrackL", t, new Vector3(-0.95f, 0.35f, 0f), new Vector3(0.45f, 0.6f, 2.3f), m["Dark"]);
-            Primitive(PrimitiveType.Cube, "TrackR", t, new Vector3(0.95f, 0.35f, 0f), new Vector3(0.45f, 0.6f, 2.3f), m["Dark"]);
-            Primitive(PrimitiveType.Cylinder, "Exhaust", t, new Vector3(0.5f, 1.5f, -0.8f), new Vector3(0.15f, 0.5f, 0.15f), m["Dark"]);
+            Box("Body", t, new Vector3(0f, 0.8f, 0.1f), new Vector3(1.6f, 0.9f, 1.8f), m["Bulldozer"], 0.2f);
+            Box("SeatBlock", t, new Vector3(0f, 1.3f, -0.45f), new Vector3(0.7f, 0.2f, 0.7f), m["Dark"], 0.08f);
+            Box("RollBar", t, new Vector3(0f, 1.9f, -0.85f), new Vector3(1.3f, 0.12f, 0.12f), m["Dark"], 0.05f);
+            Box("RollBarL", t, new Vector3(-0.6f, 1.45f, -0.85f), new Vector3(0.12f, 0.9f, 0.12f), m["Dark"], 0.05f);
+            Box("RollBarR", t, new Vector3(0.6f, 1.45f, -0.85f), new Vector3(0.12f, 0.9f, 0.12f), m["Dark"], 0.05f);
+            Box("TrackL", t, new Vector3(-0.95f, 0.35f, 0f), new Vector3(0.45f, 0.6f, 2.3f), m["Dark"], 0.2f);
+            Box("TrackR", t, new Vector3(0.95f, 0.35f, 0f), new Vector3(0.45f, 0.6f, 2.3f), m["Dark"], 0.2f);
+            Primitive(PrimitiveType.Cylinder, "Exhaust", t, new Vector3(0.5f, 1.55f, 0.4f), new Vector3(0.15f, 0.45f, 0.15f), m["Dark"]);
             GameObject blade = Empty("BladePivot", t, new Vector3(0f, 0f, 1.25f));
-            Primitive(PrimitiveType.Cube, "Blade", blade.transform, new Vector3(0f, 0.45f, 0.15f), new Vector3(2.6f, 0.8f, 0.15f), m["Metal"]);
+            Box("Blade", blade.transform, new Vector3(0f, 0.45f, 0.15f), new Vector3(2.6f, 0.8f, 0.18f), m["Metal"], 0.07f);
 
             var tool = root.AddComponent<Bulldozer>();
             Set(tool, "definition", definition);
@@ -460,17 +724,18 @@ namespace QuarryEmpire.EditorTools
         {
             GameObject root = BuildVehicleBase("Drill", position, out Transform seat, out Transform exit);
             Transform t = root.transform;
-            Primitive(PrimitiveType.Cube, "Body", t, new Vector3(0f, 0.75f, 0f), new Vector3(1.6f, 1f, 2f), m["Drill"]);
-            Primitive(PrimitiveType.Cube, "SeatBlock", t, new Vector3(0f, 1.3f, -0.45f), new Vector3(0.7f, 0.2f, 0.7f), m["Dark"]);
+            Box("Body", t, new Vector3(0f, 0.8f, 0f), new Vector3(1.6f, 1f, 2f), m["Drill"], 0.22f);
+            Box("SeatBlock", t, new Vector3(0f, 1.35f, -0.45f), new Vector3(0.7f, 0.2f, 0.7f), m["Dark"], 0.08f);
+            Box("Engine", t, new Vector3(0f, 1.45f, -0.95f), new Vector3(1.1f, 0.5f, 0.3f), m["Dark"], 0.1f);
             foreach (float x in new[] { -0.9f, 0.9f })
             foreach (float z in new[] { -0.7f, 0.7f })
-                Primitive(PrimitiveType.Cylinder, "Wheel", t, new Vector3(x, 0.35f, z), new Vector3(0.7f, 0.12f, 0.7f),
+                Primitive(PrimitiveType.Cylinder, "Wheel", t, new Vector3(x, 0.38f, z), new Vector3(0.76f, 0.14f, 0.76f),
                     m["Dark"], localEuler: new Vector3(0f, 0f, 90f));
-            GameObject bit = Empty("DrillBit", t, new Vector3(0f, 0.7f, 1.1f));
+            GameObject bit = Empty("DrillBit", t, new Vector3(0f, 0.75f, 1.1f));
             Primitive(PrimitiveType.Cylinder, "Bit", bit.transform, new Vector3(0f, 0f, 0.45f), new Vector3(0.55f, 0.45f, 0.55f),
                 m["Metal"], localEuler: new Vector3(90f, 0f, 0f));
-            Primitive(PrimitiveType.Cube, "ToothA", bit.transform, new Vector3(0.3f, 0f, 0.5f), new Vector3(0.1f, 0.1f, 0.8f), m["Dark"]);
-            Primitive(PrimitiveType.Cube, "ToothB", bit.transform, new Vector3(-0.3f, 0f, 0.5f), new Vector3(0.1f, 0.1f, 0.8f), m["Dark"]);
+            Box("ToothA", bit.transform, new Vector3(0.3f, 0f, 0.5f), new Vector3(0.1f, 0.1f, 0.8f), m["Dark"], 0.04f);
+            Box("ToothB", bit.transform, new Vector3(-0.3f, 0f, 0.5f), new Vector3(0.1f, 0.1f, 0.8f), m["Dark"], 0.04f);
 
             var tool = root.AddComponent<Drill>();
             Set(tool, "definition", definition);
@@ -498,7 +763,7 @@ namespace QuarryEmpire.EditorTools
             GameObject sellPoint = Empty("TruckSellPoint", null, SellPosition);
 
             GameObject truck = BuildTruckModel("Truck", null, park.transform.position, -90f, m["Truck"], m);
-            GameObject anchor = Empty("StackAnchor", truck.transform, new Vector3(0f, 0.95f, 0.2f));
+            GameObject anchor = Empty("StackAnchor", truck.transform, new Vector3(0f, 1.05f, -0.2f));
             var stack = truck.AddComponent<ResourceStack>();
             Edit(stack, so =>
             {
@@ -508,15 +773,15 @@ namespace QuarryEmpire.EditorTools
                 P(so, "columnsPerRow").intValue = 4;
                 P(so, "itemSpacing").vector3Value = new Vector3(0.3f, 0.28f, 0.3f);
             });
-            WorldLabel label = AddLabel(truck, "CAMION", 2.8f, true, new Vector2(400f, 140f), 34);
+            WorldLabel label = AddLabel(truck, "CAMION", 3f, true, new Vector2(400f, 140f), 34);
             var controller = truck.AddComponent<Truck>();
             Set(controller, "stack", stack);
             Set(controller, "parkPoint", park.transform);
             Set(controller, "sellPoint", sellPoint.transform);
             Set(controller, "label", label);
 
-            GameObject load = Pad("TruckLoad", null, new Vector3(0f, 0f, -11.5f), new Vector2(2.4f, 2.4f), m["PadLoad"]);
-            AddLabel(load, "ÎNCARCĂ\nCAMIONUL", 1.1f, false, new Vector2(300f, 110f), 32);
+            GameObject load = Pad("TruckLoad", null, new Vector3(0f, 0f, -11.5f), new Vector2(2.4f, 2.4f), m["PadLoad"], m, PadIcon.Crate);
+            AddLabel(load, "ÎNCARCĂ\nCAMIONUL", 2.1f, false, new Vector2(300f, 110f), 32);
             var transfer = load.AddComponent<StackTransferZone>();
             Set(transfer, "area", load.GetComponent<ZoneArea>());
             Set(transfer, "target", stack);
@@ -536,9 +801,10 @@ namespace QuarryEmpire.EditorTools
             var cameraGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var camera = cameraGo.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Hex("#87B9E0");
+            camera.backgroundColor = Hex("#A9D6EE");
             camera.fieldOfView = 40f;
-            camera.farClipPlane = 120f;
+            camera.nearClipPlane = 0.5f;
+            camera.farClipPlane = 80f;
             cameraGo.AddComponent<AudioListener>();
             cameraGo.AddComponent<CinemachineBrain>();
             cameraGo.transform.SetPositionAndRotation(player.position + CameraOffset, rotation);

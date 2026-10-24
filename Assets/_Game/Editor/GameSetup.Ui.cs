@@ -31,21 +31,24 @@ namespace QuarryEmpire.EditorTools
             Set(uiRoot, "inputModule", inputModule);
 
             Transform canvas = canvasGo.transform;
-            UiChild(canvas, "LayerHud", typeof(LayerHud));
-            UiChild(canvas, "MoneyHud", typeof(MoneyHud));
-            UiChild(canvas, "OrderHud", typeof(OrderHud));
-            UiChild(canvas, "RewardedOffers", typeof(RewardedOffersHud));
-            UiChild(canvas, "VehicleHud", typeof(VehicleHud));
+            // Textele plutitoare stau sub HUD (în lume), restul HUD-ului în zona sigură (fără notch / bara de gesturi).
+            UiChild(canvas, "FloatingText", typeof(FloatingTextUI));
+            Transform safe = UiChild(canvas, "SafeArea", typeof(SafeAreaFitter));
+            UiChild(safe, "LayerHud", typeof(LayerHud));
+            UiChild(safe, "MoneyHud", typeof(MoneyHud));
+            UiChild(safe, "OrderHud", typeof(OrderHud));
+            UiChild(safe, "RewardedOffers", typeof(RewardedOffersHud));
+            UiChild(safe, "VehicleHud", typeof(VehicleHud));
+            BuildJoystick(safe);
+            UiChild(safe, "Toast", typeof(ToastHud));
             UiChild(canvas, "CoinFly", typeof(CoinFlyUI));
-            BuildJoystick(canvas);
-            UiChild(canvas, "Toast", typeof(ToastHud));
-            UiChild(canvas, "Settings", typeof(SettingsPanel));
-            UiChild(canvas, "OfflinePopup", typeof(OfflinePopup));
+            UiChild(safe, "Settings", typeof(SettingsPanel));
+            UiChild(safe, "OfflinePopup", typeof(OfflinePopup));
             UiChild(canvas, "MainMenu", typeof(MainMenu));
             UiChild(canvas, "AdService", typeof(AdService));
         }
 
-        private static void UiChild(Transform parent, string name, System.Type component)
+        private static Transform UiChild(Transform parent, string name, System.Type component)
         {
             var go = new GameObject(name, typeof(RectTransform)) { layer = UiLayer };
             var rect = (RectTransform)go.transform;
@@ -55,6 +58,7 @@ namespace QuarryEmpire.EditorTools
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
             go.AddComponent(component);
+            return rect;
         }
 
         private static void BuildJoystick(Transform canvas)
@@ -63,9 +67,14 @@ namespace QuarryEmpire.EditorTools
             var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
             RectTransform background = UiImage("JoystickBG", canvas, knob, new Color(1f, 1f, 1f, 0.3f), 300f);
             background.anchorMin = background.anchorMax = new Vector2(0.5f, 0f);
-            background.anchoredPosition = new Vector2(0f, 330f);
+            background.anchoredPosition = new Vector2(0f, 300f);
 
             RectTransform handle = UiImage("JoystickHandle", background, knob, Color.white, 130f);
+
+            // Aspectul (inel + buton cu umbră) se aplică la rulare, fără să atingă OnScreenStick.
+            var skin = background.gameObject.AddComponent<JoystickSkin>();
+            Set(skin, "background", background.GetComponent<Image>());
+            Set(skin, "handle", handle.GetComponent<Image>());
             var stick = handle.gameObject.AddComponent<OnScreenStick>();
             Edit(stick, so =>
             {

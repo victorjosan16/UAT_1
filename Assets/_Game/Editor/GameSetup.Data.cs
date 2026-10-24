@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 
 namespace QuarryEmpire.EditorTools
 {
@@ -30,22 +32,33 @@ namespace QuarryEmpire.EditorTools
             Shader lit = Shader.Find("Universal Render Pipeline/Lit");
             if (lit == null) throw new System.Exception("Nu găsesc shader-ul URP Lit. Este instalat pachetul URP?");
 
+            // Paletă caldă, armonioasă, materiale mate (netezime mică) — stil „premium stylized”.
             var colors = new (string key, string hex, float smoothness)[]
             {
-                ("Ground", "#C9A574", 0.05f), ("QuarryFloor", "#8A6E50", 0.05f), ("Wall", "#A88B63", 0.05f),
-                ("Player", "#2F80ED", 0.2f), ("Skin", "#F2C9A0", 0.2f), ("Pickaxe", "#5A3E2B", 0.1f),
-                ("Worker", "#F2994A", 0.2f), ("Helmet", "#F2C94C", 0.4f),
-                ("Bulldozer", "#F2C94C", 0.35f), ("Drill", "#EB5757", 0.35f), ("Truck", "#27AE60", 0.35f),
-                ("OrderTruck", "#2D9CDB", 0.35f), ("Dark", "#3A3A3A", 0.2f), ("Metal", "#BDBDBD", 0.6f),
-                ("Building", "#6D6875", 0.1f), ("Coin", "#FFC83D", 0.7f),
-                ("PadSell", "#3CC060", 0.1f), ("PadUpgrade", "#9B51E0", 0.1f), ("PadBuy", "#F2994A", 0.1f),
-                ("PadRefine", "#56CCF2", 0.1f), ("PadOrder", "#2D9CDB", 0.1f), ("PadLoad", "#6FCF97", 0.1f),
+                // Mediu
+                ("Ground", "#E2C08D", 0.04f), ("SandDark", "#D3AE76", 0.04f), ("SandLight", "#EDD3A4", 0.04f),
+                ("QuarryFloor", "#8A6E50", 0.04f), ("Wall", "#A88B63", 0.05f), ("PathStone", "#C7AC86", 0.06f),
+                ("Rock1", "#9D9082", 0.08f), ("Rock2", "#857869", 0.08f), ("Leaves", "#6DB35D", 0.05f),
+                ("LeavesDark", "#4E9450", 0.05f), ("Trunk", "#7A5536", 0.05f), ("Wood", "#B98250", 0.08f),
+                ("Barrel", "#C8553D", 0.15f), ("Lamp", "#FFF1B8", 0.2f), ("Building", "#7B7287", 0.08f),
+                ("Roof", "#C8553D", 0.1f), ("Glass", "#9ED8F0", 0.5f),
+                // Personaje
+                ("Player", "#3D7BE0", 0.12f), ("Worker", "#F2994A", 0.12f), ("Overalls", "#2E3A59", 0.1f),
+                ("Skin", "#F2C9A0", 0.15f), ("Gloves", "#8A5A3C", 0.1f), ("Boots", "#4A3A2E", 0.1f),
+                ("Helmet", "#FFC93C", 0.3f), ("Backpack", "#B5652B", 0.1f), ("Eyes", "#2A2A33", 0.4f),
+                ("Pickaxe", "#7A5232", 0.1f), ("Metal", "#C9CED6", 0.45f), ("Dark", "#3A3A42", 0.15f),
+                // Utilaje
+                ("Bulldozer", "#F5B83D", 0.3f), ("Drill", "#E8574C", 0.3f), ("Truck", "#3DBE7A", 0.3f), ("OrderTruck", "#3D8FE0", 0.3f),
+                // Zone și economie
+                ("Coin", "#FFC83D", 0.55f), ("PadInner", "#F6EBD9", 0.05f),
+                ("PadSell", "#3DC46A", 0.1f), ("PadUpgrade", "#9B6BF0", 0.1f), ("PadBuy", "#F59A3D", 0.1f),
+                ("PadRefine", "#4DC3F0", 0.1f), ("PadOrder", "#3D8FE0", 0.1f), ("PadLoad", "#6FCF97", 0.1f),
                 // Resurse brute
-                ("Stone", "#8C8F96", 0.1f), ("Copper", "#C8743A", 0.2f), ("Iron", "#5E6E86", 0.2f),
-                ("Gold", "#F2C230", 0.4f), ("Diamond", "#5FE1F0", 0.8f),
+                ("Stone", "#9A9CA3", 0.08f), ("Copper", "#D07A3E", 0.2f), ("Iron", "#667A96", 0.2f),
+                ("Gold", "#F7C531", 0.4f), ("Diamond", "#62E3F2", 0.6f),
                 // Resurse rafinate
-                ("Brick", "#B5523B", 0.1f), ("CopperIngot", "#E89B5E", 0.7f), ("IronIngot", "#AEB8C6", 0.7f),
-                ("GoldIngot", "#FFD54A", 0.8f), ("CutDiamond", "#B8F7FF", 0.95f),
+                ("Brick", "#B5523B", 0.08f), ("CopperIngot", "#EB9E62", 0.5f), ("IronIngot", "#B4BFCC", 0.5f),
+                ("GoldIngot", "#FFD54A", 0.6f), ("CutDiamond", "#B8F7FF", 0.8f),
             };
 
             var result = new Materials();
@@ -65,18 +78,35 @@ namespace QuarryEmpire.EditorTools
                 result[key] = material;
             }
 
-            // Material pentru particule (nu e afectat de lumini).
+            // Materiale pentru particule (nu sunt afectate de lumini):
+            //  - Particle: cu „alpha clip” (discuri rotunde, fără amestec transparent — mai ieftin, fără overdraw costisitor);
+            //  - ParticleSolid: opac, pentru bucățile de rocă 3D.
             Shader particles = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? lit;
-            string particlePath = $"{MaterialsDir}/M_Particle.mat";
-            var particleMaterial = AssetDatabase.LoadAssetAtPath<Material>(particlePath);
-            if (particleMaterial == null)
+            Material particle = LoadOrCreateMaterial($"{MaterialsDir}/M_Particle.mat", particles);
+            particle.SetColor("_BaseColor", Color.white);
+            if (particle.HasProperty("_AlphaClip"))
             {
-                particleMaterial = new Material(particles);
-                AssetDatabase.CreateAsset(particleMaterial, particlePath);
+                particle.SetFloat("_AlphaClip", 1f);
+                particle.SetFloat("_Cutoff", 0.4f);
+                particle.EnableKeyword("_ALPHATEST_ON");
             }
-            particleMaterial.SetColor("_BaseColor", Color.white);
-            result["Particle"] = particleMaterial;
+            EditorUtility.SetDirty(particle);
+            result["Particle"] = particle;
+
+            Material solid = LoadOrCreateMaterial($"{MaterialsDir}/M_ParticleSolid.mat", particles);
+            solid.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(solid);
+            result["ParticleSolid"] = solid;
             return result;
+        }
+
+        private static Material LoadOrCreateMaterial(string path, Shader shader)
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material != null) return material;
+            material = new Material(shader);
+            AssetDatabase.CreateAsset(material, path);
+            return material;
         }
 
         // ------------------------------------------------------------ Date
@@ -282,12 +312,112 @@ namespace QuarryEmpire.EditorTools
         private static UiTheme CreateTheme()
         {
             var theme = LoadOrCreate<UiTheme>($"{DataDir}/UiTheme.asset");
+            var font = AssetDatabase.LoadAssetAtPath<Font>($"{FontsDir}/Baloo2-ExtraBold.ttf");
+            TMP_FontAsset tmpFont = CreateTmpFont(font);
+            if (tmpFont != null) EnsureTmpSettings(tmpFont);
+
             Edit(theme, so =>
             {
-                P(so, "PanelSprite").objectReferenceValue = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-                P(so, "CircleSprite").objectReferenceValue = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+                P(so, "Font").objectReferenceValue = font;
+                P(so, "TmpFont").objectReferenceValue = tmpFont;
+                // Gol = sprite-uri rotunjite generate din cod (ProceduralSprites).
+                P(so, "PanelSprite").objectReferenceValue = null;
+                P(so, "CircleSprite").objectReferenceValue = null;
             });
             return theme;
+        }
+
+        /// <summary>Caracterele pre-generate în atlasul TMP (ASCII + diacritice românești + câteva simboluri).</summary>
+        private const string TmpCharacters =
+            " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" +
+            "ĂÂÎȘȚăâîșțŞŢşţ·…×–—„”“’«»°€";
+
+        /// <summary>
+        /// Creează fontul TextMeshPro din TTF, cu toate caracterele necesare deja în atlas (static),
+        /// ca textul să nu depindă de generare la rulare. Dacă TMP nu are shader-ele disponibile în proiect,
+        /// întoarce null și jocul folosește textul clasic (cu același font TTF).
+        /// </summary>
+        private static TMP_FontAsset CreateTmpFont(Font font)
+        {
+            string path = $"{FontsDir}/Baloo2_SDF.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+            if (existing != null) return existing;
+            if (font == null) return null;
+            if (Shader.Find("TextMeshPro/Mobile/Distance Field") == null)
+            {
+                Debug.LogWarning("[QuarryEmpire] Shader-ul TextMeshPro nu e disponibil; se folosește textul clasic.");
+                return null;
+            }
+
+            try
+            {
+                TMP_FontAsset asset = TMP_FontAsset.CreateFontAsset(font, 56, 6, GlyphRenderMode.SDFAA, 1024, 1024,
+                    AtlasPopulationMode.Dynamic, false);
+                if (asset == null) return null;
+                asset.name = "Baloo2_SDF";
+                asset.TryAddCharacters(TmpCharacters, out string missing);
+                if (!string.IsNullOrEmpty(missing)) Debug.Log("[QuarryEmpire] Caractere lipsă din font: " + missing);
+                asset.atlasPopulationMode = AtlasPopulationMode.Static;
+
+                AssetDatabase.CreateAsset(asset, path);
+                foreach (Texture2D atlas in asset.atlasTextures)
+                {
+                    if (atlas == null) continue;
+                    atlas.name = "Baloo2_SDF Atlas";
+                    AssetDatabase.AddObjectToAsset(atlas, asset);
+                }
+                asset.material.name = "Baloo2_SDF Material";
+                AssetDatabase.AddObjectToAsset(asset.material, asset);
+                EditorUtility.SetDirty(asset);
+                AssetDatabase.SaveAssets();
+                return asset;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[QuarryEmpire] Nu am putut crea fontul TMP, se folosește textul clasic: " + e.Message);
+                AssetDatabase.DeleteAsset(path);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// TMP caută „TMP Settings” în Resources. Dacă proiectul nu le are (fără „TMP Essentials”), le creăm
+        /// cu fontul nostru implicit, încadrare de text activă și regulile de rupere a rândurilor.
+        /// </summary>
+        private static void EnsureTmpSettings(TMP_FontAsset font)
+        {
+            if (Resources.Load<TMP_Settings>("TMP Settings") != null) return;
+
+            TextAsset leading = CreateTextAsset("TMP LeadingCharacters.txt", "([{\u00ab\u201e\u201c$");
+            TextAsset following = CreateTextAsset("TMP FollowingCharacters.txt", ")]}.,;:!?%\u00bb\u201d\u2026");
+
+            var settings = ScriptableObject.CreateInstance<TMP_Settings>();
+            AssetDatabase.CreateAsset(settings, $"{ResourcesDir}/TMP Settings.asset");
+            var so = new SerializedObject(settings);
+            SetIfExists(so, "m_defaultFontAsset", p => p.objectReferenceValue = font);
+            SetIfExists(so, "m_leadingCharacters", p => p.objectReferenceValue = leading);
+            SetIfExists(so, "m_followingCharacters", p => p.objectReferenceValue = following);
+            SetIfExists(so, "m_enableWordWrapping", p => p.boolValue = true);
+            SetIfExists(so, "m_TextWrappingMode", p => p.intValue = 1); // TextWrappingModes.Normal (versiunile noi)
+            SetIfExists(so, "m_enableKerning", p => p.boolValue = true);
+            SetIfExists(so, "m_enableParseEscapeCharacters", p => p.boolValue = true);
+            SetIfExists(so, "m_defaultFontSize", p => p.floatValue = 36f);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+        }
+
+        private static void SetIfExists(SerializedObject so, string name, System.Action<SerializedProperty> apply)
+        {
+            SerializedProperty property = so.FindProperty(name);
+            if (property != null) apply(property);
+        }
+
+        private static TextAsset CreateTextAsset(string fileName, string content)
+        {
+            string path = $"{ResourcesDir}/{fileName}";
+            System.IO.File.WriteAllText(path, content, new System.Text.UTF8Encoding(false));
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            return AssetDatabase.LoadAssetAtPath<TextAsset>(path);
         }
     }
 }

@@ -33,7 +33,8 @@ Assets/_Game/
   Scripts/Orders Comenzi de la camioane
   Scripts/Effects Sunete procedurale, particule, tremur cameră, vibrații
   Scripts/Monetization Reclame rewarded (test) + butoane
-  Scripts/UI     HUD, meniu, setări, etichete 3D
+  Scripts/UI     HUD, meniu, setări, etichete 3D, sprite-uri procedurale, zonă sigură
+  Scripts/Visual Mesh rotunjit, animații personaj, decor animat, profiluri de calitate
 ```
 
 ## Valori de echilibru
@@ -46,5 +47,6 @@ Configurație: Platform **Android**, Branch `main`, Project subfolder gol, Unity
 **Pre-Export Method = `QuarryCloudBuild.PreExport`**, output **APK**, Bundle ID `com.victorjosan.quarryempire`.
 
 ## Documentație
+- `docs/VIZUAL.md` — personaj, mediu, HUD, efecte, performanță: ce face fiecare componentă și unde se configurează
 - `docs/MONETIZARE.md` — cum se activează reclamele reale (Unity LevelPlay)
 - `docs/GOOGLE_PLAY.md` — pașii pentru publicarea pe Google Play
