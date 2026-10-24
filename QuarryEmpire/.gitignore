@@ -1,0 +1,12 @@
+# Fișiere generate de Unity (nu se pun în git)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+*.csproj
+*.sln
+*.apk
+*.aab
