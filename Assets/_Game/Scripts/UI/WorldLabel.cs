@@ -5,7 +5,7 @@ namespace QuarryEmpire
 {
     /// <summary>
     /// Etichetă 3D deasupra unui obiect (preț, nume zonă, progres), mereu întoarsă spre cameră.
-    /// Se construiește singură din cod: Canvas în spațiul lumii + text + bară de progres opțională.
+    /// Se construiește singură din cod: Canvas în spațiul lumii + panou rotunjit + text + bară opțională.
     /// </summary>
     public class WorldLabel : MonoBehaviour
     {
@@ -16,12 +16,11 @@ namespace QuarryEmpire
         [SerializeField] private float worldScale = 0.01f;
         [SerializeField] private bool showBar = true;
         [SerializeField] private Color textColor = Color.white;
-        [SerializeField] private Color barColor = new(1f, 0.69f, 0.13f);
-        [SerializeField] private Color backgroundColor = new(0f, 0f, 0f, 0.45f);
+        [SerializeField] private Color barColor = new(1f, 0.73f, 0.16f);
+        [SerializeField] private Color backgroundColor = new(0.1f, 0.12f, 0.2f, 0.78f);
 
-        private Text _text;
+        private UiLabel _text;
         private Image _fill;
-        private GameObject _barRoot;
         private Transform _canvasTransform;
         private Transform _camera;
 
@@ -42,36 +41,32 @@ namespace QuarryEmpire
 
             Image background = UiFactory.CreatePanel("Background", _canvasTransform, backgroundColor);
             UiFactory.Stretch((RectTransform)background.transform);
-            background.raycastTarget = false;
 
             _text = UiFactory.CreateText("Text", _canvasTransform, initialText, fontSize, TextAnchor.MiddleCenter, textColor);
-            var textRect = (RectTransform)_text.transform;
-            UiFactory.Stretch(textRect, 8f);
-            if (showBar) textRect.offsetMin = new Vector2(8f, 26f);
+            RectTransform textRect = UiFactory.Stretch(_text.RectTransform, 10f);
+            if (showBar) textRect.offsetMin = new Vector2(10f, 30f);
 
             if (!showBar) return;
-            Image barBack = UiFactory.CreatePanel("BarBack", _canvasTransform, new Color(0f, 0f, 0f, 0.6f));
-            barBack.raycastTarget = false;
-            _barRoot = barBack.gameObject;
+            Image barBack = UiFactory.CreatePanel("BarBack", _canvasTransform, new Color(0f, 0f, 0f, 0.45f));
             var barRect = (RectTransform)barBack.transform;
             barRect.anchorMin = new Vector2(0f, 0f);
             barRect.anchorMax = new Vector2(1f, 0f);
             barRect.pivot = new Vector2(0.5f, 0f);
-            barRect.offsetMin = new Vector2(12f, 8f);
-            barRect.offsetMax = new Vector2(-12f, 26f);
+            barRect.offsetMin = new Vector2(16f, 10f);
+            barRect.offsetMax = new Vector2(-16f, 30f);
 
             _fill = UiFactory.CreateFill("Fill", barRect, barColor);
-            UiFactory.Stretch((RectTransform)_fill.transform, 2f);
+            UiFactory.Stretch((RectTransform)_fill.transform, 3f);
         }
 
         public void SetText(string text)
         {
-            if (_text != null && _text.text != text) _text.text = text;
+            if (_text != null) _text.Text = text;
         }
 
         public void SetTextColor(Color color)
         {
-            if (_text != null) _text.color = color;
+            if (_text != null) _text.Color = color;
         }
 
         public void SetFill(float value)

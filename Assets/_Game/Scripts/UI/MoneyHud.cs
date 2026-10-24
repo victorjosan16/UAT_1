@@ -3,36 +3,48 @@ using UnityEngine.UI;
 
 namespace QuarryEmpire
 {
-    /// <summary>Banii în partea de sus a ecranului, cu un mic „puls” la schimbare și indicatorul x2.</summary>
+    /// <summary>Banii (sus, centru): „pastilă” cu monedă, puls la câștig și indicatorul x2.</summary>
     public class MoneyHud : MonoBehaviour
     {
         public static MoneyHud Instance { get; private set; }
 
-        private Text _money;
-        private Text _boost;
+        private UiLabel _money;
+        private UiLabel _boost;
+        private GameObject _boostChip;
         private RectTransform _panel;
-        private float _pulse;
+        private RectTransform _coin;
+        private PunchScale _punch;
         private long _shown = -1;
 
         /// <summary>Ținta spre care zboară monedele din UI.</summary>
-        public RectTransform CoinTarget => _panel;
+        public RectTransform CoinTarget => _coin != null ? _coin : _panel;
 
         private void Awake()
         {
             Instance = this;
             UiTheme theme = UiRoot.Theme;
 
-            Image panel = UiFactory.CreatePanel("MoneyPanel", transform, theme.PanelColor);
+            Image panel = UiFactory.CreatePanel("MoneyPill", transform, theme.PanelColor);
             _panel = UiFactory.Place((RectTransform)panel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -50f), new Vector2(380f, 110f));
-            panel.raycastTarget = false;
+                new Vector2(0f, -24f), new Vector2(400f, 104f));
+            _punch = panel.gameObject.AddComponent<PunchScale>();
 
-            _money = UiFactory.CreateText("Money", _panel, "$0", 64, TextAnchor.MiddleCenter, theme.AccentColor);
-            UiFactory.Stretch((RectTransform)_money.transform);
+            Image coin = UiFactory.CreateImage("Coin", _panel, ProceduralSprites.Coin, Color.white);
+            _coin = UiFactory.Place((RectTransform)coin.transform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(52f, 0f), new Vector2(84f, 84f));
 
-            _boost = UiFactory.CreateText("Boost", transform, "", 34, TextAnchor.MiddleCenter, theme.PositiveColor);
-            UiFactory.Place((RectTransform)_boost.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -165f), new Vector2(440f, 50f));
+            _money = UiFactory.CreateText("Amount", _panel, "0", 64, TextAnchor.MiddleCenter, theme.TextColor);
+            RectTransform moneyRect = UiFactory.Stretch(_money.RectTransform);
+            moneyRect.offsetMin = new Vector2(96f, 0f);
+            moneyRect.offsetMax = new Vector2(-20f, 0f);
+
+            Image chip = UiFactory.CreatePanel("BoostChip", transform, theme.PositiveColor);
+            UiFactory.Place((RectTransform)chip.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -340f), new Vector2(300f, 64f));
+            _boost = UiFactory.CreateText("Text", chip.transform, "", 34);
+            UiFactory.Stretch(_boost.RectTransform);
+            _boostChip = chip.gameObject;
+            _boostChip.SetActive(false);
         }
 
         private void OnDestroy()
@@ -47,15 +59,14 @@ namespace QuarryEmpire
 
             if (money.Money != _shown)
             {
-                if (_shown >= 0 && money.Money > _shown) _pulse = 1f;
+                if (_shown >= 0 && money.Money > _shown) _punch.Punch();
                 _shown = money.Money;
-                _money.text = NumberFormat.Money(_shown);
+                _money.Text = NumberFormat.Short(_shown);
             }
 
-            _pulse = Mathf.MoveTowards(_pulse, 0f, Time.unscaledDeltaTime * 4f);
-            _panel.localScale = Vector3.one * (1f + 0.12f * _pulse);
-
-            _boost.text = money.BoostTimeLeft > 0f ? $"BANI x2 · {Mathf.CeilToInt(money.BoostTimeLeft)}s" : "";
+            bool boosted = money.BoostTimeLeft > 0f;
+            if (_boostChip.activeSelf != boosted) _boostChip.SetActive(boosted);
+            if (boosted) _boost.Text = $"BANI x2 · {Mathf.CeilToInt(money.BoostTimeLeft)}s";
         }
     }
 }

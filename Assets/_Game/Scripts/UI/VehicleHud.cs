@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace QuarryEmpire
 {
-    /// <summary>Butonul „COBOARĂ”, vizibil doar cât jucătorul conduce un utilaj.</summary>
+    /// <summary>Butonul „COBOARĂ”, vizibil doar cât jucătorul conduce un utilaj (stânga jos).</summary>
     public class VehicleHud : MonoBehaviour
     {
         private GameObject _button;
@@ -12,8 +12,8 @@ namespace QuarryEmpire
         {
             UiTheme theme = UiRoot.Theme;
             Button button = UiFactory.CreateButton("ExitVehicle", transform, "COBOARĂ", theme.NegativeColor, OnExitClicked, 40);
-            UiFactory.Place((RectTransform)button.transform, new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-40f, 300f), new Vector2(300f, 120f));
+            UiFactory.Place((RectTransform)button.transform, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(30f, 250f), new Vector2(280f, 116f));
             _button = button.gameObject;
             _button.SetActive(false);
         }

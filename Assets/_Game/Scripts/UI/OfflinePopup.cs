@@ -7,29 +7,36 @@ namespace QuarryEmpire
     public class OfflinePopup : MonoBehaviour
     {
         private GameObject _root;
-        private Text _message;
-        private Text _claimLabel;
-        private Text _doubleLabel;
+        private UiLabel _message;
+        private UiLabel _claimLabel;
+        private UiLabel _doubleLabel;
 
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
-            Image dim = UiFactory.CreatePanel("OfflineDim", transform, new Color(0f, 0f, 0f, 0.7f));
-            UiFactory.Stretch((RectTransform)dim.transform);
+            Image dim = UiFactory.CreateImage("OfflineDim", transform, UiFactory.WhiteSprite, new Color(0f, 0f, 0f, 0.6f));
+            dim.preserveAspect = false;
+            dim.raycastTarget = true;
+            UiFactory.Stretch(dim.rectTransform, -200f);
             _root = dim.gameObject;
 
-            Image box = UiFactory.CreatePanel("OfflineBox", dim.transform, theme.PanelColor);
-            var boxRect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 640f));
+            Image box = UiFactory.CreatePanel("OfflineBox", dim.transform, theme.PanelLightColor);
+            var boxRect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(840f, 720f));
+            box.gameObject.AddComponent<CanvasGroup>();
+            box.gameObject.AddComponent<PopIn>();
 
-            _message = UiFactory.CreateText("Message", boxRect, "", 46);
-            UiFactory.Place((RectTransform)_message.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(740f, 260f));
+            Image coin = UiFactory.CreateImage("Coin", boxRect, ProceduralSprites.Coin, Color.white);
+            UiFactory.Place(coin.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(150f, 150f));
+
+            _message = UiFactory.CreateText("Message", boxRect, "", 46, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(760f, 260f));
 
             Button claim = UiFactory.CreateButton("Claim", boxRect, "", theme.PositiveColor, () => Claim(false), 40);
-            UiFactory.Place((RectTransform)claim.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 190f), new Vector2(620f, 120f));
+            UiFactory.Place((RectTransform)claim.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 190f), new Vector2(640f, 124f));
             _claimLabel = UiFactory.GetButtonLabel(claim);
 
             Button doubled = UiFactory.CreateButton("Double", boxRect, "", theme.AdColor, ClaimDouble, 40);
-            UiFactory.Place((RectTransform)doubled.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(620f, 120f));
+            UiFactory.Place((RectTransform)doubled.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 46f), new Vector2(640f, 124f));
             _doubleLabel = UiFactory.GetButtonLabel(doubled);
 
             _root.SetActive(false);
@@ -40,9 +47,9 @@ namespace QuarryEmpire
 
         private void Show(long amount)
         {
-            _message.text = $"Bine ai revenit!\nCât ai lipsit, muncitorii au câștigat\n{NumberFormat.Money(amount)}";
-            _claimLabel.text = $"IA {NumberFormat.Money(amount)}";
-            _doubleLabel.text = $"IA {NumberFormat.Money(amount * 2)} (reclamă)";
+            _message.Text = $"Bine ai revenit!\nCât ai lipsit, muncitorii au câștigat\n{NumberFormat.Money(amount)}";
+            _claimLabel.Text = $"IA {NumberFormat.Money(amount)}";
+            _doubleLabel.Text = $"IA {NumberFormat.Money(amount * 2)} (reclamă)";
             _root.SetActive(true);
         }
 

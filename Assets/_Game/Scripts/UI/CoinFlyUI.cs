@@ -12,7 +12,7 @@ namespace QuarryEmpire
     {
         [SerializeField] private float flyDuration = 0.55f;
         [SerializeField] private int maxCoinsPerEvent = 4;
-        [SerializeField] private float coinSize = 56f;
+        [SerializeField] private float coinSize = 60f;
 
         private class Coin
         {
@@ -53,14 +53,9 @@ namespace QuarryEmpire
             foreach (Coin coin in _coins)
                 if (!coin.Active) return coin;
 
-            UiTheme theme = UiRoot.Theme;
-            RectTransform rect = UiFactory.CreateRect("Coin", transform);
-            rect.sizeDelta = new Vector2(coinSize, coinSize);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = theme.CircleSprite;
-            image.color = theme.AccentColor;
-            image.raycastTarget = false;
-            var created = new Coin { Rect = rect };
+            Image image = UiFactory.CreateImage("Coin", transform, ProceduralSprites.Coin, Color.white);
+            image.rectTransform.sizeDelta = new Vector2(coinSize, coinSize);
+            var created = new Coin { Rect = image.rectTransform };
             _coins.Add(created);
             return created;
         }
@@ -78,8 +73,8 @@ namespace QuarryEmpire
                 float t = Mathf.Clamp01(coin.Time / flyDuration);
                 // Ease-in: pornește încet și accelerează spre contor.
                 float eased = t * t;
-                coin.Rect.position = Vector3.Lerp(coin.Start, target, eased) + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 60f);
-                coin.Rect.localScale = Vector3.one * Mathf.Lerp(1.2f, 0.6f, t);
+                coin.Rect.position = Vector3.Lerp(coin.Start, target, eased) + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 70f);
+                coin.Rect.localScale = Vector3.one * Mathf.Lerp(1.25f, 0.6f, t);
                 if (t < 1f) continue;
                 coin.Active = false;
                 coin.Rect.gameObject.SetActive(false);

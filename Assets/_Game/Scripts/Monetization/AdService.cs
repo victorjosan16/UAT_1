@@ -17,7 +17,7 @@ namespace QuarryEmpire
         [SerializeField] private float testAdSeconds = 3f;
 
         private GameObject _overlay;
-        private Text _countdown;
+        private UiLabel _countdown;
         private Action<bool> _onComplete;
         private float _timeLeft;
         private float _previousTimeScale = 1f;
@@ -55,7 +55,7 @@ namespace QuarryEmpire
         {
             if (!IsShowing) return;
             _timeLeft -= Time.unscaledDeltaTime;
-            _countdown.text = $"RECLAMĂ DE TEST\n\nRecompensa vine în {Mathf.CeilToInt(Mathf.Max(0f, _timeLeft))}…";
+            _countdown.Text = $"RECLAMĂ DE TEST\n\nRecompensa vine în {Mathf.CeilToInt(Mathf.Max(0f, _timeLeft))}…";
             if (_timeLeft <= 0f) Finish(true);
         }
 
@@ -71,18 +71,23 @@ namespace QuarryEmpire
         private void BuildOverlay()
         {
             RectTransform canvas = UiRoot.CanvasRect;
-            Image overlay = UiFactory.CreatePanel("AdOverlay", canvas != null ? canvas : transform, new Color(0f, 0f, 0f, 0.92f));
-            UiFactory.Stretch((RectTransform)overlay.transform);
+            Image overlay = UiFactory.CreateImage("AdOverlay", canvas != null ? canvas : transform, UiFactory.WhiteSprite, new Color(0.03f, 0.04f, 0.08f, 0.96f));
+            overlay.preserveAspect = false;
+            overlay.raycastTarget = true;
+            UiFactory.Stretch(overlay.rectTransform);
             overlay.transform.SetAsLastSibling();
             _overlay = overlay.gameObject;
 
+            Image badge = UiFactory.CreateImage("PlayIcon", overlay.transform, ProceduralSprites.Play, UiRoot.Theme.AdColor);
+            UiFactory.Place(badge.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(180f, 180f));
+
             _countdown = UiFactory.CreateText("Countdown", overlay.transform, "", 56);
-            UiFactory.Stretch((RectTransform)_countdown.transform, 80f);
+            UiFactory.Place(_countdown.RectTransform, new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 300f));
 
             var close = UiFactory.CreateButton("Close", overlay.transform, "ÎNCHIDE (fără recompensă)",
                 UiRoot.Theme.NegativeColor, () => Finish(false), 34);
             UiFactory.Place((RectTransform)close.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 120f), new Vector2(620f, 110f));
+                new Vector2(0f, 160f), new Vector2(660f, 120f));
             _overlay.SetActive(false);
         }
     }
