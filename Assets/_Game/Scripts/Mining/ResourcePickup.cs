@@ -4,7 +4,7 @@ namespace QuarryEmpire
 {
     /// <summary>
     /// O bucată de resursă căzută din bloc. Ciclu de viață:
-    /// 1) sare în arc până pe sol, 2) stă pe jos, 3) zboară spre jucător și e colectată.
+    /// 1) sare în arc până pe sol, 2) stă pe jos, 3) zboară spre o stivă și intră în ea.
     /// Obiectul vine din ObjectPool și se întoarce acolo după colectare.
     /// </summary>
     public class ResourcePickup : MonoBehaviour, IPoolable
@@ -23,20 +23,23 @@ namespace QuarryEmpire
         [Tooltip("Cât stă pe jos înainte să poată fi colectată (să se vadă că a căzut).")]
         [SerializeField, Min(0f)] private float restDelay = 0.2f;
         [SerializeField] private float spinSpeed = 90f;
+        [Tooltip("După atâtea secunde pe jos, bucata dispare (ca să nu se adune la infinit).")]
+        [SerializeField] private float maxLifetime = 120f;
 
-        [Header("Zbor spre jucător")]
+        [Header("Zbor spre stivă")]
         [SerializeField] private float flyStartSpeed = 6f;
         [SerializeField] private float flyAcceleration = 30f;
-        [SerializeField] private float arriveDistance = 0.25f;
+        [SerializeField] private float arriveDistance = 0.3f;
 
         public ResourceData Data { get; private set; }
         public bool CanBeCollected => _state == State.Resting && _timer >= restDelay && Data != null;
 
         private State _state;
         private float _timer;
+        private float _age;
         private Vector3 _from;
         private Vector3 _to;
-        private Transform _target;
+        private ResourceStack _targetStack;
         private float _flySpeed;
 
         /// <summary>Setează ce resursă reprezintă bucata (și materialul ei).</summary>
@@ -57,13 +60,14 @@ namespace QuarryEmpire
             transform.position = from;
         }
 
-        /// <summary>Începe zborul spre ținta dată (de obicei spatele jucătorului).</summary>
-        public void StartCollect(Transform target)
+        /// <summary>Începe zborul spre stivă. Rezervă un loc în stivă; întoarce false dacă e plină.</summary>
+        public bool StartCollect(ResourceStack stack)
         {
-            if (!CanBeCollected) return;
-            _target = target;
+            if (!CanBeCollected || stack == null || !stack.TryReserve()) return false;
+            _targetStack = stack;
             _flySpeed = flyStartSpeed;
             _state = State.Flying;
+            return true;
         }
 
         private void Update()
@@ -85,18 +89,22 @@ namespace QuarryEmpire
 
                 case State.Resting:
                     _timer += dt;
+                    _age += dt;
                     transform.Rotate(0f, spinSpeed * dt, 0f, Space.World);
+                    if (_age >= maxLifetime) ReturnToPool();
                     break;
 
                 case State.Flying:
-                    if (_target == null)
+                    if (_targetStack == null || !_targetStack.isActiveAndEnabled)
                     {
+                        _targetStack = null;
                         _state = State.Resting;
                         break;
                     }
+                    Vector3 target = _targetStack.Anchor.position;
                     _flySpeed += flyAcceleration * dt;
-                    transform.position = Vector3.MoveTowards(transform.position, _target.position, _flySpeed * dt);
-                    if ((transform.position - _target.position).sqrMagnitude <= arriveDistance * arriveDistance)
+                    transform.position = Vector3.MoveTowards(transform.position, target, _flySpeed * dt);
+                    if ((transform.position - target).sqrMagnitude <= arriveDistance * arriveDistance)
                         Collect();
                     break;
             }
@@ -104,7 +112,15 @@ namespace QuarryEmpire
 
         private void Collect()
         {
+            ResourceStack stack = _targetStack;
+            _targetStack = null;
+            stack.AddReserved(Data);
             GameEvents.RaiseResourceCollected(Data, transform.position);
+            ReturnToPool();
+        }
+
+        private void ReturnToPool()
+        {
             if (ObjectPool.Instance != null) ObjectPool.Instance.Despawn(gameObject);
             else gameObject.SetActive(false);
         }
@@ -113,12 +129,15 @@ namespace QuarryEmpire
         {
             _state = State.Popping;
             _timer = 0f;
-            _target = null;
+            _age = 0f;
+            _targetStack = null;
         }
 
         public void OnDespawned()
         {
-            _target = null;
+            // Dacă eram în zbor, eliberăm locul rezervat în stivă.
+            if (_targetStack != null) _targetStack.CancelReservation();
+            _targetStack = null;
             Data = null;
         }
     }

@@ -92,6 +92,8 @@ namespace QuarryEmpire
             pooled.NotifyDespawned();
             pooled.IsInPool = true;
             instance.SetActive(false);
+            // Revine sub pool, ca să nu fie distrus odată cu fostul părinte.
+            instance.transform.SetParent(transform, false);
             GetStack(pooled.OriginPrefab).Push(pooled);
         }
 

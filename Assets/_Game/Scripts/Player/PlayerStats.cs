@@ -3,7 +3,7 @@ using UnityEngine;
 namespace QuarryEmpire
 {
     /// <summary>
-    /// Valorile de bază ale jucătorului. În Etapa 3 upgrade-urile vor porni de la aceste valori.
+    /// Valorile de bază ale jucătorului. PlayerStatsRuntime adaugă peste ele bonusurile din upgrade-uri.
     /// </summary>
     [CreateAssetMenu(fileName = "PlayerStats", menuName = "Quarry Empire/Player Stats")]
     public class PlayerStats : ScriptableObject
@@ -25,5 +25,7 @@ namespace QuarryEmpire
         [field: Header("Colectare")]
         [field: Tooltip("Raza (m) în care resursele de pe jos zboară spre jucător.")]
         [field: SerializeField, Min(0.1f)] public float CollectRadius { get; private set; } = 2.5f;
+        [field: Tooltip("Câte resurse încap în stiva de pe spate.")]
+        [field: SerializeField, Min(1)] public int StackCapacity { get; private set; } = 10;
     }
 }

@@ -9,7 +9,7 @@ namespace QuarryEmpire
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMovement : MonoBehaviour
     {
-        [SerializeField] private PlayerStats stats;
+        [SerializeField] private PlayerStatsRuntime stats;
         [SerializeField] private PlayerInputReader input;
         [Tooltip("Dacă e gol, se folosește automat Main Camera.")]
         [SerializeField] private Transform cameraTransform;
@@ -18,6 +18,7 @@ namespace QuarryEmpire
         [SerializeField, Range(0f, 0.5f)] private float deadZone = 0.1f;
 
         public bool IsMoving { get; private set; }
+        public Vector3 Velocity { get; private set; }
 
         private CharacterController _controller;
         private float _verticalVelocity;
@@ -40,6 +41,13 @@ namespace QuarryEmpire
 
         public void ClearAimTarget() => _hasAimTarget = false;
 
+        private void OnDisable()
+        {
+            IsMoving = false;
+            Velocity = Vector3.zero;
+            _verticalVelocity = 0f;
+        }
+
         private void Update()
         {
             Vector3 moveDirection = GetCameraRelativeDirection(input.Move);
@@ -49,8 +57,8 @@ namespace QuarryEmpire
             if (_controller.isGrounded && _verticalVelocity < 0f) _verticalVelocity = -2f;
             _verticalVelocity += gravity * Time.deltaTime;
 
-            Vector3 velocity = moveDirection * stats.MoveSpeed + Vector3.up * _verticalVelocity;
-            _controller.Move(velocity * Time.deltaTime);
+            Velocity = moveDirection * stats.MoveSpeed;
+            _controller.Move((Velocity + Vector3.up * _verticalVelocity) * Time.deltaTime);
 
             UpdateRotation(moveDirection);
         }

@@ -7,9 +7,9 @@ namespace QuarryEmpire
     /// Găsește automat cel mai apropiat bloc minabil și îl lovește la intervale regulate.
     /// Nu se ocupă de animație: anunță doar evenimentul Swung.
     /// </summary>
-    public class PlayerMiner : MonoBehaviour
+    public class PlayerMiner : MonoBehaviour, ISwingSource
     {
-        [SerializeField] private PlayerStats stats;
+        [SerializeField] private PlayerStatsRuntime stats;
         [SerializeField] private PlayerMovement movement;
         [Tooltip("Layer-ul pe care stau blocurile (Block).")]
         [SerializeField] private LayerMask blockLayer;
@@ -17,6 +17,8 @@ namespace QuarryEmpire
         [SerializeField] private float scanInterval = 0.1f;
         [Tooltip("Înălțimea (m) de la care se caută blocurile, față de picioarele jucătorului.")]
         [SerializeField] private float scanHeight = 0.5f;
+        [Tooltip("Cât de des poate apărea mesajul „Prea dur”.")]
+        [SerializeField] private float tooHardMessageCooldown = 6f;
 
         /// <summary>Anunțat la fiecare lovitură (pentru animație, sunet, efecte).</summary>
         public event Action<MineBlock> Swung;
@@ -28,6 +30,13 @@ namespace QuarryEmpire
         private MineBlock _target;
         private float _hitCooldown;
         private float _scanTimer;
+        private float _lastTooHardMessage = -100f;
+
+        private void OnDisable()
+        {
+            _target = null;
+            if (movement != null) movement.ClearAimTarget();
+        }
 
         private void Update()
         {
@@ -67,12 +76,17 @@ namespace QuarryEmpire
 
             MineBlock best = null;
             float bestDistance = float.MaxValue;
+            bool foundTooHard = false;
 
             for (int i = 0; i < count; i++)
             {
                 if (!_results[i].TryGetComponent(out MineBlock block)) continue;
                 if (!block.IsAlive || block.Data == null) continue;
-                if (block.Data.Hardness > stats.MiningTier) continue; // prea dur pentru târnăcop
+                if (!block.CanBeMinedBy(stats.MiningTier))
+                {
+                    foundTooHard = true; // prea dur pentru târnăcop
+                    continue;
+                }
 
                 // Păstrăm ținta curentă cât timp e în rază, ca să nu sărim între blocuri.
                 if (block == _target) return block;
@@ -85,6 +99,12 @@ namespace QuarryEmpire
                     bestDistance = distance;
                     best = block;
                 }
+            }
+
+            if (best == null && foundTooHard && Time.time - _lastTooHardMessage > tooHardMessageCooldown)
+            {
+                _lastTooHardMessage = Time.time;
+                GameEvents.RaiseToast("Prea dur! Îmbunătățește târnăcopul sau folosește burghiul.");
             }
             return best;
         }
