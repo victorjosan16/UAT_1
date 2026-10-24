@@ -1,5 +1,7 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace QuarryEmpire.EditorTools
 {
@@ -27,6 +29,10 @@ namespace QuarryEmpire.EditorTools
         [MenuItem("Quarry Empire/Construiește jocul")]
         public static void Run()
         {
+            // Scena nouă se creează PRIMA: NewScene descarcă din memorie asset-urile nefolosite,
+            // deci dacă am crea-o după prefab-uri, referințele la ele ar deveni invalide.
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
             EnsureFolders();
             SetupLayers();
             SetupRenderPipeline();
@@ -35,7 +41,7 @@ namespace QuarryEmpire.EditorTools
             Materials materials = CreateMaterials();
             GameData data = CreateData(materials);
             Prefabs prefabs = CreatePrefabs(materials);
-            BuildScene(materials, data, prefabs);
+            BuildScene(scene, materials, data, prefabs);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

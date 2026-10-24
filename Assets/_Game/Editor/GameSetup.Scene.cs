@@ -21,10 +21,8 @@ namespace QuarryEmpire.EditorTools
         private static readonly Vector3 SellPosition = new(-6f, 0f, -3f);
         private static readonly Vector3 CameraOffset = new(-8.2f, 13.8f, -8.2f);
 
-        private static void BuildScene(Materials m, GameData data, Prefabs prefabs)
+        private static void BuildScene(Scene scene, Materials m, GameData data, Prefabs prefabs)
         {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.62f, 0.62f, 0.68f);
 
