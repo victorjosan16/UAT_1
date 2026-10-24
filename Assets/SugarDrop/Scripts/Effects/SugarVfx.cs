@@ -71,6 +71,7 @@ namespace SugarDrop
             Color main = Palette.Tile(color);
             Color light = Palette.TileLight(color);
             Flash(position, light, 1.1f, 0.18f);
+            Splash(position, main, light);
 
             switch (color)
             {
@@ -149,6 +150,27 @@ namespace SugarDrop
                     Size(spark, 0.2f, 0.9f, 0f);
                     spark.Spin = 180f;
                     break;
+            }
+        }
+
+        /// <summary>Stropi de jeleu comuni tuturor aromelor: picături care sar și cad, plus bucățele din bomboană.</summary>
+        private void Splash(Vector3 position, Color main, Color light)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                Particle p = Emit(SugarSprites.Circle, position, Random.Range(0.4f, 0.6f), i % 2 == 0 ? main : light);
+                Vector2 dir = Random.insideUnitCircle.normalized;
+                p.Velocity = new Vector3(dir.x * Random.Range(2f, 3.5f), Mathf.Abs(dir.y) * 3f + 1f, 0f);
+                p.Gravity = 11f;
+                Size(p, 0.13f, 0.11f, 0.03f);
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                Particle p = Emit(SugarSprites.Shard, position, 0.5f, main);
+                p.Velocity = new Vector3(Random.Range(-2.5f, 2.5f), Random.Range(1.5f, 3.5f), 0f);
+                p.Gravity = 9f;
+                p.Spin = Random.Range(-500f, 500f);
+                Size(p, 0.2f, 0.18f, 0.06f);
             }
         }
 

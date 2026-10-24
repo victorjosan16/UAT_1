@@ -41,6 +41,8 @@ namespace SugarDrop
         /// <summary>Sfârșitul unei mutări: câte capace au dispărut în total (pentru mesaje „Super!”).</summary>
         public event Action<int, Vector3> MoveResolved;
         public event Action Shuffled;
+        /// <summary>S-a deschis un drum liber de sus până jos (bomboanele pot ajunge în borcan).</summary>
+        public event Action ChannelOpened;
 
         public bool Busy { get; private set; }
         /// <summary>Nu mai există nicio mutare posibilă (nici după amestecare): nivelul nu mai poate continua.</summary>
@@ -109,6 +111,8 @@ namespace SugarDrop
             }
 
             EnsurePlayable(false);
+            BuildCells();
+            UpdateFlow(false);
         }
 
         public void Clear()
@@ -139,6 +143,66 @@ namespace SugarDrop
             tile.Setup(kind, color, frozen, hits);
             tile.Cell = cell;
             return tile;
+        }
+
+        // ------------------------------------------------------------ Fundalul tablei și drumul bomboanelor
+
+        private static readonly Color CellDark = new(0.4f, 0.19f, 0.47f, 0.45f);
+        private static readonly Color CellDarkAlt = new(0.46f, 0.23f, 0.53f, 0.45f);
+        private static readonly Color CellReached = new(1f, 0.82f, 0.92f, 0.55f);
+        private static readonly Color CellChannel = new(1f, 0.86f, 0.42f, 0.6f);
+
+        private SpriteRenderer[,] _cells;
+        private bool[,] _empty;
+        private bool[,] _reached;
+        private bool _channelOpen;
+
+        /// <summary>Drumul curent e deschis până jos?</summary>
+        public bool ChannelOpen => _channelOpen;
+
+        /// <summary>Pătrățele semi-transparente sub fiecare capac (tabla „în tablă”, ca la jocurile de cofetărie).</summary>
+        private void BuildCells()
+        {
+            _cells = new SpriteRenderer[Columns, Rows];
+            _empty = new bool[Columns, Rows];
+            _reached = new bool[Columns, Rows];
+            Sprite sprite = SugarSprites.CapShadow;
+            float scale = cellSize * 0.97f / sprite.bounds.size.x;
+            for (int x = 0; x < Columns; x++)
+            for (int y = 0; y < Rows; y++)
+            {
+                var go = new GameObject($"Cell_{x}_{y}");
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = CellCenter(new Vector2Int(x, y));
+                go.transform.localScale = Vector3.one * scale;
+                var renderer = go.AddComponent<SpriteRenderer>();
+                renderer.sprite = sprite;
+                renderer.sortingOrder = 2;
+                _cells[x, y] = renderer;
+            }
+        }
+
+        /// <summary>
+        /// Colorează golurile după unde pot curge bomboanele: roz = legat de grămadă, auriu = drum până jos.
+        /// Golurile în care bomboanele nu pot ajunge rămân închise la culoare.
+        /// </summary>
+        private void UpdateFlow(bool notify)
+        {
+            if (_cells == null) return;
+            for (int x = 0; x < Columns; x++)
+            for (int y = 0; y < Rows; y++)
+                _empty[x, y] = _grid[x, y] == null;
+            ChannelRules.Reach(_empty, _reached, out bool open);
+            for (int x = 0; x < Columns; x++)
+            for (int y = 0; y < Rows; y++)
+            {
+                Color c = (x + y) % 2 == 0 ? CellDark : CellDarkAlt;
+                if (_reached[x, y]) c = open ? CellChannel : CellReached;
+                _cells[x, y].color = c;
+            }
+            bool opened = open && !_channelOpen;
+            _channelOpen = open;
+            if (opened && notify) ChannelOpened?.Invoke();
         }
 
         // ------------------------------------------------------------ Coordonate
@@ -252,6 +316,7 @@ namespace SugarDrop
 
         private IEnumerator FinishMove()
         {
+            UpdateFlow(true);
             if (_clearedThisMove > 0) MoveResolved?.Invoke(_clearedThisMove, _clearedCenter / _clearedThisMove);
             EnsurePlayable(true);
             Busy = false;
@@ -543,10 +608,62 @@ namespace SugarDrop
 
         public bool HasValidMove() => TryFindHint(out _, out _);
 
+        /// <summary>
+        /// Cea mai bună mutare pentru bomboane: cea care deschide (sau adâncește) drumul spre borcan.
+        /// La egalitate, cea care elimină mai multe capace.
+        /// </summary>
+        public bool TryFindBestHint(out Vector2Int a, out Vector2Int b)
+        {
+            a = b = default;
+            if (_grid == null) return false;
+            int best = int.MinValue;
+            var empty = new bool[Columns, Rows];
+            for (int x = 0; x < Columns; x++)
+            for (int y = 0; y < Rows; y++)
+            {
+                var from = new Vector2Int(x, y);
+                foreach (Vector2Int direction in Neighbours)
+                {
+                    Vector2Int to = from + direction;
+                    if (!InBounds(to) || !IsValidMove(from, to)) continue;
+                    int value = EstimateMove(from, to, empty);
+                    if (value <= best) continue;
+                    best = value;
+                    a = from;
+                    b = to;
+                }
+            }
+            return best > int.MinValue;
+        }
+
+        private int EstimateMove(Vector2Int a, Vector2Int b, bool[,] empty)
+        {
+            Tile ta = At(a), tb = At(b);
+            // Combinațiile speciale curăță mult: le considerăm foarte bune.
+            if (ta != null && tb != null && (ta.IsSpecial && tb.IsSpecial || ta.IsRainbow || tb.IsRainbow)) return 5000;
+
+            // Simulăm schimbul: golurile de după mutare + capacele care ar dispărea.
+            SwapCells(a, b);
+            for (int x = 0; x < Columns; x++)
+            for (int y = 0; y < Rows; y++)
+                empty[x, y] = _grid[x, y] == null;
+            int cleared = 0;
+            foreach (MatchGroup group in FindGroups())
+                foreach (Vector2Int cell in group.Cells)
+                {
+                    Tile tile = At(cell);
+                    if (tile == null || tile.Frozen) continue; // gheața doar se sparge
+                    empty[cell.x, cell.y] = true;
+                    cleared++;
+                }
+            SwapCells(a, b);
+            return ChannelRules.Score(empty) + cleared;
+        }
+
         /// <summary>Tremură scurt piesele unei mutări posibile (indiciu).</summary>
         public void ShowHint()
         {
-            if (Busy || !TryFindHint(out Vector2Int a, out Vector2Int b)) return;
+            if (Busy || !TryFindBestHint(out Vector2Int a, out Vector2Int b)) return;
             At(a)?.Wiggle();
             At(b)?.Wiggle();
         }
@@ -607,6 +724,50 @@ namespace SugarDrop
         }
 
         // ------------------------------------------------------------ Ajutoare
+
+        // ------------------------------------------------------------ Finalul dulce (mutările rămase)
+
+        /// <summary>Transformă un capac obișnuit, la întâmplare, într-unul dungat. Fals dacă nu mai există capace obișnuite.</summary>
+        public bool TryMakeRandomSpecial(out Vector3 position)
+        {
+            position = default;
+            if (_grid == null) return false;
+            var candidates = new List<Tile>();
+            foreach (Tile tile in _grid)
+                if (tile != null && tile.Kind == TileKind.Normal && !tile.Frozen && tile.ColorIndex >= 0) candidates.Add(tile);
+            if (candidates.Count == 0) return false;
+            Tile chosen = candidates[Random.Range(0, candidates.Count)];
+            TileKind kind = Random.value < 0.5f ? TileKind.StripedRow : TileKind.StripedColumn;
+            chosen.Setup(kind, chosen.ColorIndex);
+            chosen.Bounce();
+            position = chosen.transform.position;
+            SpecialCreated?.Invoke(kind, position);
+            return true;
+        }
+
+        /// <summary>Activează următorul capac special de pe tablă. Fals dacă nu mai e niciunul (sau tabla e ocupată).</summary>
+        public bool DetonateNextSpecial()
+        {
+            if (Busy || _grid == null) return false;
+            for (int y = Rows - 1; y >= 0; y--)
+            for (int x = 0; x < Columns; x++)
+            {
+                Tile tile = _grid[x, y];
+                if (tile == null || !tile.IsSpecial || tile.Frozen) continue;
+                StartCoroutine(DetonateRoutine(new Vector2Int(x, y)));
+                return true;
+            }
+            return false;
+        }
+
+        private IEnumerator DetonateRoutine(Vector2Int cell)
+        {
+            Busy = true;
+            _clearedThisMove = 0;
+            _clearedCenter = Vector3.zero;
+            yield return ClearRoutine(new HashSet<Vector2Int> { cell }, null);
+            yield return FinishMove();
+        }
 
         /// <summary>Ajutorul „bombă”: elimină o zonă 3×3 (sparge gheața, lovește biscuiții, activează speciale).</summary>
         public bool Blast(Vector2Int center)

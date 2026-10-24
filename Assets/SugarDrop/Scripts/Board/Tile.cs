@@ -53,8 +53,11 @@ namespace SugarDrop
             _overlay = Layer("Overlay", SugarSprites.Stripes, 12, size * 0.94f);
             _ice = Layer("Ice", SugarSprites.Ice, 13, size * 0.98f);
 
+            // Colțuri rotunjite: bomboanele de pe marginea unui capac alunecă în gaura de lângă el, nu rămân agățate.
             _collider = gameObject.AddComponent<BoxCollider2D>();
-            _collider.size = Vector2.one * size;
+            float radius = size * 0.2f;
+            _collider.size = Vector2.one * (size - radius * 2f);
+            _collider.edgeRadius = radius;
         }
 
         private SpriteRenderer Layer(string name, Sprite sprite, int order, float worldSize)
@@ -107,7 +110,9 @@ namespace SugarDrop
             _ice.enabled = Frozen;
             _overlay.enabled = false;
             _overlay.transform.localRotation = Quaternion.identity;
-            _icon.enabled = true;
+            // Forma piesei arată deja aroma; pictograma rămâne doar pentru capacele vechi (nefolosită acum).
+            _icon.enabled = false;
+            _shadow.sprite = SugarSprites.CapShadow;
 
             switch (Kind)
             {
@@ -124,7 +129,7 @@ namespace SugarDrop
                     return;
 
                 case TileKind.Rainbow:
-                    _base.sprite = SugarSprites.Cap;
+                    _base.sprite = PieceSprites.Pearl;
                     _base.color = Color.white;
                     _icon.enabled = false;
                     _overlay.enabled = true;
@@ -133,17 +138,16 @@ namespace SugarDrop
                     return;
             }
 
-            _base.sprite = SugarSprites.Cap;
-            _base.color = Palette.Tile(ColorIndex);
-            _icon.sprite = SugarSprites.Icon(ColorIndex);
-            _icon.color = Palette.TileLight(ColorIndex);
+            // Bomboană de jeleu cu forma aromei (sprite deja colorat, cu luciu alb).
+            _base.sprite = PieceSprites.Piece(ColorIndex);
+            _base.color = Color.white;
+            _shadow.sprite = PieceSprites.Shadow(ColorIndex);
 
             if (Kind == TileKind.StripedRow || Kind == TileKind.StripedColumn)
             {
                 _overlay.enabled = true;
-                _overlay.sprite = SugarSprites.Stripes;
-                _overlay.color = new Color(1f, 1f, 1f, 0.75f);
-                if (Kind == TileKind.StripedColumn) _overlay.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                _overlay.sprite = PieceSprites.Stripes(ColorIndex, Kind == TileKind.StripedRow);
+                _overlay.color = Color.white;
             }
             else if (Kind == TileKind.Wrapped)
             {
@@ -201,7 +205,10 @@ namespace SugarDrop
             {
                 _popT += dt / _popDuration;
                 float t = Mathf.Clamp01(_popT);
-                scale = t < 0.3f ? Mathf.Lerp(1f, 1.25f, t / 0.3f) : Mathf.Lerp(1.25f, 0f, (t - 0.3f) / 0.7f);
+                // „Pop” suculent: se strânge puțin, se umflă, apoi dispare.
+                scale = t < 0.12f ? Mathf.Lerp(1f, 0.86f, t / 0.12f)
+                    : t < 0.4f ? Mathf.Lerp(0.86f, 1.32f, (t - 0.12f) / 0.28f)
+                    : Mathf.Lerp(1.32f, 0f, (t - 0.4f) / 0.6f);
                 angle = t * 25f;
                 if (t >= 1f)
                 {

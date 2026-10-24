@@ -136,7 +136,7 @@ namespace SugarDrop.EditorTools
                 material = new PhysicsMaterial2D("CandyPhysics");
                 AssetDatabase.CreateAsset(material, path);
             }
-            material.friction = 0.15f;
+            material.friction = 0.06f; // alunecă ușor de pe capace spre găuri
             material.bounciness = 0.05f;
             EditorUtility.SetDirty(material);
             return material;

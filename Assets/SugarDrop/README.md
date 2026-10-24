@@ -12,14 +12,25 @@ Un puzzle original de tip „aliniază 3”, cu temă de cofetărie și mascota 
 - Un schimb care nu formează o aliniere se anulează și nu consumă mutarea. Dacă nu mai există mutări posibile,
   capacele se amestecă automat.
 
-## Arome (fiecare are pictograma, nota muzicală și explozia ei)
-| Aromă | Pictogramă | Efect la dispariție |
+## Arome (fiecare are forma de jeleu, nota muzicală și explozia ei)
+| Aromă | Formă | Efect la dispariție |
 |---|---|---|
 | Căpșună | inimă | inimioare care țâșnesc și plutesc |
 | Afină | picătură | bule care urcă legănându-se |
-| Mentă | frunză | frunzulițe care se învârt și cad |
+| Mentă | hexagon | frunzulițe care se învârt și cad |
 | Lămâie | stea | explozie de steluțe + inel |
-| Strugure | gem | gemuri pe orbită care se strâng într-o sclipire |
+| Strugure | drajeu oval | gemuri pe orbită care se strâng într-o sclipire |
+
+Piesele sunt desenate din cod în `Scripts/Visual/PieceSprites.cs` (margine de jeleu, lumină reflectată, luciu).
+Toate aromele au și stropi de jeleu și bucățele care sar.
+
+## Scor, stele și drumul bomboanelor
+- Fiecare capac dă puncte (mai multe în lanțurile lungi); punctele mutării apar pe tablă. Bara de scor din HUD
+  arată pragurile de 2 și 3 stele (`Scripts/Core/ScoreRules.cs`). Victoria dă mereu cel puțin o stea.
+- **Finalul dulce:** la victorie, fiecare mutare rămasă devine un capac dungat care explodează (+200 puncte).
+- **Drumul bomboanelor:** golurile legate de grămadă se luminează roz; când drumul ajunge până jos devine auriu
+  și apare „Drum liber!” (`Scripts/Core/ChannelRules.cs`). Indiciul alege mutarea care deschide cel mai bine drumul.
+- Capacele au colțuri rotunjite, iar după fiecare mutare bomboanele primesc un mic ghiont, ca să nu rămână agățate.
 
 Notele aromelor sunt din gama pentatonică și urcă pe parcursul unei mutări: lanțurile lungi sună ca o melodie.
 

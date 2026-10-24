@@ -9,7 +9,7 @@ namespace SugarDrop
     /// </summary>
     public class CandySpawner : MonoBehaviour
     {
-        [SerializeField] private float radius = 0.16f;
+        [SerializeField] private float radius = 0.24f;
         [SerializeField] private float gravityScale = 1.6f;
         [SerializeField] private PhysicsMaterial2D material;
 
@@ -32,6 +32,21 @@ namespace SugarDrop
                     area.yMin + radius + row * diameter * 0.9f);
                 position.x = Mathf.Min(position.x, area.xMax - radius);
                 _candies.Add(CreateCandy(position));
+            }
+        }
+
+        /// <summary>
+        /// Un mic „ghiont” pentru bomboanele care stau pe loc (după fiecare mutare): cele rămase pe marginea
+        /// unui capac lângă o gaură cad în ea, în loc să rămână agățate.
+        /// </summary>
+        public void Nudge(float strength = 0.6f)
+        {
+            foreach (GameObject candy in _candies)
+            {
+                if (candy == null || !candy.TryGetComponent(out Rigidbody2D body)) continue;
+                if (body.GetPointVelocity(body.position).sqrMagnitude > 0.05f) continue; // merge și în Unity 6, și în versiunile vechi
+                if (candy.TryGetComponent(out Candy c) && c.Counted) continue;
+                body.AddForce(new Vector2(Random.Range(-1f, 1f) * strength, Random.Range(0.2f, 0.5f) * strength), ForceMode2D.Impulse);
             }
         }
 

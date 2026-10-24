@@ -23,7 +23,7 @@ namespace SugarDrop
         private void OnTriggerEnter2D(Collider2D other)
         {
             if (!other.TryGetComponent(out Candy candy) || candy.Counted) return;
-            candy.Counted = true;
+            candy.MarkCounted();
             Count++;
             CountChanged?.Invoke(Count);
             CandyEntered?.Invoke(other.transform.position, candy.Color);
