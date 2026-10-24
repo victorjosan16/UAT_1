@@ -70,6 +70,31 @@ namespace QuarryEmpire
             return Mathf.Min(shaft, head);
         }));
 
+        /// <summary>Săgeată circulară („reîncepe”).</summary>
+        public static Sprite Restart => Get("restart", () => Make("Restart", 128, (x, y) =>
+        {
+            Vector2 p = new(x - 64, y - 64);
+            float angle = Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg; // -180..180, 0 = dreapta
+            float ring = Mathf.Abs(p.magnitude - 40f) - 9f;
+            // Golul din inel (sus-dreapta), unde stă vârful săgeții.
+            if (angle > 20f && angle < 80f) ring = Mathf.Max(ring, 4f);
+            // Vârful săgeții: triunghi la capătul inelului (spre 80°).
+            Vector2 tip = new(Mathf.Cos(80f * Mathf.Deg2Rad) * 40f, Mathf.Sin(80f * Mathf.Deg2Rad) * 40f);
+            Vector2 q = p - tip;
+            float head = Mathf.Max(Mathf.Abs(q.y) * 0.95f + q.x * 0.6f - 18f, -q.x - 10f);
+            return Mathf.Min(ring, head);
+        }));
+
+        /// <summary>Stea cu 5 colțuri (rezultatul nivelului).</summary>
+        public static Sprite Star => Get("star", () => Make("Star", 128, (x, y) =>
+        {
+            Vector2 p = new(x - 64, y - 60);
+            float angle = Mathf.Atan2(p.x, p.y); // 0 = sus
+            float sector = Mathf.Repeat(angle, Mathf.PI * 2f / 5f) / (Mathf.PI * 2f / 5f); // 0..1 între două vârfuri
+            float radius = Mathf.Lerp(58f, 26f, 1f - Mathf.Abs(sector * 2f - 1f));
+            return (p.magnitude - radius) * 0.8f;
+        }));
+
         // ------------------------------------------------------------ Implementare
 
         private static Sprite Get(string key, Func<Sprite> create)
