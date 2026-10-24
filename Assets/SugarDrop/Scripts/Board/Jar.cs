@@ -10,6 +10,8 @@ namespace SugarDrop
         public int Goal { get; private set; }
 
         public event Action<int> CountChanged;
+        /// <summary>O bomboană a intrat în borcan (poziția și culoarea ei, pentru sclipiri și sunet).</summary>
+        public event Action<Vector3, Color> CandyEntered;
 
         public void ResetJar(int goal)
         {
@@ -24,6 +26,7 @@ namespace SugarDrop
             candy.Counted = true;
             Count++;
             CountChanged?.Invoke(Count);
+            CandyEntered?.Invoke(other.transform.position, candy.Color);
         }
     }
 }

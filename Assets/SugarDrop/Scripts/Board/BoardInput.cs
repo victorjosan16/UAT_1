@@ -1,11 +1,14 @@
+using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace SugarDrop
 {
     /// <summary>
     /// Glisare pe tablă: pui degetul pe un capac și tragi spre vecin (sus/jos/stânga/dreapta) ca să le schimbi.
-    /// Funcționează cu degetul pe telefon și cu mouse-ul în Editor (New Input System).
+    /// În modul „țintire” (bomba), o atingere simplă pe tablă alege celula. Funcționează cu degetul pe telefon
+    /// și cu mouse-ul în Editor (New Input System).
     /// </summary>
     public class BoardInput : MonoBehaviour
     {
@@ -14,7 +17,14 @@ namespace SugarDrop
         [Tooltip("Cât trebuie tras degetul (unități din lume) ca să conteze ca glisare.")]
         [SerializeField] private float dragThreshold = 0.3f;
 
+        /// <summary>Jucătorul a atins tabla (pentru indiciul care apare după o pauză lungă).</summary>
+        public event Action Touched;
+
+        /// <summary>Dacă e setat, următoarea atingere pe tablă alege o celulă (ex. bomba) în loc de glisare.</summary>
+        public Action<Vector2Int> TapTarget { get; set; }
+
         private bool _tracking;
+        private bool _pressOnUi;
         private Vector2Int _startCell;
         private Vector2 _startWorld;
 
@@ -29,8 +39,25 @@ namespace SugarDrop
 
             if (pointer.press.wasPressedThisFrame)
             {
+                // Atingerile pe butoane (UI) nu se transmit tablei.
+                _pressOnUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+                if (_pressOnUi) return;
                 _tracking = board.TryGetCell(world, out _startCell);
                 _startWorld = world;
+                Touched?.Invoke();
+            }
+            if (_pressOnUi) return;
+
+            if (TapTarget != null)
+            {
+                if (pointer.press.wasReleasedThisFrame && _tracking && board.TryGetCell(world, out Vector2Int cell) && cell == _startCell)
+                {
+                    Action<Vector2Int> target = TapTarget;
+                    TapTarget = null;
+                    target(cell);
+                }
+                if (pointer.press.wasReleasedThisFrame) _tracking = false;
+                return;
             }
 
             if (_tracking && pointer.press.isPressed)

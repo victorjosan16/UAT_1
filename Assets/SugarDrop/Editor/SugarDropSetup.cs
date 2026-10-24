@@ -33,6 +33,7 @@ namespace SugarDrop.EditorTools
             EnsureFolder(DataDir);
             EnsureFolder(ScenesDir);
             SetupPlayerSettings();
+            SetupIcon();
 
             UiTheme theme = CreateTheme();
             PhysicsMaterial2D material = CreatePhysicsMaterial();
@@ -40,9 +41,13 @@ namespace SugarDrop.EditorTools
             Camera camera = BuildCamera();
             var systems = new GameObject("_Systems");
             systems.AddComponent<AudioManager>();
+            systems.AddComponent<SugarAudio>();
+            var vfx = Child<SugarVfx>(systems, "Vfx");
+            Set(vfx, "shakeCamera", camera);
+            Child<Backdrop>(systems, "Backdrop");
 
-            (SugarHud hud, ResultPanel result) = BuildUi(theme);
-            BuildGame(camera, material, hud, result);
+            Ui ui = BuildUi(theme);
+            BuildGame(camera, material, ui);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -74,6 +79,33 @@ namespace SugarDrop.EditorTools
                 inputHandler.intValue = 1;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
+        }
+
+        /// <summary>Iconița aplicației (Art/Icon/AppIcon.png) și ecranul de pornire.</summary>
+        private static void SetupIcon()
+        {
+            const string iconPath = Root + "/Art/Icon/AppIcon.png";
+            const string squarePath = Root + "/Art/Icon/AppIconSquare.png";
+            foreach (string path in new[] { iconPath, squarePath })
+            {
+                if (AssetImporter.GetAtPath(path) is not TextureImporter importer) continue;
+                importer.textureType = path == iconPath ? TextureImporterType.Sprite : TextureImporterType.Default;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+            var square = AssetDatabase.LoadAssetAtPath<Texture2D>(squarePath);
+            var logo = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+            if (icon != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+            if (square != null) PlayerSettings.SetIcons(NamedBuildTarget.iOS, new[] { square }, IconKind.Any);
+
+            PlayerSettings.SplashScreen.show = true;
+            PlayerSettings.SplashScreen.showUnityLogo = false;
+            PlayerSettings.SplashScreen.backgroundColor = Hex("#FF8FB1");
+            PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
+            if (logo != null) PlayerSettings.SplashScreen.logos = new[] { PlayerSettings.SplashScreenLogo.Create(1.5f, logo) };
         }
 
         private static UiTheme CreateTheme()
@@ -126,7 +158,17 @@ namespace SugarDrop.EditorTools
             return camera;
         }
 
-        private static void BuildGame(Camera camera, PhysicsMaterial2D material, SugarHud hud, ResultPanel result)
+        private struct Ui
+        {
+            public SugarHud Hud;
+            public BoosterBar Boosters;
+            public ResultPanel Result;
+            public DialogPanel Dialog;
+            public MapScreen Map;
+            public MainMenu Menu;
+        }
+
+        private static void BuildGame(Camera camera, PhysicsMaterial2D material, Ui ui)
         {
             var root = new GameObject("Game");
             var board = Child<Board>(root, "Board");
@@ -139,6 +181,8 @@ namespace SugarDrop.EditorTools
             var playfield = Child<Playfield>(root, "Playfield");
             Set(playfield, "jar", jar);
             Set(playfield, "material", material);
+            var mascot = Child<Mascot>(root, "Bobo");
+            var hint = Child<HintGuide>(root, "HintGuide");
 
             var game = root.AddComponent<SugarDropGame>();
             Set(game, "board", board);
@@ -146,11 +190,17 @@ namespace SugarDrop.EditorTools
             Set(game, "candies", candies);
             Set(game, "jar", jar);
             Set(game, "playfield", playfield);
-            Set(game, "hud", hud);
-            Set(game, "result", result);
+            Set(game, "mascot", mascot);
+            Set(game, "hintGuide", hint);
+            Set(game, "hud", ui.Hud);
+            Set(game, "boosters", ui.Boosters);
+            Set(game, "result", ui.Result);
+            Set(game, "dialog", ui.Dialog);
+            Set(game, "map", ui.Map);
+            Set(game, "menu", ui.Menu);
         }
 
-        private static (SugarHud, ResultPanel) BuildUi(UiTheme theme)
+        private static Ui BuildUi(UiTheme theme)
         {
             var eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();
@@ -167,11 +217,24 @@ namespace SugarDrop.EditorTools
             Set(uiRoot, "theme", theme);
             Set(uiRoot, "inputModule", inputModule);
 
+            // Ordinea contează: ce e mai jos în listă se desenează deasupra.
             Transform safe = UiChild(canvasGo.transform, "SafeArea", typeof(SafeAreaFitter));
-            var hud = (SugarHud)UiChild(safe, "Hud", typeof(SugarHud)).GetComponent(typeof(SugarHud));
-            var result = (ResultPanel)UiChild(canvasGo.transform, "Result", typeof(ResultPanel)).GetComponent(typeof(ResultPanel));
-            return (hud, result);
+            var ui = new Ui
+            {
+                Hud = UiComponent<SugarHud>(safe, "Hud"),
+                Boosters = UiComponent<BoosterBar>(safe, "Boosters"),
+                Result = UiComponent<ResultPanel>(canvasGo.transform, "Result"),
+                Map = UiComponent<MapScreen>(safe, "Map"),
+                Menu = UiComponent<MainMenu>(canvasGo.transform, "Menu"),
+                Dialog = UiComponent<DialogPanel>(canvasGo.transform, "Dialog"),
+            };
+            // Reclamele de test: ultimul copil, deasupra tuturor.
+            UiChild(canvasGo.transform, "AdService", typeof(AdService));
+            return ui;
         }
+
+        private static T UiComponent<T>(Transform parent, string name) where T : Component =>
+            (T)UiChild(parent, name, typeof(T)).GetComponent(typeof(T));
 
         // ------------------------------------------------------------ Utilitare
 

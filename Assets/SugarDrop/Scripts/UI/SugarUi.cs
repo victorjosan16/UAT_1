@@ -1,0 +1,98 @@
+using QuarryEmpire;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace SugarDrop
+{
+    /// <summary>Bucăți de interfață comune pentru ecranele Sugar Drop (fundal întunecat, cutii, contur pe text).</summary>
+    public static class SugarUi
+    {
+        /// <summary>Strat semi-transparent pe tot ecranul care blochează atingerile.</summary>
+        public static Image Dim(Transform parent, float alpha = 0.55f)
+        {
+            Image dim = UiFactory.CreateImage("Dim", parent, UiFactory.WhiteSprite, new Color(0.15f, 0.05f, 0.12f, alpha));
+            dim.preserveAspect = false;
+            dim.raycastTarget = true;
+            UiFactory.Stretch(dim.rectTransform, -300f);
+            return dim;
+        }
+
+        /// <summary>Cutie deschisă la culoare, cu o „panglică” roz sus și animație de apariție.</summary>
+        public static RectTransform Box(Transform parent, Vector2 size)
+        {
+            // Containerul animat (apare cu „pop”), cu umbra în spate și cutia deasupra.
+            RectTransform holder = UiFactory.CreateRect("BoxHolder", parent);
+            UiFactory.Place(holder, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            holder.gameObject.AddComponent<CanvasGroup>();
+            holder.gameObject.AddComponent<PopIn>();
+            Image shadow = UiFactory.CreatePanel("BoxShadow", holder, new Color(0.35f, 0.1f, 0.25f, 0.35f));
+            UiFactory.Place((RectTransform)shadow.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -14f), size);
+            Image box = UiFactory.CreatePanel("Box", holder, UiRoot.Theme.PanelLightColor);
+            var rect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            box.raycastTarget = true;
+            Image ribbon = UiFactory.CreatePanel("Ribbon", rect, Palette.WallStripe);
+            UiFactory.Place((RectTransform)ribbon.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size.x * 0.7f, 26f));
+            return rect;
+        }
+
+        /// <summary>Schimbă mărimea unei cutii create cu Box (cutie, umbră, panglică).</summary>
+        public static void ResizeBox(RectTransform box, Vector2 size)
+        {
+            box.sizeDelta = size;
+            var holder = (RectTransform)box.parent;
+            holder.sizeDelta = size;
+            ((RectTransform)holder.Find("BoxShadow")).sizeDelta = size;
+            ((RectTransform)box.Find("Ribbon")).sizeDelta = new Vector2(size.x * 0.7f, 26f);
+        }
+
+        /// <summary>Text cu contur închis (se citește pe orice fundal).</summary>
+        public static UiLabel Outlined(string name, Transform parent, string text, float size, Color color, float outline = 3f)
+        {
+            UiLabel label = UiFactory.CreateText(name, parent, text, size, TextAnchor.MiddleCenter, color);
+            var effect = label.gameObject.AddComponent<Outline>();
+            effect.effectColor = new Color(0.35f, 0.12f, 0.3f, 0.9f);
+            effect.effectDistance = new Vector2(outline, -outline);
+            return label;
+        }
+
+        /// <summary>„Sugar Drop” cu fiecare literă în altă culoare de bomboană.</summary>
+        public static string Logo(string text)
+        {
+            var builder = new System.Text.StringBuilder();
+            int index = 0;
+            foreach (char c in text)
+            {
+                if (c == ' ')
+                {
+                    builder.Append(' ');
+                    continue;
+                }
+                Color color = Palette.Tile(index++ % Palette.TileColorCount);
+                builder.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(color)).Append('>').Append(c).Append("</color>");
+            }
+            return builder.ToString();
+        }
+
+        public static void Click()
+        {
+            if (SugarAudio.Instance != null) SugarAudio.Instance.Play(SugarSound.Click);
+            SugarAudio.Buzz(0);
+        }
+
+        /// <summary>Arată o reclamă cu recompensă (sau dă recompensa direct dacă nu există serviciu de reclame).</summary>
+        public static void RewardedAd(string placement, System.Action onReward)
+        {
+            if (AdService.Instance == null)
+            {
+                onReward?.Invoke();
+                return;
+            }
+            AdService.Instance.ShowRewarded(placement, ok =>
+            {
+                if (ok) onReward?.Invoke();
+            });
+        }
+
+        public static string Time(int seconds) => $"{seconds / 60:00}:{seconds % 60:00}";
+    }
+}

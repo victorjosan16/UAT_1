@@ -1,0 +1,385 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace SugarDrop
+{
+    /// <summary>
+    /// Toată grafica jocului, desenată din cod (forme cu margini netede). Sprite-urile albe se colorează
+    /// prin SpriteRenderer.color / Image.color; cele colorate (curcubeu, biscuit, cupcake) au culorile lor.
+    /// Oricare poate fi înlocuit cu un desen propriu din Illustrator, cu același nume.
+    /// </summary>
+    public static class SugarSprites
+    {
+        private static readonly Dictionary<string, Sprite> Cache = new();
+
+        // ------------------------------------------------------------ Capace și pictograme
+
+        /// <summary>Capac rotunjit, lucios (alb; se colorează): mai deschis sus, cu o dungă de lumină.</summary>
+        public static Sprite Cap => Get("cap", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 6, 6, 116, 116, 30);
+            float a = Alpha(d);
+            float shade = Mathf.Lerp(0.82f, 1f, y / 128f);
+            float highlight = Alpha(RoundRect(x, y, 22, 82, 84, 26, 13)) * 0.35f;
+            float v = Mathf.Clamp01(shade + highlight);
+            return new Color(v, v, v, a);
+        }));
+
+        public static Sprite CapShadow => Get("capshadow", () => Paint(128, (x, y) =>
+            new Color(0f, 0f, 0f, Alpha(RoundRect(x, y, 6, 6, 116, 116, 30)))));
+
+        /// <summary>Pictograma unei culori: fiecare aromă are forma ei.</summary>
+        public static Sprite Icon(int color) => color switch
+        {
+            0 => Heart,
+            1 => Drop,
+            2 => Leaf,
+            3 => Star,
+            _ => Gem,
+        };
+
+        public static Sprite Heart => Get("heart", () => Mask(128, (x, y) => HeartDistance(x, y)));
+
+        /// <summary>Inimă din două cercuri și un vârf (distanță exactă → margini netede).</summary>
+        private static float HeartDistance(float x, float y)
+        {
+            float left = Vector2.Distance(new Vector2(x, y), new Vector2(46f, 78f)) - 24f;
+            float right = Vector2.Distance(new Vector2(x, y), new Vector2(82f, 78f)) - 24f;
+            float wedge = (Mathf.Abs(x - 64f) * 58f - (y - 20f) * 40f) / 70.4f;
+            return Mathf.Min(Mathf.Min(left, right), Mathf.Max(wedge, y - 76f));
+        }
+
+        public static Sprite Drop => Get("drop", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 52f);
+            float circle = p.magnitude - 34f;
+            // Vârful picăturii, în sus.
+            float tip = Mathf.Abs(p.x) * 1.15f + (p.y - 72f) * 0.55f;
+            return p.y > 0f ? Mathf.Min(circle, Mathf.Max(tip, -p.y)) : circle;
+        }));
+
+        public static Sprite Leaf => Get("leaf", () => Mask(128, (x, y) =>
+        {
+            // Frunză = intersecția a două cercuri, rotită 45°, cu o nervură.
+            Vector2 p = Rotate(new Vector2(x - 64f, y - 64f), 45f);
+            float a = Vector2.Distance(p, new Vector2(0f, -34f)) - 62f;
+            float b = Vector2.Distance(p, new Vector2(0f, 34f)) - 62f;
+            float leaf = Mathf.Max(a, b);
+            float vein = Mathf.Abs(p.x) - 2f;
+            return Mathf.Abs(p.y) < 24f ? Mathf.Max(leaf, -vein) : leaf;
+        }));
+
+        public static Sprite Star => Get("star", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 60f);
+            float angle = Mathf.Atan2(p.x, p.y);
+            float sector = Mathf.Repeat(angle, Mathf.PI * 2f / 5f) / (Mathf.PI * 2f / 5f);
+            float radius = Mathf.Lerp(56f, 26f, 1f - Mathf.Abs(sector * 2f - 1f));
+            return (p.magnitude - radius) * 0.8f;
+        }));
+
+        public static Sprite Gem => Get("gem", () => Paint(128, (x, y) =>
+        {
+            float d = Mathf.Abs(x - 64f) * 0.95f + Mathf.Abs(y - 64f) - 54f;
+            float a = Alpha(d);
+            // Fațete: jumătatea stângă mai deschisă.
+            float v = x < 64f ? (y > 64f ? 1f : 0.88f) : (y > 64f ? 0.9f : 0.76f);
+            return new Color(v, v, v, a);
+        }));
+
+        public static Sprite Circle => Get("circle", () => Mask(128, (x, y) => Vector2.Distance(new Vector2(x, y), new Vector2(64f, 64f)) - 60f));
+
+        public static Sprite Ring => Get("ring", () => Mask(128, (x, y) =>
+            Mathf.Abs(Vector2.Distance(new Vector2(x, y), new Vector2(64f, 64f)) - 52f) - 8f));
+
+        public static Sprite SoftDot => Get("softdot", () => Paint(64, (x, y) =>
+        {
+            float d = Vector2.Distance(new Vector2(x, y), new Vector2(32f, 32f)) / 30f;
+            return new Color(1f, 1f, 1f, Mathf.Clamp01(1f - d * d));
+        }));
+
+        public static Sprite Sparkle => Get("sparkle", () => Mask(64, (x, y) =>
+        {
+            Vector2 p = new(Mathf.Abs(x - 32f), Mathf.Abs(y - 32f));
+            return Mathf.Pow(p.x, 0.5f) + Mathf.Pow(p.y, 0.5f) - 5.2f;
+        }));
+
+        public static Sprite Crumb => Get("crumb", () => Mask(32, (x, y) => RoundRect(x, y, 4, 6, 24, 20, 7)));
+
+        public static Sprite Shard => Get("shard", () => Mask(32, (x, y) =>
+            Mathf.Max(Mathf.Abs(x - 16f) * 1.8f + (y - 30f) * 0.9f, 4f - y)));
+
+        // ------------------------------------------------------------ Capace speciale și obstacole
+
+        /// <summary>Dungi pentru capacul „dungat” (orizontal; rotit 90° pentru vertical).</summary>
+        public static Sprite Stripes => Get("stripes", () => Paint(128, (x, y) =>
+        {
+            float inside = Alpha(RoundRect(x, y, 10, 10, 108, 108, 26));
+            float band = Mathf.Abs(Mathf.Repeat(y, 28f) - 14f) < 5f ? 1f : 0f;
+            return new Color(1f, 1f, 1f, inside * band * 0.85f);
+        }));
+
+        /// <summary>Ramă pentru capacul „ambalat” (explodează în jur).</summary>
+        public static Sprite WrapFrame => Get("wrapframe", () => Mask(128, (x, y) =>
+        {
+            float outer = RoundRect(x, y, 4, 4, 120, 120, 32);
+            float inner = RoundRect(x, y, 18, 18, 92, 92, 22);
+            return Mathf.Max(outer, -inner);
+        }));
+
+        /// <summary>Capacul curcubeu (colorat, cu spirală).</summary>
+        public static Sprite Rainbow => Get("rainbow", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 64f);
+            float d = p.magnitude;
+            float a = Alpha(d - 58f);
+            float angle = Mathf.Atan2(p.y, p.x) / (Mathf.PI * 2f) + 0.5f;
+            float hue = Mathf.Repeat(angle + d / 90f, 1f);
+            Color c = Color.HSVToRGB(hue, 0.55f, 1f);
+            float centre = Alpha(d - 16f);
+            c = Color.Lerp(c, Color.white, centre);
+            c.a = a;
+            return c;
+        }));
+
+        /// <summary>Gheață peste capac (semitransparentă, cu reflexii).</summary>
+        public static Sprite Ice => Get("ice", () => Paint(128, (x, y) =>
+        {
+            float a = Alpha(RoundRect(x, y, 2, 2, 124, 124, 30)) * 0.6f;
+            float streak = Mathf.Abs((x - y) * 0.7071f + 20f) < 6f || Mathf.Abs((x - y) * 0.7071f - 18f) < 3f ? 0.35f : 0f;
+            float rim = Alpha(Mathf.Abs(RoundRect(x, y, 2, 2, 124, 124, 30) + 4f) - 3f) * 0.4f;
+            return new Color(0.85f, 0.95f, 1f, Mathf.Clamp01(a + streak + rim));
+        }));
+
+        /// <summary>Biscuitul (obstacol): rotunjit, auriu, cu bucăți de ciocolată.</summary>
+        public static Sprite Biscuit => Get("biscuit", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 6, 6, 116, 116, 34);
+            float a = Alpha(d);
+            var dough = new Color(0.93f, 0.72f, 0.42f);
+            var edge = new Color(0.78f, 0.52f, 0.27f);
+            Color c = Color.Lerp(dough, edge, Mathf.Clamp01((d + 14f) / 14f));
+            Vector2[] chips = { new(38, 40), new(84, 52), new(52, 86), new(90, 92), new(30, 78) };
+            foreach (Vector2 chip in chips)
+                if (Vector2.Distance(new Vector2(x, y), chip) < 9f) c = new Color(0.36f, 0.2f, 0.12f);
+            c.a = a;
+            return c;
+        }));
+
+        public static Sprite BiscuitCrack => Get("biscuitcrack", () => Mask(128, (x, y) =>
+        {
+            float l1 = Mathf.Abs((y - 64f) - (x - 64f) * 0.6f) - 2.5f;
+            float l2 = Mathf.Abs((x - 74f) + (y - 40f) * 0.4f) - 2f;
+            float inBox = RoundRect(x, y, 16, 16, 96, 96, 20);
+            return Mathf.Max(Mathf.Min(l1, y < 64f ? l2 : 99f), inBox);
+        }));
+
+        // ------------------------------------------------------------ Bomboane din grămadă
+
+        public static Sprite CandyVariant(int index) => (index % 3) switch
+        {
+            0 => CandySwirl,
+            1 => CandyWrapped,
+            _ => CandyHeart,
+        };
+
+        /// <summary>Bomboană rotundă cu spirală (albă; se colorează).</summary>
+        public static Sprite CandySwirl => Get("candyswirl", () => Paint(64, (x, y) =>
+        {
+            Vector2 p = new(x - 32f, y - 32f);
+            float d = p.magnitude;
+            float a = Alpha(d - 29f);
+            float angle = Mathf.Atan2(p.y, p.x);
+            float swirl = Mathf.Repeat(angle / (Mathf.PI * 2f) * 3f + d / 10f, 1f) < 0.5f ? 1f : 0.82f;
+            float shine = Alpha(Vector2.Distance(new Vector2(x, y), new Vector2(22f, 42f)) - 6f) * 0.5f;
+            float v = Mathf.Clamp01(swirl + shine);
+            return new Color(v, v, v, a);
+        }));
+
+        /// <summary>Bomboană ambalată (oval cu „aripioare”).</summary>
+        public static Sprite CandyWrapped => Get("candywrapped", () => Paint(64, (x, y) =>
+        {
+            Vector2 p = new(x - 32f, y - 32f);
+            float body = new Vector2(p.x / 1.25f, p.y).magnitude - 16f;
+            float wings = Mathf.Max(Mathf.Abs(p.y) - (Mathf.Abs(p.x) - 14f) * 0.8f, Mathf.Abs(p.x) - 30f);
+            float d = Mathf.Min(body, wings);
+            float v = body < 0f ? 1f : 0.85f;
+            return new Color(v, v, v, Alpha(d));
+        }));
+
+        public static Sprite CandyHeart => Get("candyheart", () => Paint(64, (x, y) =>
+        {
+            float d = HeartDistance(x * 2f, y * 2f) * 0.5f;
+            float shine = Alpha(Vector2.Distance(new Vector2(x, y), new Vector2(22f, 40f)) - 5f) * 0.45f;
+            float v = Mathf.Clamp01(0.92f + shine);
+            return new Color(v, v, v, Alpha(d));
+        }));
+
+        // ------------------------------------------------------------ Decor
+
+        /// <summary>Fundal în degrade vertical (roz-piersică sus, lavandă jos).</summary>
+        public static Sprite BackgroundGradient => Get("bggradient", () => Paint(8, 256, (x, y) =>
+            Color.Lerp(new Color(0.84f, 0.76f, 1f), new Color(1f, 0.86f, 0.9f), y / 255f)));
+
+        /// <summary>Dungi diagonale roz/alb (ca un baston de bomboană), repetabile.</summary>
+        public static Sprite CandyCane => Get("candycane", () => PaintRepeat(64, (x, y) =>
+            Mathf.Repeat(x + y, 32f) < 16f ? new Color(1f, 0.56f, 0.69f) : Color.white));
+
+        public static Sprite Beam => Get("beam", () => Paint(128, 32, (x, y) =>
+        {
+            float v = 1f - Mathf.Abs(y - 16f) / 16f;
+            float ends = Mathf.Clamp01(Mathf.Min(x, 127 - x) / 16f);
+            return new Color(1f, 1f, 1f, Mathf.Clamp01(v * v * 1.5f) * ends);
+        }));
+
+        /// <summary>Partea de jos a cupcake-ului (folie cu caneluri).</summary>
+        public static Sprite CupWrapper => Get("cupwrapper", () => Paint(128, (x, y) =>
+        {
+            float halfWidth = Mathf.Lerp(40f, 56f, y / 80f);
+            float d = Mathf.Max(Mathf.Abs(x - 64f) - halfWidth, Mathf.Max(4f - y, y - 80f));
+            float a = Alpha(d);
+            float groove = Mathf.Abs(Mathf.Repeat(x - 64f + 6f, 14f) - 7f) < 2f ? 0.82f : 1f;
+            Color c = new Color(1f, 0.55f, 0.68f) * groove;
+            c.a = a;
+            return c;
+        }));
+
+        /// <summary>Glazura cupcake-ului (nor din cercuri).</summary>
+        public static Sprite Frosting => Get("frosting", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float d = Mathf.Min(Mathf.Min(Vector2.Distance(p, new Vector2(34, 46)) - 30f, Vector2.Distance(p, new Vector2(94, 46)) - 30f),
+                Mathf.Min(Vector2.Distance(p, new Vector2(64, 66)) - 40f, Vector2.Distance(p, new Vector2(64, 40)) - 34f));
+            Color c = Color.Lerp(new Color(1f, 0.96f, 0.98f), new Color(0.98f, 0.86f, 0.92f), Mathf.Clamp01((64f - y) / 64f));
+            float sprinkle = Mathf.Repeat(x * 0.37f + y * 0.71f, 23f) < 1.4f && d < -6f ? 1f : 0f;
+            if (sprinkle > 0f) c = Color.HSVToRGB(Mathf.Repeat(x * 0.013f, 1f), 0.6f, 1f);
+            c.a = Alpha(d);
+            return c;
+        }));
+
+        public static Sprite Smile => Get("smile", () => Mask(64, (x, y) =>
+        {
+            float ring = Mathf.Abs(Vector2.Distance(new Vector2(x, y), new Vector2(32f, 40f)) - 18f) - 3.5f;
+            return Mathf.Max(ring, y - 34f);
+        }));
+
+        public static Sprite Frown => Get("frown", () => Mask(64, (x, y) =>
+        {
+            float ring = Mathf.Abs(Vector2.Distance(new Vector2(x, y), new Vector2(32f, 18f)) - 16f) - 3.5f;
+            return Mathf.Max(ring, 24f - y);
+        }));
+
+        public static Sprite Bomb => Get("bomb", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float body = Vector2.Distance(p, new Vector2(60f, 54f)) - 42f;
+            float cap = RoundRect(x, y, 76, 84, 26, 22, 6);
+            float fuse = Mathf.Abs(Vector2.Distance(p, new Vector2(104f, 100f)) - 14f) - 3f;
+            fuse = Mathf.Max(fuse, Mathf.Max(96f - x, 98f - y));
+            float d = Mathf.Min(body, Mathf.Min(cap, fuse));
+            Color c = body < 0f ? Color.Lerp(new Color(0.25f, 0.22f, 0.35f), new Color(0.5f, 0.45f, 0.65f), Alpha(Vector2.Distance(p, new Vector2(46f, 70f)) - 12f))
+                : cap < 0f ? new Color(0.6f, 0.6f, 0.7f) : new Color(1f, 0.75f, 0.3f);
+            c.a = Alpha(d);
+            return c;
+        }));
+
+        public static Sprite ShuffleIcon => Get("shuffle", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 64f);
+            float ring = Mathf.Abs(p.magnitude - 38f) - 9f;
+            float angle = Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg;
+            bool gap = (angle > 60f && angle < 100f) || (angle > -120f && angle < -80f);
+            if (gap) ring = Mathf.Max(ring, 4f);
+            Vector2 tipA = new(Mathf.Cos(60f * Mathf.Deg2Rad) * 38f, Mathf.Sin(60f * Mathf.Deg2Rad) * 38f);
+            Vector2 tipB = -tipA;
+            float headA = Mathf.Max(Mathf.Abs((p - tipA).x) * 0.9f + (p - tipA).y * 0.7f - 16f, -(p - tipA).y - 2f);
+            float headB = Mathf.Max(Mathf.Abs((p - tipB).x) * 0.9f - (p - tipB).y * 0.7f - 16f, (p - tipB).y - 2f);
+            return Mathf.Min(ring, Mathf.Min(headA, headB));
+        }));
+
+        public static Sprite Lock => Get("lock", () => Mask(128, (x, y) =>
+        {
+            float body = RoundRect(x, y, 30, 18, 68, 56, 12);
+            float shackle = Mathf.Abs(Vector2.Distance(new Vector2(x, y), new Vector2(64f, 76f)) - 22f) - 7f;
+            shackle = Mathf.Max(shackle, 70f - y);
+            return Mathf.Min(body, shackle);
+        }));
+
+        /// <summary>Rotiță (setări): cerc cu 8 dinți și o gaură în mijloc.</summary>
+        public static Sprite Gear => Get("gear", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 64f);
+            float angle = Mathf.Atan2(p.y, p.x);
+            float tooth = Mathf.Clamp01((Mathf.Cos(angle * 8f) - 0.1f) * 3f);
+            float outer = p.magnitude - (40f + tooth * 14f);
+            float hole = 16f - p.magnitude;
+            return Mathf.Max(outer, hole);
+        }));
+
+        /// <summary>Inimioară plină, colorată (vieți).</summary>
+        public static Sprite LifeHeart => Get("lifeheart", () => Paint(128, (x, y) =>
+        {
+            float d = HeartDistance(x, y);
+            float shine = Alpha(Vector2.Distance(new Vector2(x, y), new Vector2(42f, 78f)) - 10f) * 0.6f;
+            Color c = Color.Lerp(new Color(1f, 0.33f, 0.45f), Color.white, shine);
+            c.a = Alpha(d);
+            return c;
+        }));
+
+        // ------------------------------------------------------------ Implementare
+
+        private static Sprite Get(string key, Func<Sprite> create)
+        {
+            if (Cache.TryGetValue(key, out Sprite sprite) && sprite != null) return sprite;
+            sprite = create();
+            sprite.name = key;
+            Cache[key] = sprite;
+            return sprite;
+        }
+
+        private static float Alpha(float distance) => Mathf.Clamp01(0.5f - distance);
+
+        private static Vector2 Rotate(Vector2 p, float degrees)
+        {
+            float r = degrees * Mathf.Deg2Rad;
+            float c = Mathf.Cos(r), s = Mathf.Sin(r);
+            return new Vector2(p.x * c - p.y * s, p.x * s + p.y * c);
+        }
+
+        /// <summary>Distanța semnată până la un dreptunghi rotunjit (colțul stânga-jos x,y; lățime w, înălțime h).</summary>
+        private static float RoundRect(float px, float py, float x, float y, float w, float h, float r)
+        {
+            float qx = Mathf.Abs(px + 0.5f - (x + w * 0.5f)) - (w * 0.5f - r);
+            float qy = Mathf.Abs(py + 0.5f - (y + h * 0.5f)) - (h * 0.5f - r);
+            return new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude + Mathf.Min(Mathf.Max(qx, qy), 0f) - r;
+        }
+
+        private static Sprite Mask(int size, Func<int, int, float> distance) =>
+            Paint(size, (x, y) => new Color(1f, 1f, 1f, Alpha(distance(x, y))));
+
+        private static Sprite Paint(int size, Func<int, int, Color> pixel) => Paint(size, size, pixel);
+
+        private static Sprite Paint(int width, int height, Func<int, int, Color> pixel) =>
+            Build(width, height, pixel, TextureWrapMode.Clamp);
+
+        private static Sprite PaintRepeat(int size, Func<int, int, Color> pixel) =>
+            Build(size, size, pixel, TextureWrapMode.Repeat);
+
+        private static Sprite Build(int width, int height, Func<int, int, Color> pixel, TextureWrapMode wrap)
+        {
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            {
+                wrapMode = wrap,
+                filterMode = FilterMode.Bilinear,
+            };
+            var pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    pixels[y * width + x] = pixel(x, y);
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+        }
+    }
+}
