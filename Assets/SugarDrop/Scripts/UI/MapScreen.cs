@@ -18,6 +18,7 @@ namespace SugarDrop
         public event Action SettingsClicked;
 
         private GameObject _root;
+        private RectTransform _content;
         private UiLabel _lives;
         private UiLabel _lifeTimer;
         private UiLabel _coins;
@@ -42,9 +43,13 @@ namespace SugarDrop
             background.raycastTarget = true;
             UiFactory.Stretch(background.rectTransform, -300f);
             _root = background.gameObject;
+            // Fundalul depășește ecranul cu 300 px pe fiecare parte (acoperă și marginile);
+            // conținutul stă într-un dreptunghi cât ecranul, altfel bara de sus și „Joacă” ar ieși din ecran.
+            _content = UiFactory.CreateRect("Content", _root.transform);
+            UiFactory.Stretch(_content, 300f);
 
             // Drumul: puncte mici între noduri, apoi nodurile.
-            _path = UiFactory.CreateRect("Path", _root.transform);
+            _path = UiFactory.CreateRect("Path", _content);
             UiFactory.Stretch(_path);
             for (int i = 0; i < Nodes - 1; i++)
             for (int k = 1; k < 4; k++)
@@ -57,7 +62,7 @@ namespace SugarDrop
             for (int i = 0; i < Nodes; i++) BuildNode(i, theme);
 
             // Bara de sus: vieți și monede + setări.
-            Image livesPill = UiFactory.CreatePanel("LivesPill", _root.transform, theme.PanelColor);
+            Image livesPill = UiFactory.CreatePanel("LivesPill", _content, theme.PanelColor);
             UiFactory.Place((RectTransform)livesPill.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(330f, -24f), new Vector2(300f, 100f));
             Image heart = UiFactory.CreateImage("Heart", livesPill.transform, SugarSprites.LifeHeart, Color.white);
             UiFactory.Place(heart.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 0f), new Vector2(110f, 110f));
@@ -66,14 +71,14 @@ namespace SugarDrop
             _lifeTimer = UiFactory.CreateText("Timer", livesPill.transform, "", 38);
             UiFactory.Place(_lifeTimer.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(210f, 80f));
 
-            Image coinsPill = UiFactory.CreatePanel("CoinsPill", _root.transform, theme.PanelColor);
+            Image coinsPill = UiFactory.CreatePanel("CoinsPill", _content, theme.PanelColor);
             UiFactory.Place((RectTransform)coinsPill.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-150f, -24f), new Vector2(260f, 100f));
             Image coin = UiFactory.CreateImage("Coin", coinsPill.transform, ProceduralSprites.Coin, Color.white);
             UiFactory.Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 0f), new Vector2(90f, 90f));
             _coins = UiFactory.CreateText("Count", coinsPill.transform, "0", 42);
             UiFactory.Place(_coins.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(64f, 0f), new Vector2(180f, 80f));
 
-            Button settings = UiFactory.CreateIconButton("Settings", _root.transform, SugarSprites.Gear, theme.PanelColor, () =>
+            Button settings = UiFactory.CreateIconButton("Settings", _content, SugarSprites.Gear, theme.PanelColor, () =>
             {
                 SugarUi.Click();
                 SettingsClicked?.Invoke();
@@ -81,7 +86,7 @@ namespace SugarDrop
             UiFactory.Place((RectTransform)settings.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(104f, 104f));
 
             // Butonul mare „Joacă”.
-            Button play = UiFactory.CreateButton("Play", _root.transform, "", theme.PositiveColor, () =>
+            Button play = UiFactory.CreateButton("Play", _content, "", theme.PositiveColor, () =>
             {
                 SugarUi.Click();
                 PlayClicked?.Invoke();
@@ -98,7 +103,7 @@ namespace SugarDrop
 
         private void BuildNode(int index, UiTheme theme)
         {
-            RectTransform node = UiFactory.CreateRect("Node" + index, _root.transform);
+            RectTransform node = UiFactory.CreateRect("Node" + index, _content);
             UiFactory.Place(node, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), NodePosition(index), new Vector2(150f, 150f));
             Image shadow = UiFactory.CreateImage("Shadow", node, theme.Circle, new Color(0.35f, 0.1f, 0.3f, 0.3f));
             UiFactory.Stretch(shadow.rectTransform);
