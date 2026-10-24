@@ -533,9 +533,14 @@ namespace QuarryEmpire.EditorTools
 
 /// <summary>
 /// Punctul de intrare pentru Unity Build Automation (câmpul „Pre-Export Method”: QuarryCloudBuild.PreExport).
-/// Rulează înainte de build și generează scena și asset-urile Etapei 1.
+/// Rulează înainte de build și generează scena și asset-urile Etapei 1, apoi aplică Etapa Vizuală.
+/// Dacă etapa vizuală nu poate rula (ex. TMP indisponibil), build-ul continuă cu scena Etapei 1.
 /// </summary>
 public static class QuarryCloudBuild
 {
-    public static void PreExport() => QuarryEmpire.EditorTools.Stage1Setup.Run();
+    public static void PreExport()
+    {
+        QuarryEmpire.EditorTools.Stage1Setup.Run();
+        QuarryEmpire.EditorTools.VisualSetup.Run();
+    }
 }

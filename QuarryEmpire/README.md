@@ -5,14 +5,15 @@ Acest folder este un proiect Unity complet (`Assets/`, `Packages/`, `ProjectSett
 ## Generare automată a conținutului
 `Assets/_Game/Editor/Stage1Setup.cs` creează layerele, URP, setările Android, materialele,
 ScriptableObjects, prefab-urile și scena `Game`.
-- În Editor: meniul **Quarry Empire → Setup Etapa 1**.
+- În Editor: meniul **Quarry Empire → Setup Complet (Etapa 1 + Vizual)** (sau doar **Setup Etapa 1**).
+- Etapa Vizuală (personaj stilizat, mediu, HUD, efecte, profiluri 60/30 FPS) e descrisă în [`VISUAL.md`](VISUAL.md).
 - În Unity Build Automation: **Pre-Export Method = `QuarryCloudBuild.PreExport`**.
 
 ## Build în cloud (fără calculator) — Unity Build Automation
 1. cloud.unity.com → autentificare cu Unity ID → creează proiectul „Quarry Empire”.
 2. DevOps → Build Automation → configurează (free tier: minute gratuite pe lună).
 3. Source control: GitHub → repo `victorjosan16/UAT_1`.
-4. Build configuration: Platform **Android**, Branch `ccr-1d10ca5c-f6qz54`,
+4. Build configuration: Platform **Android**, Branch `ccr-47b84d6c-lm0e0i` (cu Etapa Vizuală),
    Project subfolder **`QuarryEmpire`**, Unity version: cel mai nou **Unity 6 (6000.0) LTS**,
    Pre-Export Method **`QuarryCloudBuild.PreExport`**, output **APK** (nu App Bundle).
 5. Start build → descarcă APK-ul pe telefon → instalează.
