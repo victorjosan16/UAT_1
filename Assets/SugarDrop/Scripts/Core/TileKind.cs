@@ -3,15 +3,15 @@ namespace SugarDrop
     /// <summary>Tipurile de piese de pe tablă.</summary>
     public enum TileKind
     {
-        /// <summary>Bomboană obișnuită, colorată (se elimină în grupuri de 3+ piese la fel, lipite).</summary>
+        /// <summary>Bomboană obișnuită, colorată (se elimină în linii de 3+ piese la fel).</summary>
         Normal,
-        /// <summary>Rachetă orizontală (din grup de 5–6): curăță tot rândul.</summary>
+        /// <summary>Rachetă orizontală (din 4 în linie verticală): curăță tot rândul.</summary>
         RocketH,
-        /// <summary>Rachetă verticală (din grup de 5–6): curăță toată coloana.</summary>
+        /// <summary>Rachetă verticală (din 4 în linie orizontală): curăță toată coloana.</summary>
         RocketV,
-        /// <summary>Bombă (din grup de 7–9): explozie 5×5.</summary>
+        /// <summary>Bombă (din linii în L sau T): explozie 3×3.</summary>
         Bomb,
-        /// <summary>Bomboană curcubeu (din grup de 10+): elimină toate bomboanele unei culori.</summary>
+        /// <summary>Bomboană curcubeu (din 5 în linie): elimină toate bomboanele unei culori.</summary>
         Rainbow,
         /// <summary>Bomboană-ingredient: coboară odată cu piesele și iese jos, în borcan.</summary>
         Ingredient,
@@ -29,9 +29,9 @@ namespace SugarDrop
         public const int RocketMin = 5;
         public const int BombMin = 7;
         public const int RainbowMin = 10;
-        /// <summary>Latura zonei bombei (5 = 5×5).</summary>
-        public const int BombSize = 5;
-        public const int BombComboSize = 7;
+        /// <summary>Latura zonei bombei (3 = 3×3, ca în jocurile clasice); două bombe combinate: 5×5.</summary>
+        public const int BombSize = 3;
+        public const int BombComboSize = 5;
         public const int MaxIce = 3;
 
         /// <summary>Ce piesă specială iese dintr-un grup de mărimea dată (Normal = niciuna).</summary>

@@ -6,20 +6,19 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>
-    /// Tabla din scenă: desenează celulele (cu glazură și ieșirile spre borcan) și piesele, iar atingerile le trimite
-    /// motorului de reguli (BlastEngine). Motorul calculează instant toți pașii (eliminări, căderi, piese noi,
-    /// bomboane care ies), iar tabla îi animă pe rând și anunță jocul prin evenimente.
+    /// Tabla din scenă: desenează celulele (cu glazură și ieșirile spre borcan) și piesele, iar schimburile le trimite
+    /// motorului de reguli (BlastEngine). Motorul calculează instant toți pașii (schimb, eliminări, căderi, cascade,
+    /// piese noi, bomboane care ies), iar tabla îi animă pe rând și anunță jocul prin evenimente.
     ///
-    /// Starea tablei e una singură la un moment dat (liberă / piesă specială selectată / animează): cât animează,
+    /// Starea tablei e una singură la un moment dat (liberă / piesă selectată / animează): cât animează,
     /// atingerile sunt ignorate, deci acțiunile nu se pot suprapune.
     ///
-    /// Piese speciale: o atingere pe o piesă specială fără vecine speciale o activează imediat. Dacă are vecine
-    /// speciale, prima atingere o selectează (vecinele strălucesc); a doua atingere pe o vecină le combină,
-    /// pe aceeași piesă o activează singură, iar în altă parte anulează selecția.
+    /// Mutarea: tragi o piesă spre o vecină (sau atingi o piesă, apoi o vecină). Dacă schimbul nu face nicio linie,
+    /// piesele se întorc la loc și mutarea nu se consumă.
     /// </summary>
     public class Board : MonoBehaviour
     {
-        private enum Phase { Idle, SpecialSelected, Animating }
+        private enum Phase { Idle, Selected, Animating }
 
         [SerializeField] private float cellSize = 0.92f;
         [SerializeField] private float popDuration = 0.22f;
@@ -33,11 +32,11 @@ namespace SugarDrop
 
         /// <summary>O acțiune validă a jucătorului (consumă o mutare).</summary>
         public event Action MoveMade;
-        /// <summary>O atingere fără efect (grup de 1–2, obstacol): nu consumă mutarea.</summary>
+        /// <summary>Un schimb fără efect (nicio linie) sau o piesă care nu se poate muta: nu consumă mutarea.</summary>
         public event Action InvalidTap;
         /// <summary>Un pas tocmai a început să fie animat (pentru scor și obiective).</summary>
         public event Action<BoardStep> StepPlayed;
-        /// <summary>Un grup a fost spart: mărimea, centrul (lume) și culoarea (efectele cresc cu mărimea).</summary>
+        /// <summary>Linii potrivite eliminate: câte bomboane, unde (lume) și culoarea (efectele cresc cu mărimea).</summary>
         public event Action<int, Vector3, int> GroupBlasted;
         /// <summary>O piesă dispare: culoarea, tipul și poziția (efectul diferă după aromă).</summary>
         public event Action<int, TileKind, Vector3> TileCleared;
@@ -79,7 +78,7 @@ namespace SugarDrop
         private SpriteRenderer[,] _glaze;
         private Vector2 _bottomCenter;
         private Phase _phase;
-        private Vector2Int _selectedSpecial;
+        private Vector2Int _selected;
         private Tile _pressed;
         private int _clearedThisMove;
         private Vector3 _clearedCenter;
@@ -218,18 +217,14 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Degetul pe tablă (doar vizual)
 
-        /// <summary>Degetul apasă o celulă: piesa se ridică, iar grupul care ar dispărea strălucește.</summary>
+        /// <summary>Degetul apasă o celulă: piesa se ridică puțin (doar vizual).</summary>
         public void Press(Vector2Int? cell)
         {
             if (_pressed != null) _pressed.SetSelected(false);
             _pressed = null;
-            if (_phase == Phase.SpecialSelected) return; // păstrăm strălucirea selecției
-            ClearHighlights();
             if (!cell.HasValue || _engine == null || Busy) return;
             _pressed = TileAt(cell.Value);
             if (_pressed != null) _pressed.SetSelected(true);
-            List<Vector2Int> group = _engine.GroupAt(cell.Value);
-            if (group.Count >= BlastRules.MinGroup) Highlight(group);
         }
 
         private void Highlight(IEnumerable<Vector2Int> cells)
@@ -252,56 +247,64 @@ namespace SugarDrop
 
         public bool HasValidMove() => _engine != null && _engine.HasValidMove();
 
-        public bool TryFindBestHint(Func<int, int> colorWeight, out Vector2Int cell)
+        /// <summary>Cel mai bun schimb: piesa de mutat și celula vecină spre care se mută.</summary>
+        public bool TryFindBestHint(Func<int, int> colorWeight, out Vector2Int from, out Vector2Int to)
         {
-            cell = default;
-            return _engine != null && _engine.TryFindBestTap(colorWeight, out cell);
+            from = to = default;
+            return _engine != null && _engine.TryFindBestSwap(colorWeight, out from, out to);
         }
 
-        /// <summary>Indiciu: grupul (sau piesa specială) sugerat tremură și strălucește scurt.</summary>
+        /// <summary>Indiciu: cele două piese de schimbat tremură și strălucesc scurt.</summary>
         public void ShowHint(Func<int, int> colorWeight)
         {
-            if (_phase != Phase.Idle || !TryFindBestHint(colorWeight, out Vector2Int cell)) return;
-            List<Vector2Int> group = _engine.GroupAt(cell);
-            if (group.Count == 0) group.Add(cell);
-            foreach (Vector2Int c in group) TileAt(c)?.Wiggle();
+            if (_phase != Phase.Idle || !TryFindBestHint(colorWeight, out Vector2Int from, out Vector2Int to)) return;
+            TileAt(from)?.Wiggle();
+            TileAt(to)?.Wiggle();
         }
 
         // ------------------------------------------------------------ Acțiuni
 
-        /// <summary>Atingerea jucătorului (după ridicarea degetului de pe aceeași celulă).</summary>
+        /// <summary>
+        /// Atingere simplă (fără tragere): prima selectează piesa, a doua pe o vecină face schimbul,
+        /// pe aceeași piesă sau în altă parte anulează / mută selecția.
+        /// </summary>
         public void Tap(Vector2Int cell)
         {
             if (_engine == null || _phase == Phase.Animating) return;
-
-            if (_phase == Phase.SpecialSelected)
+            if (_phase == Phase.Selected)
             {
-                Vector2Int selected = _selectedSpecial;
+                Vector2Int selected = _selected;
                 CancelSelection();
-                if (cell == selected) Run(_engine.Tap(cell), true);
-                else if (Mathf.Abs(cell.x - selected.x) + Mathf.Abs(cell.y - selected.y) == 1 && _engine.IsSpecialAt(cell))
-                    Run(_engine.Combine(selected, cell), true);
-                return; // în altă parte: doar anulează selecția
+                if (cell == selected) return;
+                if (Mathf.Abs(cell.x - selected.x) + Mathf.Abs(cell.y - selected.y) == 1)
+                {
+                    Swap(selected, cell);
+                    return;
+                }
             }
-
-            if (_engine.IsSpecialAt(cell) && _engine.AdjacentSpecials(cell).Count > 0)
-            {
-                // Are vecine speciale: o selectăm; vecinele strălucesc ca invitație la combinare.
-                _phase = Phase.SpecialSelected;
-                _selectedSpecial = cell;
-                ClearHighlights();
-                Highlight(new[] { cell });
-                Highlight(_engine.AdjacentSpecials(cell));
-                TileAt(cell)?.Bounce(0.25f);
-                return;
-            }
-
-            List<BoardStep> steps = _engine.Tap(cell);
-            if (steps == null)
+            if (!_engine.TryGetPiece(cell, out PieceInfo piece) || piece.Ice > 0 || piece.Chained
+                || piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate)
             {
                 TileAt(cell)?.Wiggle();
-                ClearHighlights();
+                return;
+            }
+            _phase = Phase.Selected;
+            _selected = cell;
+            Highlight(new[] { cell });
+            TileAt(cell)?.Bounce(0.2f);
+        }
+
+        /// <summary>Schimbă două piese vecine (tragere sau a doua atingere). Fără linie: se întorc la loc.</summary>
+        public void Swap(Vector2Int a, Vector2Int b)
+        {
+            if (_engine == null || _phase == Phase.Animating) return;
+            CancelSelection();
+            if (!_engine.IsValid(a) || !_engine.IsValid(b)) return;
+            List<BoardStep> steps = _engine.Swap(a, b);
+            if (steps == null)
+            {
                 InvalidTap?.Invoke();
+                StartCoroutine(SwapBack(a, b));
                 return;
             }
             Run(steps, true);
@@ -309,7 +312,7 @@ namespace SugarDrop
 
         public void CancelSelection()
         {
-            if (_phase != Phase.SpecialSelected) return;
+            if (_phase != Phase.Selected) return;
             _phase = Phase.Idle;
             ClearHighlights();
         }
@@ -325,6 +328,7 @@ namespace SugarDrop
         /// <summary>Ajutorul „bombă”: explozie 3×3 (nu consumă mutarea).</summary>
         public bool Blast(Vector2Int center)
         {
+            CancelSelection();
             if (_phase != Phase.Idle || _engine == null || !_engine.IsValid(center)) return false;
             List<BoardStep> steps = _engine.Blast(center);
             if (steps == null) return false;
@@ -335,6 +339,7 @@ namespace SugarDrop
         /// <summary>Ajutorul „amestecă”.</summary>
         public bool ShuffleBooster()
         {
+            CancelSelection();
             if (_phase != Phase.Idle || _engine == null) return false;
             Run(new List<BoardStep> { _engine.ShuffleStep() }, false);
             return true;
@@ -362,6 +367,7 @@ namespace SugarDrop
         /// <summary>Finalul dulce: activează următoarea piesă specială.</summary>
         public bool DetonateNextSpecial()
         {
+            CancelSelection();
             if (_phase != Phase.Idle || _engine == null) return false;
             List<BoardStep> steps = _engine.DetonateNextSpecial();
             if (steps == null) return false;
@@ -398,6 +404,7 @@ namespace SugarDrop
                     case StepKind.Shuffle: yield return AnimateShuffle(step); break;
                     case StepKind.Grow: yield return AnimateGrow(step); break;
                     case StepKind.BossAttack: yield return AnimateBossAttack(step); break;
+                    case StepKind.Swap: yield return AnimateSwap(step); break;
                 }
             }
             if (_clearedThisMove > 0) MoveResolved?.Invoke(_clearedThisMove, _clearedCenter / _clearedThisMove);
@@ -525,6 +532,38 @@ namespace SugarDrop
                 }
             Shuffled?.Invoke();
             yield return new WaitForSeconds(0.35f);
+        }
+
+        private const float SwapDuration = 0.16f;
+
+        private IEnumerator AnimateSwap(BoardStep step)
+        {
+            foreach (PieceMove move in step.Moves)
+            {
+                if (!_tiles.TryGetValue(move.Piece.Id, out Tile tile)) continue;
+                tile.Cell = move.To;
+                tile.MoveTo(CellCenter(move.To), SwapDuration);
+            }
+            yield return new WaitForSeconds(SwapDuration + 0.02f);
+        }
+
+        /// <summary>Schimb fără linie: piesele pornesc una spre alta și se întorc la loc.</summary>
+        private IEnumerator SwapBack(Vector2Int a, Vector2Int b)
+        {
+            Tile ta = TileAt(a), tb = TileAt(b);
+            if (ta == null || tb == null)
+            {
+                ta?.Wiggle();
+                yield break;
+            }
+            _phase = Phase.Animating;
+            ta.MoveTo(CellCenter(b), SwapDuration);
+            tb.MoveTo(CellCenter(a), SwapDuration);
+            yield return new WaitForSeconds(SwapDuration + 0.03f);
+            if (ta != null) ta.MoveTo(CellCenter(a), SwapDuration);
+            if (tb != null) tb.MoveTo(CellCenter(b), SwapDuration);
+            yield return new WaitForSeconds(SwapDuration + 0.02f);
+            _phase = Phase.Idle;
         }
 
         /// <summary>Atacul lovește piesele pe rând (ca o ploaie), fiecare tremură când se schimbă.</summary>

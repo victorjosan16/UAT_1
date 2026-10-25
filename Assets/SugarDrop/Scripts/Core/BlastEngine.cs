@@ -5,12 +5,12 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>
-    /// Regulile tablei „atinge și sparge” (pur, fără nimic vizual, testabil în afara Unity):
-    /// atingi un grup de cel puțin 3 bomboane la fel, lipite pe orizontală/verticală (căutare în lățime), și tot grupul
-    /// dispare. Grupurile mari lasă în locul atins o piesă specială (rachetă 5–6, bombă 7–9, curcubeu 10+).
-    /// Piesele speciale se activează la atingere sau se combină cu una vecină. Apoi piesele cad, intră piese noi
-    /// de sus, bomboanele-ingredient ies jos spre borcan. Obstacole: gheață (1–3 straturi), lanțuri, lăzi, ciocolată
-    /// care crește, glazură pe celule. Fiecare acțiune întoarce pașii pe care tabla din scenă îi animă.
+    /// Regulile tablei (pur, fără nimic vizual, testabil în afara Unity), ca în jocurile clasice cu bomboane:
+    /// schimbi două piese vecine și liniile de 3+ bomboane la fel (orizontal/vertical) dispar. 4 în linie lasă o
+    /// rachetă, liniile în L/T o bombă, 5 în linie un curcubeu. O piesă specială mutată se activează, două speciale
+    /// schimbate între ele se combină. Apoi piesele cad, intră piese noi de sus, liniile nou formate dispar în cascadă,
+    /// bomboanele-ingredient ies jos spre borcan. Obstacole: gheață (1–3 straturi), lanțuri, lăzi, ciocolată care
+    /// crește, glazură pe celule. Fiecare acțiune întoarce pașii pe care tabla din scenă îi animă.
     /// </summary>
     public sealed class BlastEngine
     {
@@ -28,7 +28,6 @@ namespace SugarDrop
             public bool IsSpecial => BlastRules.IsSpecial(Kind);
             public bool Locked => Ice > 0 || Chained;
             public bool CanGroup => Kind == TileKind.Normal && !Locked && Color >= 0;
-            public bool CanTap => !Locked && (Kind == TileKind.Normal || IsSpecial);
             public bool Falls => !IsBlocker && !Locked;
         }
 
@@ -113,7 +112,27 @@ namespace SugarDrop
                 IngredientsOnBoard++;
             }
 
+            // Tabla pornește fără linii gata făcute (ca în jocurile clasice).
+            BreakMatches();
             if (!HasValidMove()) ShuffleStep();
+        }
+
+        /// <summary>Recolorează bomboanele libere până nu mai există nicio linie de 3+ (la start și la amestecare).</summary>
+        private void BreakMatches()
+        {
+            for (int guard = 0; guard < 200; guard++)
+            {
+                List<MatchGroup> groups = FindMatches();
+                if (groups.Count == 0) return;
+                foreach (MatchGroup g in groups)
+                    foreach (Vector2Int c in g.Cells)
+                    {
+                        Piece p = At(c);
+                        if (p.Locked || !HasMatchAt(c)) continue;
+                        int start = _random.Next(Config.Colors);
+                        for (int i = 0; i < Config.Colors && HasMatchAt(c); i++) p.Color = (start + i) % Config.Colors;
+                    }
+            }
         }
 
         // ------------------------------------------------------------ Acces
@@ -175,121 +194,179 @@ namespace SugarDrop
             }
         }
 
-        // ------------------------------------------------------------ Grupuri
+        // ------------------------------------------------------------ Potriviri (3+ în linie)
 
-        /// <summary>Grupul de bomboane la fel, lipite (sus/jos/stânga/dreapta), care conține celula (căutare în lățime).</summary>
-        public List<Vector2Int> GroupAt(Vector2Int cell)
+        /// <summary>Bomboană care poate face parte dintr-o linie (și cele cu gheață/lanț: linia le sparge stratul).</summary>
+        private static bool CanMatch(Piece p) => p != null && p.Kind == TileKind.Normal && p.Color >= 0;
+
+        /// <summary>Piesă care se poate muta (schimba cu o vecină): nu obstacolele și nu bomboanele blocate.</summary>
+        private static bool CanMove(Piece p) => p != null && !p.Locked && !p.IsBlocker;
+
+        private static bool AreNeighbours(Vector2Int a, Vector2Int b) => Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y) == 1;
+
+        /// <summary>Un grup de bomboane potrivite (una sau mai multe linii lipite, de aceeași culoare).</summary>
+        private sealed class MatchGroup
         {
-            var group = new List<Vector2Int>();
-            Piece start = At(cell);
-            if (start == null || !start.CanGroup) return group;
-            var seen = new HashSet<Vector2Int> { cell };
-            var queue = new Queue<Vector2Int>();
-            queue.Enqueue(cell);
-            while (queue.Count > 0)
+            public readonly List<Vector2Int> Cells = new();
+            public int Color;
+            public int LongestH, LongestV;
+        }
+
+        /// <summary>Lungimea liniei (orizontală sau verticală) de aceeași culoare care trece prin celulă.</summary>
+        private int RunLength(Vector2Int c, Vector2Int axis)
+        {
+            Piece p = At(c);
+            if (!CanMatch(p)) return 0;
+            int length = 1;
+            for (Vector2Int n = c + axis; CanMatch(At(n)) && At(n).Color == p.Color; n += axis) length++;
+            for (Vector2Int n = c - axis; CanMatch(At(n)) && At(n).Color == p.Color; n -= axis) length++;
+            return length;
+        }
+
+        private bool HasMatchAt(Vector2Int c) =>
+            RunLength(c, Vector2Int.right) >= BlastRules.MinGroup || RunLength(c, Vector2Int.up) >= BlastRules.MinGroup;
+
+        /// <summary>Toate liniile de 3+ de pe tablă, unite în grupuri (liniile care se ating formează L/T).</summary>
+        private List<MatchGroup> FindMatches()
+        {
+            var h = new int[Columns, Rows];
+            var v = new int[Columns, Rows];
+            bool any = false;
+            foreach (Vector2Int c in ValidCells())
             {
-                Vector2Int c = queue.Dequeue();
-                group.Add(c);
-                foreach (Vector2Int d in FourWay)
-                {
-                    Vector2Int n = c + d;
-                    Piece p = At(n);
-                    if (p == null || !p.CanGroup || p.Color != start.Color || !seen.Add(n)) continue;
-                    queue.Enqueue(n);
-                }
+                int lh = RunLength(c, Vector2Int.right), lv = RunLength(c, Vector2Int.up);
+                if (lh >= BlastRules.MinGroup) { h[c.x, c.y] = lh; any = true; }
+                if (lv >= BlastRules.MinGroup) { v[c.x, c.y] = lv; any = true; }
             }
-            return group;
+            var groups = new List<MatchGroup>();
+            if (!any) return groups;
+            var seen = new HashSet<Vector2Int>();
+            foreach (Vector2Int c in ValidCells())
+            {
+                if (h[c.x, c.y] == 0 && v[c.x, c.y] == 0 || !seen.Add(c)) continue;
+                var group = new MatchGroup { Color = At(c).Color };
+                var queue = new Queue<Vector2Int>();
+                queue.Enqueue(c);
+                while (queue.Count > 0)
+                {
+                    Vector2Int g = queue.Dequeue();
+                    group.Cells.Add(g);
+                    group.LongestH = Math.Max(group.LongestH, h[g.x, g.y]);
+                    group.LongestV = Math.Max(group.LongestV, v[g.x, g.y]);
+                    foreach (Vector2Int d in FourWay)
+                    {
+                        Vector2Int n = g + d;
+                        if (!IsValid(n) || h[n.x, n.y] == 0 && v[n.x, n.y] == 0) continue;
+                        if (At(n).Color != group.Color || !seen.Add(n)) continue;
+                        queue.Enqueue(n);
+                    }
+                }
+                groups.Add(group);
+            }
+            return groups;
+        }
+
+        /// <summary>
+        /// Piesa specială dintr-un grup: 5 în linie → curcubeu; linii în L/T → bombă; 4 în linie → rachetă
+        /// (perpendiculară pe linie, ca în jocurile clasice); 3 → niciuna.
+        /// </summary>
+        private static TileKind SpecialFor(MatchGroup g)
+        {
+            int longest = Math.Max(g.LongestH, g.LongestV);
+            if (longest >= 5) return TileKind.Rainbow;
+            if (g.LongestH >= BlastRules.MinGroup && g.LongestV >= BlastRules.MinGroup) return TileKind.Bomb;
+            if (g.LongestH == 4) return TileKind.RocketV;
+            if (g.LongestV == 4) return TileKind.RocketH;
+            return TileKind.Normal;
         }
 
         public bool IsSpecialAt(Vector2Int c) => At(c) is { IsSpecial: true, Locked: false };
 
-        /// <summary>Piesele speciale vecine (pentru combinații).</summary>
-        public List<Vector2Int> AdjacentSpecials(Vector2Int c)
+        /// <summary>Schimbul a două piese vecine ar face ceva (o linie de 3+ sau o piesă specială mutată).</summary>
+        public bool IsValidSwap(Vector2Int a, Vector2Int b)
         {
-            var list = new List<Vector2Int>();
-            foreach (Vector2Int d in FourWay)
-                if (IsSpecialAt(c + d)) list.Add(c + d);
-            return list;
+            if (!AreNeighbours(a, b)) return false;
+            Piece pa = At(a), pb = At(b);
+            if (!CanMove(pa) || !CanMove(pb)) return false;
+            if (pa.IsSpecial || pb.IsSpecial) return true;
+            Exchange(a, b);
+            bool match = HasMatchAt(a) || HasMatchAt(b);
+            Exchange(a, b);
+            return match;
         }
 
-        /// <summary>Se poate face ceva: un grup de 3+ sau o piesă specială liberă.</summary>
+        private void Exchange(Vector2Int a, Vector2Int b) =>
+            (_grid[a.x, a.y], _grid[b.x, b.y]) = (_grid[b.x, b.y], _grid[a.x, a.y]);
+
+        /// <summary>Există cel puțin un schimb care face ceva.</summary>
         public bool HasValidMove()
         {
-            var seen = new HashSet<Vector2Int>();
             foreach (Vector2Int c in ValidCells())
             {
-                Piece p = At(c);
-                if (p == null) continue;
-                if (p.IsSpecial && !p.Locked) return true;
-                if (!p.CanGroup || seen.Contains(c)) continue;
-                List<Vector2Int> group = GroupAt(c);
-                if (group.Count >= BlastRules.MinGroup) return true;
-                foreach (Vector2Int g in group) seen.Add(g);
+                if (IsValidSwap(c, c + Vector2Int.right)) return true;
+                if (IsValidSwap(c, c + Vector2Int.up)) return true;
             }
             return false;
         }
 
-        /// <summary>Dacă atingerea celulei ar face ceva (grup de 3+ sau piesă specială).</summary>
-        public bool IsValidTap(Vector2Int c)
+        /// <summary>
+        /// Cel mai bun schimb pentru obiective (pentru indicii și pentru jucătorul automat din teste): linii lungi
+        /// și piese speciale, glazură, culori cerute, obstacole lovite, bomboane-ingredient coborâte.
+        /// </summary>
+        public bool TryFindBestSwap(Func<int, int> colorWeight, out Vector2Int bestFrom, out Vector2Int bestTo)
         {
-            Piece p = At(c);
-            if (p == null || !p.CanTap) return false;
-            return p.IsSpecial || GroupAt(c).Count >= BlastRules.MinGroup;
+            bestFrom = bestTo = default;
+            int bestValue = int.MinValue;
+            foreach (Vector2Int c in ValidCells())
+                foreach (Vector2Int d in new[] { Vector2Int.right, Vector2Int.up })
+                {
+                    Vector2Int n = c + d;
+                    if (!IsValidSwap(c, n)) continue;
+                    int value = SwapValue(c, n, colorWeight);
+                    if (value <= bestValue) continue;
+                    bestValue = value;
+                    // Mutăm piesa de sus în jos (sau cea specială): așa arată și indiciul.
+                    bool fromTop = n.y > c.y;
+                    bestFrom = At(c).IsSpecial ? c : At(n).IsSpecial || fromTop ? n : c;
+                    bestTo = bestFrom == c ? n : c;
+                }
+            return bestValue > int.MinValue;
         }
 
-        /// <summary>
-        /// Cea mai bună atingere pentru obiective (pentru indicii și pentru jucătorul automat din teste):
-        /// grupuri mari, glazură, culori cerute, piese de sub bomboane, obstacole lovite, piese speciale.
-        /// </summary>
-        public bool TryFindBestTap(Func<int, int> colorWeight, out Vector2Int best)
+        private int SwapValue(Vector2Int a, Vector2Int b, Func<int, int> colorWeight)
         {
-            best = default;
-            int bestValue = int.MinValue;
-            var seen = new HashSet<Vector2Int>();
-            foreach (Vector2Int c in ValidCells())
+            Piece pa = At(a), pb = At(b);
+            if (pa.IsSpecial || pb.IsSpecial)
             {
-                Piece p = At(c);
-                if (p == null || !p.CanTap || seen.Contains(c)) continue;
-                int value;
-                if (p.IsSpecial)
-                {
-                    value = 12 + (p.Kind == TileKind.Rainbow ? 10 : p.Kind == TileKind.Bomb ? 6 : 3) + AdjacentSpecials(c).Count * 8;
-                    if (IngredientAbove(c)) value += 12;
-                }
-                else
-                {
-                    List<Vector2Int> group = GroupAt(c);
-                    foreach (Vector2Int g in group) seen.Add(g);
-                    if (group.Count < BlastRules.MinGroup) continue;
-                    value = group.Count * 2 + (colorWeight != null ? colorWeight(p.Color) * group.Count : 0);
-                    if (group.Count >= BlastRules.RocketMin) value += 6;
-                    var touched = new HashSet<Vector2Int>();
-                    foreach (Vector2Int g in group)
-                    {
-                        value += _frosting[g.x, g.y] * 3;
-                        if (IngredientAbove(g)) value += 12; // fiecare celulă de sub o bomboană o coboară
-                        foreach (Vector2Int d in FourWay)
-                        {
-                            Piece n = At(g + d);
-                            if (n == null || !touched.Add(g + d)) continue;
-                            if (n.Locked || n.IsBlocker) value += IngredientAbove(g + d) ? 10 : 3;
-                            // Strivește bomboana de sub un ingredient (vezi BlastGroup): îl coboară.
-                            else if (n.IsIngredient || At(g + d + Vector2Int.up) is { IsIngredient: true }) value += 15;
-                        }
-                    }
-                    // Atingem bomboana cea mai de jos din grup (piesa specială apare acolo).
-                    Vector2Int lowest = group[0];
-                    foreach (Vector2Int g in group)
-                        if (g.y < lowest.y) lowest = g;
-                    if (value > bestValue) best = lowest;
-                    bestValue = Math.Max(bestValue, value);
-                    continue;
-                }
-                if (value <= bestValue) continue;
-                bestValue = value;
-                best = c;
+                int Weight(Piece p) => p.Kind == TileKind.Rainbow ? 20 : p.Kind == TileKind.Bomb ? 12 : p.IsSpecial ? 8 : 0;
+                int special = 10 + Weight(pa) + Weight(pb) + (pa.IsSpecial && pb.IsSpecial ? 25 : 0);
+                if (IngredientAbove(a) || IngredientAbove(b)) special += 12;
+                return special;
             }
-            return bestValue > int.MinValue;
+            Exchange(a, b);
+            int value = 0;
+            foreach (MatchGroup g in FindMatches())
+            {
+                value += g.Cells.Count * 2 + (colorWeight != null ? colorWeight(g.Color) * g.Cells.Count : 0);
+                value += SpecialFor(g) switch { TileKind.Rainbow => 30, TileKind.Bomb => 16, TileKind.Normal => 0, _ => 9 };
+                var touched = new HashSet<Vector2Int>();
+                foreach (Vector2Int c in g.Cells)
+                {
+                    value += _frosting[c.x, c.y] * 3;
+                    if (At(c).Locked) value += 4;
+                    if (IngredientAbove(c)) value += 12;
+                    foreach (Vector2Int d in FourWay)
+                    {
+                        Piece n = At(c + d);
+                        if (n == null || !touched.Add(c + d)) continue;
+                        if (n.Locked || n.IsBlocker) value += IngredientAbove(c + d) ? 10 : 3;
+                    }
+                }
+            }
+            Exchange(a, b);
+            // Coborârea directă a unei bomboane-ingredient.
+            if (pa.IsIngredient && b.y < a.y || pb.IsIngredient && a.y < b.y) value += 15;
+            return value;
         }
 
         private bool IngredientAbove(Vector2Int c)
@@ -302,88 +379,123 @@ namespace SugarDrop
         // ------------------------------------------------------------ Acțiunile jucătorului
 
         /// <summary>
-        /// Atingerea unei celule: elimină grupul (3+) sau activează piesa specială. Null = atingere invalidă
-        /// (grup de 1–2, obstacol, piesă blocată): nu consumă mutarea.
+        /// Schimbă două piese vecine. Linia de 3+ dispare (4 → rachetă, L/T → bombă, 5 → curcubeu), o piesă
+        /// specială mutată se activează, două speciale se combină. Apoi cădere și cascade până se liniștește.
+        /// Null = schimb invalid (nu face nimic): nu consumă mutarea, tabla îl întoarce înapoi.
         /// </summary>
-        public List<BoardStep> Tap(Vector2Int cell)
+        public List<BoardStep> Swap(Vector2Int a, Vector2Int b)
         {
-            Piece p = At(cell);
-            if (p == null || !p.CanTap) return null;
+            if (!IsValidSwap(a, b)) return null;
             _chocolateHit = false;
-            var steps = new List<BoardStep>();
+            Piece pa = At(a), pb = At(b);
+            Exchange(a, b);
+            var swap = new BoardStep(StepKind.Swap) { Origin = b };
+            swap.Moves.Add(new PieceMove { Piece = Info(pa, b), From = a, To = b });
+            swap.Moves.Add(new PieceMove { Piece = Info(pb, a), From = b, To = a });
+            var steps = new List<BoardStep> { swap };
 
-            if (p.IsSpecial)
+            if (pa.IsSpecial && pb.IsSpecial) steps.Add(CombineSpecials(b, a));
+            else if (pa.IsSpecial || pb.IsSpecial)
             {
+                Vector2Int cell = pa.IsSpecial ? b : a;
+                Piece special = At(cell), other = pa.IsSpecial ? pb : pa;
+                // Curcubeul ia culoarea bomboanei cu care a fost schimbat.
+                if (special.Kind == TileKind.Rainbow && CanMatch(other)) special.Color = other.Color;
                 var step = new BoardStep(StepKind.Clear) { Origin = cell };
                 Detonate(step, new[] { cell }, new HashSet<Vector2Int>(), new HashSet<Vector2Int>());
                 steps.Add(step);
+                // Bomboana mutată poate face și ea o linie (după cădere, ca o cascadă).
             }
-            else
-            {
-                List<Vector2Int> group = GroupAt(cell);
-                if (group.Count < BlastRules.MinGroup) return null;
-                steps.Add(BlastGroup(cell, group, p.Color));
-            }
+            else steps.Add(ResolveMatches(FindMatches(), 0, a, b));
             Settle(steps, true);
             return steps;
         }
 
-        private BoardStep BlastGroup(Vector2Int cell, List<Vector2Int> group, int color)
+        /// <summary>
+        /// Elimină grupurile potrivite: bomboanele dispar (cele cu gheață/lanț pierd doar un strat), obstacolele
+        /// vecine primesc o lovitură, iar grupurile mari lasă o piesă specială (în celula mutată, dacă e în grup).
+        /// </summary>
+        private BoardStep ResolveMatches(List<MatchGroup> groups, int cascade, Vector2Int? movedA = null, Vector2Int? movedB = null, bool createSpecials = true)
         {
-            var step = new BoardStep(StepKind.Clear) { Origin = cell, GroupSize = group.Count, GroupColor = color };
-            var hitObstacles = new HashSet<Vector2Int>();
-            var inGroup = new HashSet<Vector2Int>(group);
-            int minX = cell.x, maxX = cell.x, minY = cell.y, maxY = cell.y;
-            foreach (Vector2Int c in group)
+            var step = new BoardStep(StepKind.Clear, cascade);
+            var hit = new HashSet<Vector2Int>();
+            var matched = new HashSet<Vector2Int>();
+            MatchGroup biggest = null;
+            foreach (MatchGroup g in groups)
             {
-                Remove(c, At(c), step);
-                minX = Math.Min(minX, c.x);
-                maxX = Math.Max(maxX, c.x);
-                minY = Math.Min(minY, c.y);
-                maxY = Math.Max(maxY, c.y);
+                foreach (Vector2Int c in g.Cells) matched.Add(c);
+                if (biggest == null || g.Cells.Count > biggest.Cells.Count) biggest = g;
             }
-            // Obstacolele vecine grupului primesc câte o lovitură (o singură dată pe acțiune).
-            foreach (Vector2Int c in group)
+
+            var created = new List<(Vector2Int Cell, TileKind Kind, int Color)>();
+            foreach (MatchGroup g in groups)
+            {
+                TileKind special = createSpecials ? SpecialFor(g) : TileKind.Normal;
+                if (special == TileKind.Normal) continue;
+                created.Add((SpecialCell(g, movedA, movedB), special, g.Color));
+            }
+
+            int removed = 0;
+            foreach (Vector2Int c in matched)
+            {
+                Piece p = At(c);
+                if (p == null) continue;
+                if (p.Locked) Damage(c, p, step, hit);
+                else
+                {
+                    Remove(c, p, step);
+                    removed++;
+                }
+            }
+            // Obstacolele vecine primesc câte o lovitură; bomboana de sub un ingredient alăturat e strivită.
+            foreach (Vector2Int c in matched)
                 foreach (Vector2Int d in FourWay)
                 {
                     Vector2Int n = c + d;
-                    if (inGroup.Contains(n)) continue;
+                    if (matched.Contains(n)) continue;
                     Piece neighbour = At(n);
                     if (neighbour == null) continue;
-                    if (neighbour.Locked || neighbour.IsBlocker) Damage(n, neighbour, step, hitObstacles);
-                    // Bomboana-ingredient e „grea”: bomboana de sub ea e strivită de un grup spart alături,
-                    // ca ingredientul să nu rămână blocat pe o bomboană singuratică.
-                    else if (neighbour.Kind == TileKind.Normal && At(n + Vector2Int.up) is { IsIngredient: true } && hitObstacles.Add(n))
+                    if (neighbour.IsBlocker || neighbour.Locked) Damage(n, neighbour, step, hit);
+                    else if (neighbour.Kind == TileKind.Normal && !neighbour.Locked && At(n + Vector2Int.up) is { IsIngredient: true } && hit.Add(n))
                         Remove(n, neighbour, step);
-                    // Un grup spart chiar lângă bomboană o „zguduie”: bomboana de sub ea e strivită.
-                    else if (neighbour.IsIngredient)
-                    {
-                        Vector2Int under = n + Vector2Int.down;
-                        if (!inGroup.Contains(under) && At(under) is { Kind: TileKind.Normal, Locked: false } below && hitObstacles.Add(under))
-                            Remove(under, below, step);
-                    }
                 }
 
-            // Piesa specială apare exact în celula atinsă.
-            int width = maxX - minX + 1, height = maxY - minY + 1;
-            bool horizontal = width != height ? width > height : _random.Next(2) == 0;
-            TileKind special = BlastRules.SpecialForGroup(group.Count, horizontal);
-            if (special != TileKind.Normal)
+            foreach ((Vector2Int cell, TileKind kind, int color) in created)
             {
-                Piece created = NewPiece(special, special == TileKind.Rainbow ? color : -1);
-                _grid[cell.x, cell.y] = created;
-                step.Changed.Add(Info(created, cell));
+                if (At(cell) != null) continue; // celula a rămas ocupată (bomboană cu gheață)
+                Piece piece = NewPiece(kind, kind == TileKind.Rainbow ? color : -1);
+                _grid[cell.x, cell.y] = piece;
+                step.Changed.Add(Info(piece, cell));
             }
+
+            step.GroupSize = removed;
+            step.GroupColor = biggest?.Color ?? -1;
+            step.Origin = created.Count > 0 ? created[0].Cell : movedB ?? movedA ?? (biggest != null ? biggest.Cells[biggest.Cells.Count / 2] : default);
             return step;
         }
 
-        /// <summary>Combină două piese speciale vecine (ambele dispar, efectul e mai mare). Null dacă nu se poate.</summary>
-        public List<BoardStep> Combine(Vector2Int selected, Vector2Int target)
+        /// <summary>Unde apare piesa specială: în celula mutată de jucător, altfel la intersecția liniilor / la mijloc.</summary>
+        private Vector2Int SpecialCell(MatchGroup g, Vector2Int? movedA, Vector2Int? movedB)
         {
-            if (Math.Abs(selected.x - target.x) + Math.Abs(selected.y - target.y) != 1) return null;
+            foreach (Vector2Int? moved in new[] { movedB, movedA })
+                if (moved.HasValue && g.Cells.Contains(moved.Value) && !At(moved.Value).Locked) return moved.Value;
+            Vector2Int best = g.Cells[g.Cells.Count / 2];
+            int bestScore = -1;
+            foreach (Vector2Int c in g.Cells)
+            {
+                if (At(c).Locked) continue;
+                int score = (RunLength(c, Vector2Int.right) >= 3 ? 1 : 0) + (RunLength(c, Vector2Int.up) >= 3 ? 1 : 0);
+                if (score <= bestScore) continue;
+                bestScore = score;
+                best = c;
+            }
+            return best;
+        }
+
+        /// <summary>Două piese speciale schimbate între ele: ambele dispar, efectul e mai mare (combinația).</summary>
+        private BoardStep CombineSpecials(Vector2Int target, Vector2Int selected)
+        {
             Piece a = At(selected), b = At(target);
-            if (a == null || b == null || !a.IsSpecial || !b.IsSpecial || a.Locked || b.Locked) return null;
-            _chocolateHit = false;
 
             var step = new BoardStep(StepKind.Clear) { Origin = target, Combo = true };
             var cells = new List<Vector2Int>();
@@ -439,16 +551,14 @@ namespace SugarDrop
                 }
                 else
                 {
-                    // Bombă + bombă: zonă 7×7.
+                    // Bombă + bombă: zonă 5×5.
                     cells.AddRange(Square(target, BlastRules.BombComboSize));
                     step.Activations.Add(new Activation { Kind = TileKind.Bomb, Cell = target, Color = -1, Targets = new List<Vector2Int>(cells) });
                 }
             }
 
             Detonate(step, cells, new HashSet<Vector2Int>(), new HashSet<Vector2Int> { selected, target });
-            var steps = new List<BoardStep> { step };
-            Settle(steps, true);
-            return steps;
+            return step;
         }
 
         /// <summary>Ajutorul „bombă” al jucătorului: explozie 3×3 (nu consumă mutarea).</summary>
@@ -491,7 +601,7 @@ namespace SugarDrop
                 var step = new BoardStep(StepKind.Clear) { Origin = c };
                 Detonate(step, new[] { c }, new HashSet<Vector2Int>(), new HashSet<Vector2Int>());
                 var steps = new List<BoardStep> { step };
-                Settle(steps, false);
+                Settle(steps, false, false);
                 return steps;
             }
             return null;
@@ -508,12 +618,13 @@ namespace SugarDrop
             {
                 var colors = new List<int>();
                 foreach (Vector2Int c in cells) colors.Add(At(c).Color);
-                for (int attempt = 0; attempt < 200; attempt++)
+                for (int attempt = 0; attempt < 300; attempt++)
                 {
                     Shuffle(colors, _random);
-                    // Dacă distribuția nu permite niciun grup, schimbăm treptat câteva culori.
-                    if (attempt > 10) colors[_random.Next(colors.Count)] = colors[_random.Next(colors.Count)];
+                    // Dacă distribuția nu permite niciun schimb, schimbăm treptat câteva culori.
+                    if (attempt > 10) colors[_random.Next(colors.Count)] = _random.Next(Config.Colors);
                     for (int i = 0; i < cells.Count; i++) At(cells[i]).Color = colors[i];
+                    BreakMatches();
                     if (HasValidMove()) break;
                 }
                 foreach (Vector2Int c in cells) step.Changed.Add(Info(At(c), c));
@@ -673,16 +784,26 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Cădere, piese noi, ieșiri
 
-        /// <summary>Căderi, piese noi și ieșirea bomboanelor până tabla se liniștește (fără cascade automate).</summary>
-        private void Settle(List<BoardStep> steps, bool allowGrowth)
+        /// <summary>
+        /// Căderi, piese noi, ieșirea bomboanelor și cascadele (liniile formate de piesele căzute dispar și ele),
+        /// până tabla se liniștește. Apoi ciocolata poate crește, iar dacă nu mai e niciun schimb posibil, amestecăm.
+        /// </summary>
+        /// <param name="createSpecials">False la finalul nivelului: cascadele nu mai fac piese speciale noi (finalul se termină).</param>
+        private void Settle(List<BoardStep> steps, bool allowGrowth, bool createSpecials = true)
         {
-            for (int guard = 0; guard < 30; guard++)
+            for (int cascade = 1; cascade < 50; cascade++)
             {
-                BoardStep fall = Gravity();
-                if (fall.Moves.Count > 0) steps.Add(fall);
-                BoardStep exit = Exits();
-                if (exit.Exits.Count == 0) break;
-                steps.Add(exit);
+                for (int guard = 0; guard < 30; guard++)
+                {
+                    BoardStep fall = Gravity();
+                    if (fall.Moves.Count > 0) steps.Add(fall);
+                    BoardStep exit = Exits();
+                    if (exit.Exits.Count == 0) break;
+                    steps.Add(exit);
+                }
+                List<MatchGroup> groups = FindMatches();
+                if (groups.Count == 0) break;
+                steps.Add(ResolveMatches(groups, cascade, createSpecials: createSpecials));
             }
             if (allowGrowth) GrowChocolate(steps);
             if (!HasValidMove()) steps.Add(ShuffleStep());
@@ -925,6 +1046,9 @@ namespace SugarDrop
             problem = null;
             return true;
         }
+
+        /// <summary>Pentru teste: câte grupuri de linii de 3+ există acum pe tablă (după o mutare trebuie să fie 0).</summary>
+        public int DebugMatchCount() => FindMatches().Count;
 
         public int EmptyCells()
         {

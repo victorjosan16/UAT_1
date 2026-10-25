@@ -66,6 +66,7 @@ namespace SugarDrop
             { "Împăratul Zahărului", "Sugar Emperor" }, { "Regina Dulciurilor", "Sweets Queen" },
             { "Titanul de Caramel", "Caramel Titan" },
             { "Versiunea {0}", "Version {0}" },
+            { "Trage o bomboană ca să faci 3 la fel în linie!", "Swipe a candy to make 3 in a row!" },
         };
     }
 }

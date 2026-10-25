@@ -293,11 +293,11 @@ namespace SugarDrop
             else hud.ShowBanner(IntroText(_config.Type));
 
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
-            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _);
-            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int hint))
+            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _, out _);
+            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int from, out Vector2Int to))
             {
-                hud.SetTutorial(SugarLoc.T("Atinge un grup de 3+ bomboane la fel!"));
-                hintGuide.Show(board.CellCenter(hint));
+                hud.SetTutorial(SugarLoc.T(TutorialText));
+                hintGuide.Show(board.transform.TransformPoint(board.CellCenter(from)), board.transform.TransformPoint(board.CellCenter(to)));
             }
             else
             {
@@ -305,6 +305,8 @@ namespace SugarDrop
                 hintGuide.Hide();
             }
         }
+
+        private const string TutorialText = "Trage o bomboană ca să faci 3 la fel în linie!";
 
         private static string IntroText(LevelType type) => type switch
         {
@@ -596,7 +598,7 @@ namespace SugarDrop
             if ((_state == State.Playing || _state == State.Result) && _boss != null) hud.SetBoss(_boss);
             if (map.IsOpen) map.Refresh();
             if (menu.IsOpen) menu.Show();
-            if (_tutorialActive) hud.SetTutorial(SugarLoc.T("Atinge un grup de 3+ bomboane la fel!"));
+            if (_tutorialActive) hud.SetTutorial(SugarLoc.T(TutorialText));
         }
 
         private static void UiThemeColors(out Color positive, out Color ad, out Color panel)

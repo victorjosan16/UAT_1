@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SugarDrop.Tests
 {
     /// <summary>
-    /// Un jucător automat simplu: atinge mereu grupul sugerat de indiciu, fără ajutoare.
+    /// Un jucător automat simplu: face mereu schimbul sugerat de indiciu, fără ajutoare.
     /// Folosit ca să verificăm că nivelurile (inclusiv luptele cu Boss) se pot câștiga — un om joacă de obicei
     /// mai bine și are ajutoare. Folosește aceleași reguli de scor, obiective, daune și atacuri ca jocul.
     /// </summary>
@@ -28,9 +28,9 @@ namespace SugarDrop.Tests
             };
             for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck; move++)
             {
-                if (!engine.TryFindBestTap(weight, out Vector2Int cell)) break;
+                if (!engine.TryFindBestSwap(weight, out Vector2Int from, out Vector2Int to)) break;
                 movesUsed++;
-                foreach (BoardStep step in engine.Tap(cell))
+                foreach (BoardStep step in engine.Swap(from, to))
                 {
                     score += ScoreRules.PointsFor(step);
                     goals.Apply(step);

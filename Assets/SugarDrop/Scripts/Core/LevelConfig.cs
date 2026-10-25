@@ -173,7 +173,7 @@ namespace SugarDrop
                 _ => 1f,
             };
 
-            int colors = level <= 5 || (difficulty == Difficulty.Easy && level < 30) ? 4 : 5;
+            int colors = level <= 3 ? 4 : 5;
 
             Shape(level, difficulty, random, out int[] bottom, out int[] top);
             int valid = 0;
@@ -187,15 +187,17 @@ namespace SugarDrop
                 // Mutările de bază = cât îi trebuie de obicei jucătorului automat (măsurat), apoi × dificultatea.
                 case LevelType.Ingredients:
                     ingredients = level <= 4 ? 1 : level <= 30 ? 2 : 3;
-                    moves = 4 + ingredients * 10;
+                    moves = 4 + ingredients * 7;
                     break;
                 case LevelType.Frosting:
-                    frosting = Mathf.Min(valid / 3, Mathf.RoundToInt((6 + level / 5f) * goalFactor));
+                    frosting = Mathf.Min(valid / 2, Mathf.RoundToInt(Mathf.Min(24f, 10 + level / 3f) * goalFactor));
                     doubleFrosting = level >= 25 ? frosting / 5 : 0;
-                    moves = 4 + (frosting + doubleFrosting) * 2.2f;
+                    moves = 6 + (frosting + doubleFrosting) * 0.8f;
+                    // În primul capitol (învățare), glazura de pe marginile formelor neregulate cere mutări în plus.
+                    if (chapter == 0) moves *= 1.3f;
                     break;
                 case LevelType.Score:
-                    moves = 16;
+                    moves = 18;
                     break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
@@ -216,15 +218,15 @@ namespace SugarDrop
                 for (int i = 0; i < kinds; i++)
                 {
                     collectColors[i] = (first + i * 2) % colors;
-                    int count = Mathf.RoundToInt(Mathf.Min(30, 15 + level / 4f + random.Next(4)) * goalFactor);
+                    int count = Mathf.RoundToInt(Mathf.Min(60, 20 + level / 3f + random.Next(6)) * goalFactor);
                     collectCounts[i] = count;
                     total += collectCounts[i];
                 }
-                moves = 2 + total / 2.3f;
+                moves = 3 + total / 5.5f;
             }
             int finalMoves = Mathf.Clamp(Mathf.RoundToInt(moves * movesFactor), 12, 65);
-            // Scorul țintă: cam cât adună jucătorul automat în 16 mutări, ajustat după dificultate.
-            if (type == LevelType.Score) scoreTarget = Mathf.RoundToInt((16 * 150 + level * 30) * goalFactor);
+            // Scorul țintă: cam cât adună jucătorul automat în ~16 mutări, ajustat după dificultate.
+            if (type == LevelType.Score) scoreTarget = Mathf.RoundToInt((16 * 400 + level * 30) * goalFactor);
 
             // Obstacolele apar treptat (ladă de la 4, gheață de la 7, lanțuri de la 12, ciocolată de la 25) și
             // urmează valul de dificultate. Pe nivelurile cu bomboane sunt doar lăzi (gheața și lanțurile ar ține

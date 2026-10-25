@@ -119,7 +119,7 @@ namespace SugarDrop
         public const int PerActivation = 20;
         public const int Combo = 120;
         /// <summary>Cât face în medie o mutare (măsurat cu jucătorul automat).</summary>
-        public const float ExpectedDamagePerMove = 70f;
+        public const float ExpectedDamagePerMove = 160f;
 
         /// <summary>Daunele unui pas: fiecare piesă eliminată o singură dată, bonus pentru grupuri mari și speciale.</summary>
         public static int DamageFor(BoardStep step)
