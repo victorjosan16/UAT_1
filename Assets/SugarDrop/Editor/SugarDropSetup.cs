@@ -183,6 +183,9 @@ namespace SugarDrop.EditorTools
             Set(playfield, "material", material);
             var mascot = Child<Mascot>(root, "Bobo");
             var hint = Child<HintGuide>(root, "HintGuide");
+            // Masca tablei stă în scenă (nu doar adăugată din cod), ca Unity s-o păstreze în build.
+            var boardMask = Child<SpriteMask>(root, "BoardMask");
+            Set(board, "boardMask", boardMask);
 
             var game = root.AddComponent<SugarDropGame>();
             Set(game, "board", board);

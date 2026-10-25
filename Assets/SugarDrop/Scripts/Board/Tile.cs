@@ -30,6 +30,7 @@ namespace SugarDrop
         private SpriteRenderer[] _renderers;
         private Transform _visual;
         private float _size;
+        private bool _masked;
 
         private Vector3 _moveFrom, _moveTo;
         private float _moveT = -1f, _moveDuration, _moveDelay;
@@ -46,9 +47,11 @@ namespace SugarDrop
         private float _glowLevel;
         private Action _onPopped;
 
-        public void Init(float size)
+        /// <param name="masked">Piesa se vede doar în interiorul măștii tablei (dacă masca există în build).</param>
+        public void Init(float size, bool masked = true)
         {
             _size = size;
+            _masked = masked;
             _phase = UnityEngine.Random.value * 10f;
             _visual = new GameObject("Visual").transform;
             _visual.SetParent(transform, false);
@@ -73,7 +76,7 @@ namespace SugarDrop
             renderer.sprite = sprite;
             renderer.sortingOrder = order;
             // Vizibilă doar în interiorul tablei (piesele noi intră de sus, bomboanele ies jos).
-            renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            renderer.maskInteraction = _masked ? SpriteMaskInteraction.VisibleInsideMask : SpriteMaskInteraction.None;
             go.transform.localScale = Vector3.one * (worldSize / sprite.bounds.size.x);
             return renderer;
         }

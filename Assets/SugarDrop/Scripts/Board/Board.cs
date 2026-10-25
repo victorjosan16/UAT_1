@@ -68,7 +68,12 @@ namespace SugarDrop
         public float Bottom => _bottomCenter.y;
         public int FrostingLeft => _engine != null ? _engine.FrostingLeft : 0;
 
+        [Tooltip("Masca tablei, pusă în scenă de setup: așa Unity păstrează componenta SpriteMask în build "
+                 + "(altfel, adăugată doar din cod, e eliminată la „Strip Engine Code” și AddComponent întoarce null).")]
+        [SerializeField] private SpriteMask boardMask;
+
         private BlastEngine _engine;
+        private bool _masked;
         private readonly Dictionary<int, Tile> _tiles = new();
         private readonly List<Tile> _highlighted = new();
         private SpriteRenderer[,] _glaze;
@@ -111,14 +116,27 @@ namespace SugarDrop
         /// <summary>Masca tablei: piesele noi care intră de sus și bomboanele care ies jos se văd doar în interior.</summary>
         private void BuildMask()
         {
-            var go = new GameObject("Mask");
-            go.transform.SetParent(transform, false);
-            go.transform.localPosition = new Vector3(_bottomCenter.x, _bottomCenter.y + Rows * cellSize * 0.5f, 0f);
-            var mask = go.AddComponent<SpriteMask>();
-            mask.sprite = SugarSprites.CellMask;
-            Vector2 size = mask.sprite.bounds.size;
+            SpriteMask mask = boardMask;
+            if (mask == null)
+            {
+                var go = new GameObject("Mask");
+                go.transform.SetParent(transform, false);
+                mask = go.AddComponent<SpriteMask>();
+            }
+            // Fără mască (componenta lipsește din build) tabla merge oricum: piesele se văd și în afara ei.
+            _masked = mask != null;
+            if (!_masked)
+            {
+                Debug.LogWarning("[SugarDrop] SpriteMask lipsește din build; tabla merge fără mască.");
+                return;
+            }
+            Sprite sprite = SugarSprites.CellMask;
+            mask.sprite = sprite;
+            Vector2 size = sprite.bounds.size;
             float margin = cellSize * 0.35f;
-            go.transform.localScale = new Vector3((Width + margin) / size.x, (Rows * cellSize + margin) / size.y, 1f);
+            Transform t = mask.transform;
+            t.position = transform.TransformPoint(new Vector3(_bottomCenter.x, _bottomCenter.y + Rows * cellSize * 0.5f, 0f));
+            t.localScale = new Vector3((Width + margin) / size.x, (Rows * cellSize + margin) / size.y, 1f);
         }
 
         /// <summary>Pătrățelele tablei (doar celulele valide), glazura și săgețile de ieșire spre borcan.</summary>
@@ -168,7 +186,7 @@ namespace SugarDrop
             go.transform.SetParent(transform, false);
             go.transform.localPosition = localPosition;
             var tile = go.AddComponent<Tile>();
-            tile.Init(cellSize);
+            tile.Init(cellSize, _masked);
             tile.Id = piece.Id;
             tile.Cell = piece.Cell;
             tile.Setup(piece);

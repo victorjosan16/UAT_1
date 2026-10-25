@@ -1,0 +1,4 @@
+<!-- Componente adăugate doar din cod: le păstrăm în build (altfel „Strip Engine Code” le poate elimina). -->
+<linker>
+  <assembly fullname="UnityEngine.SpriteMaskModule" preserve="all"/>
+</linker>
