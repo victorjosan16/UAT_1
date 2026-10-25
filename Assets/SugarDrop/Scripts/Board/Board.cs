@@ -166,7 +166,8 @@ namespace SugarDrop
             _cells = new SpriteRenderer[Columns, Rows];
             _empty = new bool[Columns, Rows];
             _reached = new bool[Columns, Rows];
-            Sprite sprite = SugarSprites.CapShadow;
+            // Sprite alb: culoarea vine din UpdateFlow (o umbră neagră nu s-ar putea colora).
+            Sprite sprite = SugarSprites.CellMask;
             float scale = cellSize * 0.97f / sprite.bounds.size.x;
             for (int x = 0; x < Columns; x++)
             for (int y = 0; y < Rows; y++)
@@ -203,6 +204,26 @@ namespace SugarDrop
             bool opened = open && !_channelOpen;
             _channelOpen = open;
             if (opened && notify) ChannelOpened?.Invoke();
+        }
+
+        // ------------------------------------------------------------ Curgerea bomboanelor
+
+        /// <summary>
+        /// Pentru o bomboană care stă pe capace: centrul (x) celei mai apropiate găuri în care poate aluneca pe
+        /// aceeași „podea”, fără capace în cale. Bomboanele de deasupra tablei stau pe rândul de sus.
+        /// Fals dacă pe podeaua ei nu există nicio gaură accesibilă.
+        /// </summary>
+        public bool TryFindDropX(Vector2 world, out float targetX)
+        {
+            targetX = 0f;
+            if (_grid == null || _empty == null) return false;
+            float fx = (world.x - _bottomCenter.x) / cellSize + Columns * 0.5f;
+            int column = Mathf.Clamp(Mathf.FloorToInt(fx), 0, Columns - 1);
+            int row = Mathf.FloorToInt((world.y - _bottomCenter.y) / cellSize);
+            int target = ChannelRules.FindDropColumn(_empty, column, row);
+            if (target < 0) return false;
+            targetX = CellCenter(new Vector2Int(target, 0)).x + transform.position.x;
+            return true;
         }
 
         // ------------------------------------------------------------ Coordonate
@@ -484,6 +505,7 @@ namespace SugarDrop
         private void RemoveTile(Tile tile, Vector2Int cell, int index)
         {
             _grid[cell.x, cell.y] = null;
+            if (_empty != null) _empty[cell.x, cell.y] = true;
             _clearedThisMove++;
             _clearedCenter += tile.transform.position;
             TileCleared?.Invoke(tile.ColorIndex, tile.Kind, tile.transform.position);

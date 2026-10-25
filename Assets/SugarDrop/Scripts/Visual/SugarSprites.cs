@@ -26,6 +26,9 @@ namespace SugarDrop
             return new Color(v, v, v, a);
         }));
 
+        /// <summary>Pătrat rotunjit alb (fundalul unei celule de pe tablă; se colorează).</summary>
+        public static Sprite CellMask => Get("cellmask", () => Mask(128, (x, y) => RoundRect(x, y, 6, 6, 116, 116, 30)));
+
         public static Sprite CapShadow => Get("capshadow", () => Paint(128, (x, y) =>
             new Color(0f, 0f, 0f, Alpha(RoundRect(x, y, 6, 6, 116, 116, 30)))));
 

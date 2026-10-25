@@ -177,6 +177,7 @@ namespace SugarDrop.EditorTools
             Set(input, "worldCamera", camera);
             var candies = Child<CandySpawner>(root, "Candies");
             Set(candies, "material", material);
+            Set(candies, "board", board);
             var jar = Child<Jar>(root, "Jar");
             var playfield = Child<Playfield>(root, "Playfield");
             Set(playfield, "jar", jar);

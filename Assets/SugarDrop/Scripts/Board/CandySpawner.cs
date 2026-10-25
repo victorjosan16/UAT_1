@@ -12,8 +12,16 @@ namespace SugarDrop
         [SerializeField] private float radius = 0.24f;
         [SerializeField] private float gravityScale = 1.6f;
         [SerializeField] private PhysicsMaterial2D material;
+        [Tooltip("Tabla: bomboanele care stau pe capace sunt împinse ușor spre cea mai apropiată gaură.")]
+        [SerializeField] private Board board;
+        [Tooltip("Forța care împinge bomboanele spre găuri (ca un nisip care curge).")]
+        [SerializeField] private float flowForce = 3f;
+        [SerializeField] private float flowMaxSpeed = 1.4f;
 
         private readonly List<GameObject> _candies = new();
+        private readonly List<Rigidbody2D> _bodies = new();
+        private readonly List<Candy> _candyInfo = new();
+        private int _flowTick;
 
         /// <summary>Așază „count” bomboane în dreptunghiul dat, rând cu rând de jos în sus.</summary>
         public void Spawn(int count, Rect area)
@@ -50,11 +58,38 @@ namespace SugarDrop
             }
         }
 
+        /// <summary>
+        /// „Curgerea”: bomboanele care stau pe capace plate alunecă încet spre cea mai apropiată gaură
+        /// de pe aceeași podea, în loc să rămână blocate (ca zahărul care curge). Rulează la fiecare
+        /// al doilea pas de fizică; bomboanele deja în mișcare sau din borcan nu sunt atinse.
+        /// </summary>
+        private void FixedUpdate()
+        {
+            if (board == null || _bodies.Count == 0) return;
+            if (++_flowTick % 2 != 0) return;
+            for (int i = 0; i < _bodies.Count; i++)
+            {
+                Rigidbody2D body = _bodies[i];
+                if (body == null || _candyInfo[i].Counted) continue;
+                Vector2 position = body.position;
+                Vector2 velocity = body.GetPointVelocity(position);
+                if (Mathf.Abs(velocity.y) > 1.5f) continue; // cade deja
+                if (!board.TryFindDropX(position, out float targetX)) continue;
+                float dx = targetX - position.x;
+                if (Mathf.Abs(dx) < 0.12f) continue;
+                float direction = Mathf.Sign(dx);
+                if (velocity.x * direction > flowMaxSpeed) continue;
+                body.AddForce(new Vector2(direction * flowForce * body.mass, 0f));
+            }
+        }
+
         public void Clear()
         {
             foreach (GameObject candy in _candies)
                 if (candy != null) Destroy(candy);
             _candies.Clear();
+            _bodies.Clear();
+            _candyInfo.Clear();
         }
 
         private GameObject CreateCandy(Vector2 position)
@@ -82,7 +117,10 @@ namespace SugarDrop
             collider.radius = sprite.bounds.extents.x * 0.92f; // în spațiul local (obiectul e scalat)
             if (material != null) collider.sharedMaterial = material;
 
-            go.AddComponent<Candy>().Color = color;
+            var info = go.AddComponent<Candy>();
+            info.Color = color;
+            _bodies.Add(rigidbody);
+            _candyInfo.Add(info);
             return go;
         }
     }

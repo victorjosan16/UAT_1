@@ -45,6 +45,38 @@ namespace SugarDrop
             }
         }
 
+        /// <summary>
+        /// Pentru o bomboană aflată în celula (column, row) care stă pe capacul de dedesubt: coloana celei mai
+        /// apropiate găuri de pe aceeași podea (rândul row - 1) la care poate aluneca fără capace în cale.
+        /// row ≥ numărul de rânduri = deasupra tablei (acolo e mereu liber). -1 = nicio gaură accesibilă
+        /// (sau bomboana e deja deasupra unei găuri / sub tablă).
+        /// </summary>
+        public static int FindDropColumn(bool[,] empty, int column, int row)
+        {
+            int columns = empty.GetLength(0), rows = empty.GetLength(1);
+            if (row <= 0 || column < 0 || column >= columns) return -1;
+            if (row > rows) row = rows;
+            int floor = row - 1;
+            if (empty[column, floor]) return -1;
+            for (int distance = 1; distance < columns; distance++)
+            for (int side = -1; side <= 1; side += 2)
+            {
+                int x = column + side * distance;
+                if (x < 0 || x >= columns || !empty[x, floor] || !RowFree(empty, column, x, row)) continue;
+                return x;
+            }
+            return -1;
+        }
+
+        private static bool RowFree(bool[,] empty, int from, int to, int row)
+        {
+            if (row >= empty.GetLength(1)) return true;
+            int step = to > from ? 1 : -1;
+            for (int x = from + step; x != to + step; x += step)
+                if (!empty[x, row]) return false;
+            return true;
+        }
+
         /// <summary>Cât de bună e o tablă pentru bomboane: un drum până jos valorează cel mai mult, apoi cât de adânc intră.</summary>
         public static int Score(bool[,] empty)
         {

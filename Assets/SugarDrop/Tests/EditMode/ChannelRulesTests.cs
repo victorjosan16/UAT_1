@@ -61,5 +61,38 @@ namespace SugarDrop.Tests
             Assert.Greater(channel, pocket);
             Assert.Greater(deeper, shallow);
         }
+
+        [Test]
+        public void CandyAboveBoard_SlidesToNearestTopHole()
+        {
+            // Rândul de sus are o gaură în coloana 3; bomboana de deasupra coloanei 0 alunecă spre ea.
+            bool[,] empty = Map("###.###", "#######");
+            Assert.AreEqual(3, ChannelRules.FindDropColumn(empty, 0, 2));
+            Assert.AreEqual(3, ChannelRules.FindDropColumn(empty, 6, 5)); // mai sus în grămadă: tot rândul de sus
+        }
+
+        [Test]
+        public void CandyAlreadyOverHole_IsLeftToFall()
+        {
+            bool[,] empty = Map("###.###", "#######");
+            Assert.AreEqual(-1, ChannelRules.FindDropColumn(empty, 3, 2));
+        }
+
+        [Test]
+        public void InsideTheBoard_TilesInTheWayBlockTheSlide()
+        {
+            // Bomboana stă în gaura (1, 1) pe capacul (1, 0); spre dreapta, capacul (2, 1) blochează drumul.
+            bool[,] empty = Map(".#..", "#.#.", "##.#");
+            Assert.AreEqual(-1, ChannelRules.FindDropColumn(empty, 1, 1));
+            // Rândul liber: alunecă spre gaura cea mai apropiată.
+            bool[,] open = Map("....", "##.#");
+            Assert.AreEqual(2, ChannelRules.FindDropColumn(open, 0, 1));
+        }
+
+        [Test]
+        public void NoHoleOnTheFloor_NoTarget()
+        {
+            Assert.AreEqual(-1, ChannelRules.FindDropColumn(Map("####"), 1, 1));
+        }
     }
 }
