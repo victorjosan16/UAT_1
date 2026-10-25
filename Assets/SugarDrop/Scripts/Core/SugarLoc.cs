@@ -65,6 +65,7 @@ namespace SugarDrop
             { "Dragonul de Bomboane", "Candy Dragon" }, { "Monstrul de Jeleu", "Jelly Monster" },
             { "Împăratul Zahărului", "Sugar Emperor" }, { "Regina Dulciurilor", "Sweets Queen" },
             { "Titanul de Caramel", "Caramel Titan" },
+            { "Versiunea {0}", "Version {0}" },
         };
     }
 }

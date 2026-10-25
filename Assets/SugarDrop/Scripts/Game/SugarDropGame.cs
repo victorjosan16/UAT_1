@@ -566,7 +566,7 @@ namespace SugarDrop
             }, inGame));
             if (!inGame) buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
 
-            string message = inGame ? SugarLoc.T("Nivelul costă o viață.") : null;
+            string message = (inGame ? SugarLoc.T("Nivelul costă o viață.") + "\n" : "") + SugarLoc.F("Versiunea {0}", ErrorReporter.BuildId);
             dialog.Show(SugarLoc.T(inGame ? "PAUZĂ" : "SETĂRI"), message, buttons.ToArray());
             if (inGame) dialog.DismissAction = Resume;
         }
