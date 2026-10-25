@@ -6,32 +6,30 @@ using UnityEngine.InputSystem;
 namespace SugarDrop
 {
     /// <summary>
-    /// Glisare pe tablă: pui degetul pe un capac și tragi spre vecin (sus/jos/stânga/dreapta) ca să le schimbi.
-    /// În modul „țintire” (bomba), o atingere simplă pe tablă alege celula. Funcționează cu degetul pe telefon
-    /// și cu mouse-ul în Editor (New Input System).
+    /// Atingerea pe tablă: pui degetul pe o bomboană (se ridică, grupul ei strălucește) și îl ridici pe aceeași
+    /// celulă ca să spargi grupul sau să activezi piesa specială. Dacă tragi degetul pe altă celulă, nu se întâmplă
+    /// nimic (poți răzgândi). În modul „țintire” (ajutorul bombă), atingerea alege celula pentru bombă.
+    /// Merge cu degetul pe telefon și cu mouse-ul în Editor (New Input System).
     /// </summary>
     public class BoardInput : MonoBehaviour
     {
         [SerializeField] private Board board;
         [SerializeField] private Camera worldCamera;
-        [Tooltip("Cât trebuie tras degetul (unități din lume) ca să conteze ca glisare.")]
-        [SerializeField] private float dragThreshold = 0.3f;
 
         /// <summary>Jucătorul a atins tabla (pentru indiciul care apare după o pauză lungă).</summary>
         public event Action Touched;
 
-        /// <summary>Dacă e setat, următoarea atingere pe tablă alege o celulă (ex. bomba) în loc de glisare.</summary>
+        /// <summary>Dacă e setat, următoarea atingere pe tablă alege o celulă (ex. bomba) în loc de atingerea normală.</summary>
         public Action<Vector2Int> TapTarget { get; set; }
 
         private bool _tracking;
         private bool _pressOnUi;
         private Vector2Int _startCell;
-        private Vector2 _startWorld;
 
         private void OnDisable()
         {
             _tracking = false;
-            if (board != null) board.Select(null);
+            if (board != null) board.Press(null);
         }
 
         private void Update()
@@ -47,47 +45,31 @@ namespace SugarDrop
                 _pressOnUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
                 if (_pressOnUi) return;
                 _tracking = board.TryGetCell(world, out _startCell);
-                _startWorld = world;
-                if (_tracking && !board.Busy) board.Select(_startCell);
+                if (_tracking && TapTarget == null) board.Press(_startCell);
                 Touched?.Invoke();
             }
             if (_pressOnUi) return;
 
+            if (_tracking && pointer.press.isPressed && TapTarget == null)
+            {
+                // Degetul a plecat de pe celulă: renunțăm la evidențiere (atingerea nu se mai face).
+                if (!board.TryGetCell(world, out Vector2Int current) || current != _startCell) board.Press(null);
+            }
+
+            if (!pointer.press.wasReleasedThisFrame) return;
+            bool sameCell = _tracking && board.TryGetCell(world, out Vector2Int cell) && cell == _startCell;
+            _tracking = false;
+            board.Press(null);
+            if (!sameCell) return;
+
             if (TapTarget != null)
             {
-                if (pointer.press.wasReleasedThisFrame && _tracking && board.TryGetCell(world, out Vector2Int cell) && cell == _startCell)
-                {
-                    Action<Vector2Int> target = TapTarget;
-                    TapTarget = null;
-                    target(cell);
-                }
-                if (pointer.press.wasReleasedThisFrame)
-                {
-                    _tracking = false;
-                    board.Select(null);
-                }
+                Action<Vector2Int> target = TapTarget;
+                TapTarget = null;
+                target(_startCell);
                 return;
             }
-
-            if (_tracking && pointer.press.isPressed)
-            {
-                Vector2 delta = world - _startWorld;
-                if (delta.magnitude >= dragThreshold)
-                {
-                    Vector2Int direction = Mathf.Abs(delta.x) > Mathf.Abs(delta.y)
-                        ? new Vector2Int(delta.x > 0f ? 1 : -1, 0)
-                        : new Vector2Int(0, delta.y > 0f ? 1 : -1);
-                    board.Select(null);
-                    board.TrySwap(_startCell, _startCell + direction);
-                    _tracking = false;
-                }
-            }
-
-            if (pointer.press.wasReleasedThisFrame)
-            {
-                _tracking = false;
-                board.Select(null);
-            }
+            board.Tap(_startCell);
         }
     }
 }

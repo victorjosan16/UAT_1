@@ -15,16 +15,32 @@ namespace SugarDrop
 
         private readonly List<GameObject> _candies = new();
 
+        [Tooltip("Câte bomboane cu fizică pot exista deodată (cele mai vechi dispar), ca fizica să rămână ieftină.")]
+        [SerializeField] private int maxActive = 50;
+
         /// <summary>O bomboană nouă care cade din poziția dată (sub ieșirea de pe tablă).</summary>
-        public void SpawnFalling(Vector3 position, int colorIndex)
+        public void SpawnFalling(Vector3 position, int colorIndex) =>
+            SpawnFalling(position, Palette.Candy(colorIndex), SugarSprites.CandyWrapped, radius);
+
+        /// <summary>
+        /// Bomboană decorativă (din culorile strânse): cade prin tablă spre borcan și se adună acolo.
+        /// Obiectivele nu depind de ea — e doar pentru senzația de „colecție”.
+        /// </summary>
+        public void SpawnDecorative(Vector3 position, Color color) =>
+            SpawnFalling(position, color, SugarSprites.CandyVariant(Random.Range(0, 3)), radius * 0.7f);
+
+        private void SpawnFalling(Vector3 position, Color color, Sprite sprite, float size)
         {
-            Sprite sprite = SugarSprites.CandyWrapped;
+            _candies.RemoveAll(c => c == null);
+            while (_candies.Count >= maxActive)
+            {
+                Destroy(_candies[0]);
+                _candies.RemoveAt(0);
+            }
             var go = new GameObject("Candy");
             go.transform.SetParent(transform, false);
             go.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, Random.Range(-20f, 20f)));
-            go.transform.localScale = Vector3.one * (radius * 2f / sprite.bounds.size.x);
-
-            Color color = Palette.Candy(colorIndex);
+            go.transform.localScale = Vector3.one * (size * 2f / sprite.bounds.size.x);
             var body = go.AddComponent<SpriteRenderer>();
             body.sprite = sprite;
             body.color = color;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SugarDrop
 {
-    public enum StepKind { Swap, Clear, Fall, Exit, Shuffle, Grow }
+    public enum StepKind { Clear, Fall, Exit, Shuffle, Grow }
 
     /// <summary>Starea unei piese într-un pas (pentru animații).</summary>
     public struct PieceInfo
@@ -12,7 +12,11 @@ namespace SugarDrop
         public Vector2Int Cell;
         public TileKind Kind;
         public int Color;
-        public bool Frozen;
+        /// <summary>Straturi de gheață peste bomboană (0–3): nu se poate atinge și nu cade cât are gheață.</summary>
+        public int Ice;
+        /// <summary>Bomboană legată cu lanț: nu se poate atinge și nu cade până nu se rupe lanțul.</summary>
+        public bool Chained;
+        /// <summary>Loviturile rămase ale unei lăzi / ciocolate.</summary>
         public int Hits;
     }
 
@@ -35,26 +39,29 @@ namespace SugarDrop
     }
 
     /// <summary>
-    /// Un pas din rezolvarea unei mutări (schimb, eliminare, cădere, ieșirea bomboanelor, amestecare, ciocolata crește).
+    /// Un pas din rezolvarea unei mutări (eliminare, cădere, ieșirea bomboanelor, amestecare, ciocolata crește).
     /// Motorul calculează instant toți pașii; tabla din scenă îi animă pe rând.
     /// </summary>
     public sealed class BoardStep
     {
         public StepKind Kind;
-        /// <summary>A câta cascadă (0 = eliminarea făcută direct de mutare).</summary>
+        /// <summary>Păstrat pentru compatibilitate cu scorul (0 = eliminarea făcută direct de mutare).</summary>
         public int Cascade;
 
-        // Schimb: piesa ajunsă în A și cea ajunsă în B.
-        public Vector2Int A, B;
-        public int IdAtA, IdAtB;
+        /// <summary>Celula atinsă de jucător (pentru efecte).</summary>
+        public Vector2Int Origin;
+        /// <summary>Mărimea grupului eliminat la atingere (0 dacă pasul vine dintr-o piesă specială).</summary>
+        public int GroupSize;
+        public int GroupColor = -1;
+        /// <summary>Două piese speciale combinate (pentru efecte mai mari).</summary>
+        public bool Combo;
 
         public readonly List<PieceInfo> Cleared = new();
         public readonly List<Activation> Activations = new();
         /// <summary>Piese schimbate pe loc (capac special nou, culoare nouă la amestecare, ciocolată nouă). Un Id nou = piesă nouă.</summary>
         public readonly List<PieceInfo> Changed = new();
-        public readonly List<PieceInfo> Unfrozen = new();
-        /// <summary>Biscuiți loviți, dar încă întregi (Hits = loviturile rămase).</summary>
-        public readonly List<PieceInfo> BlockerHits = new();
+        /// <summary>Obstacole lovite, dar încă întregi: gheață subțiată, lanț rupt, ladă/ciocolată crăpată (starea nouă).</summary>
+        public readonly List<PieceInfo> ObstacleHits = new();
         /// <summary>Celule unde s-a topit un strat de glazură (și câte straturi au rămas).</summary>
         public readonly List<Vector2Int> FrostingCells = new();
         public readonly List<int> FrostingLeft = new();

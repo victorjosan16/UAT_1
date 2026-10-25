@@ -19,6 +19,8 @@ namespace SugarDrop
         public bool sound = true;
         public bool music = true;
         public bool vibration = true;
+        /// <summary>Fără tremurat și zoom de cameră (pentru cine preferă mișcare redusă).</summary>
+        public bool reducedMotion;
         /// <summary>„ro”, „en” sau gol (după limba telefonului).</summary>
         public string language = "";
         public bool tutorialDone;

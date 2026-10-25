@@ -6,43 +6,57 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>
-    /// Tabla din scenă: desenează celulele (cu glazură și ieșirile spre borcan) și piesele, iar mutările le trimite
-    /// motorului de reguli (Match3Engine). Motorul calculează instant toți pașii mutării (eliminări, căderi, piese
-    /// noi, cascade, bomboane care ies), iar tabla îi animă pe rând și anunță jocul prin evenimente.
+    /// Tabla din scenă: desenează celulele (cu glazură și ieșirile spre borcan) și piesele, iar atingerile le trimite
+    /// motorului de reguli (BlastEngine). Motorul calculează instant toți pașii (eliminări, căderi, piese noi,
+    /// bomboane care ies), iar tabla îi animă pe rând și anunță jocul prin evenimente.
+    ///
+    /// Starea tablei e una singură la un moment dat (liberă / piesă specială selectată / animează): cât animează,
+    /// atingerile sunt ignorate, deci acțiunile nu se pot suprapune.
+    ///
+    /// Piese speciale: o atingere pe o piesă specială fără vecine speciale o activează imediat. Dacă are vecine
+    /// speciale, prima atingere o selectează (vecinele strălucesc); a doua atingere pe o vecină le combină,
+    /// pe aceeași piesă o activează singură, iar în altă parte anulează selecția.
     /// </summary>
     public class Board : MonoBehaviour
     {
+        private enum Phase { Idle, SpecialSelected, Animating }
+
         [SerializeField] private float cellSize = 0.92f;
-        [SerializeField] private float swapDuration = 0.14f;
         [SerializeField] private float popDuration = 0.22f;
-        [SerializeField] private float popStagger = 0.018f;
+        [SerializeField] private float popStagger = 0.012f;
         [Tooltip("Cât durează căderea pe o celulă (secunde); căderile lungi sunt proporțional mai lungi, dar accelerate.")]
         [SerializeField] private float fallPerCell = 0.07f;
+        [Tooltip("Decalajul dintre coloane la cădere (pornesc în val, nu toate deodată).")]
+        [SerializeField] private float fallStagger = 0.012f;
 
         // ------------------------------------------------------------ Evenimente (pentru joc, efecte și sunete)
 
-        /// <summary>O mutare validă a fost făcută (consumă o mutare).</summary>
+        /// <summary>O acțiune validă a jucătorului (consumă o mutare).</summary>
         public event Action MoveMade;
-        /// <summary>Un schimb fără aliniere (se anulează, nu consumă mutarea).</summary>
-        public event Action InvalidSwap;
-        /// <summary>Un pas al mutării tocmai a început să fie animat (pentru scor și obiective).</summary>
+        /// <summary>O atingere fără efect (grup de 1–2, obstacol): nu consumă mutarea.</summary>
+        public event Action InvalidTap;
+        /// <summary>Un pas tocmai a început să fie animat (pentru scor și obiective).</summary>
         public event Action<BoardStep> StepPlayed;
+        /// <summary>Un grup a fost spart: mărimea, centrul (lume) și culoarea (efectele cresc cu mărimea).</summary>
+        public event Action<int, Vector3, int> GroupBlasted;
         /// <summary>O piesă dispare: culoarea, tipul și poziția (efectul diferă după aromă).</summary>
         public event Action<int, TileKind, Vector3> TileCleared;
         public event Action<TileKind, Vector3, int, List<Vector3>> SpecialActivated;
         public event Action<TileKind, Vector3> SpecialCreated;
+        /// <summary>Două piese speciale combinate (pentru efecte mai mari).</summary>
+        public event Action<Vector3> ComboTriggered;
         public event Action<Vector3> IceBroken;
-        /// <summary>Un obstacol (biscuit, ciocolată) a fost lovit (true = s-a spart).</summary>
+        /// <summary>Un obstacol (ladă, ciocolată, lanț) a fost lovit (true = s-a spart).</summary>
         public event Action<Vector3, bool> BiscuitHit;
         public event Action<Vector3, int> FrostingMelted;
         /// <summary>O bomboană-ingredient a ieșit jos: poziția și culoarea (cade apoi în borcan).</summary>
         public event Action<Vector3, int> IngredientExited;
         public event Action<Vector3> ChocolateGrew;
-        /// <summary>Sfârșitul unei mutări: câte piese au dispărut și unde (pentru puncte și laude).</summary>
+        /// <summary>Sfârșitul unei acțiuni: câte piese au dispărut și unde (pentru puncte și laude).</summary>
         public event Action<int, Vector3> MoveResolved;
         public event Action Shuffled;
 
-        public bool Busy { get; private set; }
+        public bool Busy => _phase == Phase.Animating;
         public bool Stuck => _engine != null && _engine.Stuck;
         public float CellSize => cellSize;
         public int Columns { get; private set; }
@@ -51,14 +65,15 @@ namespace SugarDrop
         public float Top => _bottomCenter.y + Rows * cellSize;
         public float Bottom => _bottomCenter.y;
         public int FrostingLeft => _engine != null ? _engine.FrostingLeft : 0;
-        /// <summary>Cascada pasului animat acum (pentru multiplicatorul de puncte).</summary>
-        public int CurrentCascade { get; private set; }
 
-        private Match3Engine _engine;
+        private BlastEngine _engine;
         private readonly Dictionary<int, Tile> _tiles = new();
+        private readonly List<Tile> _highlighted = new();
         private SpriteRenderer[,] _glaze;
         private Vector2 _bottomCenter;
-        private Tile _selected;
+        private Phase _phase;
+        private Vector2Int _selectedSpecial;
+        private Tile _pressed;
         private int _clearedThisMove;
         private Vector3 _clearedCenter;
 
@@ -73,7 +88,7 @@ namespace SugarDrop
             Columns = config.Columns;
             Rows = config.Rows;
             _bottomCenter = bottomCenter;
-            _engine = new Match3Engine(config, seed);
+            _engine = new BlastEngine(config, seed);
             BuildMask();
             BuildCells(config);
             foreach (PieceInfo piece in _engine.AllPieces()) CreateTile(piece, CellCenter(piece.Cell));
@@ -82,18 +97,16 @@ namespace SugarDrop
         public void Clear()
         {
             StopAllCoroutines();
-            Busy = false;
-            // Toți copiii, inclusiv piesele scoase care încă își făceau animația de dispariție.
+            _phase = Phase.Idle;
             foreach (Transform child in transform) Destroy(child.gameObject);
             _tiles.Clear();
+            _highlighted.Clear();
             _glaze = null;
             _engine = null;
-            _selected = null;
+            _pressed = null;
         }
 
-        /// <summary>
-        /// Masca tablei: piesele noi care intră de sus și bomboanele care ies jos se văd doar în interiorul tablei.
-        /// </summary>
+        /// <summary>Masca tablei: piesele noi care intră de sus și bomboanele care ies jos se văd doar în interior.</summary>
         private void BuildMask()
         {
             var go = new GameObject("Mask");
@@ -156,7 +169,7 @@ namespace SugarDrop
             tile.Init(cellSize);
             tile.Id = piece.Id;
             tile.Cell = piece.Cell;
-            tile.Setup(piece.Kind, piece.Color, piece.Frozen);
+            tile.Setup(piece);
             _tiles[piece.Id] = tile;
             return tile;
         }
@@ -183,92 +196,131 @@ namespace SugarDrop
         private Tile TileAt(Vector2Int cell) =>
             _engine != null && _engine.TryGetPiece(cell, out PieceInfo piece) && _tiles.TryGetValue(piece.Id, out Tile tile) ? tile : null;
 
-        // ------------------------------------------------------------ Selecție și indicii (doar vizual)
+        // ------------------------------------------------------------ Degetul pe tablă (doar vizual)
 
-        public void Select(Vector2Int? cell)
+        /// <summary>Degetul apasă o celulă: piesa se ridică, iar grupul care ar dispărea strălucește.</summary>
+        public void Press(Vector2Int? cell)
         {
-            Tile tile = cell.HasValue ? TileAt(cell.Value) : null;
-            if (tile == _selected) return;
-            if (_selected != null) _selected.SetSelected(false);
-            _selected = tile;
-            if (_selected != null) _selected.SetSelected(true);
+            if (_pressed != null) _pressed.SetSelected(false);
+            _pressed = null;
+            if (_phase == Phase.SpecialSelected) return; // păstrăm strălucirea selecției
+            ClearHighlights();
+            if (!cell.HasValue || _engine == null || Busy) return;
+            _pressed = TileAt(cell.Value);
+            if (_pressed != null) _pressed.SetSelected(true);
+            List<Vector2Int> group = _engine.GroupAt(cell.Value);
+            if (group.Count >= BlastRules.MinGroup) Highlight(group);
+        }
+
+        private void Highlight(IEnumerable<Vector2Int> cells)
+        {
+            foreach (Vector2Int c in cells)
+            {
+                Tile tile = TileAt(c);
+                if (tile == null) continue;
+                tile.SetHighlighted(true);
+                _highlighted.Add(tile);
+            }
+        }
+
+        private void ClearHighlights()
+        {
+            foreach (Tile tile in _highlighted)
+                if (tile != null) tile.SetHighlighted(false);
+            _highlighted.Clear();
         }
 
         public bool HasValidMove() => _engine != null && _engine.HasValidMove();
 
-        /// <summary>Cea mai bună mutare pentru obiective (colorWeight: cât valorează fiecare culoare).</summary>
-        public bool TryFindBestHint(Func<int, int> colorWeight, out Vector2Int a, out Vector2Int b)
+        public bool TryFindBestHint(Func<int, int> colorWeight, out Vector2Int cell)
         {
-            a = b = default;
-            return _engine != null && _engine.TryFindBestMove(colorWeight, out a, out b);
+            cell = default;
+            return _engine != null && _engine.TryFindBestTap(colorWeight, out cell);
         }
 
-        /// <summary>Tremură scurt piesele mutării sugerate.</summary>
+        /// <summary>Indiciu: grupul (sau piesa specială) sugerat tremură și strălucește scurt.</summary>
         public void ShowHint(Func<int, int> colorWeight)
         {
-            if (Busy || !TryFindBestHint(colorWeight, out Vector2Int a, out Vector2Int b)) return;
-            TileAt(a)?.Wiggle();
-            TileAt(b)?.Wiggle();
+            if (_phase != Phase.Idle || !TryFindBestHint(colorWeight, out Vector2Int cell)) return;
+            List<Vector2Int> group = _engine.GroupAt(cell);
+            if (group.Count == 0) group.Add(cell);
+            foreach (Vector2Int c in group) TileAt(c)?.Wiggle();
         }
 
         // ------------------------------------------------------------ Acțiuni
 
-        public void TrySwap(Vector2Int a, Vector2Int b)
+        /// <summary>Atingerea jucătorului (după ridicarea degetului de pe aceeași celulă).</summary>
+        public void Tap(Vector2Int cell)
         {
-            if (Busy || _engine == null || !_engine.IsValid(a)) return;
-            List<BoardStep> steps = _engine.IsValid(b) ? _engine.Swap(a, b) : null;
-            if (steps == null)
+            if (_engine == null || _phase == Phase.Animating) return;
+
+            if (_phase == Phase.SpecialSelected)
             {
-                Tile ta = TileAt(a), tb = _engine.IsValid(b) ? TileAt(b) : null;
-                if (ta != null && tb != null && _engine.TryGetPiece(a, out PieceInfo pa) && _engine.TryGetPiece(b, out PieceInfo pb)
-                    && !pa.Frozen && !pb.Frozen && IsMovable(pa.Kind) && IsMovable(pb.Kind))
-                    StartCoroutine(SwapBack(ta, tb));
-                else
-                {
-                    ta?.Wiggle();
-                    tb?.Wiggle();
-                }
-                InvalidSwap?.Invoke();
+                Vector2Int selected = _selectedSpecial;
+                CancelSelection();
+                if (cell == selected) Run(_engine.Tap(cell), true);
+                else if (Mathf.Abs(cell.x - selected.x) + Mathf.Abs(cell.y - selected.y) == 1 && _engine.IsSpecialAt(cell))
+                    Run(_engine.Combine(selected, cell), true);
+                return; // în altă parte: doar anulează selecția
+            }
+
+            if (_engine.IsSpecialAt(cell) && _engine.AdjacentSpecials(cell).Count > 0)
+            {
+                // Are vecine speciale: o selectăm; vecinele strălucesc ca invitație la combinare.
+                _phase = Phase.SpecialSelected;
+                _selectedSpecial = cell;
+                ClearHighlights();
+                Highlight(new[] { cell });
+                Highlight(_engine.AdjacentSpecials(cell));
+                TileAt(cell)?.Bounce(0.25f);
                 return;
             }
-            MoveMade?.Invoke();
-            StartCoroutine(Play(steps));
+
+            List<BoardStep> steps = _engine.Tap(cell);
+            if (steps == null)
+            {
+                TileAt(cell)?.Wiggle();
+                ClearHighlights();
+                InvalidTap?.Invoke();
+                return;
+            }
+            Run(steps, true);
         }
 
-        private static bool IsMovable(TileKind kind) => kind != TileKind.Biscuit && kind != TileKind.Chocolate;
-
-        private IEnumerator SwapBack(Tile a, Tile b)
+        public void CancelSelection()
         {
-            Busy = true;
-            Vector3 pa = a.transform.localPosition, pb = b.transform.localPosition;
-            a.MoveTo(pb, swapDuration);
-            b.MoveTo(pa, swapDuration);
-            yield return new WaitForSeconds(swapDuration);
-            a.MoveTo(pa, swapDuration);
-            b.MoveTo(pb, swapDuration);
-            yield return new WaitForSeconds(swapDuration);
-            Busy = false;
+            if (_phase != Phase.SpecialSelected) return;
+            _phase = Phase.Idle;
+            ClearHighlights();
+        }
+
+        private void Run(List<BoardStep> steps, bool consumesMove)
+        {
+            if (steps == null) return;
+            ClearHighlights();
+            if (consumesMove) MoveMade?.Invoke();
+            StartCoroutine(Play(steps));
         }
 
         /// <summary>Ajutorul „bombă”: explozie 3×3 (nu consumă mutarea).</summary>
         public bool Blast(Vector2Int center)
         {
-            if (Busy || _engine == null || !_engine.IsValid(center)) return false;
+            if (_phase != Phase.Idle || _engine == null || !_engine.IsValid(center)) return false;
             List<BoardStep> steps = _engine.Blast(center);
             if (steps == null) return false;
-            StartCoroutine(Play(steps));
+            Run(steps, false);
             return true;
         }
 
         /// <summary>Ajutorul „amestecă”.</summary>
         public bool ShuffleBooster()
         {
-            if (Busy || _engine == null) return false;
-            StartCoroutine(Play(new List<BoardStep> { _engine.ShuffleStep() }));
+            if (_phase != Phase.Idle || _engine == null) return false;
+            Run(new List<BoardStep> { _engine.ShuffleStep() }, false);
             return true;
         }
 
-        /// <summary>Finalul dulce: o piesă devine capac dungat.</summary>
+        /// <summary>Finalul dulce: o bomboană devine rachetă.</summary>
         public bool TryMakeRandomSpecial(out Vector3 position)
         {
             position = default;
@@ -279,7 +331,7 @@ namespace SugarDrop
             position = World(piece.Cell);
             if (_tiles.TryGetValue(piece.Id, out Tile tile))
             {
-                tile.Setup(piece.Kind, piece.Color, piece.Frozen);
+                tile.Setup(piece);
                 tile.Bounce(0.3f);
             }
             StepPlayed?.Invoke(step);
@@ -287,13 +339,13 @@ namespace SugarDrop
             return true;
         }
 
-        /// <summary>Finalul dulce: activează următorul capac special.</summary>
+        /// <summary>Finalul dulce: activează următoarea piesă specială.</summary>
         public bool DetonateNextSpecial()
         {
-            if (Busy || _engine == null) return false;
+            if (_phase != Phase.Idle || _engine == null) return false;
             List<BoardStep> steps = _engine.DetonateNextSpecial();
             if (steps == null) return false;
-            StartCoroutine(Play(steps));
+            Run(steps, false);
             return true;
         }
 
@@ -301,16 +353,14 @@ namespace SugarDrop
 
         private IEnumerator Play(List<BoardStep> steps)
         {
-            Busy = true;
+            _phase = Phase.Animating;
             _clearedThisMove = 0;
             _clearedCenter = Vector3.zero;
             foreach (BoardStep step in steps)
             {
-                CurrentCascade = step.Cascade;
                 StepPlayed?.Invoke(step);
                 switch (step.Kind)
                 {
-                    case StepKind.Swap: yield return AnimateSwap(step); break;
                     case StepKind.Clear: yield return AnimateClear(step); break;
                     case StepKind.Fall: yield return AnimateFall(step); break;
                     case StepKind.Exit: yield return AnimateExit(step); break;
@@ -318,28 +368,14 @@ namespace SugarDrop
                     case StepKind.Grow: yield return AnimateGrow(step); break;
                 }
             }
-            CurrentCascade = 0;
             if (_clearedThisMove > 0) MoveResolved?.Invoke(_clearedThisMove, _clearedCenter / _clearedThisMove);
-            Busy = false;
-        }
-
-        private IEnumerator AnimateSwap(BoardStep step)
-        {
-            if (_tiles.TryGetValue(step.IdAtA, out Tile a))
-            {
-                a.Cell = step.A;
-                a.MoveTo(CellCenter(step.A), swapDuration);
-            }
-            if (_tiles.TryGetValue(step.IdAtB, out Tile b))
-            {
-                b.Cell = step.B;
-                b.MoveTo(CellCenter(step.B), swapDuration);
-            }
-            yield return new WaitForSeconds(swapDuration);
+            _phase = Phase.Idle;
         }
 
         private IEnumerator AnimateClear(BoardStep step)
         {
+            if (step.GroupSize > 0) GroupBlasted?.Invoke(step.GroupSize, World(step.Origin), step.GroupColor);
+            if (step.Combo) ComboTriggered?.Invoke(World(step.Origin));
             foreach (Activation activation in step.Activations)
             {
                 var targets = new List<Vector3>(activation.Targets.Count);
@@ -347,36 +383,36 @@ namespace SugarDrop
                 SpecialActivated?.Invoke(activation.Kind, World(activation.Cell), activation.Color, targets);
             }
 
-            int index = 0;
+            // Piesele pocnesc în val, de la celula atinsă spre margini.
+            Vector3 origin = World(step.Origin);
             foreach (PieceInfo piece in step.Cleared)
             {
                 if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
                 _tiles.Remove(piece.Id);
                 Vector3 position = tile.transform.position;
-                if (piece.Kind == TileKind.Biscuit || piece.Kind == TileKind.Chocolate) BiscuitHit?.Invoke(position, true);
+                if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate) BiscuitHit?.Invoke(position, true);
                 else
                 {
                     TileCleared?.Invoke(piece.Color, piece.Kind, position);
                     _clearedThisMove++;
                     _clearedCenter += position;
                 }
-                if (tile == _selected) _selected = null;
+                if (tile == _pressed) _pressed = null;
                 GameObject go = tile.gameObject;
-                StartCoroutine(PopLater(tile, index++ * popStagger, () => Destroy(go)));
+                float delay = Vector3.Distance(position, origin) / cellSize * popStagger * 3f;
+                StartCoroutine(PopLater(tile, Mathf.Min(delay, 0.25f), () => Destroy(go)));
             }
 
-            foreach (PieceInfo piece in step.Unfrozen)
-                if (_tiles.TryGetValue(piece.Id, out Tile tile))
-                {
-                    tile.Unfreeze();
-                    IceBroken?.Invoke(tile.transform.position);
-                }
-            foreach (PieceInfo piece in step.BlockerHits)
-                if (_tiles.TryGetValue(piece.Id, out Tile tile))
-                {
-                    tile.ShowCrack();
-                    BiscuitHit?.Invoke(tile.transform.position, false);
-                }
+            foreach (PieceInfo piece in step.ObstacleHits)
+            {
+                if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
+                bool wasIce = tile.Ice > 0;
+                bool wasChain = tile.Chained;
+                tile.Setup(piece, piece.Kind == TileKind.Crate);
+                tile.Wiggle();
+                if (wasIce) IceBroken?.Invoke(tile.transform.position);
+                else BiscuitHit?.Invoke(tile.transform.position, wasChain);
+            }
             for (int i = 0; i < step.FrostingCells.Count; i++)
             {
                 Vector2Int c = step.FrostingCells[i];
@@ -390,16 +426,16 @@ namespace SugarDrop
                 FrostingMelted?.Invoke(World(c), left);
             }
 
-            // Capacele speciale noi (sau piese existente transformate) apar după ce dispar celelalte.
+            // Piesele speciale noi apar după ce dispare grupul; cele transformate (curcubeu + …) se schimbă pe loc.
             foreach (PieceInfo piece in step.Changed)
             {
                 if (!_tiles.TryGetValue(piece.Id, out Tile tile)) tile = CreateTile(piece, CellCenter(piece.Cell));
-                else tile.Setup(piece.Kind, piece.Color, piece.Frozen);
-                tile.Bounce(0.3f);
+                else tile.Setup(piece);
+                tile.Bounce(0.35f);
                 SpecialCreated?.Invoke(piece.Kind, tile.transform.position);
             }
 
-            yield return new WaitForSeconds(popDuration + Mathf.Min(index, 20) * popStagger);
+            yield return new WaitForSeconds(popDuration + 0.06f);
         }
 
         private IEnumerator PopLater(Tile tile, float delay, Action done)
@@ -416,18 +452,20 @@ namespace SugarDrop
                 Tile tile;
                 if (move.Spawned)
                 {
-                    // Piesele noi pornesc de deasupra tablei și apar treptat.
+                    // Piesele noi pornesc de deasupra tablei (ascunse de mască) și apar treptat.
                     tile = CreateTile(move.Piece, CellCenter(move.From));
                     tile.FadeIn(0.15f);
                 }
                 else if (!_tiles.TryGetValue(move.Piece.Id, out tile)) continue;
                 tile.Cell = move.To;
                 float cells = Vector2.Distance(move.From, move.To);
+                // Căderea: accelerată (rădăcină din distanță), în val de la stânga la dreapta și de jos în sus.
                 float duration = fallPerCell * Mathf.Sqrt(cells) * 2.2f;
-                tile.MoveTo(CellCenter(move.To), duration, true);
-                longest = Mathf.Max(longest, duration);
+                float delay = move.To.x * fallStagger + move.To.y * fallStagger * 0.5f;
+                tile.MoveTo(CellCenter(move.To), duration, true, delay);
+                longest = Mathf.Max(longest, duration + delay);
             }
-            yield return new WaitForSeconds(longest + 0.04f);
+            yield return new WaitForSeconds(longest + 0.05f);
         }
 
         private IEnumerator AnimateExit(BoardStep step)
@@ -436,8 +474,9 @@ namespace SugarDrop
             {
                 if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
                 _tiles.Remove(piece.Id);
-                tile.MoveTo(CellCenter(new Vector2Int(piece.Cell.x, piece.Cell.y - 1)), 0.18f, true);
-                IngredientExited?.Invoke(World(new Vector2Int(piece.Cell.x, piece.Cell.y - 1)), piece.Color);
+                Vector2Int below = new(piece.Cell.x, piece.Cell.y - 1);
+                tile.MoveTo(CellCenter(below), 0.18f, true);
+                IngredientExited?.Invoke(World(below), piece.Color);
                 GameObject go = tile.gameObject;
                 StartCoroutine(PopLater(tile, 0.12f, () => Destroy(go)));
             }
@@ -461,7 +500,7 @@ namespace SugarDrop
             foreach (PieceInfo piece in step.Changed)
                 if (_tiles.TryGetValue(piece.Id, out Tile tile))
                 {
-                    tile.Setup(piece.Kind, piece.Color, piece.Frozen);
+                    tile.Setup(piece);
                     tile.Bounce(0.3f);
                     ChocolateGrew?.Invoke(tile.transform.position);
                 }

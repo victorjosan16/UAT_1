@@ -3,20 +3,19 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>
-    /// Ghidul tutorialului: două inele care pulsează pe capacele de schimbat și un punct luminos
-    /// care „alunecă” de la unul la altul, arătând glisarea.
+    /// Ghidul tutorialului: un inel care pulsează pe grupul de atins și un „deget” luminos care apasă ritmic,
+    /// arătând atingerea.
     /// </summary>
     public class HintGuide : MonoBehaviour
     {
-        private SpriteRenderer _ringA, _ringB, _dot;
-        private Vector3 _a, _b;
+        private SpriteRenderer _ring, _dot;
+        private Vector3 _target;
         private bool _visible;
 
         private void Awake()
         {
-            _ringA = Make("RingA", SugarSprites.Ring, 1.1f);
-            _ringB = Make("RingB", SugarSprites.Ring, 1.1f);
-            _dot = Make("Dot", SugarSprites.SoftDot, 0.7f);
+            _ring = Make("Ring", SugarSprites.Ring, 1.2f);
+            _dot = Make("Dot", SugarSprites.SoftDot, 0.8f);
             Hide();
         }
 
@@ -31,10 +30,9 @@ namespace SugarDrop
             return renderer;
         }
 
-        public void Show(Vector3 a, Vector3 b)
+        public void Show(Vector3 target)
         {
-            _a = a;
-            _b = b;
+            _target = target;
             _visible = true;
             gameObject.SetActive(true);
         }
@@ -48,20 +46,14 @@ namespace SugarDrop
         private void Update()
         {
             if (!_visible) return;
-            float time = Time.time;
-            float pulse = 1f + Mathf.Sin(time * 6f) * 0.12f;
-            _ringA.transform.position = _a;
-            _ringB.transform.position = _b;
-            float ringScale = 1.1f / _ringA.sprite.bounds.size.x * pulse;
-            _ringA.transform.localScale = _ringB.transform.localScale = Vector3.one * ringScale;
-            _ringA.color = _ringB.color = new Color(1f, 1f, 1f, 0.75f + Mathf.Sin(time * 6f) * 0.25f);
-
-            // Punctul pleacă de pe primul capac, ajunge pe al doilea, apoi se stinge și o ia de la capăt.
-            float t = Mathf.Repeat(time / 1.2f, 1f);
-            float move = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.15f) / 0.55f));
-            _dot.transform.position = Vector3.Lerp(_a, _b, move);
-            float alpha = t < 0.1f ? t / 0.1f : t > 0.8f ? 1f - (t - 0.8f) / 0.2f : 1f;
-            _dot.color = new Color(1f, 1f, 0.85f, alpha);
+            // Ritm de „apăsare”: inelul se strânge când punctul apasă, apoi se lărgește și se stinge.
+            float t = Mathf.Repeat(Time.time / 1.1f, 1f);
+            float press = t < 0.25f ? t / 0.25f : 1f - Mathf.Clamp01((t - 0.25f) / 0.3f);
+            _ring.transform.position = _target;
+            _dot.transform.position = _target + new Vector3(0.18f, -0.18f, 0f) * (1f - press);
+            _ring.transform.localScale = Vector3.one * (1.2f / _ring.sprite.bounds.size.x * (1.25f - press * 0.25f + Mathf.Max(0f, t - 0.55f)));
+            _ring.color = new Color(1f, 1f, 1f, t < 0.55f ? 0.9f : 0.9f * (1f - (t - 0.55f) / 0.45f));
+            _dot.color = new Color(1f, 1f, 0.85f, 0.6f + press * 0.4f);
         }
     }
 }

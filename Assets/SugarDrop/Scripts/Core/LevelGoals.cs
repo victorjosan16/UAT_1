@@ -40,10 +40,10 @@ namespace SugarDrop
             }
         }
 
-        /// <summary>O piesă colorată a dispărut (inclusiv cele speciale). Întoarce true dacă un obiectiv s-a schimbat.</summary>
+        /// <summary>O bomboană colorată a dispărut. Întoarce true dacă un obiectiv s-a schimbat.</summary>
         public bool OnPieceCleared(int color, TileKind kind)
         {
-            if (color < 0 || kind == TileKind.Rainbow || kind == TileKind.Biscuit || kind == TileKind.Ingredient || kind == TileKind.Chocolate)
+            if (color < 0 || kind != TileKind.Normal)
                 return false;
             return Decrease(GoalKind.Collect, color);
         }

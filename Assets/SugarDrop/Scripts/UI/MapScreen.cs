@@ -456,7 +456,11 @@ namespace SugarDrop
             node.Ring.color = state == LevelNodeState.Locked ? new Color(0.71f, 0.48f, 1f, 0.45f) : Palette.Tile(4);
             node.Number.gameObject.SetActive(state != LevelNodeState.Locked);
             node.Lock.gameObject.SetActive(state == LevelNodeState.Locked);
-            node.Boss.Text = SugarLoc.T("BOSS");
+            // Mega-Boss (la fiecare 50 de niveluri): etichetă proprie, aurie, și inel auriu.
+            bool mega = LevelConfig.IsMegaBossLevel(level);
+            node.Boss.Text = SugarLoc.T(mega ? "MEGA BOSS" : "BOSS");
+            node.Boss.Color = mega ? new Color(1f, 0.84f, 0.3f) : theme.AccentColor;
+            if (mega) node.Ring.color = new Color(1f, 0.84f, 0.3f, state == LevelNodeState.Locked ? 0.5f : 1f);
 
             int stars = SugarSave.GetStars(level);
             for (int s = 0; s < 3; s++)

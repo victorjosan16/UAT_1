@@ -5,7 +5,7 @@ namespace SugarDrop.Tests
     public class LevelGoalsTests
     {
         [Test]
-        public void CollectGoal_CountsOnlyItsColor_IncludingSpecials()
+        public void CollectGoal_CountsOnlyItsColor()
         {
             LevelConfig config = LevelConfig.For(2); // „strânge culori”
             Assert.AreEqual(LevelType.Collect, config.Type);
@@ -13,9 +13,10 @@ namespace SugarDrop.Tests
             GoalItem item = goals.Items.Find(i => i.Kind == GoalKind.Collect);
             int start = item.Remaining;
             goals.OnPieceCleared(item.Color, TileKind.Normal);
-            goals.OnPieceCleared(item.Color, TileKind.StripedRow);
+            goals.OnPieceCleared(item.Color, TileKind.Normal);
             goals.OnPieceCleared((item.Color + 1) % config.Colors, TileKind.Normal);
-            goals.OnPieceCleared(-1, TileKind.Biscuit);
+            goals.OnPieceCleared(-1, TileKind.Crate);
+            goals.OnPieceCleared(item.Color, TileKind.RocketH); // piesele speciale nu au culoare de strâns
             Assert.AreEqual(start - 2, item.Remaining);
         }
 

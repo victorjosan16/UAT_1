@@ -90,7 +90,9 @@ namespace SugarDrop
         private void OnEnable()
         {
             board.MoveMade += OnMoveMade;
-            board.InvalidSwap += OnInvalidSwap;
+            board.InvalidTap += OnInvalidTap;
+            board.GroupBlasted += OnGroupBlasted;
+            board.ComboTriggered += OnComboTriggered;
             board.TileCleared += OnTileCleared;
             board.SpecialActivated += OnSpecialActivated;
             board.SpecialCreated += OnSpecialCreated;
@@ -115,7 +117,9 @@ namespace SugarDrop
         private void OnDisable()
         {
             board.MoveMade -= OnMoveMade;
-            board.InvalidSwap -= OnInvalidSwap;
+            board.InvalidTap -= OnInvalidTap;
+            board.GroupBlasted -= OnGroupBlasted;
+            board.ComboTriggered -= OnComboTriggered;
             board.TileCleared -= OnTileCleared;
             board.SpecialActivated -= OnSpecialActivated;
             board.SpecialCreated -= OnSpecialCreated;
@@ -268,11 +272,11 @@ namespace SugarDrop
             hud.ShowBanner(_config.IsBoss ? SugarLoc.T("Nivel Boss!") : IntroText(_config.Type));
 
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
-            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _, out _);
-            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int a, out Vector2Int b))
+            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _);
+            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int hint))
             {
-                hud.SetTutorial(SugarLoc.T("Glisează un capac ca să aliniezi 3 la fel!"));
-                hintGuide.Show(board.CellCenter(a), board.CellCenter(b));
+                hud.SetTutorial(SugarLoc.T("Atinge un grup de 3+ bomboane la fel!"));
+                hintGuide.Show(board.CellCenter(hint));
             }
             else
             {
@@ -515,6 +519,7 @@ namespace SugarDrop
                 if (Audio != null) Audio.ApplySettings();
             }, inGame));
             buttons.Add(Toggle(Data.vibration ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE", () => Data.vibration = !Data.vibration, inGame));
+            buttons.Add(Toggle(Data.reducedMotion ? "MIȘCARE REDUSĂ: DA" : "MIȘCARE REDUSĂ: NU", () => Data.reducedMotion = !Data.reducedMotion, inGame));
             buttons.Add(Toggle("LIMBA: ROMÂNĂ", () =>
             {
                 Data.language = SugarLoc.IsEnglish ? "ro" : "en";
@@ -546,7 +551,7 @@ namespace SugarDrop
             if (_state == State.Playing || _state == State.Result) hud.SetLevel(_level, _config.IsBoss);
             if (map.IsOpen) map.Refresh();
             if (menu.IsOpen) menu.Show();
-            if (_tutorialActive) hud.SetTutorial(SugarLoc.T("Glisează un capac ca să aliniezi 3 la fel!"));
+            if (_tutorialActive) hud.SetTutorial(SugarLoc.T("Atinge un grup de 3+ bomboane la fel!"));
         }
 
         private static void UiThemeColors(out Color positive, out Color ad, out Color panel)
@@ -697,10 +702,31 @@ namespace SugarDrop
             }
         }
 
-        private void OnInvalidSwap()
+        private void OnInvalidTap()
         {
             if (Audio != null) Audio.Play(SugarSound.Invalid, 0.7f);
             SugarAudio.Buzz(0);
+        }
+
+        /// <summary>
+        /// Efectele cresc cu mărimea grupului: 3–4 pocnet mic; 5–6 explozie medie + puls de ecran;
+        /// 7–9 explozie puternică + undă de șoc; 10+ explozie curcubeu + impuls de cameră.
+        /// </summary>
+        private void OnGroupBlasted(int size, Vector3 center, int color)
+        {
+            if (Vfx != null) Vfx.GroupBurst(center, size, color);
+            if (Audio != null) Audio.Play(size >= 7 ? SugarSound.Wrapped : SugarSound.Click, size >= 7 ? 0.7f : 0.5f, 1f + Mathf.Min(size, 12) * 0.03f);
+            SugarAudio.Buzz(size >= 10 ? 2 : size >= 5 ? 1 : 0);
+            if (size >= 7) mascot.Cheer(size >= 10 ? 2f : 1.5f);
+        }
+
+        private void OnComboTriggered(Vector3 position)
+        {
+            if (Vfx != null) Vfx.ComboFlash(position);
+            if (Audio != null) Audio.Play(SugarSound.Rainbow, 1f, 0.9f);
+            hud.ShowWord(SugarLoc.T("Combo!"), Palette.Tile(3));
+            SugarAudio.Buzz(2);
+            mascot.Cheer(2f);
         }
 
         private void OnTileCleared(int color, TileKind kind, Vector3 position)
@@ -712,6 +738,8 @@ namespace SugarDrop
                 if (Audio != null) Audio.PlayPop(color, _popChain / 2);
             }
             _popChain++;
+            // Bomboanele din culorile cerute „cad” spre borcan și se adună acolo (doar decor; obiectivul e deja numărat).
+            if (color >= 0 && IsCollectColor(color) && _decorCounter++ % 2 == 0) candies.SpawnDecorative(position, Palette.TileLight(color));
             mascot.LookAt(position);
             if (Time.unscaledTime - _lastBuzz > 0.09f)
             {
@@ -720,19 +748,29 @@ namespace SugarDrop
             }
         }
 
+        private int _decorCounter;
+
+        private bool IsCollectColor(int color)
+        {
+            if (_goals == null) return false;
+            foreach (GoalItem item in _goals.Items)
+                if (item.Kind == GoalKind.Collect && item.Color == color) return true;
+            return false;
+        }
+
         private void OnSpecialActivated(TileKind kind, Vector3 position, int color, List<Vector3> targets)
         {
             switch (kind)
             {
-                case TileKind.StripedRow:
-                case TileKind.StripedColumn:
-                    if (Vfx != null) Vfx.StripeBlast(position, kind == TileKind.StripedRow, board.Width + 0.6f, color);
+                case TileKind.RocketH:
+                case TileKind.RocketV:
+                    if (Vfx != null) Vfx.RocketLaunch(position, kind == TileKind.RocketH, board.Width + 0.6f);
                     if (Audio != null) Audio.Play(SugarSound.Striped);
                     SugarAudio.Buzz(1);
                     break;
-                case TileKind.Wrapped:
-                    if (Vfx != null) Vfx.WrapBlast(position, color);
-                    if (Audio != null) Audio.Play(color < 0 ? SugarSound.Bomb : SugarSound.Wrapped);
+                case TileKind.Bomb:
+                    if (Vfx != null) Vfx.WrapBlast(position, color, 1.6f);
+                    if (Audio != null) Audio.Play(SugarSound.Bomb);
                     SugarAudio.Buzz(2);
                     break;
                 case TileKind.Rainbow:

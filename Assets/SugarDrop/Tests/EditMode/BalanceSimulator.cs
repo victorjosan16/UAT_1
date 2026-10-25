@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SugarDrop.Tests
 {
     /// <summary>
-    /// Un jucător automat simplu: alege mereu mutarea sugerată de indiciu, fără ajutoare.
+    /// Un jucător automat simplu: atinge mereu grupul sugerat de indiciu, fără ajutoare.
     /// Folosit ca să verificăm că nivelurile se pot câștiga (un om joacă de obicei mai bine și are ajutoare).
     /// </summary>
     public static class BalanceSimulator
@@ -12,7 +12,7 @@ namespace SugarDrop.Tests
         public static bool Play(int level, int seed, out int score)
         {
             LevelConfig config = LevelConfig.For(level);
-            var engine = new Match3Engine(config, seed);
+            var engine = new BlastEngine(config, seed);
             var goals = new LevelGoals(config, engine.FrostingLeft);
             score = 0;
             Func<int, int> weight = color =>
@@ -23,8 +23,8 @@ namespace SugarDrop.Tests
             };
             for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck; move++)
             {
-                if (!engine.TryFindBestMove(weight, out Vector2Int a, out Vector2Int b)) break;
-                foreach (BoardStep step in engine.Swap(a, b))
+                if (!engine.TryFindBestTap(weight, out Vector2Int cell)) break;
+                foreach (BoardStep step in engine.Tap(cell))
                 {
                     score += ScoreRules.PointsFor(step);
                     goals.Apply(step);

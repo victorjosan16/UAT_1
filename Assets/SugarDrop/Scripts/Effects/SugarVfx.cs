@@ -41,6 +41,9 @@ namespace SugarDrop
         private int _activeCount;
         private Vector3 _cameraBase;
         private float _shake;
+        private float _zoom;
+        private float _baseOrtho;
+        private bool _zooming;
 
         private void Awake()
         {
@@ -323,7 +326,93 @@ namespace SugarDrop
         }
 
         /// <summary>Tremurul camerei (explozii); se suprapune, dar are o limită.</summary>
-        public void Shake(float amount) => _shake = Mathf.Min(0.45f, _shake + amount);
+        public void Shake(float amount)
+        {
+            if (SugarSave.Data.reducedMotion) return;
+            _shake = Mathf.Min(0.45f, _shake + amount);
+        }
+
+        /// <summary>Impuls de cameră (zoom scurt) pentru loviturile foarte puternice.</summary>
+        public void Impulse(float amount)
+        {
+            if (SugarSave.Data.reducedMotion) return;
+            _zoom = Mathf.Min(0.06f, _zoom + amount);
+        }
+
+        // ------------------------------------------------------------ Grupuri și piese speciale (Tap-to-Blast)
+
+        /// <summary>
+        /// Explozia unui grup, din ce în ce mai spectaculoasă: 3–4 sclipiri mici; 5–6 explozie medie și puls;
+        /// 7–9 undă de șoc și combo; 10+ explozie curcubeu și impuls de cameră.
+        /// </summary>
+        public void GroupBurst(Vector3 center, int size, int color)
+        {
+            Color main = color >= 0 ? Palette.Tile(color) : Color.white;
+            Color light = color >= 0 ? Palette.TileLight(color) : Color.white;
+            int sparkles = size >= 10 ? 24 : size >= 7 ? 16 : size >= 5 ? 10 : 5;
+            for (int i = 0; i < sparkles; i++)
+            {
+                Color c = size >= 10 ? Color.HSVToRGB(i / (float)sparkles, 0.5f, 1f) : i % 2 == 0 ? light : Color.white;
+                Particle p = Emit(SugarSprites.Sparkle, center, Random.Range(0.4f, 0.7f), c);
+                p.Velocity = Random.insideUnitCircle.normalized * Random.Range(2f, 2f + size * 0.35f);
+                p.Drag = 4f;
+                p.Spin = Random.Range(-300f, 300f);
+                Size(p, 0.22f, 0.3f, 0f);
+            }
+            if (size >= 5)
+            {
+                Flash(center, light, 1.6f + size * 0.12f, 0.22f);
+                Shake(0.06f);
+            }
+            if (size >= 7)
+            {
+                Ring(center, Color.white, 2.6f + size * 0.15f, 0.42f);
+                Ring(center, main, 2f + size * 0.12f, 0.5f).Delay = 0.05f;
+                Shake(0.12f);
+            }
+            if (size >= 10)
+            {
+                for (int i = 0; i < 6; i++)
+                    Ring(center, Color.HSVToRGB(i / 6f, 0.55f, 1f), 3.2f + i * 0.35f, 0.55f).Delay = i * 0.04f;
+                Impulse(0.03f);
+            }
+        }
+
+        /// <summary>Două piese speciale combinate: blitz alb mare, inele curcubeu, impuls de cameră.</summary>
+        public void ComboFlash(Vector3 position)
+        {
+            Flash(position, Color.white, 4f, 0.3f);
+            for (int i = 0; i < 4; i++)
+                Ring(position, Color.HSVToRGB(i / 4f, 0.5f, 1f), 3.5f + i * 0.6f, 0.5f).Delay = i * 0.05f;
+            Shake(0.25f);
+            Impulse(0.04f);
+        }
+
+        /// <summary>Racheta: două rachete mici zboară în direcții opuse, lăsând o dâră de sclipiri, plus raza.</summary>
+        public void RocketLaunch(Vector3 position, bool horizontal, float length)
+        {
+            StripeBlast(position, horizontal, length, -1);
+            Vector3 axis = horizontal ? Vector3.right : Vector3.up;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Particle rocket = Emit(SugarSprites.Rocket, position, 0.45f, Color.white);
+                rocket.Velocity = axis * side * length * 1.6f;
+                rocket.Rotation = horizontal ? (side > 0 ? 0f : 180f) : (side > 0 ? 90f : -90f);
+                Size(rocket, 0.7f, 0.7f, 0.6f);
+                for (int i = 0; i < 8; i++)
+                {
+                    Particle trail = Emit(SugarSprites.SoftDot, position + axis * side * (i * length / 16f), 0.35f, new Color(1f, 0.85f, 0.5f, 0.9f));
+                    trail.Delay = i * 0.025f;
+                    Size(trail, 0.35f, 0.25f, 0f);
+                }
+            }
+        }
+
+        public void WrapBlast(Vector3 position, int color, float scale)
+        {
+            WrapBlast(position, color);
+            if (scale > 1f) Ring(position, new Color(1f, 0.9f, 0.6f), 3.4f * scale, 0.5f).Delay = 0.08f;
+        }
 
         // ------------------------------------------------------------ Motor
 
@@ -459,6 +548,23 @@ namespace SugarDrop
                 Color c = p.Color;
                 c.a *= alpha;
                 p.Renderer.color = c;
+            }
+
+            if (shakeCamera != null && _zoom > 0.0005f)
+            {
+                // Impuls de cameră: un mic zoom spre tablă care revine lin.
+                if (!_zooming)
+                {
+                    _baseOrtho = shakeCamera.orthographicSize;
+                    _zooming = true;
+                }
+                _zoom = Mathf.MoveTowards(_zoom, 0f, dt * 0.25f);
+                shakeCamera.orthographicSize = _baseOrtho * (1f - _zoom);
+            }
+            else if (_zooming && shakeCamera != null)
+            {
+                _zooming = false;
+                shakeCamera.orthographicSize = _baseOrtho;
             }
 
             if (shakeCamera != null)

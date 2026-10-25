@@ -26,11 +26,11 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void Cascades_MultiplyPoints_ButCapped()
+        public void BigGroups_AreWorthMuchMore()
         {
-            Assert.AreEqual(ScoreRules.TilePoints, ScoreRules.TileValue(0));
-            Assert.AreEqual(ScoreRules.TilePoints * 3, ScoreRules.TileValue(2));
-            Assert.AreEqual(ScoreRules.TilePoints * ScoreRules.MaxCascadeMultiplier, ScoreRules.TileValue(100));
+            Assert.AreEqual(0, ScoreRules.GroupBonus(3));
+            Assert.Less(ScoreRules.GroupBonus(5), ScoreRules.GroupBonus(7));
+            Assert.Less(ScoreRules.GroupBonus(7) * 2, ScoreRules.GroupBonus(10));
         }
     }
 }

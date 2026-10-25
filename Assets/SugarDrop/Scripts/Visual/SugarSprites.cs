@@ -309,6 +309,66 @@ namespace SugarDrop
             return Mathf.Min(body, shackle);
         }));
 
+        /// <summary>Rachetă de bomboană (orizontală; verticala e aceeași rotită): corp roz-alb în dungi, vârf, aripioare.</summary>
+        public static Sprite Rocket => Get("rocket", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            // Corpul: capsulă orizontală; vârful: semicerc spre dreapta; aripioarele: două triunghiuri în stânga.
+            float body = RoundRect(x, y, 22, 44, 78, 40, 20);
+            float nose = Vector2.Distance(p, new Vector2(98f, 64f)) - 20f;
+            float finTop = Mathf.Max(Mathf.Max(30f - x, x - 54f), Mathf.Max(84f - y, y - 104f + (x - 30f) * 0.8f));
+            float finBottom = Mathf.Max(Mathf.Max(30f - x, x - 54f), Mathf.Max(y - 44f, 24f - y - (x - 30f) * 0.8f));
+            float d = Mathf.Min(Mathf.Min(body, nose), Mathf.Min(finTop, finBottom));
+            bool stripe = Mathf.Repeat(x + y * 0.4f, 20f) < 9f;
+            Color c = stripe ? new Color(1f, 0.42f, 0.55f) : new Color(1f, 0.97f, 0.98f);
+            if (nose < 0f && x > 92f) c = new Color(1f, 0.82f, 0.25f);
+            if (finTop < 0f || finBottom < 0f) c = new Color(0.45f, 0.7f, 1f);
+            float shine = Mathf.Clamp01(1f - Mathf.Abs(y - 74f) / 5f) * (body < -4f ? 0.45f : 0f);
+            c = Color.Lerp(c, Color.white, shine);
+            float shade = Mathf.Lerp(0.82f, 1f, Mathf.Clamp01((y - 30f) / 60f));
+            c = new Color(c.r * shade, c.g * shade, c.b * shade, Alpha(d));
+            return c;
+        }));
+
+        /// <summary>Ladă de lemn (obstacol): scânduri cu cuie și ramă.</summary>
+        public static Sprite Crate => Get("crate", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 8, 8, 112, 112, 14);
+            var wood = new Color(0.86f, 0.6f, 0.34f);
+            var dark = new Color(0.6f, 0.38f, 0.2f);
+            float frame = Mathf.Min(Mathf.Min(x - 8f, 120f - x), Mathf.Min(y - 8f, 120f - y));
+            bool plankLine = Mathf.Repeat(y - 8f, 28f) < 3f;
+            float diagonal = Mathf.Abs((x - 64f) - (y - 64f)) - 7f;
+            Color c = frame < 12f || diagonal < 0f ? Color.Lerp(dark, wood, 0.35f) : plankLine ? dark : wood;
+            float grain = Mathf.Sin(x * 0.35f + Mathf.Sin(y * 0.2f) * 2f) * 0.04f;
+            c = new Color(c.r + grain, c.g + grain, c.b + grain);
+            foreach (Vector2 nail in new[] { new Vector2(16, 16), new Vector2(112, 16), new Vector2(16, 112), new Vector2(112, 112) })
+                if (Vector2.Distance(new Vector2(x, y), nail) < 4f) c = new Color(0.45f, 0.45f, 0.5f);
+            c.a = Alpha(d);
+            return c;
+        }));
+
+        /// <summary>Lanț în X peste o bomboană legată.</summary>
+        public static Sprite Chain => Get("chain", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x - 64f, y - 64f);
+            float best = 99f;
+            foreach (float angle in new[] { 45f, -45f })
+            {
+                Vector2 q = Rotate(p, angle);
+                if (Mathf.Abs(q.x) > 58f) continue;
+                // Zale ovale alternând orientarea de-a lungul diagonalei.
+                float cell = Mathf.Repeat(q.x + 9f, 18f) - 9f;
+                bool flat = Mathf.Repeat(Mathf.Floor((q.x + 9f) / 18f), 2f) < 1f;
+                float rx = flat ? 9f : 4.5f, ry = flat ? 5f : 8f;
+                float ring = Mathf.Abs(new Vector2(cell / rx, q.y / ry).magnitude - 1f) * Mathf.Min(rx, ry) - 1.6f;
+                best = Mathf.Min(best, ring);
+            }
+            float a = Alpha(best);
+            float metal = 0.6f + 0.35f * Mathf.Clamp01(1f - Mathf.Abs(best + 1f) / 2f);
+            return new Color(metal * 0.85f, metal * 0.88f, metal, a);
+        }));
+
         /// <summary>Tabletă de ciocolată (obstacol care crește): pătrate în relief.</summary>
         public static Sprite Chocolate => Get("chocolate", () => Paint(128, (x, y) =>
         {
