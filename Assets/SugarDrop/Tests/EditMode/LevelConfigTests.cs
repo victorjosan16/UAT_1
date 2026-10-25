@@ -19,7 +19,7 @@ namespace SugarDrop.Tests
                 Assert.That(c.FrostingCells, Is.LessThanOrEqualTo(c.ValidCells), $"nivel {level}");
                 foreach (int color in c.CollectColors) Assert.That(color, Is.InRange(0, c.Colors - 1), $"nivel {level}");
                 Assert.That(c.Crates + c.Chocolate + c.Ice + c.Chains, Is.LessThan(c.ValidCells / 3), $"nivel {level}");
-                bool hasGoal = c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0;
+                bool hasGoal = c.Type == LevelType.Boss || c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0;
                 Assert.IsTrue(hasGoal, $"nivel {level} fără obiectiv");
             }
         }
@@ -39,7 +39,7 @@ namespace SugarDrop.Tests
         {
             var seen = new System.Collections.Generic.HashSet<LevelType>();
             for (int level = 1; level <= 12; level++) seen.Add(LevelConfig.For(level).Type);
-            Assert.AreEqual(4, seen.Count, "în primele 12 niveluri apar toate tipurile");
+            Assert.AreEqual(5, seen.Count, "în primele 12 niveluri apar toate tipurile (inclusiv primul Boss)");
             Assert.AreEqual(LevelType.Score, LevelConfig.For(1).Type);
         }
 
@@ -101,13 +101,18 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void BossLevels_AreEveryTenth_WithTwoGoals()
+        public void BossLevels_AreEveryTenth_AndAreBattles()
         {
+            for (int level = 1; level <= 200; level++)
+            {
+                LevelConfig c = LevelConfig.For(level);
+                Assert.AreEqual(level % 10 == 0, c.IsBoss, $"nivel {level}");
+                Assert.AreEqual(level % 50 == 0, c.IsMegaBoss, $"nivel {level}");
+                Assert.AreEqual(level % 10 == 0, c.Type == LevelType.Boss, $"nivel {level}");
+            }
             LevelConfig boss = LevelConfig.For(10);
-            Assert.IsTrue(boss.IsBoss);
-            Assert.Greater(boss.Ingredients, 0);
-            Assert.Greater(boss.CollectColors.Length, 0);
-            Assert.IsFalse(LevelConfig.For(11).IsBoss);
+            Assert.AreEqual(0, boss.CollectColors.Length);
+            Assert.AreEqual(0, boss.Ingredients);
         }
 
         [Test]

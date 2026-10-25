@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -109,7 +109,7 @@ namespace SugarDrop
         {
             level = Mathf.Max(1, level);
             if (level == 1) return LevelType.Score;
-            if (IsBossLevel(level)) return LevelType.Ingredients;
+            if (IsBossLevel(level)) return LevelType.Boss;
             return Cycle[(level - 2) % Cycle.Length];
         }
 
@@ -130,7 +130,8 @@ namespace SugarDrop
             bool secondEasyIsNormal = chapter >= 2 && random.Next(2) == 0;
             if (index == 0) return Difficulty.Easy;
             if (index == 1) return secondEasyIsNormal ? Difficulty.Normal : Difficulty.Easy;
-            if (index == hard) return Difficulty.Hard;
+            // În primul capitol (învățarea jocului) valul de la mijloc e doar normal; greul vine abia la nivelul 9.
+            if (index == hard) return chapter == 0 ? Difficulty.Normal : Difficulty.Hard;
             if (index == hard + 1) return Difficulty.Easy; // recuperare după nivelul greu
             if (index == 8) return hardEnding ? Difficulty.VeryHard : Difficulty.Hard;
             return Difficulty.Normal;
@@ -167,7 +168,8 @@ namespace SugarDrop
                 Difficulty.Easy => 0.5f,
                 Difficulty.Hard => 1.4f,
                 Difficulty.VeryHard => 1.7f,
-                Difficulty.Boss or Difficulty.MegaBoss => 1.2f,
+                // Boss-ul își aduce singur obstacolele (atacurile), deci tabla de start e mai liberă.
+                Difficulty.Boss or Difficulty.MegaBoss => 0.7f,
                 _ => 1f,
             };
 
@@ -185,24 +187,27 @@ namespace SugarDrop
                 // Mutările de bază = cât îi trebuie de obicei jucătorului automat (măsurat), apoi × dificultatea.
                 case LevelType.Ingredients:
                     ingredients = level <= 4 ? 1 : level <= 30 ? 2 : 3;
-                    moves = 6 + ingredients * 8;
+                    moves = 4 + ingredients * 10;
                     break;
                 case LevelType.Frosting:
                     frosting = Mathf.Min(valid / 3, Mathf.RoundToInt((6 + level / 5f) * goalFactor));
                     doubleFrosting = level >= 25 ? frosting / 5 : 0;
-                    moves = 4 + (frosting + doubleFrosting) * 1.9f;
+                    moves = 4 + (frosting + doubleFrosting) * 2.2f;
                     break;
                 case LevelType.Score:
                     moves = 16;
+                    break;
+                case LevelType.Boss:
+                    // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
+                    moves = difficulty == Difficulty.MegaBoss ? 28 : 22;
                     break;
                 default:
                     moves = 0;
                     break;
             }
-            bool boss = difficulty == Difficulty.Boss || difficulty == Difficulty.MegaBoss;
-            if (type == LevelType.Collect || boss)
+            if (type == LevelType.Collect)
             {
-                int kinds = boss ? 2 : 1 + (level >= 8 ? 1 : 0) + (level >= 20 ? 1 : 0);
+                int kinds = 1 + (level >= 8 ? 1 : 0) + (level >= 20 ? 1 : 0);
                 kinds = Mathf.Min(kinds, colors - 1);
                 collectColors = new int[kinds];
                 collectCounts = new int[kinds];
@@ -211,18 +216,13 @@ namespace SugarDrop
                 for (int i = 0; i < kinds; i++)
                 {
                     collectColors[i] = (first + i * 2) % colors;
-                    int count = Mathf.RoundToInt(Mathf.Min(40, 15 + level / 4f + random.Next(4)) * goalFactor);
-                    collectCounts[i] = boss ? count * 7 / 10 : count;
+                    int count = Mathf.RoundToInt(Mathf.Min(30, 15 + level / 4f + random.Next(4)) * goalFactor);
+                    collectCounts[i] = count;
                     total += collectCounts[i];
                 }
-                if (type == LevelType.Collect) moves = 2 + total / 2.5f;
+                moves = 2 + total / 2.3f;
             }
-            if (boss)
-            {
-                ingredients = 2;
-                moves = 6 + ingredients * 8 + 4 + (collectCounts.Length > 0 ? collectCounts[0] + collectCounts[collectCounts.Length - 1] : 0) / 3f;
-            }
-            int finalMoves = Mathf.Max(12, Mathf.RoundToInt(moves * movesFactor));
+            int finalMoves = Mathf.Clamp(Mathf.RoundToInt(moves * movesFactor), 12, 65);
             // Scorul țintă: cam cât adună jucătorul automat în 16 mutări, ajustat după dificultate.
             if (type == LevelType.Score) scoreTarget = Mathf.RoundToInt((16 * 150 + level * 30) * goalFactor);
 
@@ -238,6 +238,15 @@ namespace SugarDrop
             int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             int chains = level < 12 || ingredientLevel ? 0 : Mathf.Min(6, Scaled(1 + chapter * 0.4f));
             int chocolate = level < 25 || blockerShare < 1f ? 0 : Mathf.Min(3, Scaled(1 + chapter * 0.2f));
+            // Cel mult un sfert din tablă acoperit de obstacole (formele mici nu se umplu).
+            int obstacleRoom = valid / 4;
+            while (crates + ice + chains + chocolate > obstacleRoom)
+            {
+                if (ice >= crates && ice >= chains && ice > 0) ice--;
+                else if (crates >= chains && crates > 0) crates--;
+                else if (chains > 0) chains--;
+                else chocolate--;
+            }
 
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
                 frosting, doubleFrosting, scoreTarget, crates, crateHits, ice, iceLayers, chains, chocolate);

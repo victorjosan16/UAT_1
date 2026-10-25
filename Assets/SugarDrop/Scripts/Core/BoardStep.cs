@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SugarDrop
 {
-    public enum StepKind { Clear, Fall, Exit, Shuffle, Grow }
+    public enum StepKind { Clear, Fall, Exit, Shuffle, Grow, BossAttack }
 
     /// <summary>Starea unei piese într-un pas (pentru animații).</summary>
     public struct PieceInfo

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss }
 
     /// <summary>Un obiectiv din HUD: ce (și ce culoare), cât trebuie și cât a mai rămas.</summary>
     public sealed class GoalItem
@@ -19,12 +19,14 @@ namespace SugarDrop
     {
         public readonly List<GoalItem> Items = new();
 
-        public LevelGoals(LevelConfig config, int frostingLayers)
+        /// <param name="bossHealth">Viața Boss-ului (0 dacă nivelul nu e o luptă).</param>
+        public LevelGoals(LevelConfig config, int frostingLayers, int bossHealth = 0)
         {
+            if (bossHealth > 0) Add(GoalKind.Boss, -1, bossHealth);
             if (config.Ingredients > 0) Add(GoalKind.Ingredients, -1, config.Ingredients);
             for (int i = 0; i < config.CollectColors.Length; i++) Add(GoalKind.Collect, config.CollectColors[i], config.CollectCounts[i]);
             if (frostingLayers > 0) Add(GoalKind.Frosting, -1, frostingLayers);
-            if (config.ScoreTarget > 0 || Items.Count == 0) Add(GoalKind.Score, -1, System.Math.Max(1, config.ScoreTarget));
+            if (config.ScoreTarget > 0 || Items.Count == 0 && config.Type != LevelType.Boss) Add(GoalKind.Score, -1, System.Math.Max(1, config.ScoreTarget));
         }
 
         private void Add(GoalKind kind, int color, int target) =>
@@ -55,6 +57,19 @@ namespace SugarDrop
             foreach (PieceInfo piece in step.Cleared) changed |= OnPieceCleared(piece.Color, piece.Kind);
             for (int i = 0; i < step.FrostingCells.Count; i++) changed |= OnFrostingCleared();
             for (int i = 0; i < step.Exits.Count; i++) changed |= OnIngredientCollected();
+            return changed;
+        }
+
+        /// <summary>Viața rămasă a Boss-ului (obiectivul e îndeplinit când ajunge la 0).</summary>
+        public bool OnBossHealth(int health)
+        {
+            bool changed = false;
+            foreach (GoalItem item in Items)
+            {
+                if (item.Kind != GoalKind.Boss || item.Remaining == health) continue;
+                item.Remaining = System.Math.Max(0, health);
+                changed = true;
+            }
             return changed;
         }
 

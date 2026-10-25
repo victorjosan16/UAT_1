@@ -23,14 +23,36 @@ namespace SugarDrop.Tests
         [Test]
         public void Goals_CompleteOnlyWhenAllAreDone()
         {
-            LevelConfig boss = LevelConfig.For(10);
-            var goals = new LevelGoals(boss, 0);
-            Assert.GreaterOrEqual(goals.Items.Count, 2);
-            for (int i = 0; i < boss.Ingredients; i++) goals.OnIngredientCollected();
+            var goals = new LevelGoals(LevelConfig.For(10), 3, 1000); // Boss + glazură
+            Assert.AreEqual(2, goals.Items.Count);
+            Assert.AreEqual(GoalKind.Boss, goals.Items[0].Kind);
+            goals.OnBossHealth(0);
             Assert.IsFalse(goals.IsComplete);
-            foreach (GoalItem item in goals.Items)
-                for (int i = 0; i < item.Target && item.Kind == GoalKind.Collect; i++) goals.OnPieceCleared(item.Color, TileKind.Normal);
+            for (int i = 0; i < 3; i++) goals.OnFrostingCleared();
             Assert.IsTrue(goals.IsComplete);
+        }
+
+        [Test]
+        public void BossGoal_FollowsTheHealth()
+        {
+            var goals = new LevelGoals(LevelConfig.For(20), 0, 900);
+            GoalItem item = goals.Items[0];
+            Assert.AreEqual(GoalKind.Boss, item.Kind);
+            Assert.AreEqual(900, item.Remaining);
+            Assert.IsTrue(goals.OnBossHealth(400));
+            Assert.IsFalse(goals.OnBossHealth(400));
+            Assert.AreEqual(400, item.Remaining);
+            goals.OnBossHealth(-50);
+            Assert.AreEqual(0, item.Remaining);
+            Assert.IsTrue(goals.IsComplete);
+        }
+
+        [Test]
+        public void BossLevel_HasNoScoreGoal()
+        {
+            var goals = new LevelGoals(LevelConfig.For(10), 0, 500);
+            Assert.AreEqual(1, goals.Items.Count);
+            Assert.AreEqual(GoalKind.Boss, goals.Items[0].Kind);
         }
 
         [Test]

@@ -271,7 +271,10 @@ namespace SugarDrop
                         foreach (Vector2Int d in FourWay)
                         {
                             Piece n = At(g + d);
-                            if (n != null && (n.Locked || n.IsBlocker) && touched.Add(g + d)) value += IngredientAbove(g + d) ? 10 : 3;
+                            if (n == null || !touched.Add(g + d)) continue;
+                            if (n.Locked || n.IsBlocker) value += IngredientAbove(g + d) ? 10 : 3;
+                            // Strivește bomboana de sub un ingredient (vezi BlastGroup): îl coboară.
+                            else if (n.IsIngredient || At(g + d + Vector2Int.up) is { IsIngredient: true }) value += 15;
                         }
                     }
                     // Atingem bomboana cea mai de jos din grup (piesa specială apare acolo).
@@ -346,7 +349,19 @@ namespace SugarDrop
                     Vector2Int n = c + d;
                     if (inGroup.Contains(n)) continue;
                     Piece neighbour = At(n);
-                    if (neighbour != null && (neighbour.Locked || neighbour.IsBlocker)) Damage(n, neighbour, step, hitObstacles);
+                    if (neighbour == null) continue;
+                    if (neighbour.Locked || neighbour.IsBlocker) Damage(n, neighbour, step, hitObstacles);
+                    // Bomboana-ingredient e „grea”: bomboana de sub ea e strivită de un grup spart alături,
+                    // ca ingredientul să nu rămână blocat pe o bomboană singuratică.
+                    else if (neighbour.Kind == TileKind.Normal && At(n + Vector2Int.up) is { IsIngredient: true } && hitObstacles.Add(n))
+                        Remove(n, neighbour, step);
+                    // Un grup spart chiar lângă bomboană o „zguduie”: bomboana de sub ea e strivită.
+                    else if (neighbour.IsIngredient)
+                    {
+                        Vector2Int under = n + Vector2Int.down;
+                        if (!inGroup.Contains(under) && At(under) is { Kind: TileKind.Normal, Locked: false } below && hitObstacles.Add(under))
+                            Remove(under, below, step);
+                    }
                 }
 
             // Piesa specială apare exact în celula atinsă.
@@ -824,6 +839,58 @@ namespace SugarDrop
             var step = new BoardStep(StepKind.Grow);
             step.Changed.Add(Info(p, target));
             steps.Add(step);
+        }
+
+        // ------------------------------------------------------------ Atacurile Boss-ului
+
+        public const int MaxBossChocolate = 8;
+        public const int MaxLockedPieces = 12;
+
+        /// <summary>
+        /// Atacul unui Boss (după ce acțiunea jucătorului s-a terminat): ciocolată, gheață sau lanțuri pe câteva
+        /// bomboane obișnuite, sau amestecare. E limitat (niciodată tabla plină de obstacole) și, dacă după atac
+        /// nu mai există mutări, tabla se amestecă — o luptă nu devine niciodată imposibilă.
+        /// </summary>
+        public List<BoardStep> ApplyBossAttack(BossAttack attack, int strength)
+        {
+            var steps = new List<BoardStep>();
+            if (attack == BossAttack.Shuffle)
+            {
+                steps.Add(ShuffleStep());
+                return steps;
+            }
+
+            int chocolate = 0, locked = 0;
+            var candidates = new List<Vector2Int>();
+            foreach (Vector2Int c in ValidCells())
+            {
+                Piece p = At(c);
+                if (p == null) continue;
+                if (p.Kind == TileKind.Chocolate) chocolate++;
+                if (p.Locked) locked++;
+                // Nu atacăm rândul de sus (de acolo intră piesele noi) și nici piesele speciale.
+                if (p.Kind == TileKind.Normal && !p.Locked && c.y < Config.ColumnTop[c.x]) candidates.Add(c);
+            }
+            int room = attack == BossAttack.ChocolateSpread ? MaxBossChocolate - chocolate : MaxLockedPieces - locked;
+            int count = Math.Max(0, Math.Min(strength, room));
+            Shuffle(candidates, _random);
+
+            var step = new BoardStep(StepKind.BossAttack);
+            for (int i = 0; i < count && i < candidates.Count; i++)
+            {
+                Vector2Int c = candidates[i];
+                Piece p = At(c);
+                switch (attack)
+                {
+                    case BossAttack.ChocolateSpread: Set(p, TileKind.Chocolate, -1, 1); break;
+                    case BossAttack.Freeze: p.Ice = strength >= 4 ? 2 : 1; break;
+                    default: p.Chained = true; break;
+                }
+                step.Changed.Add(Info(p, c));
+            }
+            steps.Add(step);
+            if (!HasValidMove()) steps.Add(ShuffleStep());
+            return steps;
         }
 
         // ------------------------------------------------------------ Verificări (teste)
