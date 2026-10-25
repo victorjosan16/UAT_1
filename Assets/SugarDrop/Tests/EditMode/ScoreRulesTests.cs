@@ -17,17 +17,20 @@ namespace SugarDrop.Tests
             {
                 LevelConfig config = LevelConfig.For(level);
                 int two = ScoreRules.TwoStars(config), three = ScoreRules.ThreeStars(config);
+                Assert.Greater(two, 0);
                 Assert.Greater(three, two);
                 Assert.AreEqual(2, ScoreRules.Stars(two, config));
                 Assert.AreEqual(3, ScoreRules.Stars(three, config));
+                if (config.Type == LevelType.Score) Assert.Greater(two, config.ScoreTarget);
             }
         }
 
         [Test]
-        public void LongChains_AreWorthMore_ButCapped()
+        public void Cascades_MultiplyPoints_ButCapped()
         {
-            Assert.Greater(ScoreRules.TileValue(10), ScoreRules.TileValue(0));
-            Assert.AreEqual(ScoreRules.TileValue(1000), ScoreRules.TilePoints + ScoreRules.MaxChainBonus);
+            Assert.AreEqual(ScoreRules.TilePoints, ScoreRules.TileValue(0));
+            Assert.AreEqual(ScoreRules.TilePoints * 3, ScoreRules.TileValue(2));
+            Assert.AreEqual(ScoreRules.TilePoints * ScoreRules.MaxCascadeMultiplier, ScoreRules.TileValue(100));
         }
     }
 }

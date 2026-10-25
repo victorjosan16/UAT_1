@@ -15,5 +15,9 @@ namespace SugarDrop
         Rainbow,
         /// <summary>Biscuit (obstacol): nu se mută, nu se aliniază; se sparge de alinierile vecine sau de explozii.</summary>
         Biscuit,
+        /// <summary>Bomboană-ingredient: nu se aliniază, coboară odată cu piesele și iese jos, în borcan.</summary>
+        Ingredient,
+        /// <summary>Ciocolată (obstacol): nu se mută; se sparge de alinierile vecine; crește dacă nu e spartă.</summary>
+        Chocolate,
     }
 }

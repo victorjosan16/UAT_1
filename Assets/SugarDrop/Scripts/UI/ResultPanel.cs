@@ -91,13 +91,13 @@ namespace SugarDrop
         }
 
         /// <param name="onAdMoves">Null dacă nu se mai poate continua cu reclamă.</param>
-        public void ShowLose(int collected, int goal, Action onRetry, Action onAdMoves, Action onMap)
+        public void ShowLose(string message, Action onRetry, Action onAdMoves, Action onMap)
         {
             UiTheme theme = UiRoot.Theme;
             foreach (Image star in _stars) star.gameObject.SetActive(false);
             _title.Text = SugarLoc.T("AULEU!");
             _title.Color = theme.NegativeColor;
-            _subtitle.Text = SugarLoc.F("Ai strâns {0} din {1} bomboane.", collected, goal);
+            _subtitle.Text = message;
             _coins.gameObject.SetActive(false);
             if (onAdMoves != null)
                 SetButtons(new DialogButton(SugarLoc.T("+5 MUTĂRI (reclamă)"), theme.AdColor, onAdMoves),

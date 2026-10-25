@@ -47,8 +47,13 @@ namespace SugarDrop
             { "GRATIS (reclamă)", "FREE (ad)" }, { "Ai {0} monede", "You have {0} coins" },
             { "Bombă", "Bomb" }, { "+5 mutări", "+5 moves" }, { "Amestecă", "Shuffle" },
             { "Nivelul costă o viață.", "Leaving costs a life." }, { "Boss învins! +1 la fiecare ajutor", "Boss beaten! +1 of each booster" },
-            { "Final dulce!", "Sweet finale!" }, { "Drum liber!", "Path open!" },
-            { "Deschide un drum până jos ca bomboanele să cadă în borcan!", "Open a path to the bottom so the candies fall into the jar!" },
+            { "Final dulce!", "Sweet finale!" },
+            { "Adu bomboanele jos, în borcan!", "Bring the candies down to the jar!" },
+            { "Strânge piesele cerute!", "Collect the pieces!" },
+            { "Topește toată glazura!", "Melt all the frosting!" },
+            { "Atinge scorul!", "Reach the score!" },
+            { "Mai aveai puțin!", "So close!" },
+            { "Mai rămân: {0}", "Still needed: {0}" },
         };
     }
 }

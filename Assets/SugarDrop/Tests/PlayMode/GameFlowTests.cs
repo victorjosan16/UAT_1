@@ -57,7 +57,10 @@ namespace SugarDrop.Tests
             yield return Seconds(1.2f);
             GameObject board = GameObject.Find("Game/Board");
             Assert.IsNotNull(board);
-            Assert.AreEqual(64, board.transform.childCount, "Tabla trebuie să aibă 8×8 capace");
+            int tiles = 0;
+            foreach (Transform child in board.transform)
+                if (child.name.StartsWith("Tile_")) tiles++;
+            Assert.AreEqual(LevelConfig.For(1).ValidCells, tiles, "Fiecare celulă a tablei trebuie să aibă o piesă");
             Assert.IsNull(GameObject.Find("Canvas/SafeArea/Map/Background"), "Harta a rămas deschisă");
             Assert.AreEqual(SugarSave.MaxLives, SugarSave.Data.lives, "Pornirea nivelului nu consumă vieți");
 

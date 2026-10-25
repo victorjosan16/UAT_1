@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using QuarryEmpire;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,10 +18,20 @@ namespace SugarDrop
         private Image _levelPill;
         private UiLabel _moves;
         private UiLabel _movesCaption;
-        private UiLabel _progressText;
-        private UiProgressBar _progress;
         private PunchScale _movesPunch;
-        private PunchScale _progressPunch;
+        private RectTransform _goalCard;
+        private readonly List<GoalView> _goalViews = new();
+
+        /// <summary>Un obiectiv afișat: iconiță, numărul rămas și bifa.</summary>
+        private class GoalView
+        {
+            public GoalItem Item;
+            public RectTransform Root;
+            public UiLabel Count;
+            public Image Check;
+            public PunchScale Punch;
+            public int Shown = -1;
+        }
         private UiLabel _tutorial;
 
         private UiLabel _word;
@@ -52,21 +63,9 @@ namespace SugarDrop
             _level = UiFactory.CreateText("Level", _levelPill.transform, "", 40);
             UiFactory.Stretch(_level.RectTransform, 6f);
 
-            // Progresul borcanului (centru sus).
+            // Obiectivele nivelului (centru sus): iconiță + câte au mai rămas.
             Image card = UiFactory.CreatePanel("GoalCard", transform, theme.PanelLightColor);
-            var cardRect = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -136f), new Vector2(620f, 96f));
-            _progressPunch = card.gameObject.AddComponent<PunchScale>();
-            Image candy = UiFactory.CreateImage("CandyIcon", cardRect, SugarSprites.CandySwirl, Palette.WallStripe);
-            UiFactory.Place(candy.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(54f, 0f), new Vector2(70f, 70f));
-            _progress = UiFactory.CreateProgressBar("Progress", cardRect, theme.PositiveColor);
-            var barRect = (RectTransform)_progress.transform;
-            barRect.anchorMin = new Vector2(0f, 0.5f);
-            barRect.anchorMax = new Vector2(1f, 0.5f);
-            barRect.pivot = new Vector2(0.5f, 0.5f);
-            barRect.offsetMin = new Vector2(100f, -24f);
-            barRect.offsetMax = new Vector2(-24f, 24f);
-            _progressText = UiFactory.CreateText("Text", barRect, "", 32);
-            UiFactory.Stretch(_progressText.RectTransform);
+            _goalCard = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(420f, 136f));
 
             // Mutările rămase (dreapta sus) și butonul de pauză.
             Image movesDisc = UiFactory.CreateImage("MovesDisc", transform, theme.Circle, theme.AccentColor);
@@ -89,7 +88,7 @@ namespace SugarDrop
 
             // Textul tutorialului (sub HUD).
             _tutorial = SugarUi.Outlined("Tutorial", transform, "", 40, Color.white);
-            UiFactory.Place(_tutorial.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -300f), new Vector2(980f, 100f));
+            UiFactory.Place(_tutorial.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(980f, 90f));
             _tutorial.gameObject.SetActive(false);
 
             // Cuvântul de combo (centru) și bannerul („Ultimele mutări!”).
@@ -104,7 +103,7 @@ namespace SugarDrop
         private void BuildScore(UiTheme theme)
         {
             Image pill = UiFactory.CreatePanel("ScorePill", transform, theme.PanelColor);
-            var pillRect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(620f, 56f));
+            var pillRect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -172f), new Vector2(620f, 56f));
             _scorePunch = pill.gameObject.AddComponent<PunchScale>();
             _score = UiFactory.CreateText("Score", pillRect, "0", 34);
             UiFactory.Place(_score.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(150f, 50f));
@@ -184,12 +183,61 @@ namespace SugarDrop
             if (punch) _movesPunch.Punch(moves <= 3 ? 2f : 1f);
         }
 
-        public void SetProgress(int count, int goal, bool punch)
+        /// <summary>Construiește obiectivele nivelului (1–3 iconițe în cardul de sus).</summary>
+        public void SetGoals(LevelGoals goals)
         {
-            _progressText.Text = $"{Mathf.Min(count, goal)}/{goal}";
-            _progress.SetValue(goal > 0 ? (float)count / goal : 0f, !punch);
-            if (punch) _progressPunch.Punch(0.4f);
+            foreach (GoalView view in _goalViews) Destroy(view.Root.gameObject);
+            _goalViews.Clear();
+            int count = goals.Items.Count;
+            const float spacing = 130f;
+            for (int i = 0; i < count; i++)
+            {
+                GoalItem item = goals.Items[i];
+                RectTransform root = UiFactory.CreateRect("Goal" + i, _goalCard);
+                UiFactory.Place(root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2((i - (count - 1) * 0.5f) * spacing, 12f), new Vector2(120f, 120f));
+                Image icon = UiFactory.CreateImage("Icon", root, GoalIcon(item), GoalColor(item));
+                UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(76f, 76f));
+                UiLabel label = SugarUi.Outlined("Count", root, "", item.Kind == GoalKind.Score ? 28 : 38, Color.white, 3f);
+                UiFactory.Place(label.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -8f), new Vector2(150f, 50f));
+                Image check = UiFactory.CreateImage("Check", root, SugarSprites.Check, UiRoot.Theme.PositiveColor);
+                UiFactory.Place(check.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-16f, 18f), new Vector2(54f, 54f));
+                var view = new GoalView { Item = item, Root = root, Count = label, Check = check, Punch = root.gameObject.AddComponent<PunchScale>() };
+                _goalViews.Add(view);
+            }
+            RefreshGoals(false);
         }
+
+        /// <summary>Actualizează numerele rămase (cu un mic „puls” când scad).</summary>
+        public void RefreshGoals(bool punch)
+        {
+            foreach (GoalView view in _goalViews)
+            {
+                int remaining = view.Item.Remaining;
+                if (remaining == view.Shown) continue;
+                bool decreased = view.Shown >= 0 && remaining < view.Shown;
+                view.Shown = remaining;
+                view.Count.Text = view.Item.Kind == GoalKind.Score ? view.Item.Target.ToString() : remaining.ToString();
+                view.Count.gameObject.SetActive(!view.Item.Done || view.Item.Kind == GoalKind.Score);
+                view.Check.gameObject.SetActive(view.Item.Done);
+                if (punch && decreased) view.Punch.Punch(view.Item.Done ? 2.5f : 1f);
+            }
+        }
+
+        private static Sprite GoalIcon(GoalItem item) => item.Kind switch
+        {
+            GoalKind.Ingredients => SugarSprites.CandyWrapped,
+            GoalKind.Collect => PieceSprites.Piece(item.Color),
+            GoalKind.Frosting => SugarSprites.Glaze,
+            _ => ProceduralSprites.Star,
+        };
+
+        private static Color GoalColor(GoalItem item) => item.Kind switch
+        {
+            GoalKind.Ingredients => Palette.Candy(0),
+            GoalKind.Frosting => new Color(1f, 0.82f, 0.9f),
+            GoalKind.Score => UiRoot.Theme.AccentColor,
+            _ => Color.white,
+        };
 
         public void SetTutorial(string text)
         {

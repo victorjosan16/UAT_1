@@ -2,76 +2,218 @@ using UnityEngine;
 
 namespace SugarDrop
 {
+    /// <summary>Ce cere un nivel.</summary>
+    public enum LevelType { Score, Collect, Ingredients, Frosting }
+
     /// <summary>
-    /// Parametrii unui nivel, calculați din numărul nivelului (dificultate crescătoare, fără limită de niveluri).
-    /// Aici se reglează tot echilibrul jocului. Fiecare al 10-lea nivel e „Boss”: mai multe bomboane și obstacole,
-    /// dar și mai multe mutări și o recompensă dublă.
+    /// Parametrii unui nivel, generați determinist din numărul lui (același nivel arată la fel la fiecare încercare):
+    /// tipul (scor, strânge culori, bomboane în borcan, glazură), forma tablei, mutările, obiectivele și obstacolele.
+    /// Fiecare al 10-lea nivel e „Boss”: două obiective, mai multe mutări, recompensă dublă.
     /// </summary>
     public readonly struct LevelConfig
     {
         public const int BossEvery = 10;
+        public const int BoardColumns = 9;
+        public const int BoardRows = 9;
+
+        private static readonly LevelType[] Cycle =
+        {
+            LevelType.Collect, LevelType.Ingredients, LevelType.Frosting, LevelType.Ingredients, LevelType.Collect,
+            LevelType.Frosting, LevelType.Score, LevelType.Ingredients, LevelType.Frosting,
+        };
 
         public readonly int Level;
         public readonly int Columns;
         public readonly int Rows;
         public readonly int Colors;
         public readonly int Moves;
-        public readonly int Candies;
-        public readonly int Goal;
-        /// <summary>Câți biscuiți (blocuri care nu se mută și opresc bomboanele).</summary>
-        public readonly int Biscuits;
-        /// <summary>Câte lovituri îi trebuie unui biscuit ca să se spargă.</summary>
-        public readonly int BiscuitHits;
-        /// <summary>Câte capace înghețate (nu se mută până nu le spargi gheața cu o aliniere).</summary>
-        public readonly int Frozen;
         public readonly bool IsBoss;
+        public readonly LevelType Type;
+        /// <summary>Sămânța pentru așezarea obstacolelor și a glazurii (aceeași la fiecare încercare).</summary>
+        public readonly int Seed;
 
-        private LevelConfig(int level, int colors, int moves, int candies, int goal, int biscuits, int biscuitHits, int frozen, bool boss)
+        /// <summary>Forma tablei: pe fiecare coloană, celulele valide sunt de la ColumnBottom la ColumnTop (inclusiv).</summary>
+        public readonly int[] ColumnBottom;
+        public readonly int[] ColumnTop;
+
+        // Obiective (0 = nefolosit).
+        public readonly int Ingredients;
+        public readonly int[] CollectColors;
+        public readonly int[] CollectCounts;
+        public readonly int FrostingCells;
+        public readonly int DoubleFrosting;
+        public readonly int ScoreTarget;
+
+        // Obstacole.
+        public readonly int Biscuits;
+        public readonly int BiscuitHits;
+        public readonly int Frozen;
+        public readonly int Chocolate;
+
+        private LevelConfig(int level, int colors, int moves, bool boss, LevelType type, int[] bottom, int[] top,
+            int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget,
+            int biscuits, int biscuitHits, int frozen, int chocolate)
         {
             Level = level;
-            Columns = 8;
-            Rows = 8;
+            Columns = BoardColumns;
+            Rows = BoardRows;
             Colors = colors;
             Moves = moves;
-            Candies = candies;
-            Goal = goal;
+            IsBoss = boss;
+            Type = type;
+            Seed = level * 7919 + 17;
+            ColumnBottom = bottom;
+            ColumnTop = top;
+            Ingredients = ingredients;
+            CollectColors = collectColors;
+            CollectCounts = collectCounts;
+            FrostingCells = frosting;
+            DoubleFrosting = doubleFrosting;
+            ScoreTarget = scoreTarget;
             Biscuits = biscuits;
             BiscuitHits = biscuitHits;
             Frozen = frozen;
-            IsBoss = boss;
+            Chocolate = chocolate;
         }
 
         public static bool IsBossLevel(int level) => level > 0 && level % BossEvery == 0;
 
+        public bool IsValidCell(int x, int y) => x >= 0 && x < Columns && y >= ColumnBottom[x] && y <= ColumnTop[x];
+
+        public int ValidCells
+        {
+            get
+            {
+                int count = 0;
+                for (int x = 0; x < Columns; x++) count += ColumnTop[x] - ColumnBottom[x] + 1;
+                return count;
+            }
+        }
+
+        public static LevelType TypeFor(int level)
+        {
+            level = Mathf.Max(1, level);
+            if (level == 1) return LevelType.Score;
+            if (IsBossLevel(level)) return LevelType.Ingredients;
+            return Cycle[(level - 2) % Cycle.Length];
+        }
+
         public static LevelConfig For(int level)
         {
             level = Mathf.Max(1, level);
+            var random = new System.Random(level * 104729 + 3);
             bool boss = IsBossLevel(level);
+            LevelType type = TypeFor(level);
 
-            // Mai multe culori = mai greu de aliniat.
-            int colors = level < 3 ? 3 : level < 8 ? 4 : 5;
-            // Mai puține mutări pe măsură ce avansezi (dar niciodată sub 10).
-            int moves = Mathf.Max(10, 18 - level / 3);
-            // Bomboane mai mari și mai puține (se văd bine pe telefon și încap în zona de sus).
-            int candies = Mathf.Min(84, 34 + level * 4);
-            // Procentul cerut crește de la 55% la 75%.
-            float share = Mathf.Lerp(0.55f, 0.75f, Mathf.Clamp01((level - 1) / 25f));
+            int colors = level < 6 ? 4 : 5;
 
-            // Obstacole: biscuiți de la nivelul 4, gheață de la nivelul 6, biscuiți tari (2 lovituri) de la 15.
-            int biscuits = level < 4 ? 0 : Mathf.Min(8, 2 + (level - 4) / 3);
-            int frozen = level < 6 ? 0 : Mathf.Min(10, 2 + (level - 6) / 2);
-            int biscuitHits = level >= 15 ? 2 : 1;
+            Shape(level, random, out int[] bottom, out int[] top);
+            int valid = 0;
+            for (int x = 0; x < BoardColumns; x++) valid += top[x] - bottom[x] + 1;
 
+            // Obiectivele, apoi mutările pe măsura lor. Valorile sunt verificate cu simulatorul din teste:
+            // un jucător automat care alege mereu mutarea sugerată de indiciu trebuie să câștige des.
+            int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0;
+            int[] collectColors = System.Array.Empty<int>(), collectCounts = System.Array.Empty<int>();
+            int moves;
+            int harder = level / 40; // mutările scad foarte încet cu nivelul
+            switch (type)
+            {
+                case LevelType.Ingredients:
+                    ingredients = Mathf.Min(3, 2 + level / 25);
+                    moves = 22 + ingredients * 4 - harder;
+                    break;
+                case LevelType.Frosting:
+                    frosting = Mathf.Min(valid / 2, 8 + level / 4);
+                    doubleFrosting = level >= 20 ? frosting / 5 : 0;
+                    moves = 20 + (frosting + doubleFrosting) / 3 - harder;
+                    break;
+                case LevelType.Score:
+                    moves = 20 - harder;
+                    break;
+                default:
+                    moves = 0;
+                    break;
+            }
+            if (type == LevelType.Collect || boss)
+            {
+                int kinds = boss ? 2 : 1 + (level >= 8 ? 1 : 0) + (level >= 20 ? 1 : 0);
+                kinds = Mathf.Min(kinds, colors - 1);
+                collectColors = new int[kinds];
+                collectCounts = new int[kinds];
+                int first = random.Next(colors);
+                int total = 0;
+                for (int i = 0; i < kinds; i++)
+                {
+                    collectColors[i] = (first + i * 2) % colors;
+                    int count = Mathf.Min(30, 12 + level / 4 + random.Next(4));
+                    collectCounts[i] = boss ? count * 7 / 10 : count;
+                    total += collectCounts[i];
+                }
+                if (type == LevelType.Collect) moves = 10 + total / 6 - harder;
+            }
             if (boss)
             {
-                candies = Mathf.Min(92, candies + 14);
-                moves += 5;
-                biscuits = Mathf.Min(10, biscuits + 2);
-                frozen = Mathf.Min(14, frozen + 3);
+                ingredients += 1;
+                moves += 8;
+            }
+            moves = Mathf.Max(16, moves);
+            if (type == LevelType.Score) scoreTarget = moves * 130 + level * 40;
+
+            // Obstacole (cresc treptat). Pe nivelurile cu bomboane și glazură sunt mai puține: ar bloca obiectivul.
+            // Valorile sunt verificate cu simulatorul din teste (un jucător automat trebuie să poată câștiga des).
+            int biscuits = level < 5 ? 0 : Mathf.Min(6, 1 + (level - 5) / 5);
+            int biscuitHits = level >= 15 ? 2 : 1;
+            int frozen = level < 7 ? 0 : Mathf.Min(6, 1 + (level - 7) / 5);
+            int chocolate = level < 25 ? 0 : Mathf.Min(3, 1 + (level - 25) / 15);
+            if (type == LevelType.Ingredients || type == LevelType.Frosting)
+            {
+                biscuits /= 2;
+                frozen /= 2;
+                chocolate = 0;
             }
 
-            int goal = Mathf.RoundToInt(candies * share);
-            return new LevelConfig(level, colors, moves, candies, goal, biscuits, biscuitHits, frozen, boss);
+            return new LevelConfig(level, colors, moves, boss, type, bottom, top, ingredients, collectColors, collectCounts,
+                frosting, doubleFrosting, scoreTarget, biscuits, biscuitHits, frozen, chocolate);
+        }
+
+        /// <summary>
+        /// Forma tablei: primele niveluri sunt pătrate; apoi colțuri tăiate, arc, pâlnie, romb sau trepte.
+        /// Coloanele rămân continue (fără goluri în interior), ca piesele să poată cădea pe fiecare coloană.
+        /// </summary>
+        private static void Shape(int level, System.Random random, out int[] bottom, out int[] top)
+        {
+            bottom = new int[BoardColumns];
+            top = new int[BoardColumns];
+            for (int x = 0; x < BoardColumns; x++) top[x] = BoardRows - 1;
+            if (level < 4 || random.Next(10) < 4) return;
+
+            int center = BoardColumns / 2;
+            switch (random.Next(5))
+            {
+                case 0: // colțuri tăiate
+                    bottom[0] = bottom[BoardColumns - 1] = 1;
+                    top[0] = top[BoardColumns - 1] = BoardRows - 2;
+                    break;
+                case 1: // arc: mijlocul e mai înalt
+                    for (int x = 0; x < BoardColumns; x++) top[x] = BoardRows - 1 - Mathf.Min(2, Mathf.Abs(x - center) / 2);
+                    break;
+                case 2: // pâlnie: marginile coboară mai puțin
+                    for (int x = 0; x < BoardColumns; x++) bottom[x] = Mathf.Min(2, Mathf.Abs(x - center) / 2);
+                    break;
+                case 3: // romb
+                    for (int x = 0; x < BoardColumns; x++)
+                    {
+                        int cut = Mathf.Min(2, Mathf.Abs(x - center) / 2);
+                        bottom[x] = cut;
+                        top[x] = BoardRows - 1 - cut;
+                    }
+                    break;
+                default: // trepte
+                    for (int x = 0; x < BoardColumns; x++) top[x] = BoardRows - 1 - (x < 3 ? 1 : 0);
+                    for (int x = 0; x < BoardColumns; x++) bottom[x] = x > 5 ? 1 : 0;
+                    break;
+            }
         }
     }
 }

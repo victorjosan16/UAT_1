@@ -309,6 +309,62 @@ namespace SugarDrop
             return Mathf.Min(body, shackle);
         }));
 
+        /// <summary>Tabletă de ciocolată (obstacol care crește): pătrate în relief.</summary>
+        public static Sprite Chocolate => Get("chocolate", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 6, 6, 116, 116, 22);
+            float a = Alpha(d);
+            float cellX = Mathf.Repeat(x - 6f, 58f), cellY = Mathf.Repeat(y - 6f, 58f);
+            float groove = Mathf.Min(Mathf.Min(cellX, 58f - cellX), Mathf.Min(cellY, 58f - cellY));
+            float light = Mathf.Clamp01(groove / 8f);
+            var dark = new Color(0.33f, 0.18f, 0.1f);
+            var milk = new Color(0.55f, 0.32f, 0.18f);
+            Color c = Color.Lerp(dark, milk, light);
+            float shine = Mathf.Clamp01(1f - Mathf.Abs(cellY - 44f) / 6f) * Mathf.Clamp01(groove / 10f) * 0.35f;
+            c = Color.Lerp(c, new Color(0.85f, 0.6f, 0.45f), shine);
+            c.a = a;
+            return c;
+        }));
+
+        /// <summary>Glazura de pe o celulă (albă, cu scurgeri și presărături; se colorează după straturi).</summary>
+        public static Sprite Glaze => Get("glaze", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 4, 4, 120, 120, 26);
+            // Margine de jos „curgătoare”.
+            float drip = Mathf.Sin(x * 0.12f) * 6f + Mathf.Sin(x * 0.31f + 1f) * 3f;
+            d = Mathf.Max(d, 14f + drip - y);
+            float a = Alpha(d) * 0.92f;
+            float shade = Mathf.Lerp(0.9f, 1f, y / 128f);
+            Color c = new(shade, shade, shade, a);
+            float sprinkle = Mathf.Repeat(x * 0.41f + y * 0.73f, 29f) < 1.6f && d < -8f ? 1f : 0f;
+            if (sprinkle > 0f) c = Color.HSVToRGB(Mathf.Repeat(x * 0.017f + y * 0.006f, 1f), 0.55f, 1f) * new Color(1f, 1f, 1f, a);
+            return c;
+        }));
+
+        /// <summary>Săgeată în jos (ieșirea bomboanelor spre borcan).</summary>
+        public static Sprite Chevron => Get("chevron", () => Mask(64, (x, y) =>
+        {
+            float px = Mathf.Abs(x - 32f), py = y - 30f;
+            float arm = Mathf.Abs(py - px * 0.8f + 4f) - 5f;
+            return Mathf.Max(arm, px - 22f);
+        }));
+
+        /// <summary>Bifă (obiectiv îndeplinit).</summary>
+        public static Sprite Check => Get("check", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float a = SegmentDistance(p, new Vector2(26f, 66f), new Vector2(52f, 38f)) - 11f;
+            float b = SegmentDistance(p, new Vector2(52f, 38f), new Vector2(104f, 92f)) - 11f;
+            return Mathf.Min(a, b);
+        }));
+
+        private static float SegmentDistance(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 pa = p - a, ba = b - a;
+            float h = Mathf.Clamp01(Vector2.Dot(pa, ba) / Vector2.Dot(ba, ba));
+            return (pa - ba * h).magnitude;
+        }
+
         /// <summary>Rotiță (setări): cerc cu 8 dinți și o gaură în mijloc.</summary>
         public static Sprite Gear => Get("gear", () => Mask(128, (x, y) =>
         {

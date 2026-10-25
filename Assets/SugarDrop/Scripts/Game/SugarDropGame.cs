@@ -6,10 +6,10 @@ using UnityEngine.InputSystem;
 namespace SugarDrop
 {
     /// <summary>
-    /// Fluxul jocului: meniu → hartă → nivel → rezultat. Numără mutările, verifică victoria (obiectivul din borcan
-    /// atins) sau înfrângerea (fără mutări și bomboanele s-au liniștit), dă monede și stele, gestionează viețile,
-    /// ajutoarele (bombă, +5 mutări, amestecare), tutorialul și indiciile. Leagă evenimentele tablei de efecte,
-    /// sunete și de mascotă.
+    /// Fluxul jocului: meniu → hartă → nivel → rezultat. Numără mutările, ține scorul și obiectivele nivelului
+    /// (bomboane în borcan, culori de strâns, glazură, scor), verifică victoria și înfrângerea, dă monede și stele,
+    /// gestionează viețile, ajutoarele (bombă, +5 mutări, amestecare), tutorialul și indiciile. Leagă evenimentele
+    /// tablei de efecte, sunete și de mascotă.
     /// </summary>
     public class SugarDropGame : MonoBehaviour
     {
@@ -33,14 +33,12 @@ namespace SugarDrop
         [SerializeField] private MainMenu menu;
 
         [Header("Așezare (unități din lume)")]
-        [SerializeField] private float boardBottomY = -3f;
-        [SerializeField] private float topY = 7.2f;
+        [SerializeField] private float boardBottomY = -2.6f;
         [SerializeField] private Vector2 mascotOffset = new(3.35f, -0.4f);
 
         [Header("Final de nivel")]
-        [Tooltip("După ultima mutare, câte secunde fără bomboane noi în borcan până se declară înfrângerea.")]
-        [SerializeField] private float settleTime = 2.5f;
-        [SerializeField] private float winDelay = 0.8f;
+        [Tooltip("Pauza dintre îndeplinirea obiectivelor (sau ultima mutare) și finalul nivelului.")]
+        [SerializeField] private float endDelay = 0.45f;
 
         [Header("Economie")]
         [SerializeField] private int boosterPrice = 100;
@@ -51,8 +49,9 @@ namespace SugarDrop
         private int _level;
         private int _moves;
         private State _state;
-        private float _quietTime;
-        private float _winTimer = -1f;
+        private float _endTimer;
+        private LevelGoals _goals;
+        private System.Func<int, int> _colorWeight;
         private float _idleTime;
         private bool _playfieldBuilt;
         private bool _continuedWithAd;
@@ -62,8 +61,6 @@ namespace SugarDrop
         private int _score;
         private int _movePoints;
         private bool _scoreDirty;
-        private bool _flowTip;
-        private int _flowTipMoves;
         private float _lastBuzz;
 
         private static SugarSaveData Data => SugarSave.Data;
@@ -78,6 +75,16 @@ namespace SugarDrop
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             SugarSave.Load();
             SugarSave.UpdateLives();
+            _colorWeight = ColorWeight;
+        }
+
+        /// <summary>Pentru indicii: piesele de culorile încă cerute valorează mai mult.</summary>
+        private int ColorWeight(int color)
+        {
+            if (_goals == null) return 0;
+            foreach (GoalItem item in _goals.Items)
+                if (item.Kind == GoalKind.Collect && item.Color == color && !item.Done) return 3;
+            return 0;
         }
 
         private void OnEnable()
@@ -91,8 +98,10 @@ namespace SugarDrop
             board.BiscuitHit += OnBiscuitHit;
             board.MoveResolved += OnMoveResolved;
             board.Shuffled += OnShuffled;
-            board.ChannelOpened += OnChannelOpened;
-            jar.CountChanged += OnJarChanged;
+            board.StepPlayed += OnStepPlayed;
+            board.FrostingMelted += OnFrostingMelted;
+            board.IngredientExited += OnIngredientExited;
+            board.ChocolateGrew += OnChocolateGrew;
             jar.CandyEntered += OnCandyEntered;
             input.Touched += OnTouched;
             hud.PauseClicked += ShowPause;
@@ -114,8 +123,10 @@ namespace SugarDrop
             board.BiscuitHit -= OnBiscuitHit;
             board.MoveResolved -= OnMoveResolved;
             board.Shuffled -= OnShuffled;
-            board.ChannelOpened -= OnChannelOpened;
-            jar.CountChanged -= OnJarChanged;
+            board.StepPlayed -= OnStepPlayed;
+            board.FrostingMelted -= OnFrostingMelted;
+            board.IngredientExited -= OnIngredientExited;
+            board.ChocolateGrew -= OnChocolateGrew;
             jar.CandyEntered -= OnCandyEntered;
             input.Touched -= OnTouched;
             hud.PauseClicked -= ShowPause;
@@ -217,24 +228,21 @@ namespace SugarDrop
             Time.timeScale = 1f;
             _level = level;
             _config = LevelConfig.For(_level);
-            board.Build(_config, new Vector2(0f, boardBottomY));
+            board.Build(_config, new Vector2(0f, boardBottomY), Random.Range(1, int.MaxValue));
 
             if (!_playfieldBuilt)
             {
-                playfield.Build(board.Width * 0.5f, board.Bottom, board.Top, topY);
+                playfield.Build(board.Width * 0.5f, board.Bottom, board.Top, board.Top + 0.35f);
                 mascot.transform.position = playfield.JarCenter + (Vector3)mascotOffset;
                 _playfieldBuilt = true;
             }
 
-            float margin = 0.05f;
-            var candyArea = new Rect(-board.Width * 0.5f + margin, board.Top + 0.1f, board.Width - margin * 2f, topY - board.Top - 0.2f);
-            candies.Spawn(_config.Candies, candyArea);
-
-            jar.ResetJar(_config.Goal);
+            candies.Clear();
+            jar.ResetJar(_config.Ingredients);
+            _goals = new LevelGoals(_config, board.FrostingLeft);
             _moves = _config.Moves;
             _state = State.Playing;
-            _quietTime = 0f;
-            _winTimer = -1f;
+            _endTimer = 0f;
             _idleTime = 0f;
             _popChain = 0;
             _continuedWithAd = false;
@@ -251,18 +259,17 @@ namespace SugarDrop
             hud.HideTransient();
             hud.SetLevel(_level, _config.IsBoss);
             hud.SetMoves(_moves, false);
-            hud.SetProgress(0, _config.Goal, false);
+            hud.SetGoals(_goals);
             _score = 0;
             _movePoints = 0;
             _scoreDirty = false;
-            _flowTip = false;
             hud.SetScoreTargets(ScoreRules.TwoStars(_config), ScoreRules.ThreeStars(_config));
             mascot.SetIdle();
-            if (_config.IsBoss) hud.ShowBanner(SugarLoc.T("Nivel Boss!"));
+            hud.ShowBanner(_config.IsBoss ? SugarLoc.T("Nivel Boss!") : IntroText(_config.Type));
 
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
-            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(out _, out _);
-            if (_tutorialActive && board.TryFindBestHint(out Vector2Int a, out Vector2Int b))
+            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _, out _);
+            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int a, out Vector2Int b))
             {
                 hud.SetTutorial(SugarLoc.T("Glisează un capac ca să aliniezi 3 la fel!"));
                 hintGuide.Show(board.CellCenter(a), board.CellCenter(b));
@@ -273,6 +280,14 @@ namespace SugarDrop
                 hintGuide.Hide();
             }
         }
+
+        private static string IntroText(LevelType type) => type switch
+        {
+            LevelType.Ingredients => SugarLoc.T("Adu bomboanele jos, în borcan!"),
+            LevelType.Collect => SugarLoc.T("Strânge piesele cerute!"),
+            LevelType.Frosting => SugarLoc.T("Topește toată glazura!"),
+            _ => SugarLoc.T("Atinge scorul!"),
+        };
 
         private void RetryLevel()
         {
@@ -314,22 +329,23 @@ namespace SugarDrop
                 if (_idleTime >= (_level <= 3 ? 4f : idleHintSeconds))
                 {
                     _idleTime = 0f;
-                    board.ShowHint();
+                    board.ShowHint(_colorWeight);
                 }
             }
 
-            if (_winTimer >= 0f)
+            // Finalul: obiective îndeplinite → victorie; fără mutări (sau tabla blocată) → înfrângere.
+            // Așteptăm să se termine animațiile tablei.
+            bool complete = _goals.IsComplete;
+            bool outOfMoves = _moves <= 0 || board.Stuck;
+            if (board.Busy || (!complete && !outOfMoves))
             {
-                _winTimer += dt;
-                if (_winTimer >= winDelay) Win();
+                _endTimer = 0f;
                 return;
             }
-
-            // Fără mutări: așteptăm să se liniștească bomboanele, apoi verificăm.
-            bool outOfMoves = _moves <= 0 || board.Stuck;
-            if (!outOfMoves || board.Busy) return;
-            _quietTime += dt;
-            if (_quietTime >= settleTime) Lose();
+            _endTimer += dt;
+            if (_endTimer < endDelay) return;
+            if (complete) Win();
+            else Lose();
         }
 
         private void OnBack()
@@ -357,7 +373,6 @@ namespace SugarDrop
             CancelBomb();
             hintGuide.Hide();
             hud.SetTutorial(null);
-            _flowTip = false;
 
             // Progresul se salvează imediat (dacă aplicația se închide în timpul finalului, nivelul rămâne trecut).
             int coins = 20 + _moves * 5;
@@ -409,7 +424,7 @@ namespace SugarDrop
                 yield return new WaitForSeconds(0.12f);
             }
             while (board.Busy) yield return null;
-            yield return new WaitForSeconds(1f); // bomboanele eliberate mai cad în borcan
+            yield return new WaitForSeconds(0.8f); // bomboanele ieșite mai cad în borcan
 
             _state = State.Result;
             int stars = ScoreRules.Stars(_score, _config);
@@ -446,7 +461,7 @@ namespace SugarDrop
             mascot.SetSad();
             bool canContinue = !_continuedWithAd && !board.Stuck;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
-            result.ShowLose(jar.Count, jar.Goal, () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
+            result.ShowLose(SugarLoc.T("Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
         }
 
         private void ContinueWithMoves()
@@ -454,13 +469,12 @@ namespace SugarDrop
             _continuedWithAd = true;
             _moves += extraMoves;
             _state = State.Playing;
-            _quietTime = 0f;
+            _endTimer = 0f;
             _warnedLastMoves = false;
             input.enabled = true;
             result.Hide();
             mascot.SetIdle();
             hud.SetMoves(_moves, true);
-            if (jar.Count >= jar.Goal) _winTimer = 0f;
         }
 
         // ------------------------------------------------------------ Pauză și setări
@@ -600,7 +614,7 @@ namespace SugarDrop
                 case Booster.ExtraMoves:
                     AddBooster(Booster.ExtraMoves, -1);
                     _moves += extraMoves;
-                    _quietTime = 0f;
+                    _endTimer = 0f;
                     hud.SetMoves(_moves, true);
                     hud.ShowWord("+" + extraMoves, Palette.Tile(2));
                     if (Audio != null) Audio.Play(SugarSound.SpecialCreated);
@@ -608,9 +622,8 @@ namespace SugarDrop
                     break;
 
                 case Booster.Shuffle:
-                    if (board.RemainingTiles < 3) return;
+                    if (!board.ShuffleBooster()) return;
                     AddBooster(Booster.Shuffle, -1);
-                    board.Shuffle(true);
                     break;
             }
             RefreshBoosters();
@@ -664,7 +677,6 @@ namespace SugarDrop
         {
             if (_state != State.Playing) return;
             _moves = Mathf.Max(0, _moves - 1);
-            _quietTime = 0f;
             _idleTime = 0f;
             _popChain = 0;
             hud.SetMoves(_moves, true);
@@ -676,14 +688,6 @@ namespace SugarDrop
                 Data.tutorialDone = true;
                 SugarSave.Save();
                 hintGuide.Hide();
-                // Al doilea pas: ce trebuie de fapt făcut cu găurile.
-                _flowTip = !board.ChannelOpen;
-                _flowTipMoves = 0;
-                hud.SetTutorial(_flowTip ? SugarLoc.T("Deschide un drum până jos ca bomboanele să cadă în borcan!") : null);
-            }
-            else if (_flowTip && ++_flowTipMoves >= 4)
-            {
-                _flowTip = false;
                 hud.SetTutorial(null);
             }
             if (_moves == 3 && !_warnedLastMoves)
@@ -707,7 +711,6 @@ namespace SugarDrop
                 // Notele urcă pe parcursul mutării: lanțurile lungi sună ca o melodie.
                 if (Audio != null) Audio.PlayPop(color, _popChain / 2);
             }
-            AddScore(ScoreRules.TileValue(_popChain));
             _popChain++;
             mascot.LookAt(position);
             if (Time.unscaledTime - _lastBuzz > 0.09f)
@@ -719,7 +722,6 @@ namespace SugarDrop
 
         private void OnSpecialActivated(TileKind kind, Vector3 position, int color, List<Vector3> targets)
         {
-            AddScore(ScoreRules.SpecialActivated);
             switch (kind)
             {
                 case TileKind.StripedRow:
@@ -744,7 +746,6 @@ namespace SugarDrop
 
         private void OnSpecialCreated(TileKind kind, Vector3 position)
         {
-            AddScore(ScoreRules.SpecialCreated);
             if (Vfx != null) Vfx.SpecialCreated(position);
             if (Audio != null) Audio.Play(SugarSound.SpecialCreated);
             mascot.Cheer();
@@ -752,30 +753,47 @@ namespace SugarDrop
 
         private void OnIceBroken(Vector3 position)
         {
-            AddScore(ScoreRules.Obstacle);
             if (Vfx != null) Vfx.IceShatter(position);
             if (Audio != null) Audio.Play(SugarSound.Ice);
         }
 
         private void OnBiscuitHit(Vector3 position, bool broken)
         {
-            AddScore(broken ? ScoreRules.Obstacle * 2 : ScoreRules.Obstacle);
             if (Vfx != null) Vfx.BiscuitCrumbs(position, broken);
             if (Audio != null) Audio.Play(SugarSound.Biscuit, 1f, broken ? 0.85f : 1.1f);
         }
 
-        private void OnChannelOpened()
+        /// <summary>Scorul și obiectivele vin direct din pașii tablei (aceleași reguli ca în simulatorul din teste).</summary>
+        private void OnStepPlayed(BoardStep step)
         {
-            if (_state != State.Playing) return;
-            hud.ShowBanner(SugarLoc.T("Drum liber!"));
-            if (Audio != null) Audio.Play(SugarSound.SpecialCreated, 0.8f, 1.2f);
-            SugarAudio.Buzz(0);
-            mascot.Cheer(1.5f);
-            if (_flowTip)
-            {
-                _flowTip = false;
-                hud.SetTutorial(null);
-            }
+            if (_state != State.Playing && _state != State.Finale) return;
+            int points = ScoreRules.PointsFor(step);
+            if (points > 0) AddScore(points);
+            bool changed = _goals.Apply(step);
+            changed |= _goals.OnScore(_score);
+            if (changed) hud.RefreshGoals(true);
+        }
+
+        private void OnFrostingMelted(Vector3 position, int layersLeft)
+        {
+            if (Vfx != null) Vfx.IceShatter(position);
+            if (Audio != null) Audio.Play(SugarSound.Ice, 0.6f, 1.25f);
+        }
+
+        /// <summary>O bomboană a ieșit de pe tablă: devine o bomboană cu fizică ce cade pe pâlnie în borcan.</summary>
+        private void OnIngredientExited(Vector3 position, int color)
+        {
+            candies.SpawnFalling(position, color);
+            if (Vfx != null) Vfx.SpecialCreated(position);
+            if (Audio != null) Audio.Play(SugarSound.Star, 1f, 1.1f);
+            SugarAudio.Buzz(1);
+            mascot.Cheer(2f);
+        }
+
+        private void OnChocolateGrew(Vector3 position)
+        {
+            if (Vfx != null) Vfx.BiscuitCrumbs(position, false);
+            if (Audio != null) Audio.Play(SugarSound.Biscuit, 0.8f, 0.7f);
         }
 
         private void OnShuffled()
@@ -787,10 +805,9 @@ namespace SugarDrop
         private void OnMoveResolved(int count, Vector3 center)
         {
             if (_state != State.Playing && _state != State.Finale) return;
-            // Punctele mutării sar din mijlocul capacelor eliminate; bomboanele primesc un mic ghiont.
+            // Punctele mutării sar din mijlocul pieselor eliminate.
             if (_movePoints > 0) hud.ShowPoints(center, _movePoints, count >= 9 ? QuarryEmpire.UiRoot.Theme.AccentColor : Color.white);
             _movePoints = 0;
-            candies.Nudge();
             string word = null;
             Color color = Color.white;
             if (count >= 20) { word = "Fabulos!"; color = Palette.Tile(4); }
@@ -802,16 +819,8 @@ namespace SugarDrop
             mascot.Cheer(count >= 14 ? 2f : 1f);
         }
 
-        private void OnJarChanged(int count)
-        {
-            _quietTime = 0f;
-            hud.SetProgress(count, jar.Goal, count > 0);
-            if (_state == State.Playing && count >= jar.Goal && jar.Goal > 0 && _winTimer < 0f) _winTimer = 0f;
-        }
-
         private void OnCandyEntered(Vector3 position, Color color)
         {
-            if (_state == State.Playing || _state == State.Finale) AddScore(ScoreRules.CandyInJar, false);
             if (Vfx != null) Vfx.JarSparkle(position, color);
             if (Audio != null) Audio.Play(SugarSound.Candy, 0.5f);
             mascot.LookAt(position);

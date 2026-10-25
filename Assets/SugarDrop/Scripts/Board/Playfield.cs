@@ -5,7 +5,7 @@ namespace SugarDrop
 {
     /// <summary>
     /// Construiește din cod „cutia” jocului: pereții laterali (bastoane de bomboane), pâlnia de sub tablă și borcanul.
-    /// Bomboanele care cad prin găurile tablei alunecă pe pâlnie direct în borcan.
+    /// Bomboanele care ies pe jos din tablă alunecă pe pâlnie direct în borcan.
     /// </summary>
     public class Playfield : MonoBehaviour
     {
@@ -29,11 +29,9 @@ namespace SugarDrop
             _panel = ProceduralSprites.RoundedRect;
             float t = wallThickness;
 
-            // Fundalul tablei (ușor transparent, ca să se vadă degradeul) și al zonei cu bomboane.
+            // Fundalul tablei (ușor transparent, ca să se vadă degradeul).
             Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
                 new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f);
-            Visual("CandyZone", new Vector2(0f, (boardTop + topY) * 0.5f), new Vector2(halfWidth * 2f, topY - boardTop),
-                new Color(1f, 1f, 1f, 0.35f), 1, 0f);
 
             // Pereți laterali, de sub tablă până sus.
             float wallBottom = boardBottom - 0.2f;
