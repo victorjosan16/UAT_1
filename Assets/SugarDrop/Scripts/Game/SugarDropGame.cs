@@ -355,6 +355,11 @@ namespace SugarDrop
                 hud.ShowBanner(SugarLoc.T("Învinge Boss-ul!"));
             }
 
+            // Fără mutări rămase (sau cu obiectivele îndeplinite) tabla nu mai primește atingeri: altfel, cât timp
+            // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
+            bool canTap = _moves > 0 && !_goals.IsComplete;
+            if (input.enabled != canTap) input.enabled = canTap;
+
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
             if (_bossTurnPending && !board.Busy)
             {
@@ -727,6 +732,7 @@ namespace SugarDrop
             hud.SetMoves(_moves, true);
             if (Audio != null) Audio.Play(SugarSound.Swap);
             if (_boss != null) _bossTurnPending = true;
+            if (_moves <= 0) input.enabled = false; // ultima mutare: nicio atingere în plus până la final
 
             if (_tutorialActive)
             {
