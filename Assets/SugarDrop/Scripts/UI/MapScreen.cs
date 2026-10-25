@@ -36,6 +36,7 @@ namespace SugarDrop
             public UiLabel Number;
             public RectTransform Lock;
             public UiLabel Boss;
+            public Image Portrait;
             public Image[] Stars;
             public Image Sparkle;
             public LevelNodeAnimator Animator;
@@ -270,6 +271,12 @@ namespace SugarDrop
             view.Boss = SugarUi.Outlined("Boss", view.Visual, SugarLoc.T("BOSS"), 34, theme.AccentColor);
             UiFactory.Place(view.Boss.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(220f, 48f));
             view.Boss.gameObject.SetActive(boss);
+            if (boss)
+            {
+                // Portretul Boss-ului „pândește” din colțul nodului.
+                view.Portrait = UiFactory.CreateImage("BossFace", view.Visual, SugarSprites.BossFace(BossDefinition.For(level, 20).Look), Color.white);
+                UiFactory.Place(view.Portrait.rectTransform, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(size * 0.02f, -size * 0.04f), Vector2.one * size * 0.55f);
+            }
 
             view.Stars = new Image[3];
             for (int s = 0; s < 3; s++)
@@ -461,6 +468,7 @@ namespace SugarDrop
             node.Boss.Text = SugarLoc.T(mega ? "MEGA BOSS" : "BOSS");
             node.Boss.Color = mega ? new Color(1f, 0.84f, 0.3f) : theme.AccentColor;
             if (mega) node.Ring.color = new Color(1f, 0.84f, 0.3f, state == LevelNodeState.Locked ? 0.5f : 1f);
+            if (node.Portrait != null) node.Portrait.color = state == LevelNodeState.Locked ? new Color(0.75f, 0.72f, 0.8f, 0.9f) : Color.white;
 
             int stars = SugarSave.GetStars(level);
             for (int s = 0; s < 3; s++)

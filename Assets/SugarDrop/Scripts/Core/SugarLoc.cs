@@ -55,6 +55,16 @@ namespace SugarDrop
             { "Atinge scorul!", "Reach the score!" },
             { "Mai aveai puțin!", "So close!" },
             { "Mai rămân: {0}", "Still needed: {0}" },
+            { "BOSS!", "BOSS!" }, { "MEGA BOSS!", "MEGA BOSS!" }, { "3 faze", "3 phases" }, { "atac", "attack" },
+            { "Faza {0}/3", "Phase {0}/3" }, { "Faza {0}!", "Phase {0}!" }, { "Învinge Boss-ul!", "Defeat the Boss!" },
+            { "Atac la mutarea următoare!", "Attack next move!" }, { "Boss învins!", "Boss defeated!" },
+            { "Ploaie de ciocolată!", "Chocolate rain!" }, { "Înghețare!", "Deep freeze!" }, { "Lanțuri!", "Chains!" },
+            { "Amestecă tabla!", "Board shuffle!" },
+            { "Mega-Boss învins! +2 la fiecare ajutor", "Mega-Boss beaten! +2 of each booster" },
+            { "Regele Ciocolată", "Chocolate King" }, { "Regina Gheții", "Ice Queen" },
+            { "Dragonul de Bomboane", "Candy Dragon" }, { "Monstrul de Jeleu", "Jelly Monster" },
+            { "Împăratul Zahărului", "Sugar Emperor" }, { "Regina Dulciurilor", "Sweets Queen" },
+            { "Titanul de Caramel", "Caramel Titan" },
         };
     }
 }

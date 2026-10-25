@@ -63,6 +63,12 @@ namespace SugarDrop
         private bool _scoreDirty;
         private float _lastBuzz;
 
+        // Lupta cu Boss-ul (null pe nivelurile obișnuite).
+        private BossBattle _boss;
+        private bool _bossTurnPending;
+        private bool _waitingBossIntro;
+        private float _lastBossHitSound;
+
         private static SugarSaveData Data => SugarSave.Data;
         private static SugarVfx Vfx => SugarVfx.Instance;
         private static SugarAudio Audio => SugarAudio.Instance;
@@ -104,6 +110,7 @@ namespace SugarDrop
             board.FrostingMelted += OnFrostingMelted;
             board.IngredientExited += OnIngredientExited;
             board.ChocolateGrew += OnChocolateGrew;
+            board.BossAttackLanded += OnBossAttackLanded;
             jar.CandyEntered += OnCandyEntered;
             input.Touched += OnTouched;
             hud.PauseClicked += ShowPause;
@@ -131,6 +138,7 @@ namespace SugarDrop
             board.FrostingMelted -= OnFrostingMelted;
             board.IngredientExited -= OnIngredientExited;
             board.ChocolateGrew -= OnChocolateGrew;
+            board.BossAttackLanded -= OnBossAttackLanded;
             jar.CandyEntered -= OnCandyEntered;
             input.Touched -= OnTouched;
             hud.PauseClicked -= ShowPause;
@@ -243,7 +251,9 @@ namespace SugarDrop
 
             candies.Clear();
             jar.ResetJar(_config.Ingredients);
-            _goals = new LevelGoals(_config, board.FrostingLeft);
+            _boss = _config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(_level, _config.Moves)) : null;
+            _bossTurnPending = false;
+            _goals = new LevelGoals(_config, board.FrostingLeft, _boss?.Health ?? 0);
             _moves = _config.Moves;
             _state = State.Playing;
             _endTimer = 0f;
@@ -263,13 +273,24 @@ namespace SugarDrop
             hud.HideTransient();
             hud.SetLevel(_level, _config.IsBoss);
             hud.SetMoves(_moves, false);
+            hud.SetBoss(_boss);
             hud.SetGoals(_goals);
             _score = 0;
             _movePoints = 0;
             _scoreDirty = false;
             hud.SetScoreTargets(ScoreRules.TwoStars(_config), ScoreRules.ThreeStars(_config));
             mascot.SetIdle();
-            hud.ShowBanner(_config.IsBoss ? SugarLoc.T("Nivel Boss!") : IntroText(_config.Type));
+            // Boss-ul își face intrarea; tabla se poate atinge după ce se termină.
+            _waitingBossIntro = _boss != null;
+            if (_boss != null)
+            {
+                input.enabled = false;
+                hud.ShowBossIntro(_boss.Definition);
+                if (Audio != null) Audio.Play(SugarSound.Bomb, 0.8f, 0.7f);
+                if (Vfx != null) Vfx.Shake(0.25f);
+                SugarAudio.Buzz(2);
+            }
+            else hud.ShowBanner(IntroText(_config.Type));
 
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
             _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _);
@@ -326,6 +347,21 @@ namespace SugarDrop
             if (_state != State.Playing) return;
             float dt = Time.deltaTime;
 
+            if (_waitingBossIntro)
+            {
+                if (hud.BossIntroPlaying) return;
+                _waitingBossIntro = false;
+                input.enabled = true;
+                hud.ShowBanner(SugarLoc.T("Învinge Boss-ul!"));
+            }
+
+            // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
+            if (_bossTurnPending && !board.Busy)
+            {
+                _bossTurnPending = false;
+                BossTurn();
+            }
+
             // Indiciu după o pauză lungă: două capace care se pot schimba tremură.
             if (!board.Busy && input.TapTarget == null && !_tutorialActive)
             {
@@ -379,13 +415,15 @@ namespace SugarDrop
             hud.SetTutorial(null);
 
             // Progresul se salvează imediat (dacă aplicația se închide în timpul finalului, nivelul rămâne trecut).
+            // Cufărul Boss-ului: monede duble și câte un ajutor din fiecare (Mega-Boss: triple și câte două).
             int coins = 20 + _moves * 5;
             if (_config.IsBoss)
             {
-                coins *= 2;
-                Data.bombs++;
-                Data.extraMoves++;
-                Data.shuffles++;
+                int bonus = _config.IsMegaBoss ? 2 : 1;
+                coins *= _config.IsMegaBoss ? 3 : 2;
+                Data.bombs += bonus;
+                Data.extraMoves += bonus;
+                Data.shuffles += bonus;
             }
             Data.coins += coins;
             if (_level >= Data.level) Data.level = _level + 1;
@@ -443,7 +481,8 @@ namespace SugarDrop
             if (Audio != null) Audio.Play(SugarSound.Win);
             SugarAudio.Buzz(1);
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
-            if (_config.IsBoss) hud.ShowBanner(SugarLoc.T("Boss învins! +1 la fiecare ajutor"));
+            if (_config.IsBoss)
+                hud.ShowBanner(SugarLoc.T(_config.IsMegaBoss ? "Mega-Boss învins! +2 la fiecare ajutor" : "Boss învins! +1 la fiecare ajutor"));
             result.ShowWin(_level, stars, coins, () => Go(OpenMap));
         }
 
@@ -549,6 +588,7 @@ namespace SugarDrop
         private void RefreshTexts()
         {
             if (_state == State.Playing || _state == State.Result) hud.SetLevel(_level, _config.IsBoss);
+            if ((_state == State.Playing || _state == State.Result) && _boss != null) hud.SetBoss(_boss);
             if (map.IsOpen) map.Refresh();
             if (menu.IsOpen) menu.Show();
             if (_tutorialActive) hud.SetTutorial(SugarLoc.T("Atinge un grup de 3+ bomboane la fel!"));
@@ -686,6 +726,7 @@ namespace SugarDrop
             _popChain = 0;
             hud.SetMoves(_moves, true);
             if (Audio != null) Audio.Play(SugarSound.Swap);
+            if (_boss != null) _bossTurnPending = true;
 
             if (_tutorialActive)
             {
@@ -809,7 +850,85 @@ namespace SugarDrop
             if (points > 0) AddScore(points);
             bool changed = _goals.Apply(step);
             changed |= _goals.OnScore(_score);
+            if (_boss != null && _state == State.Playing) changed |= DamageBoss(BossRules.DamageFor(step));
             if (changed) hud.RefreshGoals(true);
+        }
+
+        // ------------------------------------------------------------ Lupta cu Boss-ul
+
+        /// <summary>Daunele unui pas (aceleași reguli ca în simulator). Întoarce true dacă obiectivul s-a schimbat.</summary>
+        private bool DamageBoss(int damage)
+        {
+            if (damage <= 0 || _boss.Defeated) return false;
+            bool phaseChanged = _boss.Damage(damage);
+            hud.RefreshBoss(true);
+            if (Time.unscaledTime - _lastBossHitSound > 0.15f)
+            {
+                _lastBossHitSound = Time.unscaledTime;
+                if (Audio != null) Audio.Play(SugarSound.Biscuit, 0.6f, 0.6f + _boss.HealthFraction * 0.4f);
+            }
+            if (_boss.Defeated)
+            {
+                hud.ShowWord(SugarLoc.T("Boss învins!"), Palette.Tile(3));
+                if (Audio != null) Audio.Play(SugarSound.Bomb, 1f, 0.8f);
+                if (Vfx != null)
+                {
+                    Vfx.Impulse(0.5f);
+                    Vfx.Shake(0.4f);
+                }
+                SugarAudio.Buzz(2);
+                mascot.Cheer(2.5f);
+            }
+            else if (phaseChanged)
+            {
+                // Mega-Boss: intră în faza următoare (atacuri noi, mai dese).
+                hud.ShowBanner(SugarLoc.F("Faza {0}!", _boss.PhaseIndex + 1));
+                if (Audio != null) Audio.Play(SugarSound.Rainbow, 1f, 0.7f);
+                if (Vfx != null) Vfx.Shake(0.35f);
+                SugarAudio.Buzz(2);
+            }
+            return _goals.OnBossHealth(_boss.Health);
+        }
+
+        /// <summary>După fiecare mutare: numărătoarea scade; la zero, Boss-ul atacă (anunțat cu o mutare înainte).</summary>
+        private void BossTurn()
+        {
+            if (_boss == null || _boss.Defeated || _goals.IsComplete || _moves <= 0) return;
+            BossAttack? attack = _boss.EndOfMove();
+            if (!attack.HasValue)
+            {
+                hud.RefreshBoss(false);
+                if (_boss.AttackWarning) hud.ShowBanner(SugarLoc.T("Atac la mutarea următoare!"));
+                return;
+            }
+            board.ApplyBossAttack(attack.Value, _boss.Phase.Strength);
+            hud.BossAttacked();
+            hud.ShowWord(SugarLoc.T(attack.Value switch
+            {
+                BossAttack.ChocolateSpread => "Ploaie de ciocolată!",
+                BossAttack.Freeze => "Înghețare!",
+                BossAttack.Lock => "Lanțuri!",
+                _ => "Amestecă tabla!",
+            }), QuarryEmpire.UiRoot.Theme.NegativeColor);
+            if (Audio != null) Audio.Play(SugarSound.Wrapped, 0.9f, 0.6f);
+            if (Vfx != null) Vfx.Shake(0.3f);
+            SugarAudio.Buzz(1);
+            mascot.SetSad();
+            StartCoroutine(MascotRecovers());
+        }
+
+        private IEnumerator MascotRecovers()
+        {
+            yield return new WaitForSeconds(1.2f);
+            if (_state == State.Playing) mascot.SetIdle();
+        }
+
+        private void OnBossAttackLanded(Vector3 position, PieceInfo piece)
+        {
+            if (Vfx == null) return;
+            if (piece.Kind == TileKind.Chocolate) Vfx.BiscuitCrumbs(position, false);
+            else if (piece.Ice > 0) Vfx.IceShatter(position);
+            else Vfx.SpecialCreated(position);
         }
 
         private void OnFrostingMelted(Vector3 position, int layersLeft)

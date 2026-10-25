@@ -53,6 +53,30 @@ namespace SugarDrop
         private bool _anyPopup;
         private Camera _camera;
 
+        // Lupta cu Boss-ul: portret, nume, bara de viață, numărătoarea până la atac; plus intrarea Boss-ului.
+        private BossBattle _boss;
+        private int _bossLook;
+        private RectTransform _bossPanel;
+        private Image _bossFace;
+        private UiLabel _bossName;
+        private UiLabel _bossHealth;
+        private UiProgressBar _bossBar;
+        private Image _bossChip;
+        private UiLabel _bossCountdown;
+        private UiLabel _bossCaption;
+        private PunchScale _bossChipPunch;
+        private float _bossHitT = -1f;
+        private RectTransform _intro;
+        private Image _introDim;
+        private Image _introFace;
+        private UiLabel _introTitle;
+        private UiLabel _introName;
+        private float _introT = -1f;
+        private const float IntroDuration = 2.2f;
+
+        /// <summary>Intrarea Boss-ului se joacă (tabla așteaptă).</summary>
+        public bool BossIntroPlaying => _introT >= 0f;
+
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
@@ -85,6 +109,7 @@ namespace SugarDrop
             UiFactory.Place((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(104f, 104f));
 
             BuildScore(theme);
+            BuildBoss(theme);
 
             // Textul tutorialului (sub HUD).
             _tutorial = SugarUi.Outlined("Tutorial", transform, "", 40, Color.white);
@@ -127,6 +152,150 @@ namespace SugarDrop
                 _popups[i].gameObject.SetActive(false);
                 _popupT[i] = -1f;
             }
+        }
+
+        private void BuildBoss(UiTheme theme)
+        {
+            Image panel = UiFactory.CreatePanel("BossPanel", transform, new Color(0.22f, 0.1f, 0.25f, 0.92f));
+            _bossPanel = UiFactory.Place((RectTransform)panel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(900f, 124f));
+            _bossFace = UiFactory.CreateImage("Face", _bossPanel, SugarSprites.BossFace(0), Color.white);
+            UiFactory.Place(_bossFace.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(72f, 6f), new Vector2(124f, 124f));
+            _bossName = SugarUi.Outlined("Name", _bossPanel, "", 32, Color.white, 3f);
+            UiFactory.Place(_bossName.RectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(146f, -6f), new Vector2(560f, 48f));
+            _bossBar = UiFactory.CreateProgressBar("Health", _bossPanel, theme.NegativeColor);
+            var bar = (RectTransform)_bossBar.transform;
+            bar.anchorMin = new Vector2(0f, 0f);
+            bar.anchorMax = new Vector2(1f, 0f);
+            bar.pivot = new Vector2(0.5f, 0f);
+            bar.offsetMin = new Vector2(146f, 20f);
+            bar.offsetMax = new Vector2(-160f, 56f);
+            _bossHealth = SugarUi.Outlined("HealthText", bar, "", 26, Color.white, 2.5f);
+            UiFactory.Stretch(_bossHealth.RectTransform, 0f);
+
+            _bossChip = UiFactory.CreateImage("Attack", _bossPanel, theme.Circle, theme.AccentColor);
+            UiFactory.Place(_bossChip.rectTransform, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-80f, 0f), new Vector2(108f, 108f));
+            _bossChipPunch = _bossChip.gameObject.AddComponent<PunchScale>();
+            _bossCountdown = UiFactory.CreateText("Count", _bossChip.transform, "", 46, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_bossCountdown.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(100f, 56f));
+            _bossCaption = UiFactory.CreateText("Caption", _bossChip.transform, "", 19, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_bossCaption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -28f), new Vector2(100f, 26f));
+            _bossPanel.gameObject.SetActive(false);
+
+            // Intrarea: ecran întunecat, portretul mare care „cade” și numele.
+            _intro = UiFactory.CreateRect("BossIntro", transform);
+            UiFactory.Stretch(_intro, 0f);
+            _introDim = UiFactory.CreateImage("Dim", _intro, null, new Color(0.08f, 0.02f, 0.1f, 0.75f));
+            UiFactory.Stretch(_introDim.rectTransform, -400f);
+            _introFace = UiFactory.CreateImage("Face", _intro, SugarSprites.BossFace(0), Color.white);
+            UiFactory.Place(_introFace.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), new Vector2(460f, 460f));
+            _introTitle = SugarUi.Outlined("Title", _intro, "", 96, theme.AccentColor, 5f);
+            UiFactory.Place(_introTitle.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 470f), new Vector2(1000f, 130f));
+            _introName = SugarUi.Outlined("Name", _intro, "", 64, Color.white, 4f);
+            UiFactory.Place(_introName.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -190f), new Vector2(1000f, 170f));
+            _intro.gameObject.SetActive(false);
+        }
+
+        /// <summary>Lupta curentă (null = nivel obișnuit, panoul se ascunde).</summary>
+        public void SetBoss(BossBattle boss)
+        {
+            _boss = boss;
+            _bossHitT = -1f;
+            _bossPanel.gameObject.SetActive(boss != null);
+            if (boss == null) return;
+            _bossLook = boss.Definition.Look;
+            _bossFace.sprite = SugarSprites.BossFace(_bossLook);
+            _bossFace.rectTransform.localScale = Vector3.one;
+            _bossName.Text = SugarLoc.T(boss.Definition.Name);
+            _bossCaption.Text = SugarLoc.T("atac");
+            RefreshBoss(false);
+        }
+
+        /// <summary>Viața și numărătoarea; hit = Boss-ul tocmai a primit daune (portretul tresare).</summary>
+        public void RefreshBoss(bool hit)
+        {
+            if (_boss == null) return;
+            _bossBar.SetValue(_boss.HealthFraction, !hit);
+            _bossHealth.Text = _boss.Health + " / " + _boss.Definition.Health;
+            _bossCountdown.Text = _boss.Defeated ? "-" : _boss.MovesUntilAttack.ToString();
+            _bossChip.color = _boss.AttackWarning ? UiRoot.Theme.NegativeColor : UiRoot.Theme.AccentColor;
+            _bossCountdown.Color = _boss.AttackWarning ? Color.white : UiRoot.Theme.TextDarkColor;
+            _bossCaption.Color = _bossCountdown.Color;
+            if (_boss.Definition.Mega)
+                _bossName.Text = SugarLoc.T(_boss.Definition.Name) + "  " + SugarLoc.F("Faza {0}/3", _boss.PhaseIndex + 1);
+            if (hit) _bossHitT = 0f;
+        }
+
+        /// <summary>Boss-ul atacă: numărătoarea sare.</summary>
+        public void BossAttacked()
+        {
+            RefreshBoss(false);
+            _bossChipPunch.Punch(2f);
+            _bossHitT = -1f;
+            if (_boss != null) _bossFace.rectTransform.localScale = Vector3.one * 1.25f;
+        }
+
+        public void ShowBossIntro(BossDefinition boss)
+        {
+            _introFace.sprite = SugarSprites.BossFace(boss.Look);
+            _introTitle.Text = boss.Mega ? SugarLoc.T("MEGA BOSS!") : SugarLoc.T("BOSS!");
+            _introName.Text = SugarLoc.T(boss.Name) + (boss.Mega ? "\n" + SugarLoc.T("3 faze") : "");
+            _intro.gameObject.SetActive(true);
+            _intro.SetAsLastSibling();
+            _introT = 0f;
+            if (SugarSave.Data.reducedMotion) _introT = 0.35f;
+        }
+
+        private void UpdateBoss(float dt)
+        {
+            if (_introT >= 0f)
+            {
+                _introT += dt / IntroDuration;
+                float t = Mathf.Clamp01(_introT);
+                // Portretul cade de sus cu un „boing”, numele apare, apoi totul se stinge.
+                float drop = t < 0.25f ? UiEase.OutBack(t / 0.25f, 2.2f) : 1f;
+                _introFace.rectTransform.anchoredPosition = new Vector2(0f, Mathf.LerpUnclamped(900f, 120f, drop));
+                _introFace.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 30f) * 6f * Mathf.Clamp01(1f - t * 2f));
+                float fade = t < 0.85f ? 1f : 1f - (t - 0.85f) / 0.15f;
+                _introDim.color = new Color(0.08f, 0.02f, 0.1f, 0.75f * fade);
+                _introFace.color = new Color(1f, 1f, 1f, fade);
+                float title = Mathf.Clamp01((t - 0.18f) / 0.12f);
+                _introTitle.RectTransform.localScale = Vector3.one * (title < 1f ? UiEase.OutBack(title, 3f) : 1f + Mathf.Sin(t * 20f) * 0.03f);
+                Color tc = _introTitle.Color;
+                tc.a = Mathf.Min(title, fade);
+                _introTitle.Color = tc;
+                Color nc = _introName.Color;
+                nc.a = Mathf.Min(Mathf.Clamp01((t - 0.3f) / 0.12f), fade);
+                _introName.Color = nc;
+                if (t >= 1f)
+                {
+                    _introT = -1f;
+                    _intro.gameObject.SetActive(false);
+                }
+            }
+
+            if (_boss == null || !_bossPanel.gameObject.activeSelf) return;
+            RectTransform face = _bossFace.rectTransform;
+            if (_bossHitT >= 0f)
+            {
+                // Lovit: tresare, se strânge și se colorează în roșu o clipă.
+                _bossHitT += dt / 0.35f;
+                float t = Mathf.Clamp01(_bossHitT);
+                face.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 40f) * 10f * (1f - t));
+                face.localScale = new Vector3(1f + 0.12f * (1f - t), 1f - 0.1f * (1f - t), 1f);
+                _bossFace.color = Color.Lerp(new Color(1f, 0.55f, 0.55f), Color.white, t);
+                if (t >= 1f) _bossHitT = -1f;
+            }
+            else
+            {
+                // Respiră; după un atac revine la mărimea normală.
+                float breathe = 1f + Mathf.Sin(Time.unscaledTime * 2.4f) * 0.03f;
+                face.localScale = Vector3.Lerp(face.localScale, new Vector3(breathe, 2f - breathe, 1f), dt * 8f);
+                face.localRotation = Quaternion.identity;
+                _bossFace.color = _boss.Defeated ? new Color(1f, 1f, 1f, 0.5f) : Color.white;
+            }
+            if (_boss.AttackWarning)
+                _bossChip.rectTransform.localScale = Vector3.one * (1f + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 6f)) * 0.12f);
+            else _bossChip.rectTransform.localScale = Vector3.one;
         }
 
         /// <summary>Pragurile de 2 și 3 stele ale nivelului (bara se umple până la 3 stele).</summary>
@@ -197,7 +366,7 @@ namespace SugarDrop
                 UiFactory.Place(root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2((i - (count - 1) * 0.5f) * spacing, 12f), new Vector2(120f, 120f));
                 Image icon = UiFactory.CreateImage("Icon", root, GoalIcon(item), GoalColor(item));
                 UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(76f, 76f));
-                UiLabel label = SugarUi.Outlined("Count", root, "", item.Kind == GoalKind.Score ? 28 : 38, Color.white, 3f);
+                UiLabel label = SugarUi.Outlined("Count", root, "", item.Kind is GoalKind.Score or GoalKind.Boss ? 28 : 38, Color.white, 3f);
                 UiFactory.Place(label.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -8f), new Vector2(150f, 50f));
                 Image check = UiFactory.CreateImage("Check", root, SugarSprites.Check, UiRoot.Theme.PositiveColor);
                 UiFactory.Place(check.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-16f, 18f), new Vector2(54f, 54f));
@@ -223,11 +392,12 @@ namespace SugarDrop
             }
         }
 
-        private static Sprite GoalIcon(GoalItem item) => item.Kind switch
+        private Sprite GoalIcon(GoalItem item) => item.Kind switch
         {
             GoalKind.Ingredients => SugarSprites.CandyWrapped,
             GoalKind.Collect => PieceSprites.Piece(item.Color),
             GoalKind.Frosting => SugarSprites.Glaze,
+            GoalKind.Boss => SugarSprites.BossFace(_bossLook),
             _ => ProceduralSprites.Star,
         };
 
@@ -263,6 +433,8 @@ namespace SugarDrop
 
         public void HideTransient()
         {
+            _introT = -1f;
+            _intro.gameObject.SetActive(false);
             _word.gameObject.SetActive(false);
             _banner.gameObject.SetActive(false);
             _wordT = _bannerT = -1f;
@@ -311,6 +483,7 @@ namespace SugarDrop
             }
 
             if (_anyPopup) UpdatePopups();
+            UpdateBoss(Time.unscaledDeltaTime);
 
             if (_tutorial.gameObject.activeSelf)
                 _tutorial.RectTransform.localScale = Vector3.one * (1f + Mathf.Sin(Time.unscaledTime * 4f) * 0.03f);

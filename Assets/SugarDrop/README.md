@@ -122,6 +122,10 @@ Același nivel arată la fel la fiecare încercare.
 3. ✅ Rachete, bombe, curcubeu și cele șase combinații
 4. ✅ Borcanul de colectare (bomboane cu fizică, număr limitat)
 5. ✅ Valuri de dificultate; obstacole: gheață 1–3, lanțuri, lăzi, ciocolată
-6. Bătăliile cu Boss (viață, atacuri anunțate) și Mega-Boss pe faze
+6. ✅ Bătăliile cu Boss: la fiecare 10 niveluri (Regele Ciocolată, Regina Gheții, Dragonul de Bomboane,
+   Monstrul de Jeleu), Mega-Boss cu 3 faze la fiecare 50 (Împăratul Zahărului la 50). Viață din daunele mutărilor,
+   atacuri (ciocolată, gheață, lanțuri, amestecare) anunțate cu o mutare înainte și aplicate doar după ce mutarea
+   s-a rezolvat complet; limitate, tabla rămâne mereu jucabilă. Intrarea Boss-ului, panou cu portret și viață,
+   portrete pe hartă, cufăr la victorie (Mega: triplu). Reguli în `Core/BossBattle.cs`, teste în `BossBattleTests`.
 7. Primele 25 de niveluri finisate de mână, recompense (cufere, capitole, recompensa zilnică)
 8. Ecrane de Boss, sunete noi, setări de calitate, extindere la 200+ niveluri

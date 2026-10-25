@@ -369,6 +369,108 @@ namespace SugarDrop
             return new Color(metal * 0.85f, metal * 0.88f, metal, a);
         }));
 
+        /// <summary>
+        /// Portretul unui Boss: 0 Regele Ciocolată, 1 Regina Gheții, 2 Dragonul de Bomboane, 3 Monstrul de Jeleu,
+        /// 4–6 Mega-Boss-urile (Împăratul Zahărului, Regina Dulciurilor, Titanul de Caramel).
+        /// </summary>
+        public static Sprite BossFace(int look) => Get("boss" + look, () => Paint(128, (x, y) => BossPixel(look, x, y)));
+
+        private static readonly Color[] BossBody =
+        {
+            new(0.5f, 0.29f, 0.16f), new(0.62f, 0.85f, 1f), new(0.38f, 0.8f, 0.42f), new(0.7f, 0.4f, 0.95f),
+            new(1f, 0.55f, 0.75f), new(0.95f, 0.3f, 0.6f), new(1f, 0.62f, 0.2f),
+        };
+
+        private static Color BossPixel(int look, int px, int py)
+        {
+            look = Mathf.Clamp(look, 0, BossBody.Length - 1);
+            Vector2 p = new(px + 0.5f, py + 0.5f);
+            Color body = BossBody[look];
+            Color gold = new(1f, 0.82f, 0.25f);
+            Color color = new(0f, 0f, 0f, 0f);
+
+            void Layer(float distance, Color c)
+            {
+                float a = Alpha(distance) * c.a;
+                if (a <= 0f) return;
+                float outA = a + color.a * (1f - a);
+                Color mixed = (c * a + color * color.a * (1f - a)) / Mathf.Max(outA, 0.0001f);
+                mixed.a = outA;
+                color = mixed;
+            }
+
+            // Coarne (dragonul și titanul), în spatele capului.
+            if (look == 2 || look == 6)
+                foreach (float side in new[] { -1f, 1f })
+                {
+                    Vector2 a = new(64f + side * 26f, 84f), b = new(64f + side * 44f, 122f);
+                    float t = Mathf.Clamp01(Vector2.Dot(p - a, b - a) / (b - a).sqrMagnitude);
+                    float horn = Vector2.Distance(p, Vector2.Lerp(a, b, t)) - Mathf.Lerp(9f, 1.5f, t);
+                    Layer(horn, new Color(1f, 0.95f, 0.8f));
+                }
+
+            // Capul (jeleul e turtit și „curge”), cu umbră jos și lumină sus.
+            bool jelly = look == 3;
+            Vector2 center = new(64f, jelly ? 50f : 56f);
+            Vector2 q = (p - center);
+            q.x /= jelly ? 1.15f : 1f;
+            q.y /= jelly ? 0.88f : 1f;
+            float head = q.magnitude - 44f;
+            if (jelly)
+                for (int i = 0; i < 3; i++)
+                {
+                    float dx = 36f + i * 28f;
+                    float drip = RoundRect(p.x - 0.5f, p.y - 0.5f, dx - 6f, 4f, 12f, 30f, 6f);
+                    head = Mathf.Min(head, drip);
+                }
+            float shade = Mathf.Clamp01((p.y - 14f) / 90f);
+            Color skin = Color.Lerp(body * 0.7f, Color.Lerp(body, Color.white, 0.25f), shade);
+            skin.a = 1f;
+            Layer(head, skin);
+            Layer(Vector2.Distance(p, center + new Vector2(-18f, 22f)) - 10f, new Color(1f, 1f, 1f, 0.35f));
+
+            // Ochi încruntați: albul, pupila și sprânceana oblică.
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 eye = center + new Vector2(side * 17f, 6f);
+                Layer(Vector2.Distance(p, eye) - 10.5f, Color.white);
+                Layer(Vector2.Distance(p, eye + new Vector2(-side * 2.5f, -2.5f)) - 5f, new Color(0.15f, 0.08f, 0.15f));
+                Layer(Vector2.Distance(p, eye + new Vector2(-side * 4f, 0f)) - 1.6f, Color.white);
+                Vector2 b0 = eye + new Vector2(side * 12f, 16f), b1 = eye + new Vector2(-side * 9f, 9f);
+                float t = Mathf.Clamp01(Vector2.Dot(p - b0, b1 - b0) / (b1 - b0).sqrMagnitude);
+                Layer(Vector2.Distance(p, Vector2.Lerp(b0, b1, t)) - 3.4f, new Color(0.2f, 0.1f, 0.12f));
+            }
+
+            // Gura: un zâmbet răutăcios, cu doi colți.
+            Vector2 mouth = center + new Vector2(0f, -18f);
+            Vector2 m = p - mouth;
+            float mouthD = new Vector2(m.x / 17f, m.y / 8f).magnitude - 1f;
+            mouthD = Mathf.Max(mouthD * 8f, m.y - 1f);
+            Layer(mouthD, new Color(0.3f, 0.06f, 0.12f));
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 f = p - (mouth + new Vector2(side * 8f, 0f));
+                float fang = Mathf.Max(Mathf.Abs(f.x) - 3.2f * Mathf.Clamp01((f.y + 6f) / 6f), Mathf.Max(f.y - 0.5f, -6f - f.y));
+                Layer(fang, Color.white);
+            }
+
+            // Accesoriul: coroană (regi, împărat, titan) sau tiară (regine).
+            bool crown = look == 0 || look == 4 || look == 6;
+            bool tiara = look == 1 || look == 5;
+            if (crown || tiara)
+            {
+                float width = crown ? 60f : 50f, baseY = crown ? 94f : 96f, spike = crown ? 24f : 14f;
+                float left = 64f - width * 0.5f;
+                float t = Mathf.Repeat((p.x - left) / (width / (crown ? 3f : 5f)), 1f);
+                float top = baseY + 8f + spike * (1f - Mathf.Abs(2f * t - 1f));
+                float band = Mathf.Max(Mathf.Max(left - p.x, p.x - (left + width)), Mathf.Max(baseY - p.y, p.y - top));
+                Color metal = tiara ? new Color(0.85f, 0.95f, 1f) : gold;
+                Layer(band, Color.Lerp(metal * 0.8f, metal, Mathf.Clamp01((p.y - baseY) / 14f)));
+                Layer(Vector2.Distance(p, new Vector2(64f, baseY + 5f)) - (crown ? 5f : 4f), tiara ? new Color(0.4f, 0.75f, 1f) : new Color(0.95f, 0.2f, 0.35f));
+            }
+            return color;
+        }
+
         /// <summary>Tabletă de ciocolată (obstacol care crește): pătrate în relief.</summary>
         public static Sprite Chocolate => Get("chocolate", () => Paint(128, (x, y) =>
         {

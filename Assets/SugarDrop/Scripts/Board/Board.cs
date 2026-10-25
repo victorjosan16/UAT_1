@@ -55,6 +55,8 @@ namespace SugarDrop
         /// <summary>Sfârșitul unei acțiuni: câte piese au dispărut și unde (pentru puncte și laude).</summary>
         public event Action<int, Vector3> MoveResolved;
         public event Action Shuffled;
+        /// <summary>Atacul Boss-ului a lovit o piesă (poziția și noua ei stare: ciocolată, gheață sau lanț).</summary>
+        public event Action<Vector3, PieceInfo> BossAttackLanded;
 
         public bool Busy => _phase == Phase.Animating;
         public bool Stuck => _engine != null && _engine.Stuck;
@@ -349,6 +351,17 @@ namespace SugarDrop
             return true;
         }
 
+        /// <summary>
+        /// Atacul Boss-ului, după ce mutarea jucătorului s-a terminat de tot (tabla e liniștită). Nu consumă mutări.
+        /// </summary>
+        public bool ApplyBossAttack(BossAttack attack, int strength)
+        {
+            CancelSelection();
+            if (_phase != Phase.Idle || _engine == null) return false;
+            Run(_engine.ApplyBossAttack(attack, strength), false);
+            return true;
+        }
+
         // ------------------------------------------------------------ Animarea pașilor
 
         private IEnumerator Play(List<BoardStep> steps)
@@ -366,6 +379,7 @@ namespace SugarDrop
                     case StepKind.Exit: yield return AnimateExit(step); break;
                     case StepKind.Shuffle: yield return AnimateShuffle(step); break;
                     case StepKind.Grow: yield return AnimateGrow(step); break;
+                    case StepKind.BossAttack: yield return AnimateBossAttack(step); break;
                 }
             }
             if (_clearedThisMove > 0) MoveResolved?.Invoke(_clearedThisMove, _clearedCenter / _clearedThisMove);
@@ -493,6 +507,21 @@ namespace SugarDrop
                 }
             Shuffled?.Invoke();
             yield return new WaitForSeconds(0.35f);
+        }
+
+        /// <summary>Atacul lovește piesele pe rând (ca o ploaie), fiecare tremură când se schimbă.</summary>
+        private IEnumerator AnimateBossAttack(BoardStep step)
+        {
+            const float gap = 0.08f;
+            foreach (PieceInfo piece in step.Changed)
+            {
+                if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
+                tile.Setup(piece);
+                tile.Wiggle();
+                BossAttackLanded?.Invoke(tile.transform.position, piece);
+                yield return new WaitForSeconds(gap);
+            }
+            yield return new WaitForSeconds(0.3f);
         }
 
         private IEnumerator AnimateGrow(BoardStep step)
