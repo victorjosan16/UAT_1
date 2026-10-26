@@ -87,7 +87,16 @@ namespace UndergroundMetroTycoon.Game
         private Vector2 ReadInput()
         {
             Vector2 value = _joystick != null ? _joystick.Value : Vector2.zero;
-#if ENABLE_LEGACY_INPUT_MANAGER
+#if ENABLE_INPUT_SYSTEM && UMT_INPUT_SYSTEM
+            UnityEngine.InputSystem.Keyboard kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null)
+            {
+                var keys = new Vector2(
+                    (kb.dKey.isPressed || kb.rightArrowKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed || kb.leftArrowKey.isPressed ? 1f : 0f),
+                    (kb.wKey.isPressed || kb.upArrowKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed || kb.downArrowKey.isPressed ? 1f : 0f));
+                if (keys.sqrMagnitude > value.sqrMagnitude) value = keys;
+            }
+#elif ENABLE_LEGACY_INPUT_MANAGER
             var keys = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (keys.sqrMagnitude > value.sqrMagnitude) value = keys;
 #endif

@@ -99,7 +99,10 @@ namespace UndergroundMetroTycoon.Game
             var go = new GameObject("EventSystem");
             go.transform.SetParent(parent, false);
             go.AddComponent<EventSystem>();
-#if ENABLE_LEGACY_INPUT_MANAGER
+#if ENABLE_INPUT_SYSTEM && UMT_INPUT_SYSTEM
+            var module = go.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            module.AssignDefaultActions();
+#elif ENABLE_LEGACY_INPUT_MANAGER
             go.AddComponent<StandaloneInputModule>();
 #else
             Debug.LogError("[UMT] Touch input needs 'Active Input Handling' set to 'Input Manager (Old)' or 'Both' " +

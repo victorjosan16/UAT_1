@@ -72,19 +72,44 @@ namespace UndergroundMetroTycoon.Game
 
         private void HandleZoomInput()
         {
-#if ENABLE_LEGACY_INPUT_MANAGER
+            bool joystickHeld = _joystick != null && _joystick.IsHeld;
+            float dpi = Screen.dpi > 0f ? Screen.dpi / 160f : 1f;
+#if ENABLE_INPUT_SYSTEM && UMT_INPUT_SYSTEM
+            UnityEngine.InputSystem.Mouse mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null)
+            {
+                float wheel = mouse.scroll.ReadValue().y;
+                if (Mathf.Abs(wheel) > 0.01f) _zoomTarget -= Mathf.Sign(wheel) * 0.6f;
+            }
+            UnityEngine.InputSystem.Touchscreen screen = UnityEngine.InputSystem.Touchscreen.current;
+            if (screen != null && !joystickHeld)
+            {
+                UnityEngine.InputSystem.Controls.TouchControl a = null, b = null;
+                foreach (UnityEngine.InputSystem.Controls.TouchControl t in screen.touches)
+                {
+                    if (!t.press.isPressed) continue;
+                    if (a == null) a = t;
+                    else if (b == null) b = t;
+                }
+                if (a != null && b != null)
+                {
+                    Vector2 pa = a.position.ReadValue(), pb = b.position.ReadValue();
+                    float current = Vector2.Distance(pa, pb);
+                    float previous = Vector2.Distance(pa - a.delta.ReadValue(), pb - b.delta.ReadValue());
+                    _zoomTarget -= (current - previous) * 0.01f / dpi;
+                }
+            }
+#elif ENABLE_LEGACY_INPUT_MANAGER
             float scroll = Input.mouseScrollDelta.y;
             if (Mathf.Abs(scroll) > 0.01f) _zoomTarget -= scroll * 0.6f;
 
-            bool joystickBusy = _joystick != null && _joystick.IsHeld;
-            if (Input.touchCount == 2 && !joystickBusy)
+            if (Input.touchCount == 2 && !joystickHeld)
             {
                 Touch a = Input.GetTouch(0);
                 Touch b = Input.GetTouch(1);
                 float current = Vector2.Distance(a.position, b.position);
                 float previous = Vector2.Distance(a.position - a.deltaPosition, b.position - b.deltaPosition);
-                float dpiScale = Screen.dpi > 0f ? Screen.dpi / 160f : 1f;
-                _zoomTarget -= (current - previous) * 0.01f / dpiScale;
+                _zoomTarget -= (current - previous) * 0.01f / dpi;
             }
 #endif
             _zoomTarget = Mathf.Clamp(_zoomTarget, minZoom, maxZoom);
