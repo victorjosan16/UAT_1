@@ -1,0 +1,17 @@
+<!--
+  Compiles the simulation layer against .NET Standard 2.1 (Unity 6's API compatibility level) with C# 9,
+  to catch use of APIs or language features Unity does not support:
+    dotnet build "UndergroundMetroTycoon/Tools~/SimulationApiCheck"
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/_UndergroundMetroTycoon/Scripts/Simulation/**/*.cs" />
+  </ItemGroup>
+</Project>

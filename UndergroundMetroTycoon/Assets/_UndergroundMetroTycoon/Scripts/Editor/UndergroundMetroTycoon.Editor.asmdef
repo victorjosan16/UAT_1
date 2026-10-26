@@ -1,0 +1,27 @@
+{
+    "name": "UndergroundMetroTycoon.Editor",
+    "rootNamespace": "UndergroundMetroTycoon.EditorTools",
+    "references": [
+        "UndergroundMetroTycoon.Simulation",
+        "UndergroundMetroTycoon.Game",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "1.0.0",
+            "define": "UMT_URP"
+        }
+    ],
+    "noEngineReferences": false
+}

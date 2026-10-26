@@ -1,0 +1,17 @@
+{
+    "name": "UndergroundMetroTycoon.Game",
+    "rootNamespace": "UndergroundMetroTycoon.Game",
+    "references": [
+        "UndergroundMetroTycoon.Simulation",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
