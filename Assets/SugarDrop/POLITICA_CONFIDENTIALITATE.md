@@ -8,7 +8,7 @@ Last updated: October 26, 2026
 Sugar Drop ("the game") is developed by Victor Josan ("we", "us"). This policy explains what data the game uses.
 
 ## Data we use
-- **Game progress** (levels, stars, scores, coins, settings) is stored only on your device.
+- **Game progress** (levels, stars, scores, coins, settings) is stored on your device (and in the cloud, see below).
 - **Leaderboard:** the game creates an **anonymous player ID** through Unity Gaming Services (Unity Technologies). It sends
   your **nickname** and your **points** (the sum of your best scores) to that service. Other players can see them on the
   leaderboard. Please do not use your full real name as your nickname.
@@ -48,7 +48,7 @@ Ultima actualizare: 26 octombrie 2026
 Sugar Drop („jocul”) este dezvoltat de Victor Josan („noi”). Această politică explică ce date folosește jocul.
 
 ## Ce date folosim
-- **Progresul din joc** (niveluri, stele, scoruri, monede, setări) este salvat doar pe telefonul tău.
+- **Progresul din joc** (niveluri, stele, scoruri, monede, setări) este salvat pe telefonul tău (și în cloud, vezi mai jos).
 - **Clasamentul:** jocul creează un **ID anonim de jucător** prin Unity Gaming Services (Unity Technologies). Trimite
   acolo **nickname-ul** tău și **punctele** (suma celor mai bune scoruri). Ceilalți jucători le pot vedea în clasament.
   Nu-ți folosi numele real complet ca nickname.
