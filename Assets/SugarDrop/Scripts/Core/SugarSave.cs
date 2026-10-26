@@ -32,6 +32,8 @@ namespace SugarDrop
         public List<int> stars = new();
         /// <summary>Cel mai bun scor pe fiecare nivel (index 0 = nivelul 1); suma lor intră în clasament.</summary>
         public List<int> bestScores = new();
+        /// <summary>Câte capitole și-au dat deja cufărul de final (capitolele 0..n-1).</summary>
+        public int chaptersRewarded;
     }
 
     /// <summary>Încărcare/salvare + vieți cu regenerare în timp.</summary>

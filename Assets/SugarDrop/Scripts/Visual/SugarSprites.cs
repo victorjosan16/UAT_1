@@ -225,6 +225,21 @@ namespace SugarDrop
         public static Sprite BackgroundGradient => Get("bggradient", () => Paint(8, 256, (x, y) =>
             Color.Lerp(new Color(0.84f, 0.76f, 1f), new Color(1f, 0.86f, 0.9f), y / 255f)));
 
+        /// <summary>Cerul unui capitol: degrade din culorile temei (o singură textură pe temă).</summary>
+        public static Sprite Sky(int chapter)
+        {
+            ChapterTheme theme = ChapterTheme.For(chapter);
+            return Get("sky" + ChapterTheme.IndexOf(chapter), () => Paint(8, 256, (x, y) => Color.Lerp(theme.SkyBottom, theme.SkyTop, y / 255f)));
+        }
+
+        /// <summary>Baston de bomboană în culoarea temei (dungi diagonale colorat/alb), repetabil.</summary>
+        public static Sprite Cane(int chapter)
+        {
+            ChapterTheme theme = ChapterTheme.For(chapter);
+            return Get("cane" + ChapterTheme.IndexOf(chapter), () => PaintRepeat(64, (x, y) =>
+                Mathf.Repeat(x + y, 32f) < 16f ? theme.Stripe : Color.white));
+        }
+
         /// <summary>Dungi diagonale roz/alb (ca un baston de bomboană), repetabile.</summary>
         public static Sprite CandyCane => Get("candycane", () => PaintRepeat(64, (x, y) =>
             Mathf.Repeat(x + y, 32f) < 16f ? new Color(1f, 0.56f, 0.69f) : Color.white));

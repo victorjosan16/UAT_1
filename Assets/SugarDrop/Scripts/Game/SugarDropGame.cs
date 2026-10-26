@@ -186,6 +186,36 @@ namespace SugarDrop
             if (menu.IsOpen) menu.Show();
         }
 
+        /// <summary>Cufărul de final de capitol: monede după stelele strânse în capitol, ajutoare pentru capitolele aproape perfecte.</summary>
+        private void ShowChapterChest(int chapter)
+        {
+            int stars = 0;
+            for (int level = chapter * LevelConfig.ChapterSize + 1; level <= (chapter + 1) * LevelConfig.ChapterSize; level++)
+                stars += SugarSave.GetStars(level);
+            int coins = 50 + stars * 5;
+            bool boosters = stars >= 24;
+            Data.coins += coins;
+            if (boosters)
+            {
+                Data.bombs++;
+                Data.extraMoves++;
+                Data.shuffles++;
+            }
+            Data.chaptersRewarded = chapter + 1;
+            SugarSave.Save();
+            RefreshBoosters();
+            map.Refresh();
+            if (Audio != null) Audio.Play(SugarSound.Win);
+            if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
+
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            string message = SugarLoc.F("Stele: {0}/30", stars) + "  ·  " + SugarLoc.F("+{0} monede", coins)
+                + (boosters ? "\n" + SugarLoc.T("+1 la fiecare ajutor") : "")
+                + "\n" + SugarLoc.F("Urmează: {0}", SugarLoc.T(ChapterTheme.For(chapter + 1).Name));
+            dialog.Show(SugarLoc.F("Capitolul {0} terminat!", chapter + 1), message,
+                new DialogButton(SugarLoc.T("SUPER!"), positive, null));
+        }
+
         private void ShowLeaderboard()
         {
             if (_state != State.Map || dialog.IsOpen) return;
@@ -313,6 +343,8 @@ namespace SugarDrop
             Time.timeScale = 1f;
             _level = level;
             _config = LevelConfig.For(_level);
+            int chapter = ChapterTheme.ChapterOf(_level);
+            if (Backdrop.Instance != null) Backdrop.Instance.ApplyTheme(chapter);
             board.Build(_config, new Vector2(0f, boardBottomY), Random.Range(1, int.MaxValue));
 
             if (!_playfieldBuilt)
@@ -321,6 +353,7 @@ namespace SugarDrop
                 mascot.transform.position = playfield.JarCenter + (Vector3)mascotOffset;
                 _playfieldBuilt = true;
             }
+            playfield.ApplyTheme(chapter);
 
             candies.Clear();
             jar.ResetJar(_config.Ingredients);
@@ -580,7 +613,14 @@ namespace SugarDrop
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
             if (_config.IsBoss)
                 hud.ShowBanner(SugarLoc.T(_config.IsMegaBoss ? "Mega-Boss învins! +2 la fiecare ajutor" : "Boss învins! +1 la fiecare ajutor"));
-            result.ShowWin(_level, stars, coins, () => Go(OpenMap));
+            // Capitol terminat (Boss învins prima dată): cufărul capitolului apare pe hartă.
+            int chapter = ChapterTheme.ChapterOf(_level);
+            bool chest = _config.IsBoss && chapter == Data.chaptersRewarded;
+            result.ShowWin(_level, stars, coins, () => Go(() =>
+            {
+                OpenMap();
+                if (chest) ShowChapterChest(chapter);
+            }));
         }
 
         /// <param name="inPopup">Punctele intră în cifra care sare la finalul mutării (bomboanele din borcan, nu).</param>

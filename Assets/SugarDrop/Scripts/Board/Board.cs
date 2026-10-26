@@ -145,13 +145,14 @@ namespace SugarDrop
         {
             _glaze = new SpriteRenderer[Columns, Rows];
             Sprite cell = SugarSprites.CellMask;
+            ChapterTheme theme = ChapterTheme.ForLevel(config.Level);
             for (int x = 0; x < Columns; x++)
             for (int y = 0; y < Rows; y++)
             {
                 var c = new Vector2Int(x, y);
                 if (!_engine.IsValid(c)) continue;
                 SpriteRenderer back = Sprite("Cell", cell, CellCenter(c), cellSize * 0.97f, 2);
-                back.color = (x + y) % 2 == 0 ? new Color(0.4f, 0.19f, 0.47f, 0.5f) : new Color(0.47f, 0.24f, 0.55f, 0.5f);
+                back.color = (x + y) % 2 == 0 ? theme.CellA : theme.CellB;
                 int layers = _engine.FrostingAt(c);
                 if (layers > 0)
                 {

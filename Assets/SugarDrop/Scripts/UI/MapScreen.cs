@@ -49,6 +49,9 @@ namespace SugarDrop
         private static readonly Color[] UnlockColors = { Color.white, new(1f, 0.84f, 0.36f), new(1f, 0.56f, 0.69f), new(0.71f, 0.48f, 1f) };
 
         private GameObject _root;
+        private Image _background;
+        private int _backgroundChapter = -1;
+        private readonly List<(int Chapter, UiLabel Label)> _chapterLabels = new();
         private RectTransform _content;
         private RectTransform _view;
         private RectTransform _scrollContent;
@@ -83,6 +86,7 @@ namespace SugarDrop
             background.raycastTarget = true;
             UiFactory.Stretch(background.rectTransform, -300f);
             _root = background.gameObject;
+            _background = background;
             // Canvas propriu: animațiile hărții nu reconstruiesc restul interfeței (și invers).
             _root.AddComponent<Canvas>();
             _root.AddComponent<GraphicRaycaster>();
@@ -236,13 +240,35 @@ namespace SugarDrop
             int needed = MapLayout.VisibleLevels(SugarSave.Data.level);
             if (needed <= _levels) return;
             int first = _levels + 1;
-            for (int level = first; level <= needed; level++) _nodes.Add(BuildNode(level));
+            for (int level = first; level <= needed; level++)
+            {
+                if ((level - 1) % LevelConfig.ChapterSize == 0) BuildChapterBanner(ChapterTheme.ChapterOf(level));
+                _nodes.Add(BuildNode(level));
+            }
             BuildDecor(first, needed);
             _levels = needed;
             _scrollContent.sizeDelta = new Vector2(0f, MapLayout.ContentHeight(_levels));
             BuildPath();
             _marker.SetAsLastSibling();
         }
+
+        /// <summary>Eticheta de la începutul unui capitol: „CAPITOLUL 2 · Pădurea de Mentă”, în culoarea temei.</summary>
+        private void BuildChapterBanner(int chapter)
+        {
+            int firstLevel = chapter * LevelConfig.ChapterSize + 1;
+            Vector2 position = MapLayout.NodePosition(firstLevel);
+            ChapterTheme theme = ChapterTheme.For(chapter);
+            Image pill = UiFactory.CreatePanel("Chapter" + (chapter + 1), _dotLayer, theme.Stripe);
+            float x = position.x > 0f ? position.x - 300f : position.x + 300f;
+            UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(Mathf.Clamp(x, -280f, 280f), position.y - 110f), new Vector2(420f, 96f));
+            UiLabel label = SugarUi.Outlined("Label", pill.transform, "", 30, Color.white, 3f);
+            UiFactory.Stretch(label.RectTransform, 8f);
+            _chapterLabels.Add((chapter, label));
+            SetChapterText(chapter, label);
+        }
+
+        private static void SetChapterText(int chapter, UiLabel label) =>
+            label.Text = SugarLoc.F("CAPITOLUL {0}", chapter + 1) + "\n" + SugarLoc.T(ChapterTheme.For(chapter).Name);
 
         private NodeView BuildNode(int level)
         {
@@ -449,6 +475,14 @@ namespace SugarDrop
             _marker.anchoredPosition = _markerTarget;
 
             SugarSaveData data = SugarSave.Data;
+            // Cerul hărții are culorile capitolului în care e jucătorul.
+            int chapter = ChapterTheme.ChapterOf(current);
+            if (chapter != _backgroundChapter)
+            {
+                _backgroundChapter = chapter;
+                _background.sprite = SugarSprites.Sky(chapter);
+            }
+            foreach ((int labelChapter, UiLabel label) in _chapterLabels) SetChapterText(labelChapter, label);
             _coins.Text = data.coins.ToString();
             _playLabel.Text = SugarLoc.T("JOACĂ") + "  ·  " + SugarLoc.F("NIVELUL {0}", Mathf.Max(1, data.level));
             RefreshLives();

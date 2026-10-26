@@ -7,24 +7,31 @@ namespace SugarDrop
     /// </summary>
     public class Backdrop : MonoBehaviour
     {
+        public static Backdrop Instance { get; private set; }
+
         [SerializeField] private int dotCount = 24;
         [SerializeField] private Vector2 area = new(22f, 28f);
 
+        private SpriteRenderer _gradient;
+        private SpriteRenderer[] _dotRenderers;
         private Transform[] _dots;
         private float[] _speeds;
         private float[] _phases;
 
         private void Awake()
         {
+            Instance = this;
             var gradient = new GameObject("Gradient");
             gradient.transform.SetParent(transform, false);
             var renderer = gradient.AddComponent<SpriteRenderer>();
+            _gradient = renderer;
             renderer.sprite = SugarSprites.BackgroundGradient;
             renderer.sortingOrder = -100;
             Vector2 spriteSize = renderer.sprite.bounds.size;
             gradient.transform.localScale = new Vector3(area.x / spriteSize.x, area.y / spriteSize.y, 1f);
 
             _dots = new Transform[dotCount];
+            _dotRenderers = new SpriteRenderer[dotCount];
             _speeds = new float[dotCount];
             _phases = new float[dotCount];
             for (int i = 0; i < dotCount; i++)
@@ -41,8 +48,24 @@ namespace SugarDrop
                 dot.transform.localScale = Vector3.one * size;
                 dot.transform.localPosition = new Vector3(Random.Range(-0.5f, 0.5f) * area.x, Random.Range(-0.5f, 0.5f) * area.y, 0f);
                 _dots[i] = dot.transform;
+                _dotRenderers[i] = dotRenderer;
                 _speeds[i] = Random.Range(0.15f, 0.45f);
                 _phases[i] = Random.value * 10f;
+            }
+        }
+
+        /// <summary>Cerul și luminile în culorile capitolului.</summary>
+        public void ApplyTheme(int chapter)
+        {
+            ChapterTheme theme = ChapterTheme.For(chapter);
+            _gradient.sprite = SugarSprites.Sky(chapter);
+            var random = new System.Random(chapter * 131 + 7);
+            foreach (SpriteRenderer dot in _dotRenderers)
+            {
+                float hue = Mathf.Repeat(theme.GlowHue + ((float)random.NextDouble() - 0.5f) * 0.18f, 1f);
+                Color c = Color.HSVToRGB(hue, 0.3f, 1f);
+                c.a = dot.color.a;
+                dot.color = c;
             }
         }
 

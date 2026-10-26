@@ -17,6 +17,9 @@ namespace SugarDrop
         [SerializeField] private float funnelDrop = 2.1f;
 
         private Sprite _panel;
+        private SpriteRenderer _boardBack;
+        private readonly System.Collections.Generic.List<SpriteRenderer> _canes = new();
+        private readonly System.Collections.Generic.List<SpriteRenderer> _stripes = new();
 
         /// <summary>Gura borcanului (pentru sclipiri și mascotă).</summary>
         public Vector3 JarMouth { get; private set; }
@@ -30,8 +33,8 @@ namespace SugarDrop
             float t = wallThickness;
 
             // Fundalul tablei (ușor transparent, ca să se vadă degradeul).
-            Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
-                new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f);
+            _boardBack = Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
+                new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f).GetComponent<SpriteRenderer>();
 
             // Pereți laterali, de sub tablă până sus.
             float wallBottom = boardBottom - 0.2f;
@@ -59,8 +62,8 @@ namespace SugarDrop
                 new Color(1f, 1f, 1f, 0.55f), 7, 0f);
             Visual("JarShine2", new Vector2(-jarHalfWidth + 0.62f, (jarBottom + jarTop) * 0.5f + 0.5f), new Vector2(0.08f, (jarTop - jarBottom) * 0.35f),
                 new Color(1f, 1f, 1f, 0.45f), 7, 0f);
-            Visual("RimLeft", new Vector2(-jarHalfWidth - t * 0.5f, jarTop + 0.05f), new Vector2(t + 0.25f, 0.28f), Palette.WallStripe, 9, 0f);
-            Visual("RimRight", new Vector2(jarHalfWidth + t * 0.5f, jarTop + 0.05f), new Vector2(t + 0.25f, 0.28f), Palette.WallStripe, 9, 0f);
+            _stripes.Add(Visual("RimLeft", new Vector2(-jarHalfWidth - t * 0.5f, jarTop + 0.05f), new Vector2(t + 0.25f, 0.28f), Palette.WallStripe, 9, 0f).GetComponent<SpriteRenderer>());
+            _stripes.Add(Visual("RimRight", new Vector2(jarHalfWidth + t * 0.5f, jarTop + 0.05f), new Vector2(t + 0.25f, 0.28f), Palette.WallStripe, 9, 0f).GetComponent<SpriteRenderer>());
             Visual("Label", new Vector2(0f, jarBottom + (jarTop - jarBottom) * 0.3f), new Vector2(jarHalfWidth * 1.3f, 0.7f),
                 new Color(1f, 0.56f, 0.69f, 0.35f), 3, 0f);
 
@@ -70,6 +73,16 @@ namespace SugarDrop
             var trigger = jar.gameObject.AddComponent<BoxCollider2D>();
             trigger.isTrigger = true;
             trigger.size = new Vector2(jarHalfWidth * 2f, jarTop - jarBottom);
+        }
+
+        /// <summary>Culorile capitolului: fundalul tablei, bastoanele, gulerul borcanului.</summary>
+        public void ApplyTheme(int chapter)
+        {
+            ChapterTheme theme = ChapterTheme.For(chapter);
+            if (_boardBack != null) _boardBack.color = new Color(theme.BoardBack.r, theme.BoardBack.g, theme.BoardBack.b, 0.85f);
+            Sprite cane = SugarSprites.Cane(chapter);
+            foreach (SpriteRenderer renderer in _canes) renderer.sprite = cane;
+            foreach (SpriteRenderer renderer in _stripes) renderer.color = theme.Stripe;
         }
 
         private void Solid(string name, Vector2 center, Vector2 size, float angle, Color? color = null)
@@ -86,6 +99,7 @@ namespace SugarDrop
             go.transform.SetPositionAndRotation(center, Quaternion.Euler(0f, 0f, angle));
             var spriteRenderer = go.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = SugarSprites.CandyCane;
+            _canes.Add(spriteRenderer);
             spriteRenderer.drawMode = SpriteDrawMode.Tiled;
             spriteRenderer.tileMode = SpriteTileMode.Continuous;
             spriteRenderer.size = size;
@@ -102,6 +116,7 @@ namespace SugarDrop
             spriteRenderer.sprite = SugarSprites.Circle;
             spriteRenderer.color = Palette.WallStripe;
             spriteRenderer.sortingOrder = 9;
+            _stripes.Add(spriteRenderer);
             go.transform.localScale = Vector3.one * (wallThickness * 1.6f / spriteRenderer.sprite.bounds.size.x);
         }
 
