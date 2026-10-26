@@ -158,6 +158,48 @@ namespace SugarDrop
             menu.Show();
             SetGameplayUi(false);
             RefreshBoosters();
+            SetupAds();
+        }
+
+        // ------------------------------------------------------------ Reclame (consimțământ GDPR)
+
+        /// <summary>
+        /// La prima pornire (doar dacă reclamele reale sunt active) întrebăm dacă jucătorul acceptă reclame
+        /// personalizate; răspunsul se poate schimba din Setări. Apoi pornește LevelPlay.
+        /// </summary>
+        private void SetupAds()
+        {
+            SugarAds.Unavailable -= OnAdUnavailable;
+            SugarAds.Unavailable += OnAdUnavailable;
+            SugarAds.Ensure();
+            if (!SugarAds.RealAds) return;
+            if (Data.adsConsent >= 0)
+            {
+                SugarAds.Instance.Initialize(Data.adsConsent == 1);
+                return;
+            }
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.Show(SugarLoc.T("Reclame"), SugarLoc.T("Reclamele din joc sunt opționale și îți dau recompense (vieți, mutări, ajutoare). Accepți reclame personalizate? Poți schimba oricând din Setări."),
+                new DialogButton(SugarLoc.T("DA, ACCEPT"), positive, () => SetAdsConsent(true)),
+                new DialogButton(SugarLoc.T("NU, MULȚUMESC"), panel, () => SetAdsConsent(false)));
+            dialog.DismissAction = () => SetAdsConsent(false);
+        }
+
+        private void SetAdsConsent(bool consent)
+        {
+            bool first = Data.adsConsent < 0;
+            Data.adsConsent = consent ? 1 : 0;
+            SugarSave.Save();
+            if (SugarAds.Instance == null) return;
+            if (first) SugarAds.Instance.Initialize(consent);
+            else SugarAds.Instance.UpdateConsent(consent);
+        }
+
+        private void OnAdUnavailable()
+        {
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.Show(SugarLoc.T("Nicio reclamă acum"), SugarLoc.T("Nu e nicio reclamă disponibilă. Verifică internetul și încearcă din nou puțin mai târziu."),
+                new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
         }
 
         /// <summary>HUD-ul și ajutoarele se ascund cât timp meniul sau harta acoperă ecranul (mai puțin de desenat).</summary>
@@ -566,6 +608,8 @@ namespace SugarDrop
             }, inGame));
             buttons.Add(Toggle(Data.vibration ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE", () => Data.vibration = !Data.vibration, inGame));
             buttons.Add(Toggle(Data.reducedMotion ? "MIȘCARE REDUSĂ: DA" : "MIȘCARE REDUSĂ: NU", () => Data.reducedMotion = !Data.reducedMotion, inGame));
+            if (SugarAds.RealAds)
+                buttons.Add(Toggle(Data.adsConsent == 1 ? "RECLAME PERSONALIZATE: DA" : "RECLAME PERSONALIZATE: NU", () => SetAdsConsent(Data.adsConsent != 1), inGame));
             buttons.Add(Toggle("LIMBA: ROMÂNĂ", () =>
             {
                 Data.language = SugarLoc.IsEnglish ? "ro" : "en";

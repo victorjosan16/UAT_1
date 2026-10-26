@@ -24,6 +24,8 @@ namespace SugarDrop
         /// <summary>„ro”, „en” sau gol (după limba telefonului).</summary>
         public string language = "";
         public bool tutorialDone;
+        /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
+        public int adsConsent = -1;
         /// <summary>Stelele obținute pe fiecare nivel (index 0 = nivelul 1).</summary>
         public List<int> stars = new();
     }

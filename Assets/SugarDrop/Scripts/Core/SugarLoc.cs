@@ -66,6 +66,12 @@ namespace SugarDrop
             { "Împăratul Zahărului", "Sugar Emperor" }, { "Regina Dulciurilor", "Sweets Queen" },
             { "Titanul de Caramel", "Caramel Titan" },
             { "Versiunea {0}", "Version {0}" },
+            { "Reclame", "Ads" }, { "DA, ACCEPT", "YES, I AGREE" }, { "NU, MULȚUMESC", "NO, THANKS" },
+            { "Reclamele din joc sunt opționale și îți dau recompense (vieți, mutări, ajutoare). Accepți reclame personalizate? Poți schimba oricând din Setări.",
+              "Ads in this game are optional and give you rewards (lives, moves, boosters). Do you agree to personalized ads? You can change this anytime in Settings." },
+            { "RECLAME PERSONALIZATE: DA", "PERSONALIZED ADS: YES" }, { "RECLAME PERSONALIZATE: NU", "PERSONALIZED ADS: NO" },
+            { "Nicio reclamă acum", "No ad right now" },
+            { "Nu e nicio reclamă disponibilă. Verifică internetul și încearcă din nou puțin mai târziu.", "No ad is available. Check your internet connection and try again a bit later." },
             { "Trage o bomboană ca să faci 3 la fel în linie!", "Swipe a candy to make 3 in a row!" },
         };
     }

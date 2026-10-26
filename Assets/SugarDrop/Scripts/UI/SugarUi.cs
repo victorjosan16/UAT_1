@@ -101,18 +101,16 @@ namespace SugarDrop
             SugarAudio.Buzz(0);
         }
 
-        /// <summary>Arată o reclamă cu recompensă (sau dă recompensa direct dacă nu există serviciu de reclame).</summary>
+        /// <summary>Arată o reclamă cu recompensă (LevelPlay sau reclama de test); recompensa doar dacă e văzută până la capăt.</summary>
         public static void RewardedAd(string placement, System.Action onReward)
         {
-            if (AdService.Instance == null)
-            {
-                onReward?.Invoke();
-                return;
-            }
-            AdService.Instance.ShowRewarded(placement, ok =>
+            System.Action<bool> done = ok =>
             {
                 if (ok) onReward?.Invoke();
-            });
+            };
+            if (SugarAds.Instance != null) SugarAds.Instance.ShowRewarded(placement, done);
+            else if (AdService.Instance != null) AdService.Instance.ShowRewarded(placement, done);
+            else onReward?.Invoke();
         }
 
         public static string Time(int seconds) => $"{seconds / 60:00}:{seconds % 60:00}";

@@ -68,6 +68,9 @@ namespace SugarDrop.EditorTools
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            // Codul SDK-urilor de reclame (folosit și prin reflecție) nu trebuie tăiat din build.
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Minimal);
+            LevelPlaySetup.Apply();
 
             // Active Input Handling = Input System Package (New).
             Object[] projectSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
