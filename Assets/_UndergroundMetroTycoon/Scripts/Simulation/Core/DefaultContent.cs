@@ -20,24 +20,24 @@ namespace UndergroundMetroTycoon.Simulation
                 Progression = new ProgressionDefinition { BaseXpPerLevel = 100, GrowthPerLevel = 1.5f, MaxLevel = 50 },
                 TerrainMaterials = new List<TerrainMaterialDefinition>
                 {
-                    Terrain(TerrainMaterial.SoftSoil, "Soft Soil", 10, 1, 5, 1),
-                    Terrain(TerrainMaterial.CompactSoil, "Compact Soil", 25, 1, 8, 2),
-                    Terrain(TerrainMaterial.Clay, "Clay", 45, 2, 14, 3),
-                    Terrain(TerrainMaterial.Stone, "Stone", 100, 3, 30, 6),
-                    Terrain(TerrainMaterial.HardRock, "Hard Rock", 250, 5, 70, 12),
-                    Terrain(TerrainMaterial.ExtremeRock, "Extreme Rock", 600, 8, 160, 25)
+                    Terrain(TerrainMaterial.SoftSoil, "Pământ moale", 10, 1, 5, 1),
+                    Terrain(TerrainMaterial.CompactSoil, "Pământ compact", 25, 1, 8, 2),
+                    Terrain(TerrainMaterial.Clay, "Argilă", 45, 2, 14, 3),
+                    Terrain(TerrainMaterial.Stone, "Piatră", 100, 3, 30, 6),
+                    Terrain(TerrainMaterial.HardRock, "Rocă dură", 250, 5, 70, 12),
+                    Terrain(TerrainMaterial.ExtremeRock, "Rocă extremă", 600, 8, 160, 25)
                 },
                 Tools = new List<ToolDefinition>
                 {
-                    new ToolDefinition { Id = BasicShovelId, DisplayName = "Basic Shovel", Level = 1, Power = 5, SwingsPerSecond = 1.4f, Reach = 1.6f, PurchaseCost = 0 }
+                    new ToolDefinition { Id = BasicShovelId, DisplayName = "Lopată simplă", Level = 1, Power = 5, SwingsPerSecond = 1.4f, Reach = 1.6f, PurchaseCost = 0 }
                 },
                 Contracts = new List<ContractDefinition>
                 {
                     new ContractDefinition
                     {
                         Id = GardenTrenchId,
-                        Title = "Garden Trench",
-                        Description = "A neighbour needs a garden bed. Dig out 20 blocks of soft soil.",
+                        Title = "Șanț de grădină",
+                        Description = "Un vecin are nevoie de un strat de flori. Sapă 20 de blocuri de pământ moale.",
                         Difficulty = ContractDifficulty.Beginner,
                         CoinReward = 500,
                         XpReward = 60,
@@ -49,8 +49,8 @@ namespace UndergroundMetroTycoon.Simulation
                     new ContractDefinition
                     {
                         Id = SmallTrenchId,
-                        Title = "Small Trench",
-                        Description = "Quick repeatable job: dig a short cable trench. Always available.",
+                        Title = "Șanț pentru cabluri",
+                        Description = "Lucrare rapidă și repetabilă: un șanț scurt pentru cabluri. Mereu disponibilă.",
                         Difficulty = ContractDifficulty.Beginner,
                         CoinReward = 120,
                         XpReward = 25,
@@ -64,8 +64,8 @@ namespace UndergroundMetroTycoon.Simulation
                     new ContractDefinition
                     {
                         Id = ResidentialFoundationId,
-                        Title = "Residential Foundation",
-                        Description = "Excavate a two-level foundation pit. The lower layer is compact soil.",
+                        Title = "Fundație rezidențială",
+                        Description = "Excavează o groapă de fundație pe două niveluri. Stratul de jos este pământ compact.",
                         Difficulty = ContractDifficulty.Beginner,
                         CoinReward = 1200,
                         XpReward = 150,

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -8,10 +7,6 @@ namespace UndergroundMetroTycoon.Game
     /// <summary>Small helpers for building the code-generated UGUI interface with one consistent style.</summary>
     public static class UIFactory
     {
-        private static Font _font;
-
-        public static Font Font => _font != null ? _font : _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
         public static RectTransform Rect(string name, Transform parent)
         {
             var go = new GameObject(name, typeof(RectTransform));
@@ -63,12 +58,13 @@ namespace UndergroundMetroTycoon.Game
         {
             RectTransform rt = Rect(name, parent);
             var text = rt.gameObject.AddComponent<Text>();
-            text.font = Font;
+            text.font = bold ? UITheme.Heavy : UITheme.Body;
             text.text = value;
             text.fontSize = size;
             text.color = color;
             text.alignment = anchor;
-            text.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
+            text.fontStyle = FontStyle.Normal;
+            text.lineSpacing = 0.9f;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.raycastTarget = false;
@@ -82,75 +78,12 @@ namespace UndergroundMetroTycoon.Game
             shadow.effectDistance = new Vector2(0f, -distance);
         }
 
-        public static Button Button(string name, Transform parent, string label, Color color, Color labelColor, int fontSize, Action onClick, out Text labelText)
-        {
-            Image background = Panel(name, parent, color, 0.7f);
-            background.raycastTarget = true;
-            AddShadow(background, 6f, 0.35f);
-            var button = background.gameObject.AddComponent<Button>();
-            button.targetGraphic = background;
-            ColorBlock colors = button.colors;
-            colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
-            colors.pressedColor = new Color(0.82f, 0.82f, 0.82f, 1f);
-            colors.disabledColor = new Color(0.55f, 0.55f, 0.55f, 0.8f);
-            colors.fadeDuration = 0.08f;
-            button.colors = colors;
-            if (onClick != null) button.onClick.AddListener(() => onClick());
-            background.gameObject.AddComponent<PressScale>();
-
-            labelText = Text("Label", background.transform, label, fontSize, labelColor, TextAnchor.MiddleCenter, true);
-            Stretch(labelText.rectTransform, 12f, 4f, 12f, 4f);
-            return button;
-        }
-
         public static Image CoinIcon(Transform parent, float size)
         {
-            Image icon = Image("Coin", parent, Color.white, UISprites.Coin);
+            Image icon = Image("Coin", parent, Color.white, UIIcons.Coin);
             icon.rectTransform.sizeDelta = new Vector2(size, size);
             icon.preserveAspect = true;
             return icon;
-        }
-
-        /// <summary>Rounded progress bar: returns the fill rect, whose anchorMax.x is the progress.</summary>
-        public static RectTransform ProgressBar(string name, Transform parent, Color background, Color fill, out RectTransform root)
-        {
-            Image bg = Panel(name, parent, background, 0.4f);
-            root = bg.rectTransform;
-            Image fillImage = Panel("Fill", bg.transform, fill, 0.4f);
-            RectTransform fillRect = fillImage.rectTransform;
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = new Vector2(0f, 1f);
-            fillRect.offsetMin = new Vector2(4f, 4f);
-            fillRect.offsetMax = new Vector2(-4f, -4f);
-            return fillRect;
-        }
-
-        public static void SetProgress(RectTransform fill, float value)
-        {
-            fill.anchorMax = new Vector2(Mathf.Clamp01(value), 1f);
-            fill.gameObject.SetActive(value > 0.001f);
-        }
-    }
-
-    /// <summary>Tactile press feedback for buttons.</summary>
-    public sealed class PressScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
-    {
-        private float _target = 1f;
-
-        public void OnPointerDown(PointerEventData eventData) => _target = 0.94f;
-        public void OnPointerUp(PointerEventData eventData) => _target = 1f;
-        public void OnPointerExit(PointerEventData eventData) => _target = 1f;
-
-        private void OnDisable()
-        {
-            _target = 1f;
-            transform.localScale = Vector3.one;
-        }
-
-        private void Update()
-        {
-            float s = Mathf.MoveTowards(transform.localScale.x, _target, Time.unscaledDeltaTime * 2.5f);
-            transform.localScale = new Vector3(s, s, 1f);
         }
     }
 

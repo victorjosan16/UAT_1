@@ -29,22 +29,49 @@ namespace UndergroundMetroTycoon.Game
         public static readonly Color Vest = Hex(0xFF7A1A);
         public static readonly Color Reflective = Hex(0xE8EEF2);
         public static readonly Color Shirt = Hex(0x2F6FB5);
-        public static readonly Color Pants = Hex(0x23324D);
+        public static readonly Color Pants = Hex(0x2F5FA8);
         public static readonly Color Boots = Hex(0x4A3222);
         public static readonly Color Steel = Hex(0xA9B4C2);
         public static readonly Color Wood = Hex(0xB07A45);
         public static readonly Color Black = Hex(0x1A1A1A);
 
-        public static Color Terrain(TerrainMaterial material)
+        // Environment
+        public static readonly Color Sand = Hex(0xE8C88F);
+        public static readonly Color SandDark = Hex(0xD3AE72);
+        public static readonly Color Terracotta = Hex(0xC8693C);
+        public static readonly Color GrassFresh = Hex(0x8BCB52);
+        public static readonly Color GrassDeep = Hex(0x6DB443);
+        public static readonly Color Sky = Hex(0x8FD2FA);
+        public static readonly Color WorkBlue = Hex(0x2F5FA8);
+
+        /// <summary>Main (side) colour of a terrain layer.</summary>
+        public static Color Terrain(TerrainMaterial material) => TerrainSide(material);
+
+        /// <summary>Lighter colour of a block's exposed top surface.</summary>
+        public static Color TerrainTop(TerrainMaterial material)
         {
             switch (material)
             {
-                case TerrainMaterial.SoftSoil: return Hex(0xB9814F);
-                case TerrainMaterial.CompactSoil: return Hex(0x8F5E37);
-                case TerrainMaterial.Clay: return Hex(0xC0673E);
-                case TerrainMaterial.Stone: return Hex(0x8C8F94);
-                case TerrainMaterial.HardRock: return Hex(0x5F646B);
-                default: return Hex(0x3E4148);
+                case TerrainMaterial.SoftSoil: return Hex(0xDDA468);
+                case TerrainMaterial.CompactSoil: return Hex(0xBF7E49);
+                case TerrainMaterial.Clay: return Hex(0xD9804F);
+                case TerrainMaterial.Stone: return Hex(0xAEB3BB);
+                case TerrainMaterial.HardRock: return Hex(0x838A94);
+                default: return Hex(0x5B616C);
+            }
+        }
+
+        /// <summary>Darker colour of a block's sides, also used for the strata in pit walls.</summary>
+        public static Color TerrainSide(TerrainMaterial material)
+        {
+            switch (material)
+            {
+                case TerrainMaterial.SoftSoil: return Hex(0xBA7640);
+                case TerrainMaterial.CompactSoil: return Hex(0x965A30);
+                case TerrainMaterial.Clay: return Hex(0xAD5830);
+                case TerrainMaterial.Stone: return Hex(0x81878F);
+                case TerrainMaterial.HardRock: return Hex(0x5E646D);
+                default: return Hex(0x40454E);
             }
         }
 

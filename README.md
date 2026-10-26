@@ -97,11 +97,11 @@ Set the Game view to a portrait resolution (e.g. 1080×1920).
 **Without Unity** (requires the .NET 8 SDK):
 
 ```bash
-dotnet test  "Tools~/SimulationTests"     # 51 NUnit tests for the simulation
+dotnet test  "Tools~/SimulationTests"     # 63 NUnit tests for the simulation
 dotnet build "Tools~/SimulationApiCheck"  # compiles Simulation as .NET Standard 2.1 / C# 9 (Unity's profile)
 ```
 
-**In Unity:** *Window → General → Test Runner* → **EditMode** (the same 51 tests, using Unity's JsonUtility for the
+**In Unity:** *Window → General → Test Runner* → **EditMode** (the same 63 tests, using Unity's JsonUtility for the
 save tests) and **PlayMode** (`Phase1SmokeTests`: boots the game, accepts the first contract, checks that the player
 auto-digs a block and earns coins).
 
@@ -128,7 +128,7 @@ detection, and a bot that finishes all three contracts using only the real movem
 
 | Check | Result |
 |---|---|
-| Simulation layer: 51 NUnit tests with .NET 8 | Passed |
+| Simulation layer: 63 NUnit tests with .NET 8 | Passed |
 | Simulation compiled as .NET Standard 2.1 / C# 9, warnings as errors | Passed |
 | Runtime + test code compiled against UnityEngine 2021.3 reference assemblies, with a hand-written UGUI API stub | Compiles, 0 warnings |
 | Editor scripts (setup, Android build) | **Not compiled.** No UnityEditor reference assembly was available |
@@ -141,7 +141,7 @@ detection, and a bot that finishes all three contracts using only the real movem
 - Animation is procedural (no Animator / skinned meshes). Only the basic shovel exists; there are no tool upgrades
   yet, so coins have no spending sink until Phase 3.
 - Excavated material counts as sold on removal. Transport and storage come in Phase 3.
-- UI uses UGUI with Unity's built-in font and English text only. Romanian localisation is not done yet.
+- The UI is in Romanian and uses the Baloo 2 font (SIL Open Font License, `Resources/Fonts/OFL-Baloo2.txt`). Visual redesign notes: `docs/VISUAL_MODERNIZATION.md`.
 - Input uses the legacy Input Manager by default. If you install the Input System package (`com.unity.inputsystem`, a version that supports your Unity version), the game uses it automatically.
 - No offline earnings, workers, machinery, metro, ads or purchases. Those are later phases by design.
 

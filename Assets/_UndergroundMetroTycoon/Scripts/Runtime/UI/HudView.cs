@@ -1,254 +1,265 @@
-using System.Globalization;
+using System;
 using UndergroundMetroTycoon.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace UndergroundMetroTycoon.Game
 {
-    /// <summary>Main HUD: level and XP, coin counter, current tool, active contract card and the menu buttons.</summary>
+    /// <summary>
+    /// Gameplay HUD: profile (avatar, level, XP), coin balance, settings, the active-contract panel, the
+    /// Contracte navigation tile and the equipped-tool badge. All values are read from the GameSession.
+    /// </summary>
     public sealed class HudView : MonoBehaviour
     {
         private GameSession _session;
         private IGameUIActions _actions;
 
-        private Text _coinText;
-        private RectTransform _coinPill;
-        private Text _levelNumber;
-        private Text _levelLabel;
-        private RectTransform _xpFill;
-        private Text _xpText;
-        private Text _toolText;
+        private Text _levelText;
+        private ProgressBarView _xpBar;
+        private CurrencyDisplay _coins;
 
-        private Text _cardHeader;
-        private Text _cardTitle;
-        private Text _cardObjective;
-        private Text _cardReward;
-        private RectTransform _cardFill;
-        private RectTransform _cardProgressRoot;
-        private GameObject _cardRewardRow;
-        private Button _claimButton;
-        private Text _claimLabel;
-        private RectTransform _contractsButton;
+        private RectTransform _contractPanel;
+        private Text _contractCaption;
+        private Text _contractObjective;
+        private GameObject _progressRow;
+        private Text _progressCount;
+        private ProgressBarView _contractBar;
+        private Text _rewardText;
+        private UIButton _claimButton;
+        private UIButton _browseButton;
 
-        private double _displayedCoins;
-        private float _coinPunch;
-        private float _contractsPulse;
+        private UIButton _contractsTile;
+        private GameObject _contractsBadge;
+        private float _tilePulse;
 
-        public RectTransform CoinIconTarget { get; private set; }
+        private RectTransform _toolRing;
+        private Image _toolRingImage;
+        private Text _toolLevel;
+
+        /// <summary>Supplies whether the player is currently digging (animates the tool badge).</summary>
+        public Func<bool> IsDigging { get; set; }
+
+        public RectTransform CoinIconTarget => _coins.IconTarget;
 
         public void Build(RectTransform root, GameSession session, IGameUIActions actions)
         {
             _session = session;
             _actions = actions;
-            _displayedCoins = session.Wallet.Coins;
-
-            BuildTopBar(root);
-            BuildContractCard(root);
-            BuildBottomButtons(root);
+            BuildProfile(root);
+            BuildCurrencyAndSettings(root);
+            BuildContractPanel(root);
+            BuildNavigation(root);
+            BuildToolBadge(root);
             Refresh();
         }
 
-        /// <summary>Pulses the contracts button to draw attention (e.g. digging without an accepted contract).</summary>
-        public void PulseContractsButton() => _contractsPulse = 2.4f;
+        /// <summary>Pulses the Contracte tile to draw attention (e.g. digging without an accepted contract).</summary>
+        public void PulseContractsButton() => _tilePulse = 2.4f;
 
-        public void PunchCoins() => _coinPunch = 0.18f;
+        public void PunchCoins() => _coins.Punch();
 
         public void Refresh()
         {
             PlayerProgression p = _session.Progression;
-            _levelNumber.text = p.Level.ToString(CultureInfo.InvariantCulture);
-            _levelLabel.text = "LEVEL " + p.Level;
+            _levelText.text = "Nivel " + p.Level;
             if (p.IsMaxLevel)
             {
-                _xpText.text = "MAX";
-                UIFactory.SetProgress(_xpFill, 1f);
+                _xpBar.Label.text = "MAX";
+                _xpBar.SetValue(1f);
             }
             else
             {
-                _xpText.text = p.XpIntoLevel + " / " + p.XpForNextLevel + " XP";
-                UIFactory.SetProgress(_xpFill, (float)p.XpIntoLevel / Mathf.Max(1, p.XpForNextLevel));
+                _xpBar.Label.text = p.XpIntoLevel + "/" + p.XpForNextLevel;
+                _xpBar.SetValue((float)p.XpIntoLevel / Mathf.Max(1, p.XpForNextLevel));
             }
 
             ToolDefinition tool = _session.EquippedTool;
-            _toolText.text = tool != null ? tool.DisplayName + "  ·  Lv " + tool.Level : "No tool";
-            RefreshContractCard();
+            _toolLevel.text = tool != null ? "Nv " + tool.Level : "-";
+            RefreshContract();
         }
 
-        private void RefreshContractCard()
+        private void RefreshContract()
         {
             string activeId = _session.Contracts.ActiveContractId;
             ContractDefinition def = _session.Contracts.GetDefinition(activeId);
-            bool active = def != null;
-            _cardProgressRoot.gameObject.SetActive(active);
-            _cardRewardRow.SetActive(active);
+            bool attention = false;
 
-            if (!active)
+            if (def == null)
             {
-                _cardHeader.text = "NO ACTIVE CONTRACT";
-                _cardHeader.color = Palette.Orange;
-                _cardTitle.text = "Pick a job to start digging";
-                _cardObjective.text = "Tap CONTRACTS below";
+                _contractCaption.text = "FĂRĂ CONTRACT ACTIV";
+                _contractCaption.color = UITheme.Orange;
+                _contractObjective.text = "Alege o lucrare nouă de pe panou";
+                _progressRow.SetActive(false);
                 _claimButton.gameObject.SetActive(false);
-                return;
+                _browseButton.gameObject.SetActive(true);
+                foreach (ContractDefinition d in _session.Contracts.Definitions)
+                    if (_session.Contracts.GetState(d.Id) == ContractState.Available) attention = true;
             }
+            else
+            {
+                ExcavationGrid grid = _session.Grid;
+                int done = grid != null && grid.SiteContractId == activeId ? grid.ExcavatedContractCellCount : 0;
+                int total = def.CountContractCells();
+                bool ready = _session.Contracts.GetState(activeId) == ContractState.ReadyForCompletion;
 
-            ExcavationGrid grid = _session.Grid;
-            int done = grid != null && grid.SiteContractId == activeId ? grid.ExcavatedContractCellCount : 0;
-            int total = def.CountContractCells();
-            bool ready = _session.Contracts.GetState(activeId) == ContractState.ReadyForCompletion;
-
-            _cardHeader.text = ready ? "CONTRACT COMPLETE" : "CURRENT CONTRACT";
-            _cardHeader.color = ready ? Palette.Emerald : Palette.Cyan;
-            _cardTitle.text = def.Title;
-            _cardObjective.text = ready ? "Collect your payment!" : "Dig blocks  " + done + " / " + total;
-            _cardReward.text = FormatCoins(def.CoinReward);
-            UIFactory.SetProgress(_cardFill, total > 0 ? (float)done / total : 0f);
-            _claimButton.gameObject.SetActive(ready);
-            _claimLabel.text = "CLAIM  " + FormatCoins(def.CoinReward);
+                _contractCaption.text = ready ? "CONTRACT FINALIZAT!" : "CONTRACT ACTIV";
+                _contractCaption.color = ready ? UITheme.Green : UITheme.BlueLight;
+                _contractObjective.text = RoText.ContractObjective(def);
+                _progressRow.SetActive(!ready);
+                _progressCount.text = done + "/" + total;
+                _contractBar.SetValue(total > 0 ? (float)done / total : 0f);
+                _rewardText.text = UITheme.Number(def.CoinReward);
+                _claimButton.gameObject.SetActive(ready);
+                _claimButton.SetLabel("REVENDICĂ  " + UITheme.Number(def.CoinReward));
+                _browseButton.gameObject.SetActive(false);
+                attention = ready;
+            }
+            _contractsBadge.SetActive(attention);
         }
 
         private void Update()
         {
-            double target = _session.Wallet.Coins;
-            if (System.Math.Abs(_displayedCoins - target) > 0.01)
-            {
-                double step = System.Math.Max(1.0, System.Math.Abs(target - _displayedCoins) * Time.unscaledDeltaTime * 6.0);
-                _displayedCoins = _displayedCoins < target ? System.Math.Min(target, _displayedCoins + step) : System.Math.Max(target, _displayedCoins - step);
-                _coinText.text = FormatCoins((long)System.Math.Round(_displayedCoins));
-            }
-
-            float scale = 1f;
-            if (_coinPunch > 0f)
-            {
-                _coinPunch -= Time.unscaledDeltaTime;
-                scale = 1f + Mathf.Sin(Mathf.Clamp01(1f - _coinPunch / 0.18f) * Mathf.PI) * 0.12f;
-            }
-            _coinPill.localScale = new Vector3(scale, scale, 1f);
+            _coins.SetTarget(_session.Wallet.Coins);
+            float t = Time.unscaledTime;
 
             if (_claimButton.gameObject.activeSelf)
             {
-                float s = 1f + Mathf.Sin(Time.unscaledTime * 6f) * 0.04f;
+                float s = 1f + Mathf.Sin(t * 6f) * 0.035f;
                 _claimButton.transform.localScale = new Vector3(s, s, 1f);
             }
 
-            if (_contractsPulse > 0f)
+            if (_contractsBadge.activeSelf)
             {
-                _contractsPulse -= Time.unscaledDeltaTime;
-                float s = 1f + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 8f)) * 0.1f;
-                _contractsButton.localScale = new Vector3(s, s, 1f);
-                if (_contractsPulse <= 0f) _contractsButton.localScale = Vector3.one;
-            }
-        }
-
-        public static string FormatCoins(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
-
-        private void BuildTopBar(RectTransform root)
-        {
-            // Level badge + XP bar (top-left).
-            Image badge = UIFactory.Image("LevelBadge", root, Palette.Yellow, UISprites.Circle);
-            UIFactory.Place(badge.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -28f), new Vector2(118f, 118f));
-            UIFactory.AddShadow(badge, 5f);
-            Image badgeInner = UIFactory.Image("Inner", badge.transform, Palette.Navy, UISprites.Circle);
-            UIFactory.Stretch(badgeInner.rectTransform, 12f, 12f, 12f, 12f);
-            _levelNumber = UIFactory.Text("Number", badgeInner.transform, "1", 52, Palette.Yellow, TextAnchor.MiddleCenter, true);
-            UIFactory.Stretch(_levelNumber.rectTransform);
-
-            Image xpPanel = UIFactory.Panel("XpPanel", root, new Color(Palette.Navy.r, Palette.Navy.g, Palette.Navy.b, 0.88f), 0.6f);
-            UIFactory.Place(xpPanel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(160f, -36f), new Vector2(330f, 102f));
-            _levelLabel = UIFactory.Text("Level", xpPanel.transform, "LEVEL 1", 32, Palette.White, TextAnchor.UpperLeft, true);
-            UIFactory.Place(_levelLabel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -10f), new Vector2(290f, 40f));
-            _xpFill = UIFactory.ProgressBar("XpBar", xpPanel.transform, Palette.NavyDeep, Palette.Cyan, out RectTransform xpRoot);
-            UIFactory.Place(xpRoot, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -54f), new Vector2(290f, 26f));
-            _xpText = UIFactory.Text("XpText", xpPanel.transform, "", 22, Palette.Muted, TextAnchor.UpperLeft);
-            UIFactory.Place(_xpText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -80f), new Vector2(290f, 26f));
-
-            // Coin pill (top-right).
-            Image pill = UIFactory.Panel("CoinPill", root, new Color(Palette.Navy.r, Palette.Navy.g, Palette.Navy.b, 0.92f), 1.2f);
-            _coinPill = pill.rectTransform;
-            UIFactory.Place(_coinPill, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-150f, -36f), new Vector2(330f, 96f));
-            UIFactory.AddShadow(pill, 5f);
-            Image coin = UIFactory.CoinIcon(pill.transform, 76f);
-            UIFactory.Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(76f, 76f));
-            CoinIconTarget = coin.rectTransform;
-            _coinText = UIFactory.Text("Coins", pill.transform, FormatCoins(_session.Wallet.Coins), 48, Palette.White, TextAnchor.MiddleRight, true);
-            UIFactory.Stretch(_coinText.rectTransform, 96f, 0f, 26f, 0f);
-
-            // Settings button (top-right corner): three-bar menu icon.
-            Button settings = UIFactory.Button("SettingsButton", root, "", Palette.NavyLight, Palette.White, 30, () => _actions.OpenSettings(), out _);
-            UIFactory.Place((RectTransform)settings.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -36f), new Vector2(100f, 96f));
-            for (int i = 0; i < 3; i++)
-            {
-                Image bar = UIFactory.Panel("Bar", settings.transform, Palette.White, 0.2f);
-                UIFactory.Place(bar.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 18f - i * 18f), new Vector2(48f, 9f));
+                float s = 1f + Mathf.Abs(Mathf.Sin(t * 4f)) * 0.15f;
+                _contractsBadge.transform.localScale = new Vector3(s, s, 1f);
             }
 
-            // Current tool chip.
-            Image toolChip = UIFactory.Panel("ToolChip", root, new Color(Palette.NavyDeep.r, Palette.NavyDeep.g, Palette.NavyDeep.b, 0.8f), 1.2f);
-            UIFactory.Place(toolChip.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -146f), new Vector2(400f, 58f));
-            _toolText = UIFactory.Text("Tool", toolChip.transform, "", 28, Palette.Yellow, TextAnchor.MiddleCenter, true);
-            UIFactory.Stretch(_toolText.rectTransform);
+            if (_tilePulse > 0f)
+            {
+                _tilePulse -= Time.unscaledDeltaTime;
+                float s = 1f + Mathf.Abs(Mathf.Sin(t * 8f)) * 0.08f;
+                _contractsTile.transform.localScale = _tilePulse > 0f ? new Vector3(s, s, 1f) : Vector3.one;
+            }
+
+            bool digging = IsDigging != null && IsDigging();
+            _toolRing.localRotation = digging ? Quaternion.Euler(0f, 0f, -t * 220f) : Quaternion.identity;
+            _toolRingImage.color = digging ? UITheme.Gold : new Color(1f, 1f, 1f, 0.55f);
         }
 
-        private void BuildContractCard(RectTransform root)
+        private void BuildProfile(RectTransform root)
         {
-            Image card = UIFactory.Panel("ContractCard", root, new Color(Palette.Navy.r, Palette.Navy.g, Palette.Navy.b, 0.9f), 0.8f);
-            UIFactory.Place(card.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -170f), new Vector2(560f, 236f));
-            UIFactory.AddShadow(card, 6f);
-            card.raycastTarget = true;
-            Button cardButton = card.gameObject.AddComponent<Button>();
-            cardButton.transition = Selectable.Transition.None;
-            cardButton.onClick.AddListener(() => _actions.OpenContracts());
+            Image card = UIFactory.Panel("Profile", root, UITheme.PanelGlass, UITheme.CornerPill);
+            UIFactory.Place(card.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(440f, 140f));
+            UIFactory.AddShadow(card, 5f, 0.35f);
 
-            Image accent = UIFactory.Panel("Accent", card.transform, Palette.Yellow, 0.3f);
-            UIFactory.Place(accent.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(10f, 196f));
+            Image ring = UIFactory.Image("AvatarRing", card.transform, UITheme.Gold, UISprites.Circle);
+            UIFactory.Place(ring.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(124f, 124f));
+            Image back = UIFactory.Image("AvatarBack", ring.transform, Palette.Hex(0x7FC8FF), UISprites.Circle);
+            UIFactory.Stretch(back.rectTransform, 7f, 7f, 7f, 7f);
+            Image avatar = UIFactory.Image("Avatar", back.transform, Color.white, UIIcons.Avatar);
+            UIFactory.Stretch(avatar.rectTransform, 4f, 2f, 4f, 6f);
 
-            _cardHeader = UIFactory.Text("Header", card.transform, "", 24, Palette.Cyan, TextAnchor.UpperLeft, true);
-            UIFactory.Place(_cardHeader.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(36f, -16f), new Vector2(500f, 30f));
-            _cardTitle = UIFactory.Text("Title", card.transform, "", 40, Palette.White, TextAnchor.UpperLeft, true);
-            UIFactory.Place(_cardTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(36f, -48f), new Vector2(500f, 50f));
-            _cardObjective = UIFactory.Text("Objective", card.transform, "", 30, Palette.Muted, TextAnchor.UpperLeft);
-            UIFactory.Place(_cardObjective.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(36f, -102f), new Vector2(500f, 40f));
+            _levelText = UIFactory.Text("Level", card.transform, "Nivel 1", UITheme.SizeTitle, UITheme.TextOnDark, TextAnchor.MiddleLeft, true);
+            UIFactory.Place(_levelText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -12f), new Vector2(270f, 56f));
+            UIFactory.AddShadow(_levelText, 2f, 0.5f);
 
-            _cardFill = UIFactory.ProgressBar("Progress", card.transform, Palette.NavyDeep, Palette.Emerald, out _cardProgressRoot);
-            UIFactory.Place(_cardProgressRoot, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(36f, -152f), new Vector2(320f, 32f));
+            _xpBar = ProgressBarView.Create(card.transform, UITheme.Turquoise, UITheme.NavyDeep, true, 24);
+            UIFactory.Place(_xpBar.Rect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -76f), new Vector2(266f, 40f));
+            Image star = UIFactory.Image("Star", card.transform, Color.white, UIIcons.Star);
+            UIFactory.Place(star.rectTransform, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(150f, -96f), new Vector2(54f, 54f));
+        }
 
-            var rewardRow = UIFactory.Rect("Reward", card.transform);
-            UIFactory.Place(rewardRow, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(372f, -144f), new Vector2(170f, 48f));
-            _cardRewardRow = rewardRow.gameObject;
-            Image rewardCoin = UIFactory.CoinIcon(rewardRow, 44f);
-            UIFactory.Place(rewardCoin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(44f, 44f));
-            _cardReward = UIFactory.Text("Amount", rewardRow, "", 34, Palette.Yellow, TextAnchor.MiddleLeft, true);
-            UIFactory.Stretch(_cardReward.rectTransform, 52f, 0f, 0f, 0f);
+        private void BuildCurrencyAndSettings(RectTransform root)
+        {
+            UIButton settings = UIButton.Create(root, null, UIButtonStyle.Navy, () => _actions.OpenSettings(), UIIcons.Gear, round: true);
+            UIFactory.Place(settings.Rect, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(108f, 116f));
 
-            _claimButton = UIFactory.Button("ClaimButton", card.transform, "CLAIM", Palette.Emerald, Palette.White, 34, () =>
+            _coins = CurrencyDisplay.Create(root, UIIcons.Coin, _session.Wallet.Coins);
+            UIFactory.Place((RectTransform)_coins.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-148f, -34f), new Vector2(330f, 100f));
+        }
+
+        private void BuildContractPanel(RectTransform root)
+        {
+            Image panel = UIFactory.Panel("ContractPanel", root, UITheme.PanelGlass, UITheme.CornerCard);
+            _contractPanel = panel.rectTransform;
+            UIFactory.Place(_contractPanel, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -164f), new Vector2(560f, 250f));
+            UIFactory.AddShadow(panel, 6f, 0.35f);
+            panel.raycastTarget = true;
+            Button open = panel.gameObject.AddComponent<Button>();
+            open.transition = Selectable.Transition.None;
+            open.onClick.AddListener(() => _actions.OpenContracts());
+
+            _contractCaption = UIFactory.Text("Caption", _contractPanel, "", UITheme.SizeCaption, UITheme.BlueLight, TextAnchor.UpperLeft, true);
+            UIFactory.Place(_contractCaption.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -14f), new Vector2(500f, 36f));
+            _contractObjective = UIFactory.Text("Objective", _contractPanel, "", UITheme.SizeLabel, UITheme.TextOnDark, TextAnchor.UpperLeft, true);
+            UIFactory.Place(_contractObjective.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -50f), new Vector2(510f, 92f));
+
+            RectTransform row = UIFactory.Rect("ProgressRow", _contractPanel);
+            UIFactory.Place(row, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(20f, 22f), new Vector2(520f, 76f));
+            _progressRow = row.gameObject;
+            Image soil = UIFactory.Image("Soil", row, Color.white, UIIcons.SoilBlock);
+            UIFactory.Place(soil.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(72f, 72f));
+            _progressCount = UIFactory.Text("Count", row, "", UITheme.SizeLabel, UITheme.TextOnDark, TextAnchor.MiddleLeft, true);
+            UIFactory.Place(_progressCount.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(110f, 60f));
+            _contractBar = ProgressBarView.Create(row, UITheme.Orange, UITheme.NavyDeep);
+            UIFactory.Place(_contractBar.Rect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(186f, 0f), new Vector2(180f, 30f));
+            Image coin = UIFactory.CoinIcon(row, 56f);
+            UIFactory.Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(380f, 0f), new Vector2(56f, 56f));
+            _rewardText = UIFactory.Text("Reward", row, "", UITheme.SizeLabel, UITheme.Gold, TextAnchor.MiddleLeft, true);
+            UIFactory.Place(_rewardText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(440f, 0f), new Vector2(110f, 60f));
+
+            _claimButton = UIButton.Create(_contractPanel, "REVENDICĂ", UIButtonStyle.Gold, () =>
             {
                 string id = _session.Contracts.ActiveContractId;
                 if (id != null) _actions.ClaimContract(id);
-            }, out _claimLabel);
-            UIFactory.Place((RectTransform)_claimButton.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(420f, 88f));
+            }, UIIcons.Coin, UITheme.SizeLabel);
+            UIFactory.Place(_claimButton.Rect, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(510f, 100f));
+
+            _browseButton = UIButton.Create(_contractPanel, "VEZI CONTRACTE", UIButtonStyle.Secondary, () => _actions.OpenContracts(), UIIcons.Clipboard, UITheme.SizeLabel);
+            UIFactory.Place(_browseButton.Rect, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(510f, 100f));
         }
 
-        private void BuildBottomButtons(RectTransform root)
+        private void BuildNavigation(RectTransform root)
         {
-            Button contracts = UIFactory.Button("ContractsButton", root, "", Palette.Yellow, Palette.Navy, 30, () => _actions.OpenContracts(), out _);
-            _contractsButton = (RectTransform)contracts.transform;
-            UIFactory.Place(_contractsButton, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 60f), new Vector2(230f, 230f));
+            _contractsTile = UIButton.Create(root, null, UIButtonStyle.Navy, () => _actions.OpenContracts());
+            UIFactory.Place(_contractsTile.Rect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -188f), new Vector2(170f, 182f));
+            Transform face = _contractsTile.Rect.Find("Face");
+            Image icon = UIFactory.Image("Icon", face, Color.white, UIIcons.Clipboard);
+            icon.preserveAspect = true;
+            UIFactory.Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(110f, 110f));
+            Text label = UIFactory.Text("Caption", face, "Contracte", UITheme.SizeCaption, UITheme.TextOnDark, TextAnchor.MiddleCenter, true);
+            UIFactory.Place(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(170f, 44f));
 
-            // Clipboard icon built from panels.
-            Image board = UIFactory.Panel("Clipboard", contracts.transform, Palette.Navy, 0.5f);
-            UIFactory.Place(board.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 26f), new Vector2(96f, 118f));
-            Image paper = UIFactory.Panel("Paper", board.transform, Palette.White, 0.3f);
-            UIFactory.Stretch(paper.rectTransform, 12f, 22f, 12f, 12f);
-            Image clip = UIFactory.Panel("Clip", board.transform, Palette.Steel, 0.3f);
-            UIFactory.Place(clip.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -6f), new Vector2(46f, 22f));
-            for (int i = 0; i < 3; i++)
-            {
-                Image line = UIFactory.Panel("Line", paper.transform, Palette.Muted, 0.2f);
-                UIFactory.Place(line.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -16f - i * 22f), new Vector2(50f, 8f));
-            }
+            Image badge = UIFactory.Image("Badge", _contractsTile.Rect, UITheme.Red, UISprites.Circle);
+            UIFactory.Place(badge.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-10f, -8f), new Vector2(50f, 50f));
+            Text mark = UIFactory.Text("Mark", badge.transform, "!", 34, Color.white, TextAnchor.MiddleCenter, true);
+            UIFactory.Stretch(mark.rectTransform, 0f, 0f, 0f, 2f);
+            _contractsBadge = badge.gameObject;
+        }
 
-            Text label = UIFactory.Text("Caption", contracts.transform, "CONTRACTS", 30, Palette.Navy, TextAnchor.MiddleCenter, true);
-            UIFactory.Place(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(220f, 40f));
+        private void BuildToolBadge(RectTransform root)
+        {
+            RectTransform badge = UIFactory.Rect("ToolBadge", root);
+            UIFactory.Place(badge, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 60f), new Vector2(220f, 220f));
+
+            Image ring = UIFactory.Image("Ring", badge, Color.white, UISprites.Circle);
+            UIFactory.Stretch(ring.rectTransform);
+            _toolRing = ring.rectTransform;
+            _toolRingImage = ring;
+            // A small orbiting marker rides the ring; it spins while the player digs.
+            Image marker = UIFactory.Image("Marker", ring.transform, UITheme.NavyDeep, UISprites.Circle);
+            UIFactory.Place(marker.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -6f), new Vector2(16f, 16f));
+
+            Image inner = UIFactory.Image("Inner", badge, UITheme.Navy, UISprites.Circle);
+            UIFactory.Stretch(inner.rectTransform, 12f, 12f, 12f, 12f);
+            Image shovel = UIFactory.Image("Tool", inner.transform, Color.white, UIIcons.Shovel);
+            shovel.preserveAspect = true;
+            UIFactory.Stretch(shovel.rectTransform, 30f, 26f, 30f, 34f);
+
+            Image pill = UIFactory.Panel("Level", badge, UITheme.Gold, UITheme.CornerPill);
+            UIFactory.Place(pill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 6f), new Vector2(120f, 46f));
+            _toolLevel = UIFactory.Text("Text", pill.transform, "Nv 1", 28, UITheme.TextDark, TextAnchor.MiddleCenter, true);
+            UIFactory.Stretch(_toolLevel.rectTransform);
         }
     }
 }

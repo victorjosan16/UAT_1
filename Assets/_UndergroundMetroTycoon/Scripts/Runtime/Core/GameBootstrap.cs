@@ -33,6 +33,9 @@ namespace UndergroundMetroTycoon.Game
         private SfxPlayer _sfx;
         private ExcavationVfx _vfx;
         private Light _sun;
+        private Camera _cameraComponent;
+        private TerrainMaterial _lastDugMaterial;
+        private List<CharacterRig> _ambientWorkers = new List<CharacterRig>();
         private float _autosaveTimer;
         private bool _pendingReset;
         private bool _savingSuspended;
@@ -74,6 +77,7 @@ namespace UndergroundMetroTycoon.Game
             var site = Session.Content.Site;
             SiteEnvironmentBuilder.Result environment = SiteEnvironmentBuilder.Build(_runtimeRoot, _materials, new Vector2(site.CenterX, site.CenterZ));
             _sun = environment.Sun;
+            _ambientWorkers = environment.AmbientWorkers;
 
             _vfx = new GameObject("VFX").AddComponent<ExcavationVfx>();
             _vfx.transform.SetParent(_runtimeRoot, false);
@@ -98,7 +102,9 @@ namespace UndergroundMetroTycoon.Game
             cameraGo.transform.SetParent(_runtimeRoot, false);
             var cam = cameraGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.55f, 0.78f, 0.95f);
+            cam.backgroundColor = Palette.Sky;
+            PostProcessingSetup.Create(_runtimeRoot, cam);
+            _cameraComponent = cam;
             cameraGo.AddComponent<AudioListener>();
 
             var playerGo = new GameObject("Player");
@@ -113,8 +119,10 @@ namespace UndergroundMetroTycoon.Game
             _dig = playerGo.AddComponent<DigController>();
             _dig.Init(Session, _player, _siteView);
             _dig.BlockedHint += OnDigBlocked;
+            rig.DirtTossed += OnDirtTossed;
 
             _ui = GameUI.Build(_runtimeRoot, Session, this, _sfx);
+            _ui.Hud.IsDigging = () => _dig != null && _dig.IsDigging;
             _player.SetJoystick(_ui.Joystick);
 
             _camera = cameraGo.AddComponent<IsometricCameraController>();
@@ -126,7 +134,7 @@ namespace UndergroundMetroTycoon.Game
 
             if (!string.IsNullOrEmpty(_startupMessage)) _ui.Feedback.ShowToast(_startupMessage);
             else if (Session.Contracts.ActiveContractId == null && Session.Contracts.GetProgress(DefaultContent.GardenTrenchId)?.CompletionCount == 0)
-                _ui.Feedback.ShowToast("Welcome! Open CONTRACTS and accept your first job.");
+                _ui.Feedback.ShowToast("Bine ai venit! Deschide Contracte și acceptă prima lucrare.");
             _startupMessage = null;
             _autosaveTimer = autosaveInterval;
         }
@@ -154,12 +162,12 @@ namespace UndergroundMetroTycoon.Game
                     if (result.Status == SaveLoadStatus.LoadedFromBackup)
                     {
                         Debug.LogWarning("[UMT] " + result.Message);
-                        _startupMessage = "Save restored from backup.";
+                        _startupMessage = "Progresul a fost restaurat din copia de rezervă.";
                     }
                     return session;
                 case SaveLoadStatus.Corrupted:
                     Debug.LogError("[UMT] " + result.Message + " Starting a new game.");
-                    _startupMessage = "Save file was damaged. Starting fresh.";
+                    _startupMessage = "Salvarea era deteriorată. Începi un joc nou.";
                     return GameSession.CreateNew(_content);
                 default:
                     return GameSession.CreateNew(_content);
@@ -200,6 +208,8 @@ namespace UndergroundMetroTycoon.Game
         private void OnCellDamaged(TerrainCell cell, int damage)
         {
             _siteView.OnCellDamaged(cell);
+            _lastDugMaterial = cell.Material;
+            _player.Rig.SetBladeSoil(_materials.Get(Palette.TerrainTop(cell.Material)));
             Vector3 top = Session.Grid.Layout.CellTopCenter(cell.Coord).ToUnity();
             _vfx.EmitHit(top, cell.Material);
             _sfx.PlayHit(cell.Material);
@@ -211,6 +221,7 @@ namespace UndergroundMetroTycoon.Game
             Vector3 center = Session.Grid.Layout.CellCenter(cell.Coord).ToUnity();
             _vfx.EmitBreak(center, cell.Material);
             _sfx.PlayBreak();
+            _player.Rig.PlayCollect();
             if (coins > 0)
             {
                 _ui.Feedback.ShowFloatingText(center + Vector3.up * 0.8f, "+" + coins, Palette.Yellow);
@@ -229,7 +240,8 @@ namespace UndergroundMetroTycoon.Game
                 Vector3 center = new Vector3(Session.Content.Site.CenterX, grid.Layout.SurfaceY, Session.Content.Site.CenterZ);
                 _vfx.EmitCelebration(center);
                 _sfx.PlayFanfare();
-                _ui.Feedback.ShowBanner("CONTRACT COMPLETE!", "Tap CLAIM to collect your payment");
+                _ui.Feedback.ShowBanner("CONTRACT FINALIZAT!", "Apasă REVENDICĂ pentru a încasa plata");
+                _player.Rig.Celebrate();
                 SaveNow();
             }
         }
@@ -237,7 +249,8 @@ namespace UndergroundMetroTycoon.Game
         private void OnContractRewardClaimed(ContractDefinition def, long coins, int xp)
         {
             _ui.Feedback.FlyCoinsFromCenter(Mathf.Clamp((int)(coins / 25), 8, 24));
-            _ui.Feedback.ShowToast("+" + HudView.FormatCoins(coins) + " coins   +" + xp + " XP");
+            _ui.Feedback.ShowToast("+" + UITheme.Number(coins) + " monede   +" + xp + " XP");
+            _player.Rig.Celebrate();
             _ui.Hud.Refresh();
             SaveNow();
         }
@@ -245,8 +258,13 @@ namespace UndergroundMetroTycoon.Game
         private void OnLevelChanged(int previous, int level)
         {
             _sfx.PlayLevelUp();
-            _ui.Feedback.ShowBanner("LEVEL " + level + "!", "New contracts may be available");
+            _ui.Feedback.ShowBanner("NIVEL " + level + "!", "Verifică panoul de contracte");
             _ui.Hud.Refresh();
+        }
+
+        private void OnDirtTossed(Vector3 bladePosition)
+        {
+            _vfx.EmitToss(bladePosition, _player.transform.right, _lastDugMaterial);
         }
 
         private void OnDigBlocked(DigOutcome reason)
@@ -254,14 +272,14 @@ namespace UndergroundMetroTycoon.Game
             switch (reason)
             {
                 case DigOutcome.NoActiveContract:
-                    _ui.Feedback.ShowToast("Accept a contract to start digging here.");
+                    _ui.Feedback.ShowToast("Acceptă un contract ca să poți săpa aici.");
                     _ui.Hud.PulseContractsButton();
                     break;
                 case DigOutcome.ToolTooWeak:
-                    _ui.Feedback.ShowToast("This ground needs a stronger tool.");
+                    _ui.Feedback.ShowToast("Terenul acesta cere o unealtă mai puternică.");
                     break;
                 case DigOutcome.OutsideContract:
-                    _ui.Feedback.ShowToast("This area is not part of your contract.");
+                    _ui.Feedback.ShowToast("Zona aceasta nu face parte din contract.");
                     break;
             }
         }
@@ -274,7 +292,7 @@ namespace UndergroundMetroTycoon.Game
             if (result == ContractActionResult.Ok)
             {
                 ContractDefinition def = Session.Contracts.GetDefinition(contractId);
-                _ui.Feedback.ShowToast("Contract accepted: " + def.Title + ". Walk up to the soil to dig!");
+                _ui.Feedback.ShowToast("Contract acceptat: " + def.Title + ". Apropie-te de pământ ca să sapi!");
                 SaveNow();
             }
             else
@@ -380,6 +398,10 @@ namespace UndergroundMetroTycoon.Game
             SettingsData s = Session.Settings;
             _sfx.Enabled = s.SoundEnabled;
             AudioListener.volume = s.SoundEnabled ? 1f : 0f;
+            PostProcessingSetup.ApplyQuality(_cameraComponent, s.GraphicsQuality);
+            // Ambient workers are pure decoration; skip them on Low quality to save CPU on weak devices.
+            foreach (CharacterRig worker in _ambientWorkers)
+                if (worker != null) worker.transform.parent.gameObject.SetActive(s.GraphicsQuality > 0);
             switch (s.GraphicsQuality)
             {
                 case 0:
@@ -404,11 +426,11 @@ namespace UndergroundMetroTycoon.Game
         {
             switch (result)
             {
-                case ContractActionResult.AnotherContractActive: return "Finish your current contract first.";
-                case ContractActionResult.Locked: return "This contract is still locked.";
-                case ContractActionResult.AlreadyClaimed: return "Reward already collected.";
-                case ContractActionResult.InvalidState: return "That contract can't do that right now.";
-                default: return "Unknown contract.";
+                case ContractActionResult.AnotherContractActive: return "Termină mai întâi contractul curent.";
+                case ContractActionResult.Locked: return "Contractul este încă blocat.";
+                case ContractActionResult.AlreadyClaimed: return "Recompensa a fost deja încasată.";
+                case ContractActionResult.InvalidState: return "Acțiunea nu este posibilă acum.";
+                default: return "Contract necunoscut.";
             }
         }
     }

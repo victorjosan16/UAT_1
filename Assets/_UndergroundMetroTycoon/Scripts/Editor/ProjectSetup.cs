@@ -132,6 +132,11 @@ namespace UndergroundMetroTycoon.EditorTools
 
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
+            // Saved with the scene so the fog shader variants used at runtime survive build stripping.
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogStartDistance = 48f;
+            RenderSettings.fogEndDistance = 120f;
             EditorSceneManager.SaveScene(scene, ScenePath);
 
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene> { new EditorBuildSettingsScene(ScenePath, true) };

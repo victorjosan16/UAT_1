@@ -59,7 +59,7 @@ namespace UndergroundMetroTycoon.Game
 
             for (int i = 0; i < TextPoolSize; i++)
             {
-                Text t = UIFactory.Text("FloatText", root, "", 40, Palette.Yellow, TextAnchor.MiddleCenter, true);
+                Text t = UIFactory.Text("FloatText", root, "", UITheme.SizeTitle, UITheme.Gold, TextAnchor.MiddleCenter, true);
                 t.rectTransform.sizeDelta = new Vector2(240f, 60f);
                 UIFactory.AddShadow(t, 3f, 0.7f);
                 t.gameObject.SetActive(false);
@@ -73,11 +73,11 @@ namespace UndergroundMetroTycoon.Game
                 _coins.Add(new FlyingCoin { Rect = coin.rectTransform });
             }
 
-            Image toast = UIFactory.Panel("Toast", root, new Color(Palette.NavyDeep.r, Palette.NavyDeep.g, Palette.NavyDeep.b, 0.92f), 1.2f);
-            UIFactory.Place(toast.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -440f), new Vector2(900f, 96f));
+            Image toast = UIFactory.Panel("Toast", root, UITheme.PanelGlass, UITheme.CornerPill);
+            UIFactory.Place(toast.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -440f), new Vector2(940f, 104f));
             _toastGroup = toast.gameObject.AddComponent<CanvasGroup>();
             _toastGroup.blocksRaycasts = false;
-            _toastText = UIFactory.Text("Text", toast.transform, "", 32, Palette.White, TextAnchor.MiddleCenter, true);
+            _toastText = UIFactory.Text("Text", toast.transform, "", UITheme.SizeBody, UITheme.TextOnDark, TextAnchor.MiddleCenter, true);
             UIFactory.Stretch(_toastText.rectTransform, 24f, 0f, 24f, 0f);
             toast.gameObject.SetActive(false);
 
@@ -85,12 +85,12 @@ namespace UndergroundMetroTycoon.Game
             UIFactory.Place(_banner, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 260f), new Vector2(1000f, 260f));
             _bannerGroup = _banner.gameObject.AddComponent<CanvasGroup>();
             _bannerGroup.blocksRaycasts = false;
-            Image ribbon = UIFactory.Panel("Ribbon", _banner, Palette.Yellow, 1f);
+            Image ribbon = UIFactory.Panel("Ribbon", _banner, UITheme.Gold, UITheme.CornerPill);
             UIFactory.Stretch(ribbon.rectTransform, 0f, 30f, 0f, 60f);
             UIFactory.AddShadow(ribbon, 8f, 0.5f);
-            _bannerTitle = UIFactory.Text("Title", ribbon.transform, "", 64, Palette.NavyDeep, TextAnchor.MiddleCenter, true);
+            _bannerTitle = UIFactory.Text("Title", ribbon.transform, "", UITheme.SizeDisplay, UITheme.TextDark, TextAnchor.MiddleCenter, true);
             UIFactory.Stretch(_bannerTitle.rectTransform, 20f, 0f, 20f, 0f);
-            _bannerSubtitle = UIFactory.Text("Subtitle", _banner, "", 36, Palette.White, TextAnchor.MiddleCenter, true);
+            _bannerSubtitle = UIFactory.Text("Subtitle", _banner, "", UITheme.SizeLabel, UITheme.TextOnDark, TextAnchor.MiddleCenter, true);
             UIFactory.Place(_bannerSubtitle.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(1000f, 50f));
             UIFactory.AddShadow(_bannerSubtitle, 3f, 0.8f);
             _banner.gameObject.SetActive(false);

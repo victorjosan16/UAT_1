@@ -19,6 +19,16 @@ namespace UndergroundMetroTycoon.Game
             return mesh;
         }
 
+        /// <summary>True when the primitive meshes can be read on the CPU, which static batching needs.</summary>
+        public static bool MeshesReadable()
+        {
+            foreach (PrimitiveType type in new[] { PrimitiveType.Cube, PrimitiveType.Sphere, PrimitiveType.Cylinder })
+            {
+                if (!GetMesh(type).isReadable) return false;
+            }
+            return true;
+        }
+
         public static GameObject Create(string name, PrimitiveType type, Transform parent, Vector3 localPosition, Vector3 localScale,
             Material material, bool castShadows = true)
         {

@@ -39,6 +39,24 @@ namespace UndergroundMetroTycoon.Game
             Emit(_dust, position, Count(7), 0.5f, 1.2f, 0.2f, 0.4f, 0.8f);
         }
 
+        /// <summary>Soil tossed off the shovel blade: a small arc of clumps thrown sideways.</summary>
+        public void EmitToss(Vector3 position, Vector3 sideways, TerrainMaterial material)
+        {
+            ParticleSystem system = GetDebris(material);
+            var emit = new ParticleSystem.EmitParams();
+            int count = Count(6);
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 dir = (sideways.normalized * 0.8f + Vector3.up * 0.9f + Random.insideUnitSphere * 0.35f).normalized;
+                emit.position = position + Random.insideUnitSphere * 0.06f;
+                emit.velocity = dir * Random.Range(2.2f, 3.2f);
+                emit.startSize = Random.Range(0.06f, 0.12f);
+                emit.startLifetime = Random.Range(0.6f, 0.85f);
+                emit.rotation3D = new Vector3(Random.Range(0f, 360f), Random.Range(0f, 360f), Random.Range(0f, 360f));
+                system.Emit(emit, 1);
+            }
+        }
+
         public void EmitCelebration(Vector3 position)
         {
             foreach (ParticleSystem system in _confetti) Emit(system, position + Vector3.up * 0.5f, Count(14), 3f, 5.5f, 0.06f, 0.11f, 1.8f);

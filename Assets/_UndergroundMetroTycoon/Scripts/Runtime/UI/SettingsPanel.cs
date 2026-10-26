@@ -5,86 +5,89 @@ using UnityEngine.UI;
 
 namespace UndergroundMetroTycoon.Game
 {
-    /// <summary>Settings: sound on/off, graphics quality and a confirmed progress reset.</summary>
+    /// <summary>Settings: sound, graphics quality and a confirmed progress reset. Values persist in the save file.</summary>
     public sealed class SettingsPanel : ModalPanel
     {
-        private static readonly string[] QualityNames = { "LOW", "MEDIUM", "HIGH" };
+        private static readonly string[] QualityNames = { "SCĂZUTĂ", "MEDIE", "RIDICATĂ" };
 
-        private readonly List<Image> _qualityButtons = new List<Image>();
+        private readonly List<UIButton> _qualityButtons = new List<UIButton>();
         private SettingsData _settings;
         private IGameUIActions _actions;
-        private Image _soundButton;
-        private Text _soundLabel;
-        private Text _resetLabel;
-        private bool _confirmReset;
+        private ConfirmDialog _confirm;
+        private UIButton _soundButton;
 
-        public void Build(RectTransform root, SettingsData settings, IGameUIActions actions, SfxPlayer sfx)
+        public void Build(RectTransform root, SettingsData settings, IGameUIActions actions, SfxPlayer sfx, ConfirmDialog confirm)
         {
             _settings = settings;
             _actions = actions;
-            BuildFrame(root, "SETTINGS", 900f, sfx);
+            _confirm = confirm;
+            BuildFrame(root, "Setări", 960f, sfx);
 
-            Row("Sound", 0f);
-            Button sound = UIFactory.Button("SoundToggle", Body, "", Palette.Emerald, Palette.NavyDeep, 34, () =>
+            RectTransform soundRow = Row("Sunet", 0f, 150f);
+            _soundButton = UIButton.Create(soundRow, "PORNIT", UIButtonStyle.Primary, () =>
             {
                 _actions.SetSoundEnabled(!_settings.SoundEnabled);
                 Sfx?.PlayClick();
                 Refresh();
-            }, out _soundLabel);
-            _soundButton = sound.GetComponent<Image>();
-            UIFactory.Place((RectTransform)sound.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(0f, -10f), new Vector2(240f, 90f));
+            }, null, UITheme.SizeLabel);
+            UIFactory.Place(_soundButton.Rect, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(250f, 100f));
 
-            Row("Graphics quality", 160f);
+            RectTransform qualityRow = Row("Calitate grafică", 174f, 250f);
             for (int i = 0; i < QualityNames.Length; i++)
             {
                 int quality = i;
-                Button b = UIFactory.Button("Quality" + i, Body, QualityNames[i], Palette.NavyLight, Palette.White, 30, () =>
+                UIButton b = UIButton.Create(qualityRow, QualityNames[i], UIButtonStyle.Light, () =>
                 {
                     _actions.SetGraphicsQuality(quality);
                     Sfx?.PlayClick();
                     Refresh();
-                }, out _);
-                UIFactory.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(i * 300f, -240f), new Vector2(280f, 90f));
-                _qualityButtons.Add(b.GetComponent<Image>());
+                }, null, 30);
+                UIFactory.Place(b.Rect, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f + i * 288f, 24f), new Vector2(270f, 96f));
+                _qualityButtons.Add(b);
             }
 
-            Row("Progress", 400f);
-            Button reset = UIFactory.Button("Reset", Body, "", Palette.Red, Palette.White, 30, OnResetPressed, out _resetLabel);
-            UIFactory.Place((RectTransform)reset.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -480f), new Vector2(880f, 90f));
-        }
-
-        protected override void OnOpened()
-        {
-            _confirmReset = false;
-            Refresh();
-        }
-
-        private void OnResetPressed()
-        {
-            Sfx?.PlayClick();
-            if (!_confirmReset)
+            RectTransform resetRow = Row("Progres", 448f, 220f);
+            UIButton reset = UIButton.Create(resetRow, "RESETEAZĂ PROGRESUL", UIButtonStyle.Danger, () =>
             {
-                _confirmReset = true;
-                Refresh();
-                return;
-            }
-            _confirmReset = false;
-            Close();
-            _actions.ResetProgress();
+                Sfx?.PlayClick();
+                _confirm.Show("Ștergi tot progresul?\nMonedele, nivelul și contractele vor fi pierdute definitiv.", "ȘTERGE", () =>
+                {
+                    Close();
+                    _actions.ResetProgress();
+                });
+            }, null, UITheme.SizeLabel);
+            UIFactory.Place(reset.Rect, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(856f, 100f));
         }
+
+        protected override void OnOpened() => Refresh();
 
         private void Refresh()
         {
-            _soundLabel.text = _settings.SoundEnabled ? "ON" : "OFF";
-            _soundButton.color = _settings.SoundEnabled ? Palette.Emerald : Palette.ConcreteDark;
-            for (int i = 0; i < _qualityButtons.Count; i++) _qualityButtons[i].color = i == _settings.GraphicsQuality ? Palette.Cyan : Palette.NavyLight;
-            _resetLabel.text = _confirmReset ? "TAP AGAIN TO ERASE ALL PROGRESS" : "RESET PROGRESS";
+            _soundButton.SetLabel(_settings.SoundEnabled ? "PORNIT" : "OPRIT");
+            _soundButton.SetStyle(_settings.SoundEnabled ? UIButtonStyle.Primary : UIButtonStyle.Light);
+            for (int i = 0; i < _qualityButtons.Count; i++)
+                _qualityButtons[i].SetStyle(i == _settings.GraphicsQuality ? UIButtonStyle.Secondary : UIButtonStyle.Light);
         }
 
-        private void Row(string label, float y)
+        private RectTransform Row(string label, float top, float height)
         {
-            Text text = UIFactory.Text(label, Body, label, 36, Palette.White, TextAnchor.MiddleLeft, true);
-            UIFactory.Place(text.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -y - 10f), new Vector2(600f, 90f));
+            Image card = UIFactory.Panel(label, Body, UITheme.CardWhite, UITheme.CornerCard);
+            UIFactory.AddShadow(card, 4f, 0.15f);
+            RectTransform rt = card.rectTransform;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(0f, -top - height);
+            rt.offsetMax = new Vector2(0f, -top);
+
+            Text text = UIFactory.Text("Label", rt, label, UITheme.SizeTitle, UITheme.TextDark, TextAnchor.UpperLeft, true);
+            UIFactory.Place(text.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -20f), new Vector2(600f, 60f));
+            if (height <= 160f)
+            {
+                text.alignment = TextAnchor.MiddleLeft;
+                UIFactory.Place(text.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(560f, 80f));
+            }
+            return rt;
         }
     }
 }

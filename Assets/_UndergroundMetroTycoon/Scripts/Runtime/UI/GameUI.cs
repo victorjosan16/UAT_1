@@ -14,6 +14,7 @@ namespace UndergroundMetroTycoon.Game
         public HudView Hud { get; private set; }
         public ContractsPanel Contracts { get; private set; }
         public SettingsPanel Settings { get; private set; }
+        public ConfirmDialog Confirm { get; private set; }
         public FeedbackLayer Feedback { get; private set; }
         public VirtualJoystick Joystick { get; private set; }
 
@@ -67,7 +68,12 @@ namespace UndergroundMetroTycoon.Game
 
             RectTransform settingsRoot = UIFactory.Rect("SettingsPanel", safe);
             Settings = settingsRoot.gameObject.AddComponent<SettingsPanel>();
-            Settings.Build(settingsRoot, session.Settings, actions, sfx);
+
+            RectTransform confirmRoot = UIFactory.Rect("ConfirmDialog", safe);
+            Confirm = confirmRoot.gameObject.AddComponent<ConfirmDialog>();
+            Confirm.Build(sfx);
+
+            Settings.Build(settingsRoot, session.Settings, actions, sfx, Confirm);
         }
 
         private void BuildJoystick(RectTransform safe)
@@ -81,13 +87,26 @@ namespace UndergroundMetroTycoon.Game
             zoneRect.offsetMin = Vector2.zero;
             zoneRect.offsetMax = Vector2.zero;
 
-            Image ring = UIFactory.Image("Base", zoneRect, new Color(1f, 1f, 1f, 0.22f), UISprites.Circle);
+            Image ring = UIFactory.Image("Base", zoneRect, new Color(1f, 1f, 1f, 0.35f), UISprites.Circle);
             UIFactory.Place(ring.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-250f, -230f), new Vector2(300f, 300f));
-            Image inner = UIFactory.Image("Inner", ring.transform, new Color(0.03f, 0.07f, 0.13f, 0.35f), UISprites.Circle);
-            UIFactory.Stretch(inner.rectTransform, 14f, 14f, 14f, 14f);
-            Image knob = UIFactory.Image("Knob", ring.transform, new Color(1f, 1f, 1f, 0.9f), UISprites.Circle);
-            UIFactory.Place(knob.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(130f, 130f));
-            UIFactory.AddShadow(knob, 5f, 0.35f);
+            Image inner = UIFactory.Image("Inner", ring.transform, new Color(0.04f, 0.09f, 0.19f, 0.45f), UISprites.Circle);
+            UIFactory.Stretch(inner.rectTransform, 10f, 10f, 10f, 10f);
+            // Direction ticks at the four compass points.
+            for (int i = 0; i < 4; i++)
+            {
+                Image tick = UIFactory.Image("Tick", ring.transform, new Color(1f, 1f, 1f, 0.7f), UISprites.Rounded, 0.2f);
+                RectTransform t = tick.rectTransform;
+                t.anchorMin = t.anchorMax = new Vector2(0.5f, 0.5f);
+                t.sizeDelta = new Vector2(34f, 10f);
+                float angle = i * 90f;
+                t.localRotation = Quaternion.Euler(0f, 0f, angle + 90f);
+                t.anchoredPosition = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad)) * 116f;
+            }
+            Image knob = UIFactory.Image("Knob", ring.transform, Color.white, UISprites.Circle);
+            UIFactory.Place(knob.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(132f, 132f));
+            UIFactory.AddShadow(knob, 6f, 0.35f);
+            Image knobCore = UIFactory.Image("Core", knob.transform, UITheme.CardPale, UISprites.Circle);
+            UIFactory.Stretch(knobCore.rectTransform, 22f, 22f, 22f, 22f);
 
             Joystick = zone.gameObject.AddComponent<VirtualJoystick>();
             Joystick.Init(zoneRect, ring.rectTransform, knob.rectTransform, 120f);

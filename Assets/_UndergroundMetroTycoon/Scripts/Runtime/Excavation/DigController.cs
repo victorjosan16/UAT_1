@@ -22,6 +22,9 @@ namespace UndergroundMetroTycoon.Game
         private bool _impactDone;
         private float _hintCooldown;
 
+        /// <summary>True while a swing is in progress (drives the HUD tool badge).</summary>
+        public bool IsDigging => _swinging;
+
         /// <summary>Raised when the player is next to cells that cannot be dug yet, with the reason.</summary>
         public event Action<DigOutcome> BlockedHint;
 

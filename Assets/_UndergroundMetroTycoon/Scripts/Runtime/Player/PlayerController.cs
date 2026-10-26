@@ -11,7 +11,7 @@ namespace UndergroundMetroTycoon.Game
     {
         [SerializeField] private float moveSpeed = 3.6f;
         [SerializeField] private float acceleration = 18f;
-        [SerializeField] private float turnSpeed = 720f;
+        [SerializeField] private float turnSpeed = 540f;
 
         private KinematicMover _mover;
         private CharacterRig _rig;
@@ -75,13 +75,19 @@ namespace UndergroundMetroTycoon.Game
             moved.y = 0f;
             if (moved.sqrMagnitude < (_velocity * dt).sqrMagnitude * 0.25f) _velocity *= 0.5f;
 
+            float yawBefore = transform.eulerAngles.y;
             if (_velocity.sqrMagnitude > 0.01f && HasMoveInput)
             {
                 Quaternion target = Quaternion.LookRotation(new Vector3(_velocity.x, 0f, _velocity.y), Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * dt);
             }
 
-            if (_rig != null) _rig.MoveSpeed01 = moved.magnitude / Mathf.Max(0.0001f, moveSpeed * dt);
+            if (_rig != null)
+            {
+                _rig.MoveSpeed01 = moved.magnitude / Mathf.Max(0.0001f, moveSpeed * dt);
+                _rig.MoveDistance += moved.magnitude;
+                _rig.TurnRate = dt > 0f ? Mathf.DeltaAngle(yawBefore, transform.eulerAngles.y) / dt : 0f;
+            }
         }
 
         private Vector2 ReadInput()
