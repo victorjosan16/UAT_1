@@ -280,6 +280,22 @@ namespace SugarDrop
             return TileKind.Normal;
         }
 
+        /// <summary>Obstacolele de pe tablă acum (la start: țintele obiectivelor cu lăzi, gheață, lanțuri, ciocolată).</summary>
+        public ObstacleCounts CountObstacles()
+        {
+            var counts = new ObstacleCounts();
+            foreach (Vector2Int c in ValidCells())
+            {
+                Piece p = At(c);
+                if (p == null) continue;
+                if (p.Kind == TileKind.Crate) counts.Crates++;
+                else if (p.Kind == TileKind.Chocolate) counts.Chocolate++;
+                counts.IceLayers += p.Ice;
+                if (p.Chained) counts.Chains++;
+            }
+            return counts;
+        }
+
         public bool IsSpecialAt(Vector2Int c) => At(c) is { IsSpecial: true, Locked: false };
 
         /// <summary>Schimbul a două piese vecine ar face ceva (o linie de 3+ sau o piesă specială mutată).</summary>
@@ -749,8 +765,16 @@ namespace SugarDrop
         private void Damage(Vector2Int c, Piece p, BoardStep step, HashSet<Vector2Int> hitObstacles)
         {
             if (!hitObstacles.Add(c)) return;
-            if (p.Ice > 0) p.Ice--;
-            else if (p.Chained) p.Chained = false;
+            if (p.Ice > 0)
+            {
+                p.Ice--;
+                step.IceLayersBroken++;
+            }
+            else if (p.Chained)
+            {
+                p.Chained = false;
+                step.ChainsBroken++;
+            }
             else if (p.IsBlocker)
             {
                 if (p.Kind == TileKind.Chocolate) _chocolateHit = true;

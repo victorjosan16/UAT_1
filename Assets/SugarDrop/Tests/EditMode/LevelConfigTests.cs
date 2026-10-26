@@ -19,7 +19,9 @@ namespace SugarDrop.Tests
                 Assert.That(c.FrostingCells, Is.LessThanOrEqualTo(c.ValidCells), $"nivel {level}");
                 foreach (int color in c.CollectColors) Assert.That(color, Is.InRange(0, c.Colors - 1), $"nivel {level}");
                 Assert.That(c.Crates + c.Chocolate + c.Ice + c.Chains, Is.LessThan(c.ValidCells / 3), $"nivel {level}");
-                bool hasGoal = c.Type == LevelType.Boss || c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0;
+                bool hasGoal = c.Type == LevelType.Boss || c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0
+                    || c.SpecialsTarget > 0 || c.Type == LevelType.Crates && c.Crates > 0 || c.Type == LevelType.Ice && c.Ice > 0
+                    || c.Type == LevelType.Chains && c.Chains > 0 || c.Type == LevelType.Chocolate && c.Chocolate > 0;
                 Assert.IsTrue(hasGoal, $"nivel {level} fără obiectiv");
             }
         }
@@ -39,7 +41,7 @@ namespace SugarDrop.Tests
         {
             var seen = new System.Collections.Generic.HashSet<LevelType>();
             for (int level = 1; level <= 12; level++) seen.Add(LevelConfig.For(level).Type);
-            Assert.AreEqual(5, seen.Count, "în primele 12 niveluri apar toate tipurile (inclusiv primul Boss)");
+            Assert.GreaterOrEqual(seen.Count, 7, "în primele 12 niveluri apar multe tipuri (inclusiv primul Boss)");
             Assert.AreEqual(LevelType.Score, LevelConfig.For(1).Type);
         }
 
@@ -120,6 +122,40 @@ namespace SugarDrop.Tests
         {
             Assert.AreEqual(1, LevelConfig.For(0).Level);
             Assert.AreEqual(1, LevelConfig.For(-5).Level);
+        }
+
+        [Test]
+        public void ObstacleLevels_AppearAfterTheirObstacle_AndHaveIt()
+        {
+            for (int level = 1; level <= 200; level++)
+            {
+                LevelConfig c = LevelConfig.For(level);
+                switch (c.Type)
+                {
+                    case LevelType.Crates: Assert.GreaterOrEqual(level, 4); Assert.Greater(c.Crates, 0, $"nivel {level}"); break;
+                    case LevelType.Specials: Assert.GreaterOrEqual(level, 5); Assert.Greater(c.SpecialsTarget, 0); break;
+                    case LevelType.Ice: Assert.GreaterOrEqual(level, 7); Assert.Greater(c.Ice, 0, $"nivel {level}"); break;
+                    case LevelType.Chains: Assert.GreaterOrEqual(level, 12); Assert.Greater(c.Chains, 0, $"nivel {level}"); break;
+                    case LevelType.Chocolate: Assert.GreaterOrEqual(level, 25); Assert.Greater(c.Chocolate, 0, $"nivel {level}"); break;
+                }
+            }
+            var seen = new System.Collections.Generic.HashSet<LevelType>();
+            for (int level = 1; level <= 40; level++) seen.Add(LevelConfig.For(level).Type);
+            Assert.AreEqual(System.Enum.GetValues(typeof(LevelType)).Length, seen.Count, "până la nivelul 40 apar toate tipurile");
+        }
+
+        [Test]
+        public void ObstacleLevels_PlaceTheObstaclesOnTheBoard()
+        {
+            for (int level = 4; level <= 80; level++)
+            {
+                LevelConfig c = LevelConfig.For(level);
+                ObstacleCounts counts = new BlastEngine(c, level).CountObstacles();
+                if (c.Type == LevelType.Crates) Assert.AreEqual(c.Crates, counts.Crates, $"nivel {level}");
+                if (c.Type == LevelType.Chains) Assert.AreEqual(c.Chains, counts.Chains, $"nivel {level}");
+                if (c.Type == LevelType.Ice) Assert.GreaterOrEqual(counts.IceLayers, c.Ice, $"nivel {level}");
+                if (c.Type == LevelType.Chocolate) Assert.Greater(counts.Chocolate, 0, $"nivel {level}");
+            }
         }
     }
 }

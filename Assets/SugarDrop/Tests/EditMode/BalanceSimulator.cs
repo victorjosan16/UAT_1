@@ -17,7 +17,7 @@ namespace SugarDrop.Tests
             LevelConfig config = LevelConfig.For(level);
             var engine = new BlastEngine(config, seed);
             BossBattle boss = config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(level, config.Moves)) : null;
-            var goals = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0);
+            var goals = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0, engine.CountObstacles());
             score = 0;
             movesUsed = 0;
             Func<int, int> weight = color =>

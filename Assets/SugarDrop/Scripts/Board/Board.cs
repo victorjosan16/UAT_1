@@ -66,6 +66,8 @@ namespace SugarDrop
         public float Top => _bottomCenter.y + Rows * cellSize;
         public float Bottom => _bottomCenter.y;
         public int FrostingLeft => _engine != null ? _engine.FrostingLeft : 0;
+        /// <summary>Obstacolele de pe tablă acum (la start: țintele nivelurilor cu obstacole).</summary>
+        public ObstacleCounts Obstacles => _engine != null ? _engine.CountObstacles() : default;
 
         [Tooltip("Masca tablei, pusă în scenă de setup: așa Unity păstrează componenta SpriteMask în build "
                  + "(altfel, adăugată doar din cod, e eliminată la „Strip Engine Code” și AddComponent întoarce null).")]

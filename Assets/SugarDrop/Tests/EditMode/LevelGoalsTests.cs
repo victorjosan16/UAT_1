@@ -77,5 +77,53 @@ namespace SugarDrop.Tests
             goals.OnFrostingCleared(); // în plus: nu trece sub zero
             Assert.IsTrue(goals.Items.Find(i => i.Kind == GoalKind.Frosting).Done);
         }
+
+        [Test]
+        public void CrateGoal_CountsDestroyedCrates()
+        {
+            LevelConfig config = LevelConfig.For(4);
+            Assert.AreEqual(LevelType.Crates, config.Type);
+            var goals = new LevelGoals(config, 0, 0, new ObstacleCounts { Crates = 2 });
+            GoalItem item = goals.Items.Find(i => i.Kind == GoalKind.Crates);
+            Assert.AreEqual(2, item.Target);
+            var step = new BoardStep(StepKind.Clear);
+            step.Cleared.Add(new PieceInfo { Kind = TileKind.Crate, Color = -1 });
+            Assert.IsTrue(goals.Apply(step));
+            Assert.AreEqual(1, item.Remaining);
+        }
+
+        [Test]
+        public void IceGoal_CountsBrokenLayers()
+        {
+            LevelConfig config = LevelConfig.For(7);
+            Assert.AreEqual(LevelType.Ice, config.Type);
+            var goals = new LevelGoals(config, 0, 0, new ObstacleCounts { IceLayers = 3 });
+            var step = new BoardStep(StepKind.Clear) { IceLayersBroken = 2 };
+            goals.Apply(step);
+            Assert.AreEqual(1, goals.Items.Find(i => i.Kind == GoalKind.Ice).Remaining);
+        }
+
+        [Test]
+        public void SpecialsGoal_CountsActivations()
+        {
+            LevelConfig config = LevelConfig.For(6);
+            Assert.AreEqual(LevelType.Specials, config.Type);
+            var goals = new LevelGoals(config, 0);
+            GoalItem item = goals.Items.Find(i => i.Kind == GoalKind.Specials);
+            Assert.AreEqual(config.SpecialsTarget, item.Target);
+            var step = new BoardStep(StepKind.Clear);
+            step.Activations.Add(new Activation { Kind = TileKind.Bomb, Color = -1 });
+            goals.Apply(step);
+            Assert.AreEqual(config.SpecialsTarget - 1, item.Remaining);
+        }
+
+        [Test]
+        public void ObstacleLevel_WithoutObstacles_FallsBackToAScore()
+        {
+            var goals = new LevelGoals(LevelConfig.For(4), 0, 0, default);
+            Assert.AreEqual(1, goals.Items.Count);
+            Assert.AreEqual(GoalKind.Score, goals.Items[0].Kind);
+            Assert.AreEqual(LevelGoals.FallbackScore, goals.Items[0].Target);
+        }
     }
 }

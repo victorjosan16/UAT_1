@@ -326,7 +326,7 @@ namespace SugarDrop
             jar.ResetJar(_config.Ingredients);
             _boss = _config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(_level, _config.Moves)) : null;
             _bossTurnPending = false;
-            _goals = new LevelGoals(_config, board.FrostingLeft, _boss?.Health ?? 0);
+            _goals = new LevelGoals(_config, board.FrostingLeft, _boss?.Health ?? 0, board.Obstacles);
             _moves = _config.Moves;
             _state = State.Playing;
             _endTimer = 0f;
@@ -386,6 +386,11 @@ namespace SugarDrop
             LevelType.Ingredients => SugarLoc.T("Adu bomboanele jos, în borcan!"),
             LevelType.Collect => SugarLoc.T("Strânge piesele cerute!"),
             LevelType.Frosting => SugarLoc.T("Topește toată glazura!"),
+            LevelType.Crates => SugarLoc.T("Sparge toate lăzile!"),
+            LevelType.Ice => SugarLoc.T("Sparge toată gheața!"),
+            LevelType.Chains => SugarLoc.T("Rupe toate lanțurile!"),
+            LevelType.Chocolate => SugarLoc.T("Oprește ciocolata!"),
+            LevelType.Specials => SugarLoc.T("Folosește piese speciale!"),
             _ => SugarLoc.T("Atinge scorul!"),
         };
 

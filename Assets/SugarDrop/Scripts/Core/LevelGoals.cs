@@ -2,7 +2,16 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials }
+
+    /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
+    public struct ObstacleCounts
+    {
+        public int Crates;
+        public int IceLayers;
+        public int Chains;
+        public int Chocolate;
+    }
 
     /// <summary>Un obiectiv din HUD: ce (și ce culoare), cât trebuie și cât a mai rămas.</summary>
     public sealed class GoalItem
@@ -19,14 +28,27 @@ namespace SugarDrop
     {
         public readonly List<GoalItem> Items = new();
 
+        /// <summary>Scorul cerut dacă un nivel cu obstacole n-a primit niciun obstacol (tablă prea mică).</summary>
+        public const int FallbackScore = 6400;
+
         /// <param name="bossHealth">Viața Boss-ului (0 dacă nivelul nu e o luptă).</param>
-        public LevelGoals(LevelConfig config, int frostingLayers, int bossHealth = 0)
+        /// <param name="obstacles">Obstacolele de pe tablă la start (țintele nivelurilor cu lăzi, gheață, lanțuri, ciocolată).</param>
+        public LevelGoals(LevelConfig config, int frostingLayers, int bossHealth = 0, ObstacleCounts obstacles = default)
         {
             if (bossHealth > 0) Add(GoalKind.Boss, -1, bossHealth);
             if (config.Ingredients > 0) Add(GoalKind.Ingredients, -1, config.Ingredients);
             for (int i = 0; i < config.CollectColors.Length; i++) Add(GoalKind.Collect, config.CollectColors[i], config.CollectCounts[i]);
             if (frostingLayers > 0) Add(GoalKind.Frosting, -1, frostingLayers);
-            if (config.ScoreTarget > 0 || Items.Count == 0 && config.Type != LevelType.Boss) Add(GoalKind.Score, -1, System.Math.Max(1, config.ScoreTarget));
+            switch (config.Type)
+            {
+                case LevelType.Crates when obstacles.Crates > 0: Add(GoalKind.Crates, -1, obstacles.Crates); break;
+                case LevelType.Ice when obstacles.IceLayers > 0: Add(GoalKind.Ice, -1, obstacles.IceLayers); break;
+                case LevelType.Chains when obstacles.Chains > 0: Add(GoalKind.Chains, -1, obstacles.Chains); break;
+                case LevelType.Chocolate when obstacles.Chocolate > 0: Add(GoalKind.Chocolate, -1, obstacles.Chocolate); break;
+            }
+            if (config.SpecialsTarget > 0) Add(GoalKind.Specials, -1, config.SpecialsTarget);
+            if (config.ScoreTarget > 0) Add(GoalKind.Score, -1, config.ScoreTarget);
+            else if (Items.Count == 0 && config.Type != LevelType.Boss) Add(GoalKind.Score, -1, FallbackScore);
         }
 
         private void Add(GoalKind kind, int color, int target) =>
@@ -54,7 +76,15 @@ namespace SugarDrop
         public bool Apply(BoardStep step)
         {
             bool changed = false;
-            foreach (PieceInfo piece in step.Cleared) changed |= OnPieceCleared(piece.Color, piece.Kind);
+            foreach (PieceInfo piece in step.Cleared)
+            {
+                changed |= OnPieceCleared(piece.Color, piece.Kind);
+                if (piece.Kind == TileKind.Crate) changed |= Decrease(GoalKind.Crates, -1);
+                else if (piece.Kind == TileKind.Chocolate) changed |= Decrease(GoalKind.Chocolate, -1);
+            }
+            for (int i = 0; i < step.IceLayersBroken; i++) changed |= Decrease(GoalKind.Ice, -1);
+            for (int i = 0; i < step.ChainsBroken; i++) changed |= Decrease(GoalKind.Chains, -1);
+            for (int i = 0; i < step.Activations.Count; i++) changed |= Decrease(GoalKind.Specials, -1);
             for (int i = 0; i < step.FrostingCells.Count; i++) changed |= OnFrostingCleared();
             for (int i = 0; i < step.Exits.Count; i++) changed |= OnIngredientCollected();
             return changed;

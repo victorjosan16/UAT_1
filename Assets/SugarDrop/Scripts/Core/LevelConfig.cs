@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -21,10 +21,15 @@ namespace SugarDrop
         public const int BoardColumns = 9;
         public const int BoardRows = 9;
 
+        /// <summary>
+        /// Ordinea tipurilor de niveluri (se repetă). Tipurile cu obstacole apar abia după ce obstacolul lor a fost
+        /// introdus (vezi <see cref="Unlocked"/>); până atunci locul lor îl ia un tip clasic.
+        /// </summary>
         private static readonly LevelType[] Cycle =
         {
-            LevelType.Collect, LevelType.Ingredients, LevelType.Frosting, LevelType.Ingredients, LevelType.Collect,
-            LevelType.Frosting, LevelType.Score, LevelType.Ingredients, LevelType.Frosting,
+            LevelType.Collect, LevelType.Ingredients, LevelType.Crates, LevelType.Frosting, LevelType.Specials,
+            LevelType.Ice, LevelType.Collect, LevelType.Ingredients, LevelType.Chains, LevelType.Frosting,
+            LevelType.Chocolate, LevelType.Score, LevelType.Specials, LevelType.Crates,
         };
 
         public readonly int Level;
@@ -49,6 +54,8 @@ namespace SugarDrop
         public readonly int FrostingCells;
         public readonly int DoubleFrosting;
         public readonly int ScoreTarget;
+        /// <summary>Câte piese speciale trebuie activate (nivelurile „Piese speciale”).</summary>
+        public readonly int SpecialsTarget;
 
         // Obstacole.
         public readonly int Crates;
@@ -62,7 +69,7 @@ namespace SugarDrop
         public bool IsMegaBoss => Difficulty == Difficulty.MegaBoss;
 
         private LevelConfig(int level, Difficulty difficulty, int colors, int moves, LevelType type, int[] bottom, int[] top,
-            int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget,
+            int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget, int specialsTarget,
             int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate)
         {
             Level = level;
@@ -82,6 +89,7 @@ namespace SugarDrop
             FrostingCells = frosting;
             DoubleFrosting = doubleFrosting;
             ScoreTarget = scoreTarget;
+            SpecialsTarget = specialsTarget;
             Crates = crates;
             CrateHits = crateHits;
             Ice = ice;
@@ -110,8 +118,26 @@ namespace SugarDrop
             level = Mathf.Max(1, level);
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
-            return Cycle[(level - 2) % Cycle.Length];
+            LevelType type = Cycle[(level - 2) % Cycle.Length];
+            return Unlocked(type, level) ? type : type switch
+            {
+                LevelType.Chocolate => LevelType.Ingredients,
+                LevelType.Ice => LevelType.Frosting,
+                LevelType.Specials => LevelType.Score,
+                _ => LevelType.Collect,
+            };
         }
+
+        /// <summary>Un tip de nivel cu obstacole apare abia de la nivelul în care e introdus obstacolul lui.</summary>
+        private static bool Unlocked(LevelType type, int level) => type switch
+        {
+            LevelType.Crates => level >= 4,
+            LevelType.Specials => level >= 5,
+            LevelType.Ice => level >= 7,
+            LevelType.Chains => level >= 12,
+            LevelType.Chocolate => level >= 25,
+            _ => true,
+        };
 
         /// <summary>
         /// Dificultatea nivelului în valul capitolului: ușor, ușor, normal… greu, recuperare ușoară… foarte greu, Boss.
@@ -179,7 +205,12 @@ namespace SugarDrop
             int valid = 0;
             for (int x = 0; x < BoardColumns; x++) valid += top[x] - bottom[x] + 1;
 
-            int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0;
+            int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0, specialsTarget = 0;
+            int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
+            int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
+            // Câte obstacole are nivelul care le are ca obiectiv (lăzi, gheață, lanțuri, ciocolată).
+            int Focus(float baseCount, int min, int max) => Mathf.Clamp(Mathf.RoundToInt(baseCount * goalFactor), min, max);
+            int focus = 0;
             int[] collectColors = System.Array.Empty<int>(), collectCounts = System.Array.Empty<int>();
             float moves;
             switch (type)
@@ -198,6 +229,26 @@ namespace SugarDrop
                     break;
                 case LevelType.Score:
                     moves = 18;
+                    break;
+                case LevelType.Crates:
+                    focus = Focus(4 + chapter * 0.8f, 3, 10);
+                    moves = 6 + focus * crateHits * 2.2f;
+                    break;
+                case LevelType.Ice:
+                    focus = Focus(4 + chapter * 0.8f, 3, 10);
+                    moves = 6 + focus * (1 + iceLayers) * 0.5f * 2.2f;
+                    break;
+                case LevelType.Chains:
+                    focus = Focus(4 + chapter * 0.7f, 3, 9);
+                    moves = 6 + focus * 2.2f;
+                    break;
+                case LevelType.Chocolate:
+                    focus = Focus(2 + chapter * 0.3f, 2, 5);
+                    moves = 10 + focus * 4f;
+                    break;
+                case LevelType.Specials:
+                    specialsTarget = Focus(3 + level / 20f, 3, 8);
+                    moves = 6 + specialsTarget * 3.5f;
                     break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
@@ -231,27 +282,44 @@ namespace SugarDrop
             // Obstacolele apar treptat (ladă de la 4, gheață de la 7, lanțuri de la 12, ciocolată de la 25) și
             // urmează valul de dificultate. Pe nivelurile cu bomboane sunt doar lăzi (gheața și lanțurile ar ține
             // bomboanele pe loc), iar pe cele cu glazură obstacolele sunt mai puține.
+            // Pe nivelurile cu un obstacol ca obiectiv, celelalte obstacole sunt mai puține (nu acoperă ținta).
             bool ingredientLevel = type == LevelType.Ingredients;
-            float blockerShare = type == LevelType.Frosting || ingredientLevel ? 0.5f : 1f;
+            bool focusLevel = focus > 0;
+            float blockerShare = type == LevelType.Frosting || ingredientLevel || focusLevel ? 0.5f : 1f;
             int Scaled(float baseCount) => Mathf.RoundToInt(baseCount * obstacleFactor * blockerShare);
             int crates = level < 4 ? 0 : Mathf.Min(8, Scaled(2 + chapter * 0.6f));
-            int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
             int ice = level < 7 || ingredientLevel ? 0 : Mathf.Min(8, Scaled(2 + chapter * 0.6f));
-            int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             int chains = level < 12 || ingredientLevel ? 0 : Mathf.Min(6, Scaled(1 + chapter * 0.4f));
             int chocolate = level < 25 || blockerShare < 1f ? 0 : Mathf.Min(3, Scaled(1 + chapter * 0.2f));
-            // Cel mult un sfert din tablă acoperit de obstacole (formele mici nu se umplu).
+            switch (type)
+            {
+                case LevelType.Crates: crates = focus; break;
+                case LevelType.Ice: ice = focus; break;
+                case LevelType.Chains: chains = focus; break;
+                case LevelType.Chocolate: chocolate = focus; break;
+            }
+            // Cel mult un sfert din tablă acoperit de obstacole (formele mici nu se umplu); obstacolul-țintă se taie ultimul.
             int obstacleRoom = valid / 4;
             while (crates + ice + chains + chocolate > obstacleRoom)
             {
-                if (ice >= crates && ice >= chains && ice > 0) ice--;
-                else if (crates >= chains && crates > 0) crates--;
-                else if (chains > 0) chains--;
-                else chocolate--;
+                if (type != LevelType.Ice && ice > 0 && ice >= crates && ice >= chains) ice--;
+                else if (type != LevelType.Crates && crates > 0 && crates >= chains) crates--;
+                else if (type != LevelType.Chains && chains > 0) chains--;
+                else if (type != LevelType.Chocolate && chocolate > 0) chocolate--;
+                else if (type != LevelType.Ice && ice > 0) ice--;
+                else if (type != LevelType.Crates && crates > 0) crates--;
+                else if (crates + ice + chains + chocolate > 0)
+                {
+                    // Doar obstacolul-țintă a mai rămas: îl reducem pe el.
+                    if (crates > 0) crates--;
+                    else if (ice > 0) ice--;
+                    else if (chains > 0) chains--;
+                    else chocolate--;
+                }
             }
 
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
-                frosting, doubleFrosting, scoreTarget, crates, crateHits, ice, iceLayers, chains, chocolate);
+                frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate);
         }
 
         /// <summary>

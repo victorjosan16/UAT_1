@@ -68,6 +68,9 @@ namespace SugarDrop
         public readonly List<PieceMove> Moves = new();
         /// <summary>Bomboanele care au ieșit jos, spre borcan.</summary>
         public readonly List<PieceInfo> Exits = new();
+        /// <summary>Straturi de gheață sparte și lanțuri rupte în acest pas (pentru obiective).</summary>
+        public int IceLayersBroken;
+        public int ChainsBroken;
 
         public BoardStep(StepKind kind, int cascade = 0)
         {

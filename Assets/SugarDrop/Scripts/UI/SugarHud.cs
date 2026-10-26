@@ -398,6 +398,11 @@ namespace SugarDrop
             GoalKind.Collect => PieceSprites.Piece(item.Color),
             GoalKind.Frosting => SugarSprites.Glaze,
             GoalKind.Boss => SugarSprites.BossFace(_bossLook),
+            GoalKind.Crates => SugarSprites.Crate,
+            GoalKind.Ice => SugarSprites.Ice,
+            GoalKind.Chains => SugarSprites.Chain,
+            GoalKind.Chocolate => SugarSprites.Chocolate,
+            GoalKind.Specials => SugarSprites.Rocket,
             _ => ProceduralSprites.Star,
         };
 
