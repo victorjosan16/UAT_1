@@ -553,6 +553,36 @@ namespace SugarDrop
             return Mathf.Max(outer, hole);
         }));
 
+        /// <summary>Cadou: cutie cu capac, panglică și fundă.</summary>
+        public static Sprite Gift => Get("gift", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float box = RoundRect(x, y, 26, 14, 76, 62, 8);
+            float lid = RoundRect(x, y, 18, 72, 92, 22, 6);
+            float bowL = Mathf.Abs(Vector2.Distance(p, new Vector2(50f, 104f)) - 11f) - 5f;
+            float bowR = Mathf.Abs(Vector2.Distance(p, new Vector2(78f, 104f)) - 11f) - 5f;
+            // Panglica: o fâșie goală pe mijlocul cutiei și o linie între capac și cutie.
+            float ribbon = Mathf.Max(4f - Mathf.Abs(x + 0.5f - 64f), 3f - Mathf.Abs(y + 0.5f - 74f));
+            float body = Mathf.Max(Mathf.Min(box, lid), ribbon);
+            return Mathf.Min(body, Mathf.Min(bowL, bowR));
+        }));
+
+        /// <summary>Listă cu bife (misiuni).</summary>
+        public static Sprite Checklist => Get("checklist", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float d = float.MaxValue;
+            for (int row = 0; row < 3; row++)
+            {
+                float cy = 96f - row * 32f;
+                float tick = Mathf.Min(SegmentDistance(p, new Vector2(16f, cy), new Vector2(26f, cy - 10f)),
+                    SegmentDistance(p, new Vector2(26f, cy - 10f), new Vector2(44f, cy + 10f))) - 6f;
+                float line = RoundRect(x, y, 54, cy - 7f, 60, 14, 7);
+                d = Mathf.Min(d, Mathf.Min(tick, line));
+            }
+            return d;
+        }));
+
         /// <summary>Trofeu (clasament): cupă cu toarte, picior și soclu.</summary>
         public static Sprite Trophy => Get("trophy", () => Mask(128, (x, y) =>
         {

@@ -121,6 +121,8 @@ namespace SugarDrop
             map.LevelClicked += TryPlayLevel;
             map.SettingsClicked += ShowMapSettings;
             map.LeaderboardClicked += ShowLeaderboard;
+            map.GiftClicked += ShowGift;
+            map.MissionsClicked += ShowMissions;
             menu.PlayClicked += OpenMapAnimated;
         }
 
@@ -150,6 +152,8 @@ namespace SugarDrop
             map.LevelClicked -= TryPlayLevel;
             map.SettingsClicked -= ShowMapSettings;
             map.LeaderboardClicked -= ShowLeaderboard;
+            map.GiftClicked -= ShowGift;
+            map.MissionsClicked -= ShowMissions;
             menu.PlayClicked -= OpenMapAnimated;
         }
 
@@ -216,6 +220,115 @@ namespace SugarDrop
                 new DialogButton(SugarLoc.T("SUPER!"), positive, null));
         }
 
+        // ------------------------------------------------------------ Cadoul zilnic și misiunile
+
+        private bool _giftOffered;
+
+        /// <summary>La prima deschidere a hărții dintr-o zi nouă, cadoul apare singur.</summary>
+        private void OfferGift()
+        {
+            if (_giftOffered || !SugarDaily.GiftAvailable || dialog.IsOpen || welcome.IsOpen) return;
+            _giftOffered = true;
+            ShowGift();
+        }
+
+        private void ShowGift()
+        {
+            if (_state != State.Map || dialog.IsOpen) return;
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            if (!SugarDaily.GiftAvailable)
+            {
+                dialog.Show(SugarLoc.T("Cadou zilnic"), null,
+                    () => SugarLoc.F("Următorul cadou în {0}", Clock(DailyRules.UntilTomorrow)),
+                    new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
+                return;
+            }
+            int day = SugarDaily.GiftStreakDay;
+            DailyGift gift = DailyRules.GiftFor(day);
+            var buttons = new List<DialogButton> { new(SugarLoc.T("REVENDICĂ"), positive, () => ClaimGift(1)) };
+            if (gift.Coins > 0) buttons.Add(new DialogButton(SugarLoc.T("x2 MONEDE (reclamă)"), ad, () => SugarUi.RewardedAd("daily_gift", () => ClaimGift(2))));
+            dialog.Show(SugarLoc.T("Cadou zilnic"), SugarLoc.F("Ziua {0} din 7", day) + "\n" + GiftText(gift, 1), buttons.ToArray());
+        }
+
+        private void ClaimGift(int multiplier)
+        {
+            if (!SugarDaily.GiftAvailable) return;
+            DailyGift gift = SugarDaily.ClaimGift(multiplier);
+            RefreshBoosters();
+            map.Refresh();
+            if (Audio != null) Audio.Play(SugarSound.Win);
+            if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.Show(SugarLoc.T("Cadou zilnic"), GiftText(gift, multiplier), new DialogButton(SugarLoc.T("SUPER!"), positive, null));
+        }
+
+        private static string GiftText(DailyGift gift, int multiplier)
+        {
+            var parts = new List<string>();
+            if (gift.Coins > 0) parts.Add(SugarLoc.F("+{0} monede", gift.Coins * multiplier));
+            if (gift.Bombs > 0 && gift.ExtraMoves > 0 && gift.Shuffles > 0) parts.Add(SugarLoc.T("+1 la fiecare ajutor"));
+            else
+            {
+                if (gift.Bombs > 0) parts.Add(SugarLoc.T("+1 bombă"));
+                if (gift.ExtraMoves > 0) parts.Add(SugarLoc.T("+1 ajutor „+5 mutări”"));
+                if (gift.Shuffles > 0) parts.Add(SugarLoc.T("+1 amestecare"));
+            }
+            return string.Join("  ·  ", parts);
+        }
+
+        private void ShowMissions()
+        {
+            if (_state != State.Map) return;
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            Mission[] missions = SugarDaily.Missions;
+            var buttons = new List<DialogButton>();
+            for (int i = 0; i < missions.Length; i++)
+            {
+                int index = i;
+                Mission mission = missions[i];
+                string text = SugarLoc.F(mission.TextKey, mission.Target);
+                if (SugarDaily.Claimed(i))
+                    buttons.Add(new DialogButton(text + "\n" + SugarLoc.T("GATA"), Color.Lerp(panel, Color.white, 0.35f), null, false));
+                else if (SugarDaily.CanClaim(i))
+                    buttons.Add(new DialogButton(text + "\n" + SugarLoc.F("REVENDICĂ +{0}", mission.Reward), positive, () => ClaimMission(index), false));
+                else
+                    buttons.Add(new DialogButton(text + "\n" + SugarDaily.Progress(i) + "/" + mission.Target + "  ·  +" + mission.Reward, panel, null, false));
+            }
+            buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), QuarryEmpire.UiRoot.Theme.AccentColor, null));
+            dialog.Show(SugarLoc.T("Misiuni zilnice"), null,
+                () => SugarLoc.F("Toate trei: +{0} bonus", DailyRules.AllMissionsBonus) + "\n" + SugarLoc.F("Misiuni noi în {0}", Clock(DailyRules.UntilTomorrow)),
+                buttons.ToArray());
+        }
+
+        private void ClaimMission(int index)
+        {
+            int coins = SugarDaily.Claim(index);
+            if (coins <= 0) return;
+            if (Audio != null) Audio.Play(SugarSound.Win);
+            SugarAudio.Buzz(1);
+            map.Refresh();
+            ShowMissions();
+        }
+
+        /// <summary>Progresul misiunilor dintr-un pas al tablei (bomboane, piese speciale, combinații, obstacole).</summary>
+        private void TrackMissions(BoardStep step)
+        {
+            int candies = 0, obstacles = step.IceLayersBroken + step.ChainsBroken;
+            foreach (PieceInfo piece in step.Cleared)
+            {
+                if (piece.Kind == TileKind.Normal && piece.Color >= 0) candies++;
+                else if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate) obstacles++;
+            }
+            bool done = SugarDaily.AddProgress(MissionKind.ClearCandies, candies) >= 0;
+            done |= SugarDaily.AddProgress(MissionKind.UseSpecials, step.Activations.Count) >= 0;
+            done |= SugarDaily.AddProgress(MissionKind.MakeCombos, step.Combo ? 1 : 0) >= 0;
+            done |= SugarDaily.AddProgress(MissionKind.BreakObstacles, obstacles) >= 0;
+            if (done) hud.ShowBanner(SugarLoc.T("Misiune îndeplinită!"));
+        }
+
+        private static string Clock(System.TimeSpan time) =>
+            $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}";
+
         private void ShowLeaderboard()
         {
             if (_state != State.Map || dialog.IsOpen) return;
@@ -273,7 +386,11 @@ namespace SugarDrop
         /// <summary>Schimbă ecranul sub o tranziție (care blochează și apăsările repetate).</summary>
         private static void Go(System.Action action) => UITransitionController.Run(action);
 
-        private void OpenMapAnimated() => Go(OpenMap);
+        private void OpenMapAnimated() => Go(() =>
+        {
+            OpenMap();
+            OfferGift();
+        });
 
         private void OnApplicationPause(bool paused)
         {
@@ -605,6 +722,8 @@ namespace SugarDrop
             }
             SugarSave.SetStars(_level, stars);
             bool record = SugarSave.SetBestScore(_level, _score);
+            SugarDaily.AddProgress(MissionKind.WinLevels, 1);
+            SugarDaily.AddProgress(MissionKind.EarnStars, stars);
             SugarSave.Save();
             if (record) SugarLeaderboard.Ensure().Submit();
 
@@ -1010,6 +1129,7 @@ namespace SugarDrop
             if (_state != State.Playing && _state != State.Finale) return;
             int points = ScoreRules.PointsFor(step);
             if (points > 0) AddScore(points);
+            if (_state == State.Playing) TrackMissions(step);
             bool changed = _goals.Apply(step);
             changed |= _goals.OnScore(_score);
             if (_boss != null && _state == State.Playing) changed |= DamageBoss(BossRules.DamageFor(step));

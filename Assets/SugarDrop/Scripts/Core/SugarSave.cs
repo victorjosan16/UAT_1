@@ -34,6 +34,14 @@ namespace SugarDrop
         public List<int> bestScores = new();
         /// <summary>Câte capitole și-au dat deja cufărul de final (capitolele 0..n-1).</summary>
         public int chaptersRewarded;
+        /// <summary>Ziua (DailyRules.DayOf) în care s-a revendicat ultimul cadou zilnic și ziua din serie (1–7).</summary>
+        public int giftDay = -1;
+        public int giftStreak;
+        /// <summary>Misiunile zilei: ziua, nivelul jucătorului când au fost alese, progresul și dacă s-au revendicat (0/1).</summary>
+        public int missionDay = -1;
+        public int missionLevel = 1;
+        public List<int> missionProgress = new();
+        public List<int> missionClaimed = new();
     }
 
     /// <summary>Încărcare/salvare + vieți cu regenerare în timp.</summary>
