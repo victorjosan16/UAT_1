@@ -142,7 +142,7 @@ detection, and a bot that finishes all three contracts using only the real movem
   yet, so coins have no spending sink until Phase 3.
 - Excavated material counts as sold on removal. Transport and storage come in Phase 3.
 - UI uses UGUI with Unity's built-in font and English text only. Romanian localisation is not done yet.
-- Input works with either the legacy Input Manager or the Input System package (`com.unity.inputsystem`), whichever is active.
+- Input uses the legacy Input Manager by default. If you install the Input System package (`com.unity.inputsystem`, a version that supports your Unity version), the game uses it automatically.
 - No offline earnings, workers, machinery, metro, ads or purchases. Those are later phases by design.
 
 ## Next milestone: Phase 2 (Employee Automation)
