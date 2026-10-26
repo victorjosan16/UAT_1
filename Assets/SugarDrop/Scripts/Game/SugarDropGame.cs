@@ -79,9 +79,9 @@ namespace SugarDrop
 
         private void Awake()
         {
-            Application.targetFrameRate = 60;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             SugarSave.Load();
+            SugarQuality.Apply();
             SugarSave.UpdateLives();
             _colorWeight = ColorWeight;
         }
@@ -124,6 +124,7 @@ namespace SugarDrop
             map.GiftClicked += ShowGift;
             map.MissionsClicked += ShowMissions;
             menu.PlayClicked += OpenMapAnimated;
+            SugarCloudSave.Restored += OnCloudRestored;
         }
 
         private void OnDisable()
@@ -155,6 +156,7 @@ namespace SugarDrop
             map.GiftClicked -= ShowGift;
             map.MissionsClicked -= ShowMissions;
             menu.PlayClicked -= OpenMapAnimated;
+            SugarCloudSave.Restored -= OnCloudRestored;
         }
 
         private void Start()
@@ -328,6 +330,63 @@ namespace SugarDrop
 
         private static string Clock(System.TimeSpan time) =>
             $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}";
+
+        /// <summary>Progresul a venit din cloud (ex. după reinstalare): ecranele arată noul progres.</summary>
+        private void OnCloudRestored()
+        {
+            RefreshBoosters();
+            if (welcome.IsOpen && !string.IsNullOrEmpty(Data.nickname))
+            {
+                // Jucătorul își avea deja numele: nu-l mai întrebăm, trecem direct la reclame.
+                welcome.Hide();
+                SetupAds();
+            }
+            if (menu.IsOpen) menu.Show();
+            if (map.IsOpen) map.Show();
+            SugarLeaderboard.Ensure().Submit();
+        }
+
+        // ------------------------------------------------------------ Cererea de recenzie
+
+        /// <summary>După nivelul 8 (și încă o dată după 25, dacă a ales „mai târziu”), Bobo întreabă dacă îți place jocul.</summary>
+        private bool ShouldAskRating(int level) =>
+            Data.rateState == 0 && level == 8 || Data.rateState == 1 && level == 25;
+
+        private void AskRating()
+        {
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.Show(SugarLoc.T("Îți place Sugar Drop?"), SugarLoc.T("Bobo e curios ce părere ai!"),
+                new DialogButton(SugarLoc.T("DA, ÎMI PLACE!"), positive, AskReview),
+                new DialogButton(SugarLoc.T("NU PREA"), panel, () => SetRateState(2)));
+            dialog.DismissAction = () => SetRateState(1);
+        }
+
+        private void AskReview()
+        {
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.Show(SugarLoc.T("Mulțumim!"), SugarLoc.T("Ne lași o recenzie pe Google Play? Ne ajută foarte mult."),
+                new DialogButton(SugarLoc.T("EVALUEAZĂ"), positive, () =>
+                {
+                    SetRateState(2);
+                    OpenStorePage();
+                }),
+                new DialogButton(SugarLoc.T("MAI TÂRZIU"), panel, () => SetRateState(1)));
+            dialog.DismissAction = () => SetRateState(1);
+        }
+
+        private static void SetRateState(int state)
+        {
+            Data.rateState = System.Math.Max(Data.rateState, state);
+            SugarSave.Save();
+        }
+
+        private static void OpenStorePage()
+        {
+            string id = Application.identifier;
+            Application.OpenURL(Application.platform == RuntimePlatform.Android
+                ? "market://details?id=" + id
+                : "https://play.google.com/store/apps/details?id=" + id);
+        }
 
         private void ShowLeaderboard()
         {
@@ -735,10 +794,14 @@ namespace SugarDrop
             // Capitol terminat (Boss învins prima dată): cufărul capitolului apare pe hartă.
             int chapter = ChapterTheme.ChapterOf(_level);
             bool chest = _config.IsBoss && chapter == Data.chaptersRewarded;
+            bool rating = !chest && ShouldAskRating(_level);
+            SugarNotifications.AskPermissionOnce();
+            if (SugarCloudSave.Instance != null) SugarCloudSave.Instance.RequestUpload();
             result.ShowWin(_level, stars, coins, () => Go(() =>
             {
                 OpenMap();
                 if (chest) ShowChapterChest(chapter);
+                else if (rating) AskRating();
             }));
         }
 
@@ -815,6 +878,8 @@ namespace SugarDrop
             }, inGame));
             buttons.Add(Toggle(Data.vibration ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE", () => Data.vibration = !Data.vibration, inGame));
             buttons.Add(Toggle(Data.reducedMotion ? "MIȘCARE REDUSĂ: DA" : "MIȘCARE REDUSĂ: NU", () => Data.reducedMotion = !Data.reducedMotion, inGame));
+            buttons.Add(Toggle(SugarQuality.LabelKey, SugarQuality.Cycle, inGame));
+            buttons.Add(Toggle(Data.notifications ? "NOTIFICĂRI: PORNITE" : "NOTIFICĂRI: OPRITE", () => Data.notifications = !Data.notifications, inGame));
             if (SugarAds.RealAds)
                 buttons.Add(Toggle(Data.adsConsent == 1 ? "RECLAME PERSONALIZATE: DA" : "RECLAME PERSONALIZATE: NU", () => SetAdsConsent(Data.adsConsent != 1), inGame));
             buttons.Add(new DialogButton(SugarLoc.T("LIMBA") + ": " + SugarLoc.NativeName(SugarLoc.Current).ToUpperInvariant(), panel,

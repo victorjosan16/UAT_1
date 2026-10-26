@@ -12,6 +12,10 @@ Sugar Drop ("the game") is developed by Victor Josan ("we", "us"). This policy e
 - **Leaderboard:** the game creates an **anonymous player ID** through Unity Gaming Services (Unity Technologies). It sends
   your **nickname** and your **points** (the sum of your best scores) to that service. Other players can see them on the
   leaderboard. Please do not use your full real name as your nickname.
+- **Cloud save:** your game progress (levels, stars, scores, coins, boosters, nickname) is also stored with Unity Cloud
+  Save, linked to the same anonymous player ID, so it can be restored after reinstalling the game.
+- **Notifications** (lives refilled, daily gift) are scheduled on your device only. You can turn them off in
+  **Settings → Notifications** or in your phone's settings.
 - **Ads** are optional and rewarded. They are shown through Unity LevelPlay and its partner ad networks. These may use
   your device's **advertising ID**, device information and IP address to show ads and measure results. At first launch
   we ask whether you agree to personalized ads. You can change your choice at any time in **Settings → Personalized ads**.
@@ -48,6 +52,10 @@ Sugar Drop („jocul”) este dezvoltat de Victor Josan („noi”). Această po
 - **Clasamentul:** jocul creează un **ID anonim de jucător** prin Unity Gaming Services (Unity Technologies). Trimite
   acolo **nickname-ul** tău și **punctele** (suma celor mai bune scoruri). Ceilalți jucători le pot vedea în clasament.
   Nu-ți folosi numele real complet ca nickname.
+- **Salvarea în cloud:** progresul din joc (niveluri, stele, scoruri, monede, ajutoare, nickname) e păstrat și în Unity
+  Cloud Save, legat de același ID anonim, ca să poată fi recuperat după reinstalarea jocului.
+- **Notificările** (vieți pline, cadoul zilnic) sunt programate doar pe telefonul tău. Le poți opri din
+  **Setări → Notificări** sau din setările telefonului.
 - **Reclamele** sunt opționale și îți dau recompense. Sunt afișate prin Unity LevelPlay și rețelele partenere de reclame.
   Acestea pot folosi **ID-ul de publicitate** al telefonului, informații despre dispozitiv și adresa IP, ca să afișeze
   reclame și să măsoare rezultatele. La prima pornire te întrebăm dacă accepți reclame personalizate. Poți schimba

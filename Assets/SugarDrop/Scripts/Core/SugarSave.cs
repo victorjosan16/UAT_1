@@ -42,6 +42,15 @@ namespace SugarDrop
         public int missionLevel = 1;
         public List<int> missionProgress = new();
         public List<int> missionClaimed = new();
+        /// <summary>Calitatea grafică (GraphicsQuality); -1 = aleasă după telefon.</summary>
+        public int graphics = -1;
+        /// <summary>Notificări (viețile pline, cadoul zilnic) și dacă am cerut deja permisiunea Android.</summary>
+        public bool notifications = true;
+        public bool notificationsAsked;
+        /// <summary>Cererea de recenzie: 0 = neîntrebat, 1 = „mai târziu”, 2 = gata (a evaluat sau a refuzat).</summary>
+        public int rateState;
+        /// <summary>Momentul (Unix, secunde) ultimei schimbări de progres (pentru alegerea între salvarea locală și cea din cloud).</summary>
+        public long savedAt;
     }
 
     /// <summary>Încărcare/salvare + vieți cu regenerare în timp.</summary>
@@ -142,6 +151,71 @@ namespace SugarDrop
                 foreach (int score in Data.bestScores) total += score;
                 return total;
             }
+        }
+
+        // ------------------------------------------------------------ Salvarea din cloud
+
+        /// <summary>Progresul în JSON (pentru salvarea în cloud).</summary>
+        public static string ToJson() => JsonUtility.ToJson(Data);
+
+        public static SugarSaveData FromJson(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            try
+            {
+                return JsonUtility.FromJson<SugarSaveData>(json);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static int TotalStars(SugarSaveData data)
+        {
+            int total = 0;
+            foreach (int stars in data.stars) total += stars;
+            return total;
+        }
+
+        /// <summary>„a” e mai avansat decât „b”: nivel mai mare, apoi mai multe stele, apoi scoruri mai mari.</summary>
+        public static bool IsAhead(SugarSaveData a, SugarSaveData b)
+        {
+            if (a == null) return false;
+            if (b == null) return true;
+            if (a.level != b.level) return a.level > b.level;
+            int starsA = TotalStars(a), starsB = TotalStars(b);
+            if (starsA != starsB) return starsA > starsB;
+            long scoreA = 0, scoreB = 0;
+            foreach (int s in a.bestScores) scoreA += s;
+            foreach (int s in b.bestScores) scoreB += s;
+            return scoreA > scoreB;
+        }
+
+        /// <summary>
+        /// Înlocuiește progresul cu cel din cloud, dar păstrează setările acestui telefon (sunet, limbă, grafică,
+        /// notificări, consimțământul pentru reclame).
+        /// </summary>
+        public static void Replace(SugarSaveData cloud)
+        {
+            if (cloud == null) return;
+            SugarSaveData local = Data;
+            cloud.sound = local.sound;
+            cloud.music = local.music;
+            cloud.vibration = local.vibration;
+            cloud.reducedMotion = local.reducedMotion;
+            cloud.language = local.language;
+            cloud.graphics = local.graphics;
+            cloud.notifications = local.notifications;
+            cloud.notificationsAsked = local.notificationsAsked;
+            cloud.adsConsent = local.adsConsent;
+            if (string.IsNullOrEmpty(cloud.nickname)) cloud.nickname = local.nickname;
+            cloud.stars ??= new List<int>();
+            cloud.bestScores ??= new List<int>();
+            cloud.missionProgress ??= new List<int>();
+            cloud.missionClaimed ??= new List<int>();
+            _data = cloud;
+            Save();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

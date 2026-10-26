@@ -37,6 +37,8 @@ namespace SugarDrop
         [SerializeField] private Camera shakeCamera;
 
         private readonly List<Particle> _particles = new();
+        /// <summary>Particulă „fantomă” (niciodată afișată), dată efectelor când s-a atins limita setării de grafică.</summary>
+        private Particle _scratch;
         private int _cursor;
         private int _activeCount;
         private Vector3 _cameraBase;
@@ -57,6 +59,10 @@ namespace SugarDrop
                 go.SetActive(false);
                 _particles.Add(new Particle { Transform = go.transform, Renderer = renderer });
             }
+            var scratch = new GameObject("Scratch");
+            scratch.transform.SetParent(transform, false);
+            scratch.SetActive(false);
+            _scratch = new Particle { Transform = scratch.transform, Renderer = scratch.AddComponent<SpriteRenderer>() };
             if (shakeCamera == null) shakeCamera = Camera.main;
             if (shakeCamera != null) _cameraBase = shakeCamera.transform.position;
         }
@@ -439,6 +445,8 @@ namespace SugarDrop
 
         private Particle Emit(Sprite sprite, Vector3 position, float life, Color color)
         {
+            // Limita setării de grafică: peste ea, efectul primește o particulă care nu se vede.
+            if (_activeCount >= SugarQuality.MaxParticles) return _scratch;
             // Caută o particulă liberă; dacă toate sunt ocupate, o refolosește pe cea mai veche.
             Particle p = null;
             for (int i = 0; i < _particles.Count; i++)

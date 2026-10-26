@@ -132,7 +132,7 @@ namespace SugarDrop
 
             if (ambientRate > 0f && _ambientSprite != null)
             {
-                _ambientAccumulator += dt * ambientRate;
+                _ambientAccumulator += dt * ambientRate * SugarQuality.AmbientScale;
                 while (_ambientAccumulator >= 1f)
                 {
                     _ambientAccumulator -= 1f;

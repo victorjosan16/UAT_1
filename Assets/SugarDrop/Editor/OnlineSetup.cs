@@ -6,8 +6,9 @@ using UnityEngine;
 namespace SugarDrop.EditorTools
 {
     /// <summary>
-    /// Activează clasamentul online (simbolul SUGARDROP_UGS) doar când pachetul Unity Leaderboards
-    /// (com.unity.services.leaderboards) e instalat, ca proiectul să compileze și fără el. Dacă în
+    /// Activează codul serviciilor doar când pachetul lor e instalat, ca proiectul să compileze și fără ele:
+    /// clasamentul (SUGARDROP_UGS, com.unity.services.leaderboards), salvarea în cloud (SUGARDROP_CLOUDSAVE,
+    /// com.unity.services.cloudsave) și notificările (SUGARDROP_NOTIFICATIONS, com.unity.mobile.notifications). Dacă în
     /// <see cref="SugarOnlineConfig.ProjectId"/> e completat un Project ID, leagă proiectul de el.
     /// Rulează la deschiderea proiectului și în build-ul din cloud (din SugarDropSetup).
     /// </summary>
@@ -17,30 +18,40 @@ namespace SugarDrop.EditorTools
         public const string Define = "SUGARDROP_UGS";
         private const string Package = "com.unity.services.leaderboards";
 
+        private static readonly (string Package, string Define)[] Optional =
+        {
+            (Package, Define),
+            ("com.unity.services.cloudsave", "SUGARDROP_CLOUDSAVE"),
+            ("com.unity.mobile.notifications", "SUGARDROP_NOTIFICATIONS"),
+        };
+
         static OnlineSetup() => EditorApplication.delayCall += Apply;
 
-        public static bool PackageInstalled
+        public static bool PackageInstalled => Installed(Package);
+
+        private static bool Installed(string package)
         {
-            get
-            {
-                if (Directory.Exists("Packages/" + Package)) return true;
-                return File.Exists("Packages/manifest.json") && File.ReadAllText("Packages/manifest.json").Contains("\"" + Package + "\"");
-            }
+            if (Directory.Exists("Packages/" + package)) return true;
+            return File.Exists("Packages/manifest.json") && File.ReadAllText("Packages/manifest.json").Contains("\"" + package + "\"");
         }
 
         [MenuItem("Sugar Drop/Clasament: verifică Unity Leaderboards")]
         public static void Apply()
         {
             bool installed = PackageInstalled;
-            foreach (NamedBuildTarget target in new[] { NamedBuildTarget.Android, NamedBuildTarget.iOS, NamedBuildTarget.Standalone })
+            foreach ((string package, string define) in Optional)
             {
-                string defines = PlayerSettings.GetScriptingDefineSymbols(target);
-                bool has = (";" + defines + ";").Contains(";" + Define + ";");
-                if (installed == has) continue;
-                defines = installed
-                    ? (string.IsNullOrEmpty(defines) ? Define : defines + ";" + Define)
-                    : string.Join(";", System.Array.FindAll(defines.Split(';'), d => d != Define));
-                PlayerSettings.SetScriptingDefineSymbols(target, defines);
+                bool present = Installed(package);
+                foreach (NamedBuildTarget target in new[] { NamedBuildTarget.Android, NamedBuildTarget.iOS, NamedBuildTarget.Standalone })
+                {
+                    string defines = PlayerSettings.GetScriptingDefineSymbols(target);
+                    bool has = (";" + defines + ";").Contains(";" + define + ";");
+                    if (present == has) continue;
+                    defines = present
+                        ? (string.IsNullOrEmpty(defines) ? define : defines + ";" + define)
+                        : string.Join(";", System.Array.FindAll(defines.Split(';'), d => d != define));
+                    PlayerSettings.SetScriptingDefineSymbols(target, defines);
+                }
             }
             LinkProject();
             Debug.Log(installed

@@ -88,6 +88,23 @@ Jocul are 9 limbi: engleză (implicită), română, spaniolă, portugheză, fran
 - Limbi cu alt alfabet (rusă, japoneză, chineză, coreeană, arabă, hindi) ar avea nevoie de un font în plus:
   Baloo 2 are doar litere latine.
 
+## Capitole, obiective, zilnic
+- **Capitole:** la fiecare 10 niveluri se schimbă tema (cer, tablă, bastoane, harta): Câmpia de Căpșuni, Pădurea de
+  Mentă, Lacul de Afine ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol
+  dă **cufărul capitolului** (monede după stele, ajutoare la 24+ stele).
+- **Obiective:** pe lângă bomboanele în borcan, culori, glazură și scor, nivelurile cer și: **sparge lăzile** (de la 4),
+  **folosește piese speciale** (de la 5), **sparge gheața** (de la 7), **rupe lanțurile** (de la 12), **oprește
+  ciocolata** (de la 25). Ordinea: `Cycle` din `Core/LevelConfig.cs`.
+- **Cadou zilnic** (serie de 7 zile, monede x2 cu reclamă) și **3 misiuni pe zi** (`Core/SugarDaily.cs`), din
+  butoanele din stânga hărții.
+- **Setări:** grafică (Înaltă / Medie / Scăzută: particule, lumini, 30 sau 60 FPS; implicit după memoria telefonului)
+  și notificări.
+- **Salvare în cloud** (Unity Cloud Save, `Online/SugarCloudSave.cs`): la pornire, dacă progresul din cloud e mai
+  avansat (ex. după reinstalare), îl aduce pe telefon; după fiecare victorie trimite progresul.
+- **Notificări locale** (`Online/SugarNotifications.cs`): vieți pline, cadoul zilnic la 10:00, „Bobo îți duce dorul”
+  după 3 zile. Permisiunea Android se cere după prima victorie.
+- **Recenzie:** după nivelul 8, Bobo întreabă dacă îți place jocul; „Da” duce la pagina din Google Play.
+
 ## Nickname și clasament
 - La prima pornire, Bobo te salută și îți alegi un **nickname** (`UI/WelcomePanel.cs`). Abia după aceea apare întrebarea
   despre reclame. Nickname-ul se schimbă din Setări, iar meniul arată „Salut, <nickname>!”.

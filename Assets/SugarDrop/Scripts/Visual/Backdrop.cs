@@ -69,6 +69,23 @@ namespace SugarDrop
             }
         }
 
+        private void OnEnable()
+        {
+            SugarQuality.Changed += ApplyQuality;
+            if (_dots != null) ApplyQuality();
+        }
+
+        private void OnDisable() => SugarQuality.Changed -= ApplyQuality;
+
+        private void Start() => ApplyQuality();
+
+        /// <summary>Pe grafică redusă plutesc mai puține lumini.</summary>
+        private void ApplyQuality()
+        {
+            int visible = Mathf.RoundToInt(_dots.Length * SugarQuality.AmbientScale);
+            for (int i = 0; i < _dots.Length; i++) _dots[i].gameObject.SetActive(i < visible);
+        }
+
         private void Update()
         {
             float half = area.y * 0.5f;

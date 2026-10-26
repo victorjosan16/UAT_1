@@ -4,7 +4,6 @@ using UnityEngine;
 #if SUGARDROP_UGS
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Unity.Services.Leaderboards;
 #endif
 
@@ -88,29 +87,12 @@ namespace SugarDrop
             public string n;
         }
 
-        private Task _signIn;
         private long _sentScore = -1;
         private string _sentName;
         private bool _sending;
         private bool _sendAgain;
 
         private void Start() => Submit();
-
-        /// <summary>Pornește serviciile Unity și intră anonim (o singură dată; la eșec se reîncearcă la următoarea cerere).</summary>
-        private Task SignIn()
-        {
-            if (_signIn == null || _signIn.IsFaulted || _signIn.IsCanceled) _signIn = SignInAsync();
-            return _signIn;
-        }
-
-        private static async Task SignInAsync()
-        {
-            // Fără proiect Unity Cloud legat, serviciile nu pot porni (ex. în Editor, înainte de configurare).
-            if (string.IsNullOrEmpty(Application.cloudProjectId))
-                throw new InvalidOperationException("proiectul nu e legat de Unity Cloud");
-            if (UnityServices.State != ServicesInitializationState.Initialized) await UnityServices.InitializeAsync();
-            if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
-        }
 
         /// <summary>Trimite punctele și nickname-ul (doar dacă s-au schimbat de la ultima trimitere).</summary>
         public async void Submit()
@@ -130,7 +112,7 @@ namespace SugarDrop
                     long score = SugarSave.TotalScore;
                     string name = SugarSave.Data.nickname;
                     if (score == _sentScore && name == _sentName) break;
-                    await SignIn();
+                    await SugarServices.SignIn();
                     if (name != _sentName) await UpdatePlayerName(name);
                     var options = new AddPlayerScoreOptions { Metadata = new Meta { n = name } };
                     await LeaderboardsService.Instance.AddPlayerScoreAsync(SugarOnlineConfig.LeaderboardId, score, options);
@@ -167,8 +149,8 @@ namespace SugarDrop
             LeaderboardResult result;
             try
             {
-                await SignIn();
-                string myId = AuthenticationService.Instance.PlayerId;
+                await SugarServices.SignIn();
+                string myId = SugarServices.PlayerId;
                 result = new LeaderboardResult { Online = true };
                 var page = await LeaderboardsService.Instance.GetScoresAsync(SugarOnlineConfig.LeaderboardId,
                     new GetScoresOptions { Limit = SugarOnlineConfig.TopCount, IncludeMetadata = true });

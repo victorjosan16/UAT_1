@@ -31,6 +31,7 @@ Manage translations → Add your own translations**.
     - *Device or other IDs*: ID-ul de publicitate și ID-ul anonim de jucător;
     - *App activity → Other user-generated content*: nickname-ul;
     - *App activity → Other actions*: scorul;
+    - *App activity → Other user-generated content / App info and performance*: progresul din joc (salvarea în cloud);
     - scopul: *App functionality*, plus *Advertising* pentru ID-ul de publicitate;
     - datele sunt criptate în tranzit; jucătorul poate cere ștergerea prin email;
   - **Content rating**: chestionarul IARC (fără violență, fără chat, fără cumpărături reale);
