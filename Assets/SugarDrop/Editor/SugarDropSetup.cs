@@ -25,14 +25,20 @@ namespace SugarDrop.EditorTools
         private const string FontPath = "Assets/_Game/Art/Fonts/Baloo2-ExtraBold.ttf";
         private const int UiLayer = 5;
 
+        /// <summary>Versiunea afișată în magazin (primele două cifre); a treia e numărul build-ului.</summary>
+        public const string VersionPrefix = "1.0";
+
         [MenuItem("Sugar Drop/Construiește jocul")]
-        public static void Run()
+        public static void Run() => Run(0);
+
+        /// <param name="buildNumber">Numărul build-ului din Unity Build Automation (crește singur); 0 = build local.</param>
+        public static void Run(int buildNumber)
         {
             // Scena nouă PRIMA (NewScene descarcă asset-urile nefolosite din memorie).
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             EnsureFolder(DataDir);
             EnsureFolder(ScenesDir);
-            SetupPlayerSettings();
+            SetupPlayerSettings(buildNumber);
             SetupIcon();
 
             UiTheme theme = CreateTheme();
@@ -57,12 +63,14 @@ namespace SugarDrop.EditorTools
 
         // ------------------------------------------------------------ Proiect
 
-        private static void SetupPlayerSettings()
+        private static void SetupPlayerSettings(int buildNumber)
         {
             PlayerSettings.companyName = "VictorJosan";
             PlayerSettings.productName = "Sugar Drop";
-            PlayerSettings.bundleVersion = "0.1.0";
-            PlayerSettings.Android.bundleVersionCode = 1;
+            // Google Play cere ca versionCode să crească la fiecare încărcare: folosim numărul build-ului din cloud.
+            PlayerSettings.bundleVersion = $"{VersionPrefix}.{buildNumber}";
+            PlayerSettings.Android.bundleVersionCode = Mathf.Max(1, buildNumber);
+            PlayerSettings.iOS.buildNumber = Mathf.Max(1, buildNumber).ToString();
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.victorjosan.sugardrop");
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, "com.victorjosan.sugardrop");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
@@ -312,5 +320,16 @@ namespace SugarDrop.EditorTools
 /// <summary>Punctul de intrare pentru Unity Build Automation: Pre-Export Method = SugarDropCloudBuild.PreExport.</summary>
 public static class SugarDropCloudBuild
 {
+#if UNITY_CLOUD_BUILD
+    /// <summary>Unity Build Automation trimite manifestul build-ului; din el luăm numărul build-ului.</summary>
+    public static void PreExport(UnityEngine.CloudBuild.BuildManifestObject manifest)
+    {
+        int buildNumber = 0;
+        if (manifest != null && manifest.TryGetValue("buildNumber", out string value)) int.TryParse(value, out buildNumber);
+        UnityEngine.Debug.Log("[SugarDrop] Build din cloud nr. " + buildNumber);
+        SugarDrop.EditorTools.SugarDropSetup.Run(buildNumber);
+    }
+#else
     public static void PreExport() => SugarDrop.EditorTools.SugarDropSetup.Run();
+#endif
 }

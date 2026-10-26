@@ -78,6 +78,16 @@ Același nivel arată la fel la fiecare încercare.
 - Bara de scor din HUD arată pragurile de 2 și 3 stele; victoria dă mereu o stea.
 - **Finalul dulce:** la victorie, fiecare mutare rămasă devine o rachetă care explodează (+200 puncte).
 
+## Limbi
+Jocul are 9 limbi: engleză (implicită), română, spaniolă, portugheză, franceză, germană, italiană, turcă și indoneziană.
+- La prima pornire, limba se ia după telefon. Dacă telefonul e în altă limbă, jocul pornește în engleză.
+- Limba se schimbă din **Setări → LIMBA**.
+- Textele din cod sunt în română și servesc drept chei. Fiecare rând din tabelul `SugarLoc` are traducerea în toate
+  limbile, iar testele verifică să nu lipsească nimic.
+- Pentru un text nou: adaugi un rând `R(ro, en, es, pt, fr, de, it, tr, id)`.
+- Limbi cu alt alfabet (rusă, japoneză, chineză, coreeană, arabă, hindi) ar avea nevoie de un font în plus:
+  Baloo 2 are doar litere latine.
+
 ## Nickname și clasament
 - La prima pornire, Bobo te salută și îți alegi un **nickname** (`UI/WelcomePanel.cs`). Abia după aceea apare întrebarea
   despre reclame. Nickname-ul se schimbă din Setări, iar meniul arată „Salut, <nickname>!”.
@@ -96,7 +106,7 @@ Același nivel arată la fel la fiecare încercare.
 - Nivelurile (tip, val de dificultate, formă, obiective, mutări, obstacole): `Scripts/Core/LevelConfig.cs`
 - Regulile tablei: `Scripts/Core/BlastEngine.cs` — cod pur, fără Unity; `Board` din scenă doar animă pașii motorului
   și ține o singură stare la un moment dat (liberă / piesă selectată / animează), ca acțiunile să nu se suprapună.
-- Culorile: `Scripts/Core/Palette.cs`; textele RO → EN: `Scripts/Core/SugarLoc.cs`
+- Culorile: `Scripts/Core/Palette.cs`; traducerile: `Scripts/Core/SugarLoc.cs`
 - Aspectul pieselor și animațiile de jeleu: `Scripts/Board/Tile.cs`; bomboanele din borcan: `CandySpawner`; pâlnia și borcanul: `Playfield`
 - Efectele vizuale: `Scripts/Effects/SugarVfx.cs`; sunetele: `Scripts/Effects/SugarAudio.cs`
 - Grafica (desenată din cod): `Scripts/Visual/SugarSprites.cs`, `PieceSprites.cs`; mascota: `Scripts/Visual/Mascot.cs`
@@ -123,6 +133,10 @@ Același nivel arată la fel la fiecare încercare.
 
 ## Build în cloud (Unity Build Automation)
 - **Branch:** `sugar-drop` · **Pre-Export Method:** `SugarDropCloudBuild.PreExport` · **Bundle ID:** `com.victorjosan.sugardrop`
+- Repo-uri: `victorjosan16/Games01` și `victorjosan16/UAT_1`. Build Automation e legat de UAT_1; branch-ul `sugar-drop`
+  e identic în amândouă.
+- Versiunea: `versionCode` = numărul build-ului din cloud; numele versiunii = `1.0.<număr>` (`SugarDropSetup.VersionPrefix`)
+- Publicarea pe Google Play și textele de magazin în 9 limbi: `GOOGLE_PLAY.md`
 - restul ca la Quarry Empire (Android, APK, debug keystore)
 
 ## Etape (promptul „Premium Candy Blast”)

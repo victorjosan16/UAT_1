@@ -653,11 +653,8 @@ namespace SugarDrop
             buttons.Add(Toggle(Data.reducedMotion ? "MIȘCARE REDUSĂ: DA" : "MIȘCARE REDUSĂ: NU", () => Data.reducedMotion = !Data.reducedMotion, inGame));
             if (SugarAds.RealAds)
                 buttons.Add(Toggle(Data.adsConsent == 1 ? "RECLAME PERSONALIZATE: DA" : "RECLAME PERSONALIZATE: NU", () => SetAdsConsent(Data.adsConsent != 1), inGame));
-            buttons.Add(Toggle("LIMBA: ROMÂNĂ", () =>
-            {
-                Data.language = SugarLoc.IsEnglish ? "ro" : "en";
-                RefreshTexts();
-            }, inGame));
+            buttons.Add(new DialogButton(SugarLoc.T("LIMBA") + ": " + SugarLoc.NativeName(SugarLoc.Current).ToUpperInvariant(), panel,
+                () => ShowLanguages(inGame), false));
             if (!inGame)
             {
                 buttons.Add(new DialogButton(SugarLoc.F("NICKNAME: {0}", Data.nickname), panel, () => welcome.Show(false, SetNickname)));
@@ -667,6 +664,27 @@ namespace SugarDrop
             string message = (inGame ? SugarLoc.T("Nivelul costă o viață.") + "\n" : "") + SugarLoc.F("Versiunea {0}", ErrorReporter.BuildId);
             dialog.Show(SugarLoc.T(inGame ? "PAUZĂ" : "SETĂRI"), message, buttons.ToArray());
             if (inGame) dialog.DismissAction = Resume;
+        }
+
+        /// <summary>Lista limbilor (fiecare scrisă în limba ei); alegerea traduce imediat tot jocul.</summary>
+        private void ShowLanguages(bool inGame)
+        {
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            var buttons = new List<DialogButton>();
+            foreach (SugarLanguage language in SugarLoc.Languages)
+            {
+                bool current = language == SugarLoc.Current;
+                buttons.Add(new DialogButton(SugarLoc.NativeName(language), current ? positive : panel, () =>
+                {
+                    Data.language = SugarLoc.Code(language);
+                    SugarSave.Save();
+                    RefreshTexts();
+                    ShowSettings(inGame);
+                }, false));
+            }
+            buttons.Add(new DialogButton(SugarLoc.T("ÎNAPOI"), QuarryEmpire.UiRoot.Theme.AccentColor, () => ShowSettings(inGame), false));
+            dialog.Show(SugarLoc.T("LIMBA"), null, buttons.ToArray());
+            dialog.DismissAction = () => ShowSettings(inGame);
         }
 
         private DialogButton Toggle(string label, System.Action change, bool inGame) =>

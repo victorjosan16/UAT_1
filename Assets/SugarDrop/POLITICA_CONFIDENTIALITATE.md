@@ -1,21 +1,57 @@
-# Politica de confidențialitate – Sugar Drop
+# Sugar Drop – Privacy Policy
 
-> Ciornă pentru Google Play. Completează câmpurile din paranteze drepte. Apoi publică textul la un link public,
-> de exemplu Google Sites sau GitHub Pages, și pune link-ul în fișa aplicației.
+> Before publishing: replace `[email]` with your contact address. Then publish this page at a public link
+> (see `GOOGLE_PLAY.md` → „Politica de confidențialitate: cum o publici gratuit”).
 
-Ultima actualizare: [data]
+Last updated: October 26, 2026
 
-Sugar Drop („jocul”) este dezvoltat de [numele tău] („noi”). Această politică explică ce date folosește jocul.
+Sugar Drop ("the game") is developed by Victor Josan ("we", "us"). This policy explains what data the game uses.
+
+## Data we use
+- **Game progress** (levels, stars, scores, coins, settings) is stored only on your device.
+- **Leaderboard:** the game creates an **anonymous player ID** through Unity Gaming Services (Unity Technologies). It sends
+  your **nickname** and your **points** (the sum of your best scores) to that service. Other players can see them on the
+  leaderboard. Please do not use your full real name as your nickname.
+- **Ads** are optional and rewarded. They are shown through Unity LevelPlay and its partner ad networks. These may use
+  your device's **advertising ID**, device information and IP address to show ads and measure results. At first launch
+  we ask whether you agree to personalized ads. You can change your choice at any time in **Settings → Personalized ads**.
+
+## Who we share data with
+- Unity Technologies (Unity Gaming Services, Unity LevelPlay): https://unity.com/legal/privacy-policy
+- LevelPlay's ad partners, under their own policies.
+
+We do not sell your data.
+
+## Children
+The game is not directed at children under 13, and we do not knowingly collect data from them.
+
+## Deleting your data
+You can delete your local progress by uninstalling the game. To delete your leaderboard entry, email us at [email]
+and include your nickname.
+
+## Changes
+If this policy changes, we will update this page and the date above.
+
+## Contact
+Victor Josan – [email]
+
+---
+
+# Sugar Drop – Politica de confidențialitate
+
+Ultima actualizare: 26 octombrie 2026
+
+Sugar Drop („jocul”) este dezvoltat de Victor Josan („noi”). Această politică explică ce date folosește jocul.
 
 ## Ce date folosim
 - **Progresul din joc** (niveluri, stele, scoruri, monede, setări) este salvat doar pe telefonul tău.
-- **Clasamentul:** când joci, jocul creează un **ID anonim de jucător** prin Unity Gaming Services (Unity Technologies).
-  Trimite acolo **nickname-ul** ales de tine și **punctele** (suma celor mai bune scoruri). Ele sunt vizibile pentru
-  ceilalți jucători în clasament. Nu-ți folosi numele real complet ca nickname.
-- **Reclamele** (opționale, cu recompensă) sunt afișate prin Unity LevelPlay și rețelele partenere. Acestea pot folosi
-  **ID-ul de publicitate** al telefonului, informații despre dispozitiv și adresa IP pentru a afișa reclame și a măsura
-  rezultatele. La prima pornire îți cerem acordul pentru reclame personalizate. Îl poți schimba oricând din
-  **Setări → Reclame personalizate**.
+- **Clasamentul:** jocul creează un **ID anonim de jucător** prin Unity Gaming Services (Unity Technologies). Trimite
+  acolo **nickname-ul** tău și **punctele** (suma celor mai bune scoruri). Ceilalți jucători le pot vedea în clasament.
+  Nu-ți folosi numele real complet ca nickname.
+- **Reclamele** sunt opționale și îți dau recompense. Sunt afișate prin Unity LevelPlay și rețelele partenere de reclame.
+  Acestea pot folosi **ID-ul de publicitate** al telefonului, informații despre dispozitiv și adresa IP, ca să afișeze
+  reclame și să măsoare rezultatele. La prima pornire te întrebăm dacă accepți reclame personalizate. Poți schimba
+  oricând alegerea din **Setări → Reclame personalizate**.
 
 ## Cu cine împărțim datele
 - Unity Technologies (Unity Gaming Services, Unity LevelPlay): https://unity.com/legal/privacy-policy
@@ -27,8 +63,11 @@ Nu vindem datele tale.
 Jocul nu se adresează copiilor sub 13 ani și nu colectăm cu bună știință date de la ei.
 
 ## Ștergerea datelor
-Poți șterge progresul local dezinstalând jocul. Pentru ștergerea datelor din clasament, scrie-ne la [adresa ta de email]
-și menționează nickname-ul.
+Poți șterge progresul local dezinstalând jocul. Pentru ștergerea datelor din clasament, scrie-ne la [email] și
+menționează nickname-ul.
+
+## Modificări
+Dacă politica se schimbă, actualizăm această pagină și data de mai sus.
 
 ## Contact
-[numele tău] – [adresa ta de email]
+Victor Josan – [email]
