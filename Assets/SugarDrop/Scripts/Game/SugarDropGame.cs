@@ -31,6 +31,8 @@ namespace SugarDrop
         [SerializeField] private DialogPanel dialog;
         [SerializeField] private MapScreen map;
         [SerializeField] private MainMenu menu;
+        [SerializeField] private WelcomePanel welcome;
+        [SerializeField] private LeaderboardPanel leaderboard;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -118,6 +120,7 @@ namespace SugarDrop
             map.PlayClicked += TryPlay;
             map.LevelClicked += TryPlayLevel;
             map.SettingsClicked += ShowMapSettings;
+            map.LeaderboardClicked += ShowLeaderboard;
             menu.PlayClicked += OpenMapAnimated;
         }
 
@@ -146,6 +149,7 @@ namespace SugarDrop
             map.PlayClicked -= TryPlay;
             map.LevelClicked -= TryPlayLevel;
             map.SettingsClicked -= ShowMapSettings;
+            map.LeaderboardClicked -= ShowLeaderboard;
             menu.PlayClicked -= OpenMapAnimated;
         }
 
@@ -158,7 +162,34 @@ namespace SugarDrop
             menu.Show();
             SetGameplayUi(false);
             RefreshBoosters();
-            SetupAds();
+            SugarLeaderboard.Ensure();
+
+            // Prima pornire: Bobo ne salută și ne alegem nickname-ul; abia apoi întrebarea despre reclame.
+            if (string.IsNullOrEmpty(Data.nickname))
+            {
+                welcome.Show(true, nickname =>
+                {
+                    SetNickname(nickname);
+                    SetupAds();
+                });
+            }
+            else SetupAds();
+        }
+
+        // ------------------------------------------------------------ Nickname și clasament
+
+        private void SetNickname(string nickname)
+        {
+            Data.nickname = nickname;
+            SugarSave.Save();
+            SugarLeaderboard.Ensure().Submit();
+            if (menu.IsOpen) menu.Show();
+        }
+
+        private void ShowLeaderboard()
+        {
+            if (_state != State.Map || dialog.IsOpen) return;
+            leaderboard.Show();
         }
 
         // ------------------------------------------------------------ Reclame (consimțământ GDPR)
@@ -248,7 +279,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -446,6 +477,16 @@ namespace SugarDrop
                 dialog.Dismiss();
                 return;
             }
+            if (welcome.IsOpen)
+            {
+                welcome.Dismiss();
+                return;
+            }
+            if (leaderboard.IsOpen)
+            {
+                leaderboard.Hide();
+                return;
+            }
             switch (_state)
             {
                 case State.Playing: ShowPause(); break;
@@ -525,7 +566,9 @@ namespace SugarDrop
                 coins += 20;
             }
             SugarSave.SetStars(_level, stars);
+            bool record = SugarSave.SetBestScore(_level, _score);
             SugarSave.Save();
+            if (record) SugarLeaderboard.Ensure().Submit();
 
             if (Audio != null) Audio.Play(SugarSound.Win);
             SugarAudio.Buzz(1);
@@ -615,7 +658,11 @@ namespace SugarDrop
                 Data.language = SugarLoc.IsEnglish ? "ro" : "en";
                 RefreshTexts();
             }, inGame));
-            if (!inGame) buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
+            if (!inGame)
+            {
+                buttons.Add(new DialogButton(SugarLoc.F("NICKNAME: {0}", Data.nickname), panel, () => welcome.Show(false, SetNickname)));
+                buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
+            }
 
             string message = (inGame ? SugarLoc.T("Nivelul costă o viață.") + "\n" : "") + SugarLoc.F("Versiunea {0}", ErrorReporter.BuildId);
             dialog.Show(SugarLoc.T(inGame ? "PAUZĂ" : "SETĂRI"), message, buttons.ToArray());

@@ -71,6 +71,7 @@ namespace SugarDrop.EditorTools
             // Codul SDK-urilor de reclame (folosit și prin reflecție) nu trebuie tăiat din build.
             PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Minimal);
             LevelPlaySetup.Apply();
+            OnlineSetup.Apply();
 
             // Active Input Handling = Input System Package (New).
             Object[] projectSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
@@ -169,6 +170,8 @@ namespace SugarDrop.EditorTools
             public DialogPanel Dialog;
             public MapScreen Map;
             public MainMenu Menu;
+            public WelcomePanel Welcome;
+            public LeaderboardPanel Leaderboard;
         }
 
         private static void BuildGame(Camera camera, PhysicsMaterial2D material, Ui ui)
@@ -204,6 +207,8 @@ namespace SugarDrop.EditorTools
             Set(game, "dialog", ui.Dialog);
             Set(game, "map", ui.Map);
             Set(game, "menu", ui.Menu);
+            Set(game, "welcome", ui.Welcome);
+            Set(game, "leaderboard", ui.Leaderboard);
         }
 
         private static Ui BuildUi(UiTheme theme)
@@ -232,6 +237,8 @@ namespace SugarDrop.EditorTools
                 Result = UiComponent<ResultPanel>(canvasGo.transform, "Result"),
                 Map = UiComponent<MapScreen>(safe, "Map"),
                 Menu = UiComponent<MainMenu>(canvasGo.transform, "Menu"),
+                Leaderboard = UiComponent<LeaderboardPanel>(canvasGo.transform, "Leaderboard"),
+                Welcome = UiComponent<WelcomePanel>(canvasGo.transform, "Welcome"),
                 Dialog = UiComponent<DialogPanel>(canvasGo.transform, "Dialog"),
             };
             // Tranziția dintre ecrane: deasupra ferestrelor, sub reclame.

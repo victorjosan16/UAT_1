@@ -13,6 +13,7 @@ namespace SugarDrop
         private GameObject _root;
         private UiLabel _logo;
         private UiLabel _tagline;
+        private UiLabel _greeting;
         private UiLabel _playLabel;
         private RectTransform _playRect;
         private float _enterT = -1f;
@@ -62,6 +63,8 @@ namespace SugarDrop
             UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 420f), new Vector2(1060f, 240f));
             _tagline = SugarUi.Outlined("Tagline", _root.transform, "", 44, Color.white, 3f);
             UiFactory.Place(_tagline.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 250f), new Vector2(980f, 120f));
+            _greeting = SugarUi.Outlined("Greeting", _root.transform, "", 56, theme.AccentColor, 4f);
+            UiFactory.Place(_greeting.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -330f), new Vector2(980f, 90f));
 
             // Bobo „pictat” în meniu: un cupcake mare.
             Image cup = UiFactory.CreateImage("Cup", _root.transform, SugarSprites.CupWrapper, Color.white);
@@ -94,6 +97,8 @@ namespace SugarDrop
         {
             _tagline.Text = SugarLoc.T("Aliniază 3 capace la fel ca să eliberezi bomboanele!");
             _playLabel.Text = SugarLoc.T("JOACĂ");
+            string nickname = SugarSave.Data.nickname;
+            _greeting.Text = string.IsNullOrEmpty(nickname) ? "" : SugarLoc.F("Salut, {0}!", nickname);
             _root.SetActive(true);
             _enterT = 0f;
         }

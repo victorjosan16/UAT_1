@@ -78,12 +78,19 @@ Același nivel arată la fel la fiecare încercare.
 - Bara de scor din HUD arată pragurile de 2 și 3 stele; victoria dă mereu o stea.
 - **Finalul dulce:** la victorie, fiecare mutare rămasă devine o rachetă care explodează (+200 puncte).
 
+## Nickname și clasament
+- La prima pornire, Bobo te salută și îți alegi un **nickname** (`UI/WelcomePanel.cs`). Abia după aceea apare întrebarea
+  despre reclame. Nickname-ul se schimbă din Setări, iar meniul arată „Salut, <nickname>!”.
+- **Clasamentul** se deschide de pe hartă, din butonul cu trofeu de sub setări (`UI/LeaderboardPanel.cs`).
+  Punctele sunt **suma celor mai bune scoruri** de pe fiecare nivel (`SugarSave.TotalScore`).
+  E online prin Unity Gaming Services (`Online/SugarLeaderboard.cs`). Configurarea e în `CLASAMENT.md`.
+
 ## Progres și economie
 - **Vieți:** 5, una se pierde la înfrângere (sau la ieșirea dintr-un nivel început); se regenerează câte una la 20 de minute.
 - **Monede:** 20 + 5 pe fiecare mutare rămasă (+20 la 3 stele, ×2 la Boss).
 - **Ajutoare:** bombă (explozie 3×3 unde atingi), +5 mutări, amestecare. Se cumpără cu 100 de monede sau cu o reclamă.
 - La înfrângere poți continua o dată cu **+5 mutări** (reclamă). Reclamele sunt deocamdată de test.
-- Salvarea (nivel, stele, vieți, monede, ajutoare, setări) e în `SugarSave` (PlayerPrefs, JSON).
+- Salvarea (nivel, stele, recorduri, vieți, monede, ajutoare, setări, nickname) e în `SugarSave` (PlayerPrefs, JSON).
 
 ## Unde se reglează
 - Nivelurile (tip, val de dificultate, formă, obiective, mutări, obstacole): `Scripts/Core/LevelConfig.cs`

@@ -48,6 +48,7 @@ singur codul LevelPlay).
 ## 6. Google Play (când publici)
 - Fișa aplicației: bifează **„Conține reclame”**.
 - **Data safety**: declară ID-ul de publicitate și datele despre dispozitiv folosite de rețeaua de reclame.
-- **Politica de confidențialitate**: un link public (asistentul ți-o poate scrie).
+- **Politica de confidențialitate**: un link public. Ciorna e în `POLITICA_CONFIDENTIALITATE.md`. Completezi
+  numele și emailul, apoi o publici, de exemplu pe Google Sites.
 - Recomandat: fișierul **app-ads.txt** pe site-ul tău de dezvoltator (LevelPlay îți dă conținutul).
 - Dacă adaugi mai târziu **AdMob** prin mediere, Google cere fereastra lor de consimțământ (UMP).

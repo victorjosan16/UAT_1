@@ -22,6 +22,7 @@ namespace SugarDrop
 
         public event Action PlayClicked;
         public event Action SettingsClicked;
+        public event Action LeaderboardClicked;
         /// <summary>Un nivel deblocat a fost atins (pentru rejucare sau pentru nivelul curent).</summary>
         public event Action<int> LevelClicked;
 
@@ -196,6 +197,13 @@ namespace SugarDrop
                 SettingsClicked?.Invoke();
             }, 0.6f);
             UiFactory.Place((RectTransform)settings.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -28f), new Vector2(108f, 108f));
+
+            Button leaderboard = SugarUi.IconButton("Leaderboard", bar, SugarSprites.Trophy, theme.AccentColor, () =>
+            {
+                SugarUi.Click();
+                LeaderboardClicked?.Invoke();
+            }, 0.62f);
+            UiFactory.Place((RectTransform)leaderboard.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -160f), new Vector2(108f, 108f));
         }
 
         private static RectTransform Pill(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size, UiTheme theme)

@@ -73,6 +73,16 @@ namespace SugarDrop
             { "Nicio reclamă acum", "No ad right now" },
             { "Nu e nicio reclamă disponibilă. Verifică internetul și încearcă din nou puțin mai târziu.", "No ad is available. Check your internet connection and try again a bit later." },
             { "Trage o bomboană ca să faci 3 la fel în linie!", "Swipe a candy to make 3 in a row!" },
+            { "Bine ai venit!", "Welcome!" }, { "HAI SĂ JUCĂM!", "LET'S PLAY!" }, { "SALVEAZĂ", "SAVE" }, { "ANULEAZĂ", "CANCEL" },
+            { "Salut! Eu sunt Bobo, cupcake-ul care te însoțește prin Sugar Drop. Cum să-ți spun? Numele tău va apărea în clasament.",
+              "Hi! I'm Bobo, the cupcake who'll keep you company in Sugar Drop. What should I call you? Your name will appear on the leaderboard." },
+            { "Alege numele cu care apari în clasament.", "Choose the name shown on the leaderboard." },
+            { "Minimum {0} caractere", "At least {0} characters" }, { "Litere, cifre și spații, maximum {0}", "Letters, digits and spaces, up to {0}" },
+            { "Salut, {0}!", "Hi, {0}!" }, { "CLASAMENT", "LEADERBOARD" },
+            { "Punctele = suma celor mai bune scoruri de pe fiecare nivel", "Points = your best score on every level, added up" },
+            { "Se încarcă…", "Loading…" }, { "Fii primul în clasament!", "Be the first on the leaderboard!" },
+            { "Clasamentul online nu e disponibil acum. Verifică internetul.", "The online leaderboard isn't available right now. Check your internet connection." },
+            { "Locul tău: {0} · {1} puncte", "Your rank: {0} · {1} points" }, { "Punctele tale: {0}", "Your points: {0}" }, { " (tu)", " (you)" },
         };
     }
 }

@@ -26,8 +26,12 @@ namespace SugarDrop
         public bool tutorialDone;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
         public int adsConsent = -1;
+        /// <summary>Numele afișat în clasament (gol = încă neales: la prima pornire apare fereastra de bun venit).</summary>
+        public string nickname = "";
         /// <summary>Stelele obținute pe fiecare nivel (index 0 = nivelul 1).</summary>
         public List<int> stars = new();
+        /// <summary>Cel mai bun scor pe fiecare nivel (index 0 = nivelul 1); suma lor intră în clasament.</summary>
+        public List<int> bestScores = new();
     }
 
     /// <summary>Încărcare/salvare + vieți cu regenerare în timp.</summary>
@@ -105,6 +109,29 @@ namespace SugarDrop
         {
             while (Data.stars.Count < level) Data.stars.Add(0);
             Data.stars[level - 1] = Mathf.Max(Data.stars[level - 1], stars);
+        }
+
+        public static int GetBestScore(int level) =>
+            level >= 1 && level <= Data.bestScores.Count ? Data.bestScores[level - 1] : 0;
+
+        /// <summary>Păstrează scorul dacă e mai mare decât recordul nivelului; true = record nou.</summary>
+        public static bool SetBestScore(int level, int score)
+        {
+            if (level < 1 || score <= GetBestScore(level)) return false;
+            while (Data.bestScores.Count < level) Data.bestScores.Add(0);
+            Data.bestScores[level - 1] = score;
+            return true;
+        }
+
+        /// <summary>Punctele pentru clasament: suma celor mai bune scoruri de pe toate nivelurile.</summary>
+        public static long TotalScore
+        {
+            get
+            {
+                long total = 0;
+                foreach (int score in Data.bestScores) total += score;
+                return total;
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

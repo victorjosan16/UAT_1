@@ -23,6 +23,9 @@ namespace SugarDrop.Tests
             _backup = PlayerPrefs.GetString(SaveKey, null);
             PlayerPrefs.DeleteKey(SaveKey);
             SugarSave.Load();
+            // Jucător care și-a ales deja nickname-ul (fereastra de bun venit are testul ei).
+            SugarSave.Data.nickname = "Tester";
+            SugarSave.Save();
             Time.timeScale = 1f;
         }
 
@@ -89,6 +92,42 @@ namespace SugarDrop.Tests
             Click("Canvas/SafeArea/Map/Background/Content/Scroll/Path/Nodes/Level5");
             yield return Seconds(1f);
             Assert.IsNotNull(GameObject.Find("Canvas/SafeArea/Map/Background"), "Un nivel încuiat nu trebuie să pornească");
+        }
+
+        [UnityTest]
+        public IEnumerator FirstLaunch_GreetsAndSavesNickname()
+        {
+            if (!Application.CanStreamedLevelBeLoaded("SugarDrop"))
+                Assert.Ignore("Scena SugarDrop nu e în Build Settings.");
+            SugarSave.Data.nickname = "";
+            SugarSave.Save();
+            SceneManager.LoadScene("SugarDrop");
+            yield return Frames(10);
+
+            Assert.IsNotNull(GameObject.Find("Canvas/Welcome/Dim"), "La prima pornire trebuie să apară fereastra de bun venit");
+            GameObject.Find("Canvas/Welcome/Dim/BoxHolder/Box/NameFrame/NameField").GetComponent<InputField>().text = "  Ana  Maria!! ";
+            Click("Canvas/Welcome/Dim/BoxHolder/Box/Confirm");
+            yield return Frames(2);
+            Assert.IsNull(GameObject.Find("Canvas/Welcome/Dim"), "Fereastra trebuie să se închidă");
+            Assert.AreEqual("Ana Maria", SugarSave.Data.nickname);
+        }
+
+        [UnityTest]
+        public IEnumerator Leaderboard_OpensFromMap()
+        {
+            if (!Application.CanStreamedLevelBeLoaded("SugarDrop"))
+                Assert.Ignore("Scena SugarDrop nu e în Build Settings.");
+            SceneManager.LoadScene("SugarDrop");
+            yield return Frames(10);
+            Click("Canvas/Menu/Background/Play");
+            yield return Seconds(1f);
+
+            Click("Canvas/SafeArea/Map/Background/Content/TopBar/Leaderboard");
+            yield return Seconds(0.5f);
+            Assert.IsNotNull(GameObject.Find("Canvas/Leaderboard/Dim"), "Clasamentul nu s-a deschis");
+            Click("Canvas/Leaderboard/Dim/BoxHolder/Box/Close");
+            yield return Frames(2);
+            Assert.IsNull(GameObject.Find("Canvas/Leaderboard/Dim"));
         }
 
         private static void Click(string path)

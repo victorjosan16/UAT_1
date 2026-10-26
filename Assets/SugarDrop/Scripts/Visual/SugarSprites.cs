@@ -538,6 +538,19 @@ namespace SugarDrop
             return Mathf.Max(outer, hole);
         }));
 
+        /// <summary>Trofeu (clasament): cupă cu toarte, picior și soclu.</summary>
+        public static Sprite Trophy => Get("trophy", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float bowl = Mathf.Max(Vector2.Distance(p, new Vector2(64f, 98f)) - 36f, y - 98f);
+            float rim = RoundRect(x, y, 24, 94, 80, 12, 5);
+            float handleL = Mathf.Max(Mathf.Abs(Vector2.Distance(p, new Vector2(30f, 84f)) - 13f) - 5f, x - 34f);
+            float handleR = Mathf.Max(Mathf.Abs(Vector2.Distance(p, new Vector2(98f, 84f)) - 13f) - 5f, 94f - x);
+            float stem = RoundRect(x, y, 56, 34, 16, 32, 4);
+            float foot = RoundRect(x, y, 36, 16, 56, 18, 6);
+            return Mathf.Min(Mathf.Min(Mathf.Min(bowl, rim), Mathf.Min(handleL, handleR)), Mathf.Min(stem, foot));
+        }));
+
         /// <summary>Inimioară plină, colorată (vieți).</summary>
         public static Sprite LifeHeart => Get("lifeheart", () => Paint(128, (x, y) =>
         {
