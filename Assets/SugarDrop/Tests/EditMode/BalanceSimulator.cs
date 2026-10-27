@@ -28,7 +28,7 @@ namespace SugarDrop.Tests
                     if (item.Kind == GoalKind.Collect && item.Color == color && !item.Done) return 3;
                 return 0;
             };
-            for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck && !engine.TimeBombExpired; move++)
+            for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck && !(engine.TimeBombExpired || engine.BoboBurned); move++)
             {
                 if (!engine.TryFindBestSwap(weight, out Vector2Int from, out Vector2Int to)) break;
                 movesUsed++;
@@ -44,7 +44,7 @@ namespace SugarDrop.Tests
                 BossAttack? attack = boss.EndOfMove();
                 if (attack.HasValue) engine.ApplyBossAttack(attack.Value, boss.Phase.Strength);
             }
-            return goals.IsComplete && !engine.TimeBombExpired;
+            return goals.IsComplete && !(engine.TimeBombExpired || engine.BoboBurned);
         }
 }
 }

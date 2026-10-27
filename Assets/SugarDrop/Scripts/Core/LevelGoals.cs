@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Bobo, Fire }
 
     /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
     public struct ObstacleCounts
@@ -12,6 +12,7 @@ namespace SugarDrop
         public int Chains;
         public int Chocolate;
         public int Pots;
+        public int Fires;
     }
 
     /// <summary>Un obiectiv din HUD: ce (și ce culoare), cât trebuie și cât a mai rămas.</summary>
@@ -48,6 +49,9 @@ namespace SugarDrop
                 case LevelType.Chocolate when obstacles.Chocolate > 0: Add(GoalKind.Chocolate, -1, obstacles.Chocolate); break;
                 case LevelType.Garden when obstacles.Pots > 0: Add(GoalKind.Flowers, -1, obstacles.Pots); break;
                 case LevelType.Defuse when config.TimeBombGoal > 0: Add(GoalKind.TimeBombs, -1, config.TimeBombGoal); break;
+                case LevelType.Descent:
+                case LevelType.Frozen: Add(GoalKind.Bobo, -1, 1); break;
+                case LevelType.Blaze when obstacles.Fires > 0: Add(GoalKind.Fire, -1, obstacles.Fires); break;
             }
             if (config.SpecialsTarget > 0) Add(GoalKind.Specials, -1, config.SpecialsTarget);
             if (config.ScoreTarget > 0) Add(GoalKind.Score, -1, config.ScoreTarget);
@@ -87,13 +91,19 @@ namespace SugarDrop
                 if (piece.Kind == TileKind.Crate) changed |= Decrease(GoalKind.Crates, -1);
                 else if (piece.Kind == TileKind.Chocolate) changed |= Decrease(GoalKind.Chocolate, -1);
                 else if (piece.Kind == TileKind.Pot) changed |= Decrease(GoalKind.Flowers, -1);
+                else if (piece.Kind == TileKind.Fire) changed |= Decrease(GoalKind.Fire, -1);
                 if (piece.Timer > 0) changed |= Decrease(GoalKind.TimeBombs, -1);
             }
             for (int i = 0; i < step.IceLayersBroken; i++) changed |= Decrease(GoalKind.Ice, -1);
             for (int i = 0; i < step.ChainsBroken; i++) changed |= Decrease(GoalKind.Chains, -1);
             for (int i = 0; i < step.Activations.Count; i++) changed |= Decrease(GoalKind.Specials, -1);
             for (int i = 0; i < step.FrostingCells.Count; i++) changed |= OnFrostingCleared();
-            for (int i = 0; i < step.Exits.Count; i++) changed |= OnIngredientCollected();
+            foreach (PieceInfo exit in step.Exits)
+                changed |= exit.Color == BlastRules.BoboColor ? Decrease(GoalKind.Bobo, -1) : OnIngredientCollected();
+            // Focul care se întinde mărește obiectivul.
+            if (step.Kind == StepKind.Grow)
+                foreach (PieceInfo grown in step.Changed)
+                    if (grown.Kind == TileKind.Fire) changed |= Increase(GoalKind.Fire);
             return changed;
         }
 
@@ -124,6 +134,17 @@ namespace SugarDrop
                 item.Remaining = remaining;
             }
             return changed;
+        }
+
+        private bool Increase(GoalKind kind)
+        {
+            foreach (GoalItem item in Items)
+            {
+                if (item.Kind != kind) continue;
+                item.Remaining++;
+                return true;
+            }
+            return false;
         }
 
         private bool Decrease(GoalKind kind, int color)

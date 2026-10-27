@@ -139,6 +139,24 @@ namespace SugarDrop
                     _base.sprite = SugarSprites.Chocolate;
                     return;
 
+                case TileKind.Ingredient when ColorIndex == BlastRules.BoboColor:
+                    // Bobo pe tablă (coborâre / înghețat).
+                    _base.sprite = SugarSprites.BoboToken;
+                    _shadow.sprite = PieceSprites.Shadow(-1);
+                    return;
+
+                case TileKind.Hero:
+                    // Bobo prins pe loc, speriat de focul care coboară.
+                    _base.sprite = SugarSprites.BoboTokenScared;
+                    _shadow.sprite = PieceSprites.Shadow(-1);
+                    return;
+
+                case TileKind.Fire:
+                    _base.sprite = SugarSprites.Flame;
+                    _shadow.sprite = PieceSprites.Shadow(-1);
+                    ShowOverlay(SugarSprites.SoftDot, new Color(1f, 0.6f, 0.2f, 0.45f));
+                    return;
+
                 case TileKind.Ingredient:
                     // Bomboana care trebuie dusă în borcan: mare, ambalată, în culoarea ei, cu o sclipire.
                     _base.sprite = SugarSprites.CandyWrapped;
@@ -337,6 +355,21 @@ namespace SugarDrop
                 }
                 if (IsRainbow) _overlay.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 90f);
                 if (Kind == TileKind.Ingredient) angle += Mathf.Sin(Time.time * 2.5f + _phase) * 6f;
+                // Bobo țopăie pe loc; focul pâlpâie; Bobo prins tremură de frică.
+                if (Kind == TileKind.Ingredient && ColorIndex == BlastRules.BoboColor && Ice == 0)
+                {
+                    float hop = Mathf.Abs(Mathf.Sin(Time.time * 3f + _phase));
+                    scaleY *= 1f + hop * 0.08f;
+                    scaleX *= 1f - hop * 0.04f;
+                }
+                if (Kind == TileKind.Fire)
+                {
+                    float flicker = Mathf.Sin(Time.time * 11f + _phase) * 0.5f + Mathf.Sin(Time.time * 17f + _phase * 2f) * 0.5f;
+                    scaleY *= 1f + flicker * 0.08f;
+                    scaleX *= 1f - flicker * 0.04f;
+                    angle += flicker * 4f;
+                }
+                if (Kind == TileKind.Hero) angle += Mathf.Sin(Time.time * 32f + _phase) * 2.5f;
                 // Bomba cu ceas tremură când mai are puține mutări; bulina pulsează.
                 if (Timer > 0 && Timer <= 3)
                 {

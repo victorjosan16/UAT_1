@@ -106,8 +106,9 @@ namespace SugarDrop.Tests
         [Test]
         public void SpecialsGoal_CountsActivations()
         {
-            LevelConfig config = LevelConfig.For(6);
-            Assert.AreEqual(LevelType.Specials, config.Type);
+            int level = 5;
+            while (LevelConfig.For(level).Type != LevelType.Specials) level++;
+            LevelConfig config = LevelConfig.For(level);
             var goals = new LevelGoals(config, 0);
             GoalItem item = goals.Items.Find(i => i.Kind == GoalKind.Specials);
             Assert.AreEqual(config.SpecialsTarget, item.Target);

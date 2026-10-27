@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus, Descent, Frozen, Blaze }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -74,6 +74,13 @@ namespace SugarDrop
         /// <summary>Secundele nivelului bonus (0 = nivel obișnuit, cu mutări).</summary>
         public readonly int BonusSeconds;
         public bool IsBonus => Type == LevelType.Bonus;
+        /// <summary>Straturile de gheață din jurul lui Bobo (nivelurile „Bobo înghețat”).</summary>
+        public readonly int BoboIce;
+        /// <summary>Focul de la start și la câte mutări se întinde (nivelurile „Focul și apa”).</summary>
+        public readonly int Fires;
+        public readonly int FireEvery;
+        /// <summary>Bobo e o piesă pe tablă care trebuie dusă jos, la ieșire.</summary>
+        public bool HasBobo => Type is LevelType.Descent or LevelType.Frozen;
 
         // Obstacole.
         public readonly int Crates;
@@ -89,7 +96,8 @@ namespace SugarDrop
         private LevelConfig(int level, Difficulty difficulty, int colors, int moves, LevelType type, int[] bottom, int[] top,
             int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget, int specialsTarget,
             int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate,
-            int pots, int timeBombs, int timeBombStart, int timeBombGoal, int[] portalIn, int[] portalOut, int bonusSeconds)
+            int pots, int timeBombs, int timeBombStart, int timeBombGoal, int[] portalIn, int[] portalOut, int bonusSeconds,
+            int boboIce, int fires, int fireEvery)
         {
             Level = level;
             Chapter = (level - 1) / ChapterSize;
@@ -122,6 +130,9 @@ namespace SugarDrop
             PortalIn = portalIn;
             PortalOut = portalOut;
             BonusSeconds = bonusSeconds;
+            BoboIce = boboIce;
+            Fires = fires;
+            FireEvery = fireEvery;
         }
 
         public static bool IsBossLevel(int level) => level > 0 && level % ChapterSize == 0;
@@ -145,6 +156,7 @@ namespace SugarDrop
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
             if (IsBonusLevel(level)) return LevelType.Bonus;
+            if (BoboTypeFor(level) is LevelType bobo) return bobo;
             // Mecanica ținutului e „vedeta” lui: în Pădurea de Mentă (11–20) grădinile, în Deșertul de Lămâie (31–40)
             // bombele cu ceas apar la fiecare al treilea nivel; după aceea intră în rotația obișnuită.
             int chapterIndex = (level - 1) % ChapterSize;
@@ -160,6 +172,28 @@ namespace SugarDrop
                 LevelType.Defuse => LevelType.Frosting,
                 _ => LevelType.Collect,
             };
+        }
+
+        /// <summary>
+        /// Aventurile lui Bobo: în fiecare ținut, 4 niveluri cu Bobo pe tablă (pozițiile 3, 6, 8 și 9 din capitol).
+        /// Câmpia de Căpșuni învață coborârea, Pădurea de Mentă aduce focul, Lacul de Afine gheața; apoi se amestecă.
+        /// </summary>
+        public static LevelType? BoboTypeFor(int level)
+        {
+            int index = (Mathf.Max(1, level) - 1) % ChapterSize;
+            int chapter = (Mathf.Max(1, level) - 1) / ChapterSize;
+            if (index is not (2 or 5 or 7 or 8)) return null;
+            bool first = index is 2 or 7;
+            LevelType[] rotation = { LevelType.Descent, LevelType.Blaze, LevelType.Frozen };
+            (LevelType a, LevelType b) = chapter switch
+            {
+                0 => (LevelType.Descent, LevelType.Descent),
+                1 => (LevelType.Blaze, LevelType.Descent),
+                2 => (LevelType.Frozen, LevelType.Blaze),
+                3 => (LevelType.Blaze, LevelType.Frozen),
+                _ => (rotation[chapter % 3], rotation[(chapter + 1) % 3]),
+            };
+            return first ? a : b;
         }
 
         /// <summary>Un tip de nivel cu obstacole apare abia de la nivelul în care e introdus obstacolul lui.</summary>
@@ -236,7 +270,8 @@ namespace SugarDrop
                 _ => 1f,
             };
 
-            int colors = level <= 3 ? 4 : 5;
+            // Focul: cu 4 culori, apa (albastrul) apare mai des și se fac mai multe linii.
+            int colors = level <= 3 || type == LevelType.Blaze ? 4 : 5;
 
             Shape(level, difficulty, random, out int[] bottom, out int[] top);
             int valid = 0;
@@ -244,6 +279,7 @@ namespace SugarDrop
 
             int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0, specialsTarget = 0;
             int pots = 0, timeBombs = 0, timeBombStart = 0, timeBombGoal = 0, bonusSeconds = 0;
+            int boboIce = 0, fires = 0, fireEvery = 0;
             int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
             int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             // Câte obstacole are nivelul care le are ca obiectiv (lăzi, gheață, lanțuri, ciocolată).
@@ -314,6 +350,21 @@ namespace SugarDrop
                     bonusSeconds = 40;
                     moves = bonusSeconds / 1.2f;
                     break;
+                case LevelType.Descent:
+                    // Bobo pornește din rândul de sus și trebuie dus până jos.
+                    moves = 9f + chapter * 0.4f;
+                    break;
+                case LevelType.Frozen:
+                    // Întâi se sparge gheața din jurul lui (liniile de lângă el), apoi coboară de la mijloc.
+                    boboIce = level < 40 ? 2 : 3;
+                    moves = 8f + boboIce * 2.5f + chapter * 0.3f;
+                    break;
+                case LevelType.Blaze:
+                    // Focul coboară spre Bobo; la început se întinde mai rar.
+                    fires = Focus(3 + chapter * 0.45f, 3, 8);
+                    fireEvery = chapter >= 3 && difficulty is Difficulty.Hard or Difficulty.VeryHard ? 2 : 3;
+                    moves = 4f + fires * 2.2f;
+                    break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
                     moves = difficulty == Difficulty.MegaBoss ? 28 : 22;
@@ -347,9 +398,9 @@ namespace SugarDrop
             // urmează valul de dificultate. Pe nivelurile cu bomboane sunt doar lăzi (gheața și lanțurile ar ține
             // bomboanele pe loc), iar pe cele cu glazură obstacolele sunt mai puține.
             // Pe nivelurile cu un obstacol ca obiectiv, celelalte obstacole sunt mai puține (nu acoperă ținta).
-            bool ingredientLevel = type == LevelType.Ingredients;
+            bool ingredientLevel = type is LevelType.Ingredients or LevelType.Descent or LevelType.Frozen;
             bool focusLevel = focus > 0;
-            float blockerShare = type == LevelType.Frosting || ingredientLevel || focusLevel ? 0.5f : 1f;
+            float blockerShare = type == LevelType.Frosting || type == LevelType.Blaze || ingredientLevel || focusLevel ? 0.5f : 1f;
             int Scaled(float baseCount) => Mathf.RoundToInt(baseCount * obstacleFactor * blockerShare);
             int crates = level < 4 ? 0 : Mathf.Min(8, Scaled(2 + chapter * 0.6f));
             int ice = level < 7 || ingredientLevel ? 0 : Mathf.Min(8, Scaled(2 + chapter * 0.6f));
@@ -388,6 +439,7 @@ namespace SugarDrop
             // bomboane-ingredient (ar ieși prin portal în loc să ajungă jos), nici la Boss sau în bonus.
             int[] portalIn = System.Array.Empty<int>(), portalOut = System.Array.Empty<int>();
             bool portals = level >= PortalsFrom && type != LevelType.Ingredients && type != LevelType.Boss && type != LevelType.Bonus
+                && type != LevelType.Descent && type != LevelType.Frozen
                 && (chapter == 2 || random.Next(10) < 3);
             if (portals)
             {
@@ -404,7 +456,7 @@ namespace SugarDrop
 
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
                 frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate,
-                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds);
+                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds, boboIce, fires, fireEvery);
         }
 
         /// <summary>

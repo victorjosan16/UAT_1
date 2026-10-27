@@ -39,6 +39,12 @@ namespace SugarDrop
         private float _caught;
         private bool _rescued;
         private float _rescueT;
+        // Boss: Bobo e închis într-un glob de sticlă care crapă pe măsură ce Boss-ul pierde din viață.
+        private bool _globeMode;
+        private SpriteRenderer _globe;
+        private SpriteRenderer _globeRim;
+        private readonly List<SpriteRenderer> _cracks = new();
+        private Vector3 _globeCenter;
 
         public bool Visible => gameObject.activeSelf;
 
@@ -55,6 +61,9 @@ namespace SugarDrop
             _plate.drawMode = SpriteDrawMode.Sliced;
             _hunter = Renderer("Hunter", SugarSprites.BossFace(0), 33);
             _flash = Renderer("Flash", SugarSprites.SoftDot, 34);
+            _globe = Renderer("Globe", SugarSprites.Circle, 27);
+            _globeRim = Renderer("GlobeRim", SugarSprites.Ring, 28);
+            for (int i = 0; i < 6; i++) _cracks.Add(Renderer("Crack", SugarSprites.Shard, 29));
             gameObject.SetActive(false);
         }
 
@@ -76,6 +85,7 @@ namespace SugarDrop
         {
             _theme = theme;
             _style = StyleFor(theme);
+            SetGlobe(false, boboFeet);
             _width = width;
             _bottom = bottom;
             _feet = boboFeet.y;
@@ -124,6 +134,41 @@ namespace SugarDrop
 
         public void Hide() => gameObject.SetActive(false);
 
+        /// <summary>Lupta cu Boss-ul: fără lichid, doar Bobo închis în glob (progresul = cât a crăpat globul).</summary>
+        public void ShowGlobe(int theme, Vector3 boboFeet, float boboHeight, float width, float bottom)
+        {
+            Show(theme, boboFeet, boboHeight, width, bottom);
+            SetGlobe(true, boboFeet + Vector3.up * boboHeight * 0.45f);
+        }
+
+        private void SetGlobe(bool on, Vector3 center)
+        {
+            _globeMode = on;
+            _globeCenter = center;
+            _body.gameObject.SetActive(!on);
+            foreach (SpriteRenderer puff in _puffs) puff.gameObject.SetActive(!on);
+            foreach (SpriteRenderer particle in _particles) particle.gameObject.SetActive(!on);
+            _hunter.gameObject.SetActive(!on && _theme == 4);
+            _globe.gameObject.SetActive(on);
+            _globeRim.gameObject.SetActive(on);
+            foreach (SpriteRenderer crack in _cracks) crack.gameObject.SetActive(false);
+            if (!on) return;
+            Size(_globe, 3.1f);
+            Size(_globeRim, 3.2f);
+            _globe.color = new Color(0.75f, 0.9f, 1f, 0.28f);
+            _globeRim.color = new Color(1f, 1f, 1f, 0.75f);
+            _globe.transform.position = _globeRim.transform.position = center;
+            var random = new System.Random(7);
+            for (int i = 0; i < _cracks.Count; i++)
+            {
+                float angle = i / (float)_cracks.Count * Mathf.PI * 2f;
+                _cracks[i].transform.position = center + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * 1.05f;
+                _cracks[i].transform.rotation = Quaternion.Euler(0f, 0f, angle * Mathf.Rad2Deg + 90f + (float)random.NextDouble() * 40f);
+                _cracks[i].color = new Color(1f, 1f, 1f, 0.9f);
+                Size(_cracks[i], 0.7f);
+            }
+        }
+
         /// <summary>Cât a înaintat pericolul (0 = departe, 1 = la mijlocul lui Bobo); se mișcă lin spre valoare.</summary>
         public void SetProgress(float progress)
         {
@@ -135,6 +180,7 @@ namespace SugarDrop
         {
             _rescued = true;
             _rescueT = 0f;
+            if (_globeMode && SugarVfx.Instance != null) SugarVfx.Instance.IceShatter(_globeCenter);
         }
 
         /// <summary>Înfrângere: pericolul îl ajunge pe Bobo.</summary>
@@ -150,6 +196,11 @@ namespace SugarDrop
         private void Update()
         {
             float now = Time.time, dt = Time.deltaTime;
+            if (_globeMode)
+            {
+                UpdateGlobe(now, dt);
+                return;
+            }
             if (_rescued)
             {
                 _rescueT += dt;
@@ -163,6 +214,25 @@ namespace SugarDrop
             }
             else _shown = Mathf.Lerp(_shown, _target, 1f - Mathf.Exp(-dt * 3f));
             Apply(_shown, now);
+        }
+
+        /// <summary>Globul: crăpături tot mai multe cu cât Boss-ul e mai rănit; la victorie se sparge și dispare.</summary>
+        private void UpdateGlobe(float now, float dt)
+        {
+            _shown = Mathf.Lerp(_shown, _target, 1f - Mathf.Exp(-dt * 4f));
+            int cracks = Mathf.Clamp(Mathf.FloorToInt(_shown * (_cracks.Count + 0.99f)), 0, _cracks.Count);
+            for (int i = 0; i < _cracks.Count; i++) _cracks[i].gameObject.SetActive(!_rescued && i < cracks);
+            float wobble = 1f + Mathf.Sin(now * 2f) * 0.015f;
+            if (_rescued)
+            {
+                _rescueT += dt;
+                float t = Mathf.Clamp01(_rescueT / 0.35f);
+                wobble = 1f + t * 0.4f;
+                _globe.color = new Color(0.75f, 0.9f, 1f, 0.28f * (1f - t));
+                _globeRim.color = new Color(1f, 1f, 1f, 0.75f * (1f - t));
+            }
+            _globe.transform.localScale = Vector3.one * (3.1f / _globe.sprite.bounds.size.x) * wobble;
+            _globeRim.transform.localScale = Vector3.one * (3.2f / _globeRim.sprite.bounds.size.x) * wobble;
         }
 
         /// <summary>Așază nivelul pericolului: corpul, suprafața ondulată, particulele, spiridușul și sudoarea lui Bobo.</summary>

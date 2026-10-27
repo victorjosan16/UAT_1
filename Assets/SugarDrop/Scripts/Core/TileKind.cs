@@ -21,6 +21,10 @@ namespace SugarDrop
         Chocolate,
         /// <summary>Ghiveci cu floare (Pădurea de Mentă): nu se mișcă; liniile vecine îl „udă” (3 lovituri) până înflorește.</summary>
         Pot,
+        /// <summary>Foc (Aventurile lui Bobo): nu se mișcă, se întinde spre Bobo și se stinge cu apă (bomboane albastre) sau explozii.</summary>
+        Fire,
+        /// <summary>Bobo prins pe loc (nivelurile cu foc): nu se mișcă și nu poate fi lovit.</summary>
+        Hero,
     }
 
     /// <summary>Pragurile pentru piesele speciale (configurabile într-un singur loc).</summary>
@@ -37,6 +41,10 @@ namespace SugarDrop
         public const int MaxIce = 3;
         /// <summary>De câte ori trebuie „udat” un ghiveci până înflorește.</summary>
         public const int PotHits = 3;
+        /// <summary>„Culoarea” lui Bobo când e piesă pe tablă (coboară și iese jos, ca bomboanele-ingredient).</summary>
+        public const int BoboColor = 50;
+        /// <summary>Bomboanele care sunt apă: liniile lor sting focul vecin (afinele albastre).</summary>
+        public const int WaterColor = 1;
 
         /// <summary>Ce piesă specială iese dintr-un grup de mărimea dată (Normal = niciuna).</summary>
         public static TileKind SpecialForGroup(int size, bool horizontal) =>

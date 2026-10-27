@@ -112,7 +112,12 @@ namespace SugarDrop
         /// <summary>Nivelurile cu borcan: bomboanele-ingredient cad în el; restul au pericolul lui Bobo.</summary>
         private static bool NeedsJar(LevelConfig config) => config.Ingredients > 0;
 
-        private float DangerProgress => _config.IsBonus
+        /// <summary>Bobo e chiar pe tablă (coborâre, înghețat, foc): nu mai stă și sub ea.</summary>
+        private bool BoboOnBoard => _config.HasBobo || _config.Type == LevelType.Blaze;
+
+        private float DangerProgress => _config.IsBoss && _boss != null
+            ? 1f - _boss.Health / (float)Mathf.Max(1, _boss.Definition.Health)
+            : _config.IsBonus
             ? 1f - _bonusTime / Mathf.Max(1f, _config.BonusSeconds)
             : 1f - _moves / (float)Mathf.Max(1, _config.Moves);
 
@@ -679,7 +684,9 @@ namespace SugarDrop
                 Streak = StreakSpecials(config) > 0 ? SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak) : "",
             };
             // O singură propoziție: pericolul ținutului (fără borcan) sau ce e special la nivel.
-            info.Scenario = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!")
+            bool boboOnBoard = config.HasBobo || config.Type == LevelType.Blaze;
+            info.Scenario = config.IsBoss ? SugarLoc.T("Vrăjitorul l-a închis pe Bobo într-un glob! Învinge-l!")
+                : boboOnBoard ? IntroText(config.Type)
                 : !NeedsJar(config) && !config.IsBonus ? SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level))))
                 : IntroText(config.Type);
             if (config.PortalIn.Length > 0 && IsNew(PortalBit)) info.Scenario += "\n" + SugarLoc.T("Portalurile duc bomboanele dintr-o coloană în alta!");
@@ -845,20 +852,26 @@ namespace SugarDrop
             mascot.ApplyCostume();
 
             // Sub tablă: borcanul (unde are rost) sau Bobo pe un suport de tort, cu pericolul ținutului care urcă.
+            // Sub tablă: borcanul (ingrediente), nimic (Bobo e chiar pe tablă: îl așteptăm jos), globul (Boss) sau
+            // Bobo pe un suport de tort, cu pericolul ținutului care urcă (nivelurile clasice).
             _jarLevel = NeedsJar(_config);
             playfield.SetJarVisible(_jarLevel);
             mascot.Scared = false;
+            mascot.gameObject.SetActive(!BoboOnBoard);
+            Camera view = Camera.main;
+            float screenBottom = view != null ? view.transform.position.y - view.orthographicSize - 0.5f : -11f;
+            Vector3 stand = playfield.JarCenter + new Vector3(0f, 0.4f, 0f);
             if (_jarLevel)
             {
                 mascot.transform.position = playfield.JarCenter + (Vector3)mascotOffset;
                 _danger.Hide();
             }
+            else if (BoboOnBoard) _danger.Hide();
             else
             {
-                mascot.transform.position = playfield.JarCenter + new Vector3(0f, 0.4f, 0f);
-                Camera view = Camera.main;
-                float screenBottom = view != null ? view.transform.position.y - view.orthographicSize - 0.5f : -11f;
-                _danger.Show(ChapterTheme.IndexOf(chapter), mascot.transform.position + Vector3.down * 0.85f, 2f, board.Width + 0.8f, screenBottom);
+                mascot.transform.position = stand;
+                if (_config.IsBoss) _danger.ShowGlobe(ChapterTheme.IndexOf(chapter), stand + Vector3.down * 0.85f, 2f, board.Width + 0.8f, screenBottom);
+                else _danger.Show(ChapterTheme.IndexOf(chapter), stand + Vector3.down * 0.85f, 2f, board.Width + 0.8f, screenBottom);
             }
 
             candies.Clear();
@@ -1051,7 +1064,8 @@ namespace SugarDrop
         private static int MechanicBit(LevelType type) => type switch
         {
             LevelType.Crates or LevelType.Ice or LevelType.Chains or LevelType.Chocolate or LevelType.Specials
-                or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients => 1 << (int)type,
+                or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients
+                or LevelType.Descent or LevelType.Frozen or LevelType.Blaze => 1 << (int)type,
             _ => 0,
         };
 
@@ -1074,6 +1088,9 @@ namespace SugarDrop
             LevelType.Garden => SugarLoc.T("Udă ghivecele până înfloresc!"),
             LevelType.Defuse => SugarLoc.T("Dezamorsează bombele cu ceas!"),
             LevelType.Bonus => SugarLoc.T("Sugar Rush! Cât mai multe puncte până expiră timpul!"),
+            LevelType.Descent => SugarLoc.T("Ajută-l pe Bobo să coboare până jos!"),
+            LevelType.Frozen => SugarLoc.T("Sparge gheața din jurul lui Bobo, apoi du-l jos!"),
+            LevelType.Blaze => SugarLoc.T("Stinge focul cu bomboane albastre înainte să ajungă la Bobo!"),
             _ => SugarLoc.T("Atinge scorul!"),
         };
 
@@ -1130,13 +1147,13 @@ namespace SugarDrop
             // Fără mutări rămase (sau cu obiectivele îndeplinite) tabla nu mai primește atingeri: altfel, cât timp
             // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
             if (_config.IsBonus) TickBonus(dt);
-            bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired && !_powerRunning;
+            bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired && !board.BoboBurned && !_powerRunning;
             if (input.enabled != canTap) input.enabled = canTap;
             if (_danger.Visible)
             {
                 float danger = DangerProgress;
                 _danger.SetProgress(danger);
-                mascot.Scared = danger > 0.65f;
+                mascot.Scared = danger > 0.65f && !_config.IsBoss;
             }
 
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
@@ -1167,7 +1184,7 @@ namespace SugarDrop
             // Finalul: obiective îndeplinite → victorie; fără mutări (sau tabla blocată) → înfrângere.
             // Așteptăm să se termine animațiile tablei.
             bool complete = _config.IsBonus ? _bonusTime <= 0f || board.Stuck : _goals.IsComplete;
-            bool outOfMoves = !_config.IsBonus && (_moves <= 0 || board.Stuck || board.TimeBombExpired);
+            bool outOfMoves = !_config.IsBonus && (_moves <= 0 || board.Stuck || board.TimeBombExpired || board.BoboBurned);
             if (board.Busy || _powerRunning || (!complete && !outOfMoves))
             {
                 _endTimer = 0f;
@@ -1235,6 +1252,8 @@ namespace SugarDrop
         private void Win()
         {
             if (_danger.Visible) _danger.PlayRescue();
+            // Focul stins: Bobo (care stătea pe tablă) apare dedesubt, teafăr.
+            if (_config.Type == LevelType.Blaze && !mascot.gameObject.activeSelf) BoboLanded(playfield.JarCenter);
             _state = State.Finale;
             input.enabled = false;
             CancelBomb();
@@ -1349,6 +1368,7 @@ namespace SugarDrop
         private void Lose()
         {
             bool exploded = board.TimeBombExpired;
+            bool burned = board.BoboBurned;
             _state = State.Result;
             input.enabled = false;
             CancelBomb();
@@ -1357,14 +1377,15 @@ namespace SugarDrop
             SugarAudio.Buzz(1);
             mascot.SetSad();
             if (_danger.Visible) _danger.PlayCaught();
-            bool canContinue = !_continuedWithAd && !board.Stuck && !exploded;
+            bool canContinue = !_continuedWithAd && !board.Stuck && !exploded && !burned;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
             // Arătăm exact ce a mai lipsit (de ex. 2 ghivece): jucătorul vede cât de aproape a fost.
             var missing = new List<(Sprite, Color, int)>();
             if (_goals != null)
                 foreach (GoalItem item in _goals.Items)
                     if (!item.Done) missing.Add((hud.GoalIcon(item), SugarHud.GoalColor(item), item.Remaining));
-            result.ShowLose(SugarLoc.T(exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap), missing);
+            string reason = burned ? "Focul l-a ajuns pe Bobo!" : exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!";
+            result.ShowLose(SugarLoc.T(reason), () => Go(RetryLevel), onAd, () => Go(LeaveToMap), missing);
         }
 
         private void ContinueWithMoves()
@@ -1627,6 +1648,12 @@ namespace SugarDrop
 
         private void OnTileCleared(int color, TileKind kind, Vector3 position)
         {
+            // Focul stins: aburi și un sfârâit.
+            if (kind == TileKind.Fire)
+            {
+                if (Vfx != null) Vfx.WaterSplash(position);
+                if (Audio != null) Audio.Play(SugarSound.Ice, 0.7f, 1.3f);
+            }
             if (color >= 0)
             {
                 if (Vfx != null) Vfx.TilePopped(color, position);
@@ -1799,11 +1826,33 @@ namespace SugarDrop
         /// <summary>O bomboană a ieșit de pe tablă: devine o bomboană cu fizică ce cade pe pâlnie în borcan.</summary>
         private void OnIngredientExited(Vector3 position, int color)
         {
+            if (color == BlastRules.BoboColor)
+            {
+                BoboLanded(position);
+                return;
+            }
             candies.SpawnFalling(position, color);
             if (Vfx != null) Vfx.SpecialCreated(position);
             if (Audio != null) Audio.Play(SugarSound.Star, 1f, 1.1f);
             SugarAudio.Buzz(1);
             mascot.Cheer(2f);
+        }
+
+        /// <summary>Bobo a ieșit pe jos: sare din tablă, aterizează sub ea și se bucură.</summary>
+        private void BoboLanded(Vector3 exit)
+        {
+            mascot.gameObject.SetActive(true);
+            mascot.transform.position = playfield.JarCenter + new Vector3(Mathf.Clamp(exit.x, -2.5f, 2.5f), 0.4f, 0f);
+            mascot.SetHappy();
+            mascot.Cheer(2f);
+            hud.ShowWord(SugarLoc.T("Bobo e liber!"), Palette.Tile(0));
+            if (Vfx != null)
+            {
+                Vfx.SpecialCreated(exit);
+                Vfx.Confetti(mascot.transform.position + Vector3.up * 1.5f, 4f, 3f);
+            }
+            if (Audio != null) Audio.Play(SugarSound.Win, 0.8f);
+            SugarAudio.Buzz(2);
         }
 
         // ------------------------------------------------------------ Mecanicile ținuturilor

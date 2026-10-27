@@ -509,6 +509,8 @@ namespace SugarDrop
             GoalKind.Specials => SugarSprites.Rocket,
             GoalKind.Flowers => SugarSprites.Flower,
             GoalKind.TimeBombs => SugarSprites.Bomb,
+            GoalKind.Bobo => SugarSprites.BoboToken,
+            GoalKind.Fire => SugarSprites.Flame,
             _ => ProceduralSprites.Star,
         };
 

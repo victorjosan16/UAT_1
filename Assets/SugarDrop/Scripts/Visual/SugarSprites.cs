@@ -827,6 +827,64 @@ namespace SugarDrop
             return c;
         }));
 
+        /// <summary>Bobo ca piesă pe tablă: folie roz cu dungi, glazură, cireașă, ochi și zâmbet.</summary>
+        public static Sprite BoboToken => Get("bobotoken", () => Paint(128, (x, y) => BoboPixel(x, y, false)));
+
+        /// <summary>Bobo speriat (lângă foc): gura „O”, sprâncene ridicate și o picătură de sudoare.</summary>
+        public static Sprite BoboTokenScared => Get("bobotokenscared", () => Paint(128, (x, y) => BoboPixel(x, y, true)));
+
+        private static Color BoboPixel(int x, int y, bool scared)
+        {
+            Vector2 p = new(x, y);
+            // Folia (trapez) jos și glazura (trei bule) sus.
+            float half = Mathf.Lerp(34f, 44f, (y - 8f) / 50f);
+            float cup = Mathf.Max(Mathf.Max(8f - y, y - 60f), Mathf.Abs(x - 64f) - half) - 2f;
+            float dome = Mathf.Min(Mathf.Min(Vector2.Distance(p, new Vector2(64f, 74f)) - 40f, Vector2.Distance(p, new Vector2(38f, 64f)) - 24f),
+                Vector2.Distance(p, new Vector2(90f, 64f)) - 24f);
+            float cherry = Vector2.Distance(p, new Vector2(68f, 114f)) - 11f;
+            float body = Mathf.Min(Mathf.Min(cup, dome), cherry);
+            float a = Alpha(body);
+            if (a <= 0f) return Color.clear;
+            Color c;
+            if (cherry <= 0.5f) c = Over(new Color(0.9f, 0.15f, 0.28f), Color.white, Alpha(Vector2.Distance(p, new Vector2(64f, 118f)) - 3f) * 0.8f);
+            else if (dome <= 0.5f && y > 46f)
+            {
+                c = Color.Lerp(new Color(1f, 0.8f, 0.9f), Color.white, Mathf.Clamp01((y - 46f) / 60f));
+                // Stropi colorați pe glazură.
+                if ((x * 7 + y * 13) % 97 < 3) c = Color.HSVToRGB((x * 0.013f) % 1f, 0.6f, 1f);
+            }
+            else
+            {
+                c = new Color(1f, 0.45f, 0.62f);
+                if (Mathf.Repeat(x - 64f, 14f) < 3f) c = new Color(0.92f, 0.32f, 0.5f);
+            }
+            // Fața, pe folie.
+            Color ink = new(0.3f, 0.1f, 0.2f);
+            for (int e = -1; e <= 1; e += 2)
+            {
+                Vector2 eye = new(64f + e * 17f, 40f);
+                c = Over(c, ink, Alpha(Vector2.Distance(p, eye) - (scared ? 8f : 7f)));
+                c = Over(c, Color.white, Alpha(Vector2.Distance(p, eye + new Vector2(-2f, 3f)) - 2.5f));
+                if (scared) c = Over(c, ink, Alpha(SegmentDistance(p, eye + new Vector2(-7f * e, 16f), eye + new Vector2(6f * e, 12f)) - 2f));
+            }
+            if (scared)
+            {
+                c = Over(c, ink, Alpha(Vector2.Distance(p, new Vector2(64f, 22f)) - 6f));
+                float drop = Mathf.Min(Vector2.Distance(p, new Vector2(100f, 62f)) - 6f,
+                    Mathf.Max(Mathf.Abs(x - 100f) - (74f - y) * 0.45f, Mathf.Max(62f - y, y - 74f)));
+                c = Over(c, new Color(0.55f, 0.85f, 1f), Alpha(drop));
+            }
+            else
+            {
+                float smile = Mathf.Max(Mathf.Abs(Vector2.Distance(p, new Vector2(64f, 32f)) - 11f) - 2.5f, y - 30f);
+                c = Over(c, ink, Alpha(smile));
+            }
+            for (int e = -1; e <= 1; e += 2)
+                c = Over(c, new Color(1f, 0.35f, 0.5f), Alpha(Vector2.Distance(p, new Vector2(64f + e * 30f, 28f)) - 6f) * 0.5f);
+            c.a = a;
+            return c;
+        }
+
         /// <summary>Slime acru: pată verde din câteva bule unite, cu luciu.</summary>
         public static Sprite Slime => Get("slime", () => Paint(128, (x, y) =>
         {

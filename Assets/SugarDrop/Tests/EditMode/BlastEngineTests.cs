@@ -252,7 +252,9 @@ namespace SugarDrop.Tests
                     Assert.IsTrue(engine.CheckIntegrity(out string problem), $"nivel {level}, mutarea {move}: {problem}");
                     Assert.AreEqual(0, engine.DebugMatchCount(), $"nivel {level}: linii rămase nerezolvate");
                     Assert.IsTrue(engine.HasValidMove() || engine.Stuck, $"nivel {level}: tablă blocată nemarcată");
-                    Assert.AreEqual(config.Ingredients, engine.IngredientsExited + engine.IngredientsOnBoard + engine.IngredientsToSpawn,
+                    // Bobo (pe nivelurile lui) e numărat printre piesele care coboară, până iese.
+                    int bobo = config.HasBobo && !engine.BoboEscaped ? 1 : 0;
+                    Assert.AreEqual(config.Ingredients + bobo, engine.IngredientsExited + engine.IngredientsOnBoard + engine.IngredientsToSpawn,
                         $"nivel {level}: bomboane pierdute");
                     foreach (BoardStep step in steps)
                     {

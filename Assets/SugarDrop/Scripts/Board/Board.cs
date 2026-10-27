@@ -74,6 +74,9 @@ namespace SugarDrop
         public float Bottom => _bottomCenter.y;
         public int FrostingLeft => _engine != null ? _engine.FrostingLeft : 0;
         public bool TimeBombExpired => _engine != null && _engine.TimeBombExpired;
+        /// <summary>Focul a ajuns lângă Bobo (nivelurile cu foc): nivelul e pierdut.</summary>
+        public bool BoboBurned => _engine != null && _engine.BoboBurned;
+        public bool BoboEscaped => _engine != null && _engine.BoboEscaped;
         /// <summary>Obstacolele de pe tablă acum (la start: țintele nivelurilor cu obstacole).</summary>
         public ObstacleCounts Obstacles => _engine != null ? _engine.CountObstacles() : default;
 
@@ -172,7 +175,7 @@ namespace SugarDrop
             }
 
             BuildPortals(config);
-            if (config.Ingredients <= 0) return;
+            if (config.Ingredients <= 0 && !config.HasBobo) return;
             for (int x = 0; x < Columns; x++)
             {
                 Vector3 below = CellCenter(new Vector2Int(x, config.ColumnBottom[x])) + Vector3.down * cellSize * 0.62f;

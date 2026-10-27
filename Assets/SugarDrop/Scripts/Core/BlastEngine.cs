@@ -24,7 +24,8 @@ namespace SugarDrop
             public int Hits;
             public int Timer;
 
-            public bool IsBlocker => Kind == TileKind.Crate || Kind == TileKind.Chocolate || Kind == TileKind.Pot;
+            public bool IsBlocker => Kind is TileKind.Crate or TileKind.Chocolate or TileKind.Pot or TileKind.Fire or TileKind.Hero;
+            public bool IsBobo => Kind == TileKind.Ingredient && Color == BlastRules.BoboColor;
             public bool IsIngredient => Kind == TileKind.Ingredient;
             public bool IsSpecial => BlastRules.IsSpecial(Kind);
             public bool Locked => Ice > 0 || Chained;
@@ -47,6 +48,12 @@ namespace SugarDrop
         /// <summary>O bombă cu ceas a ajuns la 0: nivelul e pierdut.</summary>
         public bool TimeBombExpired { get; private set; }
         public int TimeBombsOnBoard { get; private set; }
+        /// <summary>Focul a ajuns lângă Bobo: nivelul e pierdut.</summary>
+        public bool BoboBurned { get; private set; }
+        /// <summary>Bobo a ajuns jos, la ieșire (nivelurile de coborâre).</summary>
+        public bool BoboEscaped { get; private set; }
+        private int _fireTicks;
+        private bool _fireHit;
 
         private readonly Piece[,] _grid;
         private readonly int[,] _frosting;
@@ -131,6 +138,8 @@ namespace SugarDrop
                 IngredientsToSpawn--;
                 IngredientsOnBoard++;
             }
+
+            PlaceBobo(layout);
 
             // Tabla pornește fără linii gata făcute (ca în jocurile clasice).
             BreakMatches();
@@ -313,6 +322,7 @@ namespace SugarDrop
                 if (p.Kind == TileKind.Crate) counts.Crates++;
                 else if (p.Kind == TileKind.Pot) counts.Pots++;
                 else if (p.Kind == TileKind.Chocolate) counts.Chocolate++;
+                else if (p.Kind == TileKind.Fire) counts.Fires++;
                 counts.IceLayers += p.Ice;
                 if (p.Chained) counts.Chains++;
             }
@@ -400,6 +410,12 @@ namespace SugarDrop
                     {
                         Piece n = At(c + d);
                         if (n == null || !touched.Add(c + d)) continue;
+                        // Focul se stinge doar cu apă: o linie albastră lângă foc e foarte valoroasă.
+                        if (n.Kind == TileKind.Fire)
+                        {
+                            if (g.Color == BlastRules.WaterColor) value += 30;
+                            continue;
+                        }
                         if (n.Locked || n.IsBlocker) value += IngredientAbove(c + d) ? 10 : 3;
                     }
                 }
@@ -450,6 +466,7 @@ namespace SugarDrop
             else steps.Add(ResolveMatches(FindMatches(), 0, a, b));
             Settle(steps, true);
             TickTimeBombs(steps);
+            GrowFire(steps);
             return steps;
         }
 
@@ -478,10 +495,13 @@ namespace SugarDrop
             }
 
             int removed = 0;
+            // Liniile de bomboane albastre sunt apă: doar ele sting focul de lângă ele.
+            var water = new HashSet<Vector2Int>();
             foreach (Vector2Int c in matched)
             {
                 Piece p = At(c);
                 if (p == null) continue;
+                if (p.Color == BlastRules.WaterColor) water.Add(c);
                 if (p.Locked) Damage(c, p, step, hit);
                 else
                 {
@@ -497,6 +517,7 @@ namespace SugarDrop
                     if (matched.Contains(n)) continue;
                     Piece neighbour = At(n);
                     if (neighbour == null) continue;
+                    if (neighbour.Kind == TileKind.Fire && !water.Contains(c)) continue;
                     if (neighbour.IsBlocker || neighbour.Locked) Damage(n, neighbour, step, hit);
                     else if (neighbour.Kind == TileKind.Normal && !neighbour.Locked && At(n + Vector2Int.up) is { IsIngredient: true } && hit.Add(n))
                         Remove(n, neighbour, step);
@@ -791,7 +812,7 @@ namespace SugarDrop
         /// <summary>O lovitură într-un obstacol (o singură dată pe acțiune): gheață, lanț, ladă sau ciocolată.</summary>
         private void Damage(Vector2Int c, Piece p, BoardStep step, HashSet<Vector2Int> hitObstacles)
         {
-            if (!hitObstacles.Add(c)) return;
+            if (p.Kind == TileKind.Hero || !hitObstacles.Add(c)) return;
             if (p.Ice > 0)
             {
                 p.Ice--;
@@ -805,6 +826,7 @@ namespace SugarDrop
             else if (p.IsBlocker)
             {
                 if (p.Kind == TileKind.Chocolate) _chocolateHit = true;
+                if (p.Kind == TileKind.Fire) _fireHit = true;
                 p.Hits--;
                 if (p.Hits <= 0)
                 {
@@ -1051,10 +1073,93 @@ namespace SugarDrop
                 _grid[c.x, c.y] = null;
                 step.Exits.Add(Info(p, c));
                 IngredientsOnBoard--;
-                IngredientsExited++;
+                if (p.IsBobo) BoboEscaped = true;
+                else IngredientsExited++;
             }
             return step;
         }
+
+        // ------------------------------------------------------------ Aventurile lui Bobo
+
+        /// <summary>
+        /// Bobo pe tablă: la coborâre pornește sus (într-o coloană fără obstacole), înghețat stă la mijloc într-un bloc
+        /// de gheață; la nivelurile cu foc stă jos, pe loc, iar focul pornește din rândurile de sus.
+        /// </summary>
+        private void PlaceBobo(System.Random layout)
+        {
+            if (Config.HasBobo)
+            {
+                var columns = new List<int>();
+                for (int x = 1; x < Columns - 1; x++)
+                    if (ColumnClear(x)) columns.Add(x);
+                int column = columns.Count > 0 ? columns[layout.Next(columns.Count)] : Columns / 2;
+                int y = Config.Type == LevelType.Frozen
+                    ? Math.Clamp(Rows / 2 + 1, Config.ColumnBottom[column] + 2, Config.ColumnTop[column])
+                    : Config.ColumnTop[column];
+                Piece bobo = At(new Vector2Int(column, y));
+                if (bobo != null)
+                {
+                    Set(bobo, TileKind.Ingredient, BlastRules.BoboColor, 0);
+                    bobo.Ice = Config.BoboIce;
+                    IngredientsOnBoard++;
+                }
+            }
+            if (Config.Fires <= 0) return;
+            int middle = Columns / 2;
+            Piece hero = At(new Vector2Int(middle, Config.ColumnBottom[middle]));
+            if (hero != null) Set(hero, TileKind.Hero, -1, 0);
+            var top = new List<Vector2Int>();
+            foreach (Vector2Int c in ValidCells())
+                if (c.y >= Config.ColumnTop[c.x] - 2 && At(c) is { Kind: TileKind.Normal, Locked: false } && c.y < Config.ColumnTop[c.x]) top.Add(c);
+            Shuffle(top, layout);
+            for (int i = 0; i < Config.Fires && i < top.Count; i++) Set(At(top[i]), TileKind.Fire, -1, 1);
+        }
+
+        /// <summary>
+        /// La fiecare FireEvery mutări focul se întinde peste o bomboană vecină, de preferat spre Bobo — dar nu și în
+        /// mutarea în care a fost stins ceva (lupta cu focul e răsplătită). Dacă ajunge lângă el, Bobo e prins.
+        /// </summary>
+        private void GrowFire(List<BoardStep> steps)
+        {
+            if (Config.Fires <= 0 || BoboBurned) return;
+            bool fought = _fireHit;
+            _fireHit = false;
+            _fireTicks++;
+            if (!fought && _fireTicks % Math.Max(1, Config.FireEvery) == 0)
+            {
+                Vector2Int hero = HeroCell();
+                var options = new List<Vector2Int>();
+                foreach (Vector2Int c in ValidCells())
+                {
+                    if (At(c) is not { Kind: TileKind.Fire }) continue;
+                    foreach (Vector2Int d in FourWay)
+                        if (At(c + d) is { Kind: TileKind.Normal, Locked: false } && !options.Contains(c + d)) options.Add(c + d);
+                }
+                if (options.Count > 0)
+                {
+                    // Cele mai apropiate de Bobo au prioritate; dintre primele două se alege la întâmplare.
+                    options.Sort((a, b) => Manhattan(a, hero).CompareTo(Manhattan(b, hero)));
+                    Vector2Int target = options[_random.Next(Math.Min(2, options.Count))];
+                    Piece p = At(target);
+                    Set(p, TileKind.Fire, -1, 1);
+                    var step = new BoardStep(StepKind.Grow);
+                    step.Changed.Add(Info(p, target));
+                    steps.Add(step);
+                }
+            }
+            Vector2Int h = HeroCell();
+            foreach (Vector2Int d in FourWay)
+                if (At(h + d) is { Kind: TileKind.Fire }) BoboBurned = true;
+        }
+
+        private Vector2Int HeroCell()
+        {
+            foreach (Vector2Int c in ValidCells())
+                if (At(c) is { Kind: TileKind.Hero }) return c;
+            return new Vector2Int(Columns / 2, 0);
+        }
+
+        private static int Manhattan(Vector2Int a, Vector2Int b) => Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y);
 
         /// <summary>Dacă acțiunea n-a lovit nicio ciocolată, ciocolata se întinde peste o bomboană vecină.</summary>
         private void GrowChocolate(List<BoardStep> steps)
