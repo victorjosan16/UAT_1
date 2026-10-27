@@ -9,7 +9,7 @@ namespace SugarDrop
     /// </summary>
     public static class MapLayout
     {
-        public const float BottomPadding = 360f;
+        public const float BottomPadding = 560f; // deasupra butonului „Joacă” și a barei de jos
         public const float TopPadding = 460f;
         public const float Spacing = 235f;
         public const float Amplitude = 250f;

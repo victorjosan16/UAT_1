@@ -7,18 +7,15 @@ using UnityEngine.UI;
 namespace SugarDrop
 {
     /// <summary>
-    /// Dashboard-ul (ecranul principal): vieți (cu cronometru), monede și stele sus; Bobo cu costumul ales, care
-    /// clipește, sare când îl atingi și spune ce te așteaptă; progresul capitolului; butonul „Joacă” (spre harta
-    /// nivelurilor) și 8 plăci: Roata norocului, Cadou, Misiuni, Eveniment, Garderoba lui Bobo, Clasament, Profil,
-    /// Setări. Fundalul are cerul capitolului și o ploaie de bomboane.
+    /// Ecranul principal Drop Quest: vieți (cu cronometru), monede și stele sus; logo-ul; Bobo cu costumul ales,
+    /// care clipește, sare când îl atingi și spune ce te așteaptă; progresul capitolului; butonul mare „Joacă”
+    /// (spre harta nivelurilor) și bara de lemn de jos: Profil, Bobo (garderoba), Evenimente (roata, cadoul,
+    /// misiunile, weekendul), Clasament, Setări. Fundalul are cerul capitolului și o ploaie de piese.
     /// </summary>
     public class MainMenu : MonoBehaviour
     {
         public event Action PlayClicked;
-        public event Action WheelClicked;
-        public event Action GiftClicked;
-        public event Action MissionsClicked;
-        public event Action EventClicked;
+        public event Action EventsClicked;
         public event Action WardrobeClicked;
         public event Action LeaderboardClicked;
         public event Action ProfileClicked;
@@ -27,19 +24,11 @@ namespace SugarDrop
         private const int FloaterCount = 16;
         private const float RainTop = 1150f;
         private const float RainBottom = -1150f;
-        private const float BoboY = 300f;
-        private const float PlayY = -150f;
+        private const float BoboY = 290f;
+        private const float PlayY = -250f;
+        private const int NavEvents = 2;
 
         private static readonly string[] TapLines = { "Hihi, gâdilă!", "Hai să jucăm!", "Ești cel mai tare!", "Bomboane, bomboane!", "Încă un nivel?" };
-
-        private class DashTile
-        {
-            public RectTransform Rect;
-            public UiLabel Caption;
-            public UiLabel Sub;
-            public GameObject Badge;
-            public string Key;
-        }
 
         private GameObject _root;
         private Image _background;
@@ -55,8 +44,7 @@ namespace SugarDrop
         private BoboView _bobo;
         private RectTransform _bubble;
         private UiLabel _bubbleText;
-        private DashTile _wheel, _gift, _missions, _event, _wardrobe, _ranking, _profile, _settings;
-        private readonly List<DashTile> _tiles = new();
+        private QuestNav _nav;
         private UIParticleController _bursts;
 
         private RectTransform[] _floaters;
@@ -107,7 +95,7 @@ namespace SugarDrop
             BuildBubble(theme);
             BuildChapterCard(theme);
             BuildPlayButton(theme);
-            BuildTiles(theme);
+            BuildNav(theme);
 
             _root.SetActive(false);
         }
@@ -190,8 +178,9 @@ namespace SugarDrop
         /// <summary>Capitolul curent: numele ținutului și câte stele ai strâns în el (din 30).</summary>
         private void BuildChapterCard(UiTheme theme)
         {
-            Image card = UiFactory.CreatePanel("ChapterCard", _root.transform, new Color(1f, 1f, 1f, 0.7f));
-            var rect = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(780f, 120f));
+            RectTransform card = SugarUi.Card("ChapterCard", _root.transform, out Image face);
+            UiFactory.Place(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(780f, 128f));
+            var rect = (RectTransform)face.transform;
             _chapter = UiFactory.CreateText("Chapter", rect, "", 32, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Place(_chapter.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(760f, 50f));
             _chapterBar = UiFactory.CreateProgressBar("Progress", rect, theme.AccentColor);
@@ -224,52 +213,23 @@ namespace SugarDrop
             _playLabel.transform.SetAsLastSibling();
         }
 
-        private void BuildTiles(UiTheme theme)
+        /// <summary>Bara de lemn de jos (fiecare buton deschide o fereastră care există deja).</summary>
+        private void BuildNav(UiTheme theme)
         {
-            _wheel = AddTile("Wheel", SugarSprites.Wheel(8), Color.white, Palette.Tile(3), 0, "Roata", () => WheelClicked?.Invoke(), true);
-            _gift = AddTile("Gift", SugarSprites.Gift, Color.white, Palette.Tile(0), 1, "Cadou", () => GiftClicked?.Invoke(), true);
-            _missions = AddTile("Missions", SugarSprites.Checklist, Color.white, Palette.Tile(1), 2, "Misiuni", () => MissionsClicked?.Invoke(), true);
-            _event = AddTile("Event", ProceduralSprites.Star, Color.white, Palette.Tile(4), 3, "Eveniment", () => EventClicked?.Invoke(), false);
-            _wardrobe = AddTile("Wardrobe", SugarSprites.CostumeSprite(Costume.PartyHat), Color.white, Palette.Tile(2), 4, "Bobo", () => WardrobeClicked?.Invoke(), false);
-            _ranking = AddTile("Leaderboard", SugarSprites.Trophy, theme.AccentColor, theme.PanelColor, 5, "Clasament", () => LeaderboardClicked?.Invoke(), false);
-            _profile = AddTile("Profile", SugarSprites.Person, Color.white, Color.Lerp(Palette.Tile(1), Palette.Tile(4), 0.5f), 6, "Profil", () => ProfileClicked?.Invoke(), false);
-            _settings = AddTile("Settings", SugarSprites.Gear, Color.white, theme.PanelColor, 7, "Setări", () => SettingsClicked?.Invoke(), false);
-        }
-
-        private DashTile AddTile(string name, Sprite icon, Color iconColor, Color color, int index, string captionKey, Action onClick, bool badge)
-        {
-            int row = index / 4, column = index % 4;
-            Vector2 position = new((column - 1.5f) * 240f, -390f - row * 230f);
-            Button button = SugarUi.Button(name, _root.transform, "", color, () =>
-            {
-                SugarUi.Click();
-                onClick();
-            }, 28);
-            var rect = UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, new Vector2(225f, 205f));
-            Transform face = button.transform.Find("Face");
-            Image image = UiFactory.CreateImage("Icon", face, icon, iconColor);
-            UiFactory.Place(image.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(100f, 100f));
-            var tile = new DashTile { Rect = rect, Key = captionKey };
-            tile.Caption = SugarUi.Outlined("Caption", face, "", 30, Color.white, 3f);
-            UiFactory.Place(tile.Caption.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(215f, 44f));
-            tile.Sub = UiFactory.CreateText("Sub", face, "", 22, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.9f));
-            UiFactory.Place(tile.Sub.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(215f, 30f));
-            if (badge)
-            {
-                Image dot = UiFactory.CreateImage("Badge", button.transform, SugarSprites.Circle, UiRoot.Theme.NegativeColor);
-                UiFactory.Place(dot.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-14f, -14f), new Vector2(40f, 40f));
-                dot.gameObject.SetActive(false);
-                tile.Badge = dot.gameObject;
-            }
-            _tiles.Add(tile);
-            return tile;
+            // Fundalul depășește ecranul cu 300 px; bara stă pe marginea de jos a ecranului.
+            _nav = new QuestNav(_root.transform, 300f, -1,
+                ("Profil", SugarSprites.Person, Color.Lerp(Palette.Tile(1), Palette.Tile(4), 0.5f), () => ProfileClicked?.Invoke()),
+                ("Bobo", SugarSprites.CostumeSprite(Costume.PartyHat), Palette.Tile(2), () => WardrobeClicked?.Invoke()),
+                ("Evenimente", SugarSprites.Gift, Palette.Tile(0), () => EventsClicked?.Invoke()),
+                ("Clasament", SugarSprites.Trophy, QuestStyle.GoldDeep, () => LeaderboardClicked?.Invoke()),
+                ("Setări", SugarSprites.Gear, QuestStyle.Blue, () => SettingsClicked?.Invoke()));
         }
 
         // ------------------------------------------------------------ Afișare
 
         public void Show()
         {
-            foreach (DashTile tile in _tiles) tile.Caption.Text = SugarLoc.T(tile.Key);
+            _nav.Translate();
             RefreshCounters();
             _bobo.SetCostume(CostumeRules.Current);
             _line = 0;
@@ -306,28 +266,7 @@ namespace SugarDrop
             _chapterStars.Text = chapterStars + "/30";
             _playLabel.Text = SugarLoc.T("JOACĂ") + "\n<size=32>" + SugarLoc.F("NIVELUL {0}", level) + "</size>";
 
-            int freeSpins = SugarWheel.FreeSpinsLeft;
-            _wheel.Badge.SetActive(freeSpins > 0);
-            _wheel.Sub.Text = freeSpins > 0 ? SugarLoc.T("GRATIS") : SugarWheel.AdSpinsLeft > 0 ? SugarLoc.T("cu reclamă") : "";
-            _gift.Badge.SetActive(SugarDaily.GiftAvailable);
-            _gift.Sub.Text = SugarDaily.GiftAvailable ? SugarLoc.F("Ziua {0} din 7", SugarDaily.GiftStreakDay) : "";
-            _missions.Badge.SetActive(SugarDaily.AnyClaimable);
-            _missions.Sub.Text = MissionsDone() + "/" + DailyRules.MissionsPerDay;
-            bool weekend = SugarEvents.WeekendNow;
-            _event.Sub.Text = Countdown(SugarEvents.Countdown(DateTime.Now));
-            _event.Caption.Text = SugarLoc.T(weekend ? "Weekend dulce" : "Eveniment");
-            _wardrobe.Sub.Text = SugarLoc.T(CostumeRules.NameKey(CostumeRules.Current));
-            _ranking.Sub.Text = SugarSave.TotalScore.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture).Replace(',', '.');
-            _profile.Sub.Text = data.nickname;
-            _settings.Sub.Text = SugarLoc.NativeName(SugarLoc.Current);
-        }
-
-        private static int MissionsDone()
-        {
-            int done = 0;
-            for (int i = 0; i < DailyRules.MissionsPerDay; i++)
-                if (SugarDaily.Claimed(i) || SugarDaily.CanClaim(i)) done++;
-            return done;
+            _nav.SetBadge(NavEvents, EventsPanel.AnythingNew);
         }
 
         /// <summary>„1z 5h” sau „5h 12m” (cât mai e până la începutul/sfârșitul weekendului).</summary>
@@ -430,10 +369,8 @@ namespace SugarDrop
             _bubble.localScale = Vector3.one * UiEase.OutBack(_bubblePop, 2.2f);
 
             _shine.anchoredPosition = new Vector2(Mathf.Lerp(-600f, 600f, Mathf.Repeat(time / 2.6f, 1f) * 1.6f - 0.3f), 0f);
-            // Roata de pe placă se învârte încet, ca să atragă atenția când e gratis.
-            if (_wheel.Badge.activeSelf) _wheel.Rect.Find("Face/Icon").localRotation = Quaternion.Euler(0f, 0f, -time * 40f);
 
-            // Intrarea: logo-ul cade de sus, butonul urcă, plăcile apar pe rând.
+            // Intrarea: logo-ul cade de sus, butonul urcă, butoanele de jos apar pe rând.
             float pulse = 1f + Mathf.Sin(time * 3.2f) * 0.035f;
             if (_enterT >= 0f)
             {
@@ -442,10 +379,10 @@ namespace SugarDrop
                 float playT = Mathf.Clamp01((_enterT - 0.25f) / 0.5f);
                 _logo.RectTransform.anchoredPosition = new Vector2(0f, 700f + (1f - UiEase.OutBack(logoT, 2f)) * 600f);
                 _playRect.anchoredPosition = new Vector2(0f, PlayY - (1f - UiEase.OutBack(playT, 1.6f)) * 500f);
-                for (int i = 0; i < _tiles.Count; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     float t = Mathf.Clamp01((_enterT - 0.35f - i * 0.05f) / 0.35f);
-                    _tiles[i].Rect.localScale = Vector3.one * UiEase.OutBack(t, 2f);
+                    _nav.ButtonAt(i).localScale = Vector3.one * UiEase.OutBack(t, 2f);
                 }
                 if (_enterT > 1.2f) _enterT = -1f;
             }

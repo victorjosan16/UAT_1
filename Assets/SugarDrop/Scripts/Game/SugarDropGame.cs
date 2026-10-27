@@ -36,6 +36,7 @@ namespace SugarDrop
         [SerializeField] private TutorialCoach coach;
         [SerializeField] private WheelPanel wheel;
         [SerializeField] private WardrobePanel wardrobe;
+        [SerializeField] private EventsPanel eventsPanel;
         [SerializeField] private SettingsPanel settings;
         [SerializeField] private StoryPanel story;
         [SerializeField] private LevelStartPanel levelStart;
@@ -214,15 +215,13 @@ namespace SugarDrop
             map.LevelClicked += TryPlayLevel;
             map.SettingsClicked += ShowMapSettings;
             map.LeaderboardClicked += ShowLeaderboard;
-            map.GiftClicked += ShowGift;
-            map.MissionsClicked += ShowMissions;
+            map.HomeClicked += GoHome;
+            map.EventsClicked += ShowEvents;
+            map.WardrobeClicked += ShowWardrobe;
             menu.PlayClicked += OpenMapAnimated;
-            menu.GiftClicked += ShowGift;
-            menu.MissionsClicked += ShowMissions;
+            menu.EventsClicked += ShowEvents;
             menu.LeaderboardClicked += ShowLeaderboard;
             menu.SettingsClicked += ShowMapSettings;
-            menu.WheelClicked += ShowWheel;
-            menu.EventClicked += ShowEvent;
             menu.WardrobeClicked += ShowWardrobe;
             menu.ProfileClicked += ShowProfile;
             wheel.PrizeWon += OnWheelPrize;
@@ -261,15 +260,13 @@ namespace SugarDrop
             map.LevelClicked -= TryPlayLevel;
             map.SettingsClicked -= ShowMapSettings;
             map.LeaderboardClicked -= ShowLeaderboard;
-            map.GiftClicked -= ShowGift;
-            map.MissionsClicked -= ShowMissions;
+            map.HomeClicked -= GoHome;
+            map.EventsClicked -= ShowEvents;
+            map.WardrobeClicked -= ShowWardrobe;
             menu.PlayClicked -= OpenMapAnimated;
-            menu.GiftClicked -= ShowGift;
-            menu.MissionsClicked -= ShowMissions;
+            menu.EventsClicked -= ShowEvents;
             menu.LeaderboardClicked -= ShowLeaderboard;
             menu.SettingsClicked -= ShowMapSettings;
-            menu.WheelClicked -= ShowWheel;
-            menu.EventClicked -= ShowEvent;
             menu.WardrobeClicked -= ShowWardrobe;
             menu.ProfileClicked -= ShowProfile;
             wheel.PrizeWon -= OnWheelPrize;
@@ -645,7 +642,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen || story.IsOpen || levelStart.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || eventsPanel.IsOpen || settings.IsOpen || story.IsOpen || levelStart.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -783,6 +780,20 @@ namespace SugarDrop
         {
             RefreshBoosters();
             RefreshHome();
+        }
+
+        /// <summary>De pe hartă înapoi la ecranul principal (la fel ca butonul Înapoi al telefonului).</summary>
+        private void GoHome()
+        {
+            if (_state != State.Map || dialog.IsOpen) return;
+            Go(OpenMenu);
+        }
+
+        /// <summary>Fereastra cu toate evenimentele (fiecare rând deschide fereastra lui).</summary>
+        private void ShowEvents()
+        {
+            if (!OnHomeScreen || dialog.IsOpen) return;
+            eventsPanel.Show(new EventsHost { Wheel = ShowWheel, Gift = ShowGift, Missions = ShowMissions, Weekend = ShowEvent });
         }
 
         private void ShowWardrobe()
@@ -1242,6 +1253,11 @@ namespace SugarDrop
             if (wardrobe.IsOpen)
             {
                 wardrobe.Hide();
+                return;
+            }
+            if (eventsPanel.IsOpen)
+            {
+                eventsPanel.Hide();
                 return;
             }
             if (story.IsOpen)

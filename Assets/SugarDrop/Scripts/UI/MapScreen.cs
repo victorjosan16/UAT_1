@@ -12,7 +12,8 @@ namespace SugarDrop
     /// lucioase. Nivelurile trecute au culoarea aromei și stele, cel curent e auriu, plutește și are un halou,
     /// cele viitoare sunt estompate și încuiate. Harta se derulează cu degetul, se centrează singură pe nivelul
     /// curent, iar după o victorie drumul se aprinde până la nivelul nou, care se deblochează animat.
-    /// Straturile de fundal se mișcă mai încet decât drumul (paralaxă). Sus: vieți, monede, setări; jos: „Joacă”.
+    /// Straturile de fundal se mișcă mai încet decât drumul (paralaxă). Sus: vieți, monede, setări, clasament; jos: „Joacă” și bara de lemn
+    /// (acasă, harta, evenimente, Bobo).
     /// </summary>
     public class MapScreen : MonoBehaviour
     {
@@ -23,8 +24,9 @@ namespace SugarDrop
         public event Action PlayClicked;
         public event Action SettingsClicked;
         public event Action LeaderboardClicked;
-        public event Action GiftClicked;
-        public event Action MissionsClicked;
+        public event Action HomeClicked;
+        public event Action EventsClicked;
+        public event Action WardrobeClicked;
         /// <summary>Un nivel deblocat a fost atins (pentru rejucare sau pentru nivelul curent).</summary>
         public event Action<int> LevelClicked;
 
@@ -81,7 +83,8 @@ namespace SugarDrop
         private RectTransform _marker;
         private RectTransform _playGlow;
         private UiLabel _lives, _lifeTimer, _coins, _playLabel;
-        private GameObject _giftBadge, _missionsBadge;
+        private QuestNav _nav;
+        private const int NavEvents = 2;
 
         private readonly List<NodeView> _nodes = new();
         private readonly List<Image> _dots = new();
@@ -130,6 +133,7 @@ namespace SugarDrop
 
             BuildTopBar(theme);
             BuildPlayButton(theme);
+            BuildNav();
             BuildNewLandBanner(theme);
 
             _scroller.SetParallaxLayers(new[] { _farLayer, _midLayer }, new[] { 0.25f, 0.6f });
@@ -244,23 +248,16 @@ namespace SugarDrop
             }, 0.62f);
             UiFactory.Place((RectTransform)leaderboard.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -160f), new Vector2(108f, 108f));
 
-            // Stânga, sub vieți: cadoul zilnic și misiunile (cu un punct roșu când e ceva de revendicat).
-            _giftBadge = SideButton("Gift", bar, SugarSprites.Gift, Palette.Tile(0), new Vector2(24f, -160f), () => GiftClicked?.Invoke());
-            _missionsBadge = SideButton("Missions", bar, SugarSprites.Checklist, Palette.Tile(1), new Vector2(24f, -292f), () => MissionsClicked?.Invoke());
         }
 
-        private static GameObject SideButton(string name, RectTransform bar, Sprite icon, Color color, Vector2 position, Action onClick)
+        /// <summary>Bara de lemn de jos: acasă, harta (ecranul deschis), evenimentele și garderoba lui Bobo.</summary>
+        private void BuildNav()
         {
-            Button button = SugarUi.IconButton(name, bar, icon, color, () =>
-            {
-                SugarUi.Click();
-                onClick();
-            }, 0.6f);
-            UiFactory.Place((RectTransform)button.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), position, new Vector2(108f, 108f));
-            Image badge = UiFactory.CreateImage("Badge", button.transform, SugarSprites.Circle, UiRoot.Theme.NegativeColor);
-            UiFactory.Place(badge.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-14f, -14f), new Vector2(34f, 34f));
-            badge.gameObject.SetActive(false);
-            return badge.gameObject;
+            _nav = new QuestNav(_content, 0f, 1,
+                ("Acasă", SugarSprites.Home, QuestStyle.Blue, () => HomeClicked?.Invoke()),
+                ("Harta", SugarSprites.MapPin, QuestStyle.Green, null),
+                ("Evenimente", SugarSprites.Gift, Palette.Tile(0), () => EventsClicked?.Invoke()),
+                ("Bobo", SugarSprites.CostumeSprite(Costume.PartyHat), Palette.Tile(2), () => WardrobeClicked?.Invoke()));
         }
 
         private static RectTransform Pill(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size, UiTheme theme)
@@ -275,13 +272,13 @@ namespace SugarDrop
         {
             Image glow = UiFactory.CreateImage("PlayGlow", _content, SugarSprites.SoftDot, new Color(1f, 1f, 0.85f, 0.55f));
             glow.preserveAspect = false;
-            _playGlow = UiFactory.Place(glow.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 165f), new Vector2(860f, 320f));
+            _playGlow = UiFactory.Place(glow.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, QuestNav.Height + 150f), new Vector2(860f, 320f));
             Button play = SugarUi.Button("Play", _content, "", theme.PositiveColor, () =>
             {
                 SugarUi.Click();
                 PlayClicked?.Invoke();
             }, 54);
-            UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 80f), new Vector2(660f, 170f));
+            UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, QuestNav.Height + 66f), new Vector2(660f, 170f));
             _playLabel = UiFactory.GetButtonLabel(play);
         }
 
@@ -609,8 +606,8 @@ namespace SugarDrop
             }
             foreach ((int labelChapter, UiLabel label) in _chapterLabels) SetChapterText(labelChapter, label);
             _coins.Text = data.coins.ToString();
-            _giftBadge.SetActive(SugarDaily.GiftAvailable);
-            _missionsBadge.SetActive(SugarDaily.AnyClaimable);
+            _nav.SetBadge(NavEvents, EventsPanel.AnythingNew);
+            _nav.Translate();
             _playLabel.Text = SugarLoc.T("JOACĂ") + "  ·  " + SugarLoc.F("NIVELUL {0}", Mathf.Max(1, data.level));
             RefreshLives();
         }

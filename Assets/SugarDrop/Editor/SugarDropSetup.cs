@@ -185,6 +185,7 @@ namespace SugarDrop.EditorTools
             public TutorialCoach Coach;
             public WheelPanel Wheel;
             public WardrobePanel Wardrobe;
+            public EventsPanel Events;
             public SettingsPanel Settings;
             public StoryPanel Story;
             public LevelStartPanel LevelStart;
@@ -228,6 +229,7 @@ namespace SugarDrop.EditorTools
             Set(game, "coach", ui.Coach);
             Set(game, "wheel", ui.Wheel);
             Set(game, "wardrobe", ui.Wardrobe);
+            Set(game, "eventsPanel", ui.Events);
             Set(game, "settings", ui.Settings);
             Set(game, "story", ui.Story);
             Set(game, "levelStart", ui.LevelStart);
@@ -263,6 +265,7 @@ namespace SugarDrop.EditorTools
                 Leaderboard = UiComponent<LeaderboardPanel>(canvasGo.transform, "Leaderboard"),
                 Wheel = UiComponent<WheelPanel>(canvasGo.transform, "Wheel"),
                 Wardrobe = UiComponent<WardrobePanel>(canvasGo.transform, "Wardrobe"),
+                Events = UiComponent<EventsPanel>(canvasGo.transform, "Events"),
                 Settings = UiComponent<SettingsPanel>(canvasGo.transform, "Settings"),
                 LevelStart = UiComponent<LevelStartPanel>(canvasGo.transform, "LevelStart"),
                 Story = UiComponent<StoryPanel>(canvasGo.transform, "Story"),
