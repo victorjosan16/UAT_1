@@ -19,7 +19,7 @@ namespace SugarDrop
             "piece0", "piece1", "piece2", "piece3", "piece4", "pearl",
             "sky0", "sky1", "sky2", "sky3", "sky4", "sky5", "sky6", "sky7", "sky8", "sky9", "bggradient",
             "crate", "chocolate", "ice", "chain", "pot", "flame", "bomb", "rocket", "rainbow",
-            "bobotoken", "bobotokenscared", "boss0", "boss1", "boss2", "boss3", "boss4", "boss5", "boss6",
+            "bobo", "bobohappy", "boboscared", "bobotoken", "bobotokenscared", "boss0", "boss1", "boss2", "boss3", "boss4", "boss5", "boss6",
             "gift", "trophy", "lifeheart", "flower", "portal", "logo",
         };
 

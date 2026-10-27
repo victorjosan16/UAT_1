@@ -202,6 +202,11 @@ namespace SugarDrop
             Image shadow = UiFactory.CreateImage("Shadow", _marker, SugarSprites.SoftDot, QuestStyle.Shadow);
             UiFactory.Place(shadow.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 4f), new Vector2(90f, 26f));
             shadow.preserveAspect = false;
+            if (BoboArt.Available)
+            {
+                BoboArt.AddTo(_marker, 150f, new Vector2(0f, -4f));
+                return;
+            }
             Image cup = UiFactory.CreateImage("Cup", _marker, SugarSprites.CupWrapper, Color.white);
             UiFactory.Place(cup.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 0f), new Vector2(96f, 96f));
             Image frosting = UiFactory.CreateImage("Frosting", _marker, SugarSprites.Frosting, Color.white);

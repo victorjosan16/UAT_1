@@ -46,8 +46,11 @@ Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de
 ## Personaje (256×256)
 | Fișier | Descriere |
 |---|---|
-| `bobotoken.png` | Bobo, mascota: cupcake roz cu cireașă, ochi mari, zâmbet (pe tablă) |
-| `bobotokenscared.png` | Același Bobo, speriat: gura „O”, o picătură de sudoare |
+| `bobo.png` | Bobo în picioare, liniștit: blănos alb, urechi și moț ca niște frunze albastre, eșarfă albastră cu stea aurie (pătrat, picioarele la ~4% de jos) |
+| `bobohappy.png` | Același Bobo, bucuros (ochi închiși de râs, o mână sus) |
+| `boboscared.png` | Același Bobo, surprins / speriat (gura „O”) |
+| `bobotoken.png` | Capul lui Bobo, zâmbind (piesa de pe tablă, butonul Puterea lui Bobo) |
+| `bobotokenscared.png` | Capul lui Bobo, speriat (nivelurile cu foc) |
 | `boss0.png` … `boss6.png` | Fețele boșilor: 0 Regele Noroiului, 1 Regina Gheții, 2 Dragonul de Foc, 3 Monstrul Mlaștinii, 4 Împăratul Furtunii, 5 Regina Spinilor, 6 Titanul de Piatră. Prieten-amenințători, nu înfricoșători. |
 
 ## Iconițe (256×256)

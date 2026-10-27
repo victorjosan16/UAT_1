@@ -106,9 +106,14 @@ namespace SugarDrop
             return text;
         }
 
-        /// <summary>Bobo mic (cupcake cu cireașă), ca în meniul principal.</summary>
+        /// <summary>Bobo mic, ca în meniul principal (imaginea pictată sau, fără ea, cupcake-ul desenat).</summary>
         private static void BuildBobo(RectTransform parent)
         {
+            if (BoboArt.Available)
+            {
+                BoboArt.AddTo(parent, 270f, new Vector2(0f, 0f));
+                return;
+            }
             Image cup = UiFactory.CreateImage("Cup", parent, SugarSprites.CupWrapper, Color.white);
             UiFactory.Place(cup.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -55f), new Vector2(170f, 170f));
             Image frosting = UiFactory.CreateImage("Frosting", parent, SugarSprites.Frosting, Color.white);

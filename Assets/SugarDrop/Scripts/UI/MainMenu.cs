@@ -58,6 +58,7 @@ namespace SugarDrop
         private float _bubblePop;
         private int _tapLine;
         private float _refresh;
+        private float _happyUntil;
 
         public bool IsOpen => _root.activeSelf;
 
@@ -296,6 +297,8 @@ namespace SugarDrop
 
         private void PokeBobo()
         {
+            _bobo.SetPose(1);
+            _happyUntil = Time.unscaledTime + 1.2f;
             _jumpVelocity = 1400f;
             _blinkT = 0f;
             Say(SugarLoc.T(TapLines[_tapLine++ % TapLines.Length]));
@@ -359,6 +362,11 @@ namespace SugarDrop
                 }
             }
             foreach (RectTransform eye in _bobo.Eyes) eye.localScale = new Vector3(1f, eyeY, 1f);
+            if (_happyUntil > 0f && time >= _happyUntil)
+            {
+                _happyUntil = 0f;
+                _bobo.SetPose(0);
+            }
 
             if (time >= _nextLine)
             {

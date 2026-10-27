@@ -78,7 +78,7 @@ namespace SugarDrop
             var rect = UiFactory.Place((RectTransform)slot.Back.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(185f, 225f));
             slot.Back.raycastTarget = true;
             Sprite sprite = SugarSprites.CostumeSprite(costume);
-            Image icon = UiFactory.CreateImage("Icon", rect, sprite != null ? sprite : SugarSprites.Frosting, sprite != null ? Color.white : new Color(1f, 1f, 1f, 0.6f));
+            Image icon = UiFactory.CreateImage("Icon", rect, sprite != null ? sprite : SugarSprites.BoboToken, sprite != null ? Color.white : new Color(1f, 1f, 1f, 0.75f));
             UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), new Vector2(140f, 140f));
             slot.Caption = UiFactory.CreateText("Caption", rect, "", 26, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Place(slot.Caption.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(175f, 66f));

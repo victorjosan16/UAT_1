@@ -42,17 +42,8 @@ namespace SugarDrop
 
             _bobo = UiFactory.CreateRect("Bobo", _card);
             UiFactory.Place(_bobo, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(95f, 0f), new Vector2(150f, 150f));
-            Image cup = UiFactory.CreateImage("Cup", _bobo, SugarSprites.CupWrapper, Color.white);
-            UiFactory.Place(cup.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -28f), new Vector2(110f, 110f));
-            Image frosting = UiFactory.CreateImage("Frosting", _bobo, SugarSprites.Frosting, Color.white);
-            UiFactory.Place(frosting.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 14f), new Vector2(118f, 118f));
-            Image smile = UiFactory.CreateImage("Smile", _bobo, SugarSprites.Smile, new Color(0.35f, 0.12f, 0.22f));
-            UiFactory.Place(smile.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(36f, 36f));
-            for (int e = -1; e <= 1; e += 2)
-            {
-                Image eye = UiFactory.CreateImage("Eye", _bobo, SugarSprites.Circle, new Color(0.25f, 0.12f, 0.2f));
-                UiFactory.Place(eye.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(e * 20f, -18f), new Vector2(14f, 14f));
-            }
+            if (BoboArt.Available) BoboArt.AddTo(_bobo, 170f, new Vector2(0f, -10f));
+            else BuildDrawnBobo();
 
             _text = UiFactory.CreateText("Text", _card, "", 40, TextAnchor.MiddleLeft, theme.TextDarkColor);
             _text.RectTransform.anchorMin = new Vector2(0f, 0f);
@@ -78,6 +69,22 @@ namespace SugarDrop
             outline.effectDistance = new Vector2(3f, -3f);
 
             Hide();
+        }
+
+        /// <summary>Bobo desenat din cod (când lipsesc imaginile pictate).</summary>
+        private void BuildDrawnBobo()
+        {
+            Image cup = UiFactory.CreateImage("Cup", _bobo, SugarSprites.CupWrapper, Color.white);
+            UiFactory.Place(cup.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -28f), new Vector2(110f, 110f));
+            Image frosting = UiFactory.CreateImage("Frosting", _bobo, SugarSprites.Frosting, Color.white);
+            UiFactory.Place(frosting.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 14f), new Vector2(118f, 118f));
+            Image smile = UiFactory.CreateImage("Smile", _bobo, SugarSprites.Smile, new Color(0.35f, 0.12f, 0.22f));
+            UiFactory.Place(smile.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(36f, 36f));
+            for (int e = -1; e <= 1; e += 2)
+            {
+                Image eye = UiFactory.CreateImage("Eye", _bobo, SugarSprites.Circle, new Color(0.25f, 0.12f, 0.2f));
+                UiFactory.Place(eye.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(e * 20f, -18f), new Vector2(14f, 14f));
+            }
         }
 
         /// <summary>Pas de joc: cardul jos, în dreapta ajutoarelor (peste borcan), ca tabla să rămână vizibilă și liberă.</summary>

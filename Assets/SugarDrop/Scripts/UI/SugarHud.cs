@@ -392,10 +392,8 @@ namespace SugarDrop
             _powerFill.fillClockwise = true;
             Image face = UiFactory.CreateImage("Face", _power, theme.Circle, Color.white);
             UiFactory.Place(face.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * 112f);
-            Image frosting = UiFactory.CreateImage("Bobo", face.transform, SugarSprites.Frosting, Color.white);
-            UiFactory.Place(frosting.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -4f), Vector2.one * 92f);
-            Image cherry = UiFactory.CreateImage("Cherry", face.transform, SugarSprites.Circle, new Color(0.93f, 0.2f, 0.32f));
-            UiFactory.Place(cherry.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(3f, 34f), Vector2.one * 26f);
+            Image bobo = UiFactory.CreateImage("Bobo", face.transform, SugarSprites.BoboToken, Color.white);
+            UiFactory.Place(bobo.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * 100f);
             var button = _power.gameObject.AddComponent<Button>();
             button.targetGraphic = back;
             button.transition = Selectable.Transition.None;

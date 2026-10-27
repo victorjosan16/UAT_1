@@ -3,9 +3,9 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>
-    /// „Bobo”, cupcake-ul care stă lângă borcan. Respiră, clipește, se uită spre ultima explozie,
-    /// sare de bucurie la combo-uri, dansează la victorie și se întristează la înfrângere.
-    /// Construit din sprite-uri procedurale (folie, glazură, cireașă, ochi, gură).
+    /// „Bobo”, care stă sub tablă. Respiră, sare de bucurie la combo-uri, dansează la victorie, se sperie de pericol
+    /// și se întristează la înfrângere. Cu imaginile pictate (BoboArt) își schimbă ipostaza (liniștit, bucuros,
+    /// speriat); fără ele e desenul din cod (folie, glazură, cireașă, ochi care clipesc și urmăresc exploziile, gură).
     /// </summary>
     public class Mascot : MonoBehaviour
     {
@@ -20,6 +20,7 @@ namespace SugarDrop
         private Transform _cherry;
         private SpriteRenderer _costume;
         private Vector3 _costumeHead, _costumeEyes;
+        private SpriteRenderer _art;
         private Mood _mood;
         private float _jumpT = -1f;
         private float _jumpHeight;
@@ -37,6 +38,18 @@ namespace SugarDrop
             _body.SetParent(transform, false);
 
             Part("Shadow", SugarSprites.SoftDot, new Vector3(0f, -0.5f * size, 0f), new Vector2(1.2f, 0.3f) * size, new Color(0.3f, 0.1f, 0.25f, 0.25f), 1, transform);
+            if (BoboArt.Available)
+            {
+                // Imaginea pătrată: picioarele (la 4% de jos) pe umbră.
+                float art = 1.35f * size;
+                float bottom = -0.47f * size - 0.04f * art;
+                _art = Part("Art", BoboArt.Idle, new Vector3(0f, bottom + art * 0.5f, 0f), Vector2.one * art, Color.white, 4, _body);
+                _costume = Part("Costume", SugarSprites.Circle, new Vector3(0f, bottom + art * BoboArt.HeadTop + 0.2f * size, 0f), Vector2.one * size * 0.5f, Color.white, 8, _body);
+                _costumeHead = _costume.transform.localPosition;
+                _costumeEyes = new Vector3(0f, (bottom + art * BoboArt.EyeLine) / Mathf.Max(0.001f, _body.lossyScale.y), 0f);
+                ApplyCostume();
+                return;
+            }
             Part("Wrapper", SugarSprites.CupWrapper, new Vector3(0f, -0.12f * size, 0f), Vector2.one * size * 0.8f, Color.white, 2, _body);
             Part("Frosting", SugarSprites.Frosting, new Vector3(0f, 0.28f * size, 0f), Vector2.one * size * 0.85f, Color.white, 3, _body);
             _cherry = Part("Cherry", SugarSprites.Circle, new Vector3(0.05f * size, 0.68f * size, 0f), Vector2.one * size * 0.2f, new Color(0.93f, 0.2f, 0.32f), 4, _body).transform;
@@ -66,7 +79,7 @@ namespace SugarDrop
             Costume costume = CostumeRules.Current;
             Sprite sprite = SugarSprites.CostumeSprite(costume);
             _costume.gameObject.SetActive(sprite != null);
-            _cherry.gameObject.SetActive(sprite == null || CostumeRules.OnEyes(costume));
+            if (_cherry != null) _cherry.gameObject.SetActive(sprite == null || CostumeRules.OnEyes(costume));
             if (sprite == null) return;
             _costume.sprite = sprite;
             _costume.transform.localPosition = CostumeRules.OnEyes(costume) ? _costumeEyes : _costumeHead;
@@ -111,20 +124,20 @@ namespace SugarDrop
         {
             _scared = false;
             _mood = Mood.Happy;
-            _mouth.sprite = SugarSprites.Smile;
+            Face(false);
         }
 
         public void SetSad()
         {
             _mood = Mood.Sad;
-            _mouth.sprite = SugarSprites.Frown;
+            Face(true);
         }
 
         public void SetIdle()
         {
             _scared = false;
             _mood = Mood.Idle;
-            _mouth.sprite = SugarSprites.Smile;
+            Face(false);
         }
 
         /// <summary>Speriat (pericolul se apropie): gura în jos și tremur ușor.</summary>
@@ -135,11 +148,22 @@ namespace SugarDrop
             {
                 if (_scared == value) return;
                 _scared = value;
-                if (_mood != Mood.Sad) _mouth.sprite = value ? SugarSprites.Frown : SugarSprites.Smile;
+                if (_mood != Mood.Sad) Face(value);
             }
         }
 
         private bool _scared;
+
+        /// <summary>Fața după stare: gura (desenul din cod) sau ipostaza imaginii pictate.</summary>
+        private void Face(bool worried)
+        {
+            if (_art != null)
+            {
+                _art.sprite = worried ? BoboArt.Scared : _mood == Mood.Happy ? BoboArt.Happy : BoboArt.Idle;
+                return;
+            }
+            _mouth.sprite = worried ? SugarSprites.Frown : SugarSprites.Smile;
+        }
 
         // ------------------------------------------------------------ Animație
 
@@ -186,6 +210,7 @@ namespace SugarDrop
             _body.localPosition = new Vector3(0f, y, 0f);
             _body.localRotation = Quaternion.Euler(0f, 0f, angle);
             _body.localScale = scale;
+            if (_art != null) return; // imaginea pictată nu are ochi separați
             _cherry.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(time * 5f) * 8f);
 
             // Clipit din când în când.
