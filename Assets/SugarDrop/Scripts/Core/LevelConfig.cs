@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus, Rescue }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -34,6 +34,13 @@ namespace SugarDrop
 
         /// <summary>Nivelul bonus „Sugar Rush” (pe timp, fără pierdere): al 5-lea din fiecare capitol, de la nivelul 15.</summary>
         public static bool IsBonusLevel(int level) => level >= 15 && level % ChapterSize == 5;
+
+        /// <summary>De aici începe modul „Salvează-l pe Bobo”.</summary>
+        public const int RescueFrom = 101;
+
+        /// <summary>De la nivelul 101: două niveluri de salvare, unul clasic (Boss-ii și Sugar Rush rămân ca înainte).</summary>
+        public static bool IsRescueLevel(int level) =>
+            level >= RescueFrom && !IsBossLevel(level) && !IsBonusLevel(level) && level % 3 != 0;
 
         /// <summary>De la ce nivel apar portalurile (Lacul de Afine).</summary>
         public const int PortalsFrom = 21;
@@ -145,6 +152,7 @@ namespace SugarDrop
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
             if (IsBonusLevel(level)) return LevelType.Bonus;
+            if (IsRescueLevel(level)) return LevelType.Rescue;
             // Mecanica ținutului e „vedeta” lui: în Pădurea de Mentă (11–20) grădinile, în Deșertul de Lămâie (31–40)
             // bombele cu ceas apar la fiecare al treilea nivel; după aceea intră în rotația obișnuită.
             int chapterIndex = (level - 1) % ChapterSize;
@@ -270,6 +278,10 @@ namespace SugarDrop
                 case LevelType.Score:
                     moves = 18;
                     break;
+                case LevelType.Rescue:
+                    // Câte atingeri îi trebuie botului, plus o rezervă (jucătorul nu vede drumul optim din prima).
+                    moves = RescueLayout.For(level, difficulty).BotMoves * 1.4f + 3f;
+                    break;
                 case LevelType.Crates:
                     focus = Focus(4 + chapter * 0.8f, 3, 10);
                     moves = 5 + focus * crateHits * 1.6f;
@@ -387,7 +399,7 @@ namespace SugarDrop
             // Portalurile (de la Lacul de Afine): pe toate nivelurile din lac, apoi pe unele niveluri. Nu pe cele cu
             // bomboane-ingredient (ar ieși prin portal în loc să ajungă jos), nici la Boss sau în bonus.
             int[] portalIn = System.Array.Empty<int>(), portalOut = System.Array.Empty<int>();
-            bool portals = level >= PortalsFrom && type != LevelType.Ingredients && type != LevelType.Boss && type != LevelType.Bonus
+            bool portals = level >= PortalsFrom && type != LevelType.Ingredients && type != LevelType.Boss && type != LevelType.Bonus && type != LevelType.Rescue
                 && (chapter == 2 || random.Next(10) < 3);
             if (portals)
             {

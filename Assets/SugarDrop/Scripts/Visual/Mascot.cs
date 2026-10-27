@@ -125,6 +125,22 @@ namespace SugarDrop
             _mouth.sprite = SugarSprites.Smile;
         }
 
+        private readonly System.Collections.Generic.Dictionary<SpriteRenderer, Color> _colors = new();
+
+        /// <summary>Salvează-l pe Bobo: cât e prins, Bobo e doar o siluetă întunecată; salvat, își recapătă culorile.</summary>
+        public void SetSilhouette(bool silhouette)
+        {
+            foreach (SpriteRenderer renderer in _body.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (!_colors.TryGetValue(renderer, out Color original))
+                {
+                    original = renderer.color;
+                    _colors[renderer] = original;
+                }
+                renderer.color = silhouette ? new Color(0.18f, 0.09f, 0.22f, original.a) : original;
+            }
+        }
+
         // ------------------------------------------------------------ Animație
 
         private void Update()

@@ -22,7 +22,8 @@ namespace SugarDrop.Tests
                 bool hasGoal = c.Type == LevelType.Boss || c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0
                     || c.SpecialsTarget > 0 || c.Type == LevelType.Crates && c.Crates > 0 || c.Type == LevelType.Ice && c.Ice > 0
                     || c.Type == LevelType.Chains && c.Chains > 0 || c.Type == LevelType.Chocolate && c.Chocolate > 0
-                    || c.Type == LevelType.Garden && c.Pots > 0 || c.Type == LevelType.Defuse && c.TimeBombGoal > 0 || c.IsBonus;
+                    || c.Type == LevelType.Garden && c.Pots > 0 || c.Type == LevelType.Defuse && c.TimeBombGoal > 0 || c.IsBonus
+                    || c.Type == LevelType.Rescue;
                 Assert.IsTrue(hasGoal, $"nivel {level} fără obiectiv");
             }
         }
@@ -142,7 +143,9 @@ namespace SugarDrop.Tests
             }
             var seen = new System.Collections.Generic.HashSet<LevelType>();
             for (int level = 1; level <= 40; level++) seen.Add(LevelConfig.For(level).Type);
-            Assert.AreEqual(System.Enum.GetValues(typeof(LevelType)).Length, seen.Count, "până la nivelul 40 apar toate tipurile");
+            // Toate tipurile clasice (salvarea lui Bobo vine abia de la nivelul 101).
+            Assert.AreEqual(System.Enum.GetValues(typeof(LevelType)).Length - 1, seen.Count, "până la nivelul 40 apar toate tipurile");
+            Assert.IsFalse(seen.Contains(LevelType.Rescue));
         }
 
         [Test]

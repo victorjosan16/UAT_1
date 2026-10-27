@@ -413,6 +413,7 @@ namespace SugarDrop
             GoalKind.Specials => SugarSprites.Rocket,
             GoalKind.Flowers => SugarSprites.Flower,
             GoalKind.TimeBombs => SugarSprites.Bomb,
+            GoalKind.Rescue => SugarSprites.Cage,
             _ => ProceduralSprites.Star,
         };
 
@@ -421,6 +422,7 @@ namespace SugarDrop
             GoalKind.Ingredients => Palette.Candy(0),
             GoalKind.Frosting => new Color(1f, 0.82f, 0.9f),
             GoalKind.Score => UiRoot.Theme.AccentColor,
+            GoalKind.Rescue => new Color(0.85f, 0.6f, 0.25f),
             _ => Color.white,
         };
 
