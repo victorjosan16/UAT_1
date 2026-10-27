@@ -122,7 +122,7 @@ namespace SugarDrop.Tests
         [Test]
         public void GeneratedLevels_AreSolvable_Deterministic_AndFair()
         {
-            for (int level = LevelConfig.RescueFrom; level <= 260; level++)
+            for (int level = 2; level <= 260; level++)
             {
                 if (!LevelConfig.IsRescueLevel(level)) continue;
                 LevelConfig config = LevelConfig.For(level);
@@ -144,6 +144,9 @@ namespace SugarDrop.Tests
             Assert.AreEqual(LevelType.Bonus, LevelConfig.For(105).Type);
             Assert.AreEqual(LevelType.Boss, LevelConfig.For(110).Type);
             Assert.AreNotEqual(LevelType.Rescue, LevelConfig.For(99).Type);
+            Assert.AreEqual(LevelType.Rescue, LevelConfig.For(5).Type, "prima salvare vine devreme");
+            Assert.AreEqual(LevelType.Rescue, LevelConfig.For(13).Type);
+            Assert.AreNotEqual(LevelType.Rescue, LevelConfig.For(1).Type);
             var goals = new LevelGoals(LevelConfig.For(101), 0, 0, default);
             Assert.IsFalse(goals.IsComplete);
             goals.MarkRescued();

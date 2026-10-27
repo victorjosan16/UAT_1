@@ -143,9 +143,8 @@ namespace SugarDrop.Tests
             }
             var seen = new System.Collections.Generic.HashSet<LevelType>();
             for (int level = 1; level <= 40; level++) seen.Add(LevelConfig.For(level).Type);
-            // Toate tipurile clasice (salvarea lui Bobo vine abia de la nivelul 101).
-            Assert.AreEqual(System.Enum.GetValues(typeof(LevelType)).Length - 1, seen.Count, "până la nivelul 40 apar toate tipurile");
-            Assert.IsFalse(seen.Contains(LevelType.Rescue));
+            // Toate tipurile, inclusiv salvarea lui Bobo (de la nivelul 5).
+            Assert.AreEqual(System.Enum.GetValues(typeof(LevelType)).Length, seen.Count, "până la nivelul 40 apar toate tipurile");
         }
 
         [Test]

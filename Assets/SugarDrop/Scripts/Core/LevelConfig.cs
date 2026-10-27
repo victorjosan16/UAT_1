@@ -38,9 +38,18 @@ namespace SugarDrop
         /// <summary>De aici începe modul „Salvează-l pe Bobo”.</summary>
         public const int RescueFrom = 101;
 
-        /// <summary>De la nivelul 101: două niveluri de salvare, unul clasic (Boss-ii și Sugar Rush rămân ca înainte).</summary>
-        public static bool IsRescueLevel(int level) =>
-            level >= RescueFrom && !IsBossLevel(level) && !IsBonusLevel(level) && level % 3 != 0;
+        /// <summary>
+        /// Salvarea lui Bobo apare de la început: nivelurile 5 și 8 în primul ținut, apoi câte două pe ținut
+        /// (pozițiile 3 și 7 din capitol, unde nu cad nici mecanica ținutului, nici Sugar Rush). De la nivelul 101:
+        /// două niveluri de salvare, unul clasic. Boss-ii și Sugar Rush rămân ca înainte.
+        /// </summary>
+        public static bool IsRescueLevel(int level)
+        {
+            if (IsBossLevel(level) || IsBonusLevel(level)) return false;
+            if (level >= RescueFrom) return level % 3 != 0;
+            int index = (level - 1) % ChapterSize;
+            return level < ChapterSize ? level is 5 or 8 : index is 2 or 6;
+        }
 
         /// <summary>De la ce nivel apar portalurile (Lacul de Afine).</summary>
         public const int PortalsFrom = 21;
@@ -280,7 +289,9 @@ namespace SugarDrop
                     break;
                 case LevelType.Rescue:
                     // Câte atingeri îi trebuie botului, plus o rezervă (jucătorul nu vede drumul optim din prima).
-                    moves = RescueLayout.For(level, difficulty).BotMoves * 1.4f + 3f;
+                    // Primele salvări (până la nivelul 40) sunt foarte generoase; apoi rezerva scade până la 101.
+                    float spare = level < 40 || level >= RescueFrom ? 1.4f : 1.1f;
+                    moves = RescueLayout.For(level, difficulty).BotMoves * spare + 2f;
                     break;
                 case LevelType.Crates:
                     focus = Focus(4 + chapter * 0.8f, 3, 10);

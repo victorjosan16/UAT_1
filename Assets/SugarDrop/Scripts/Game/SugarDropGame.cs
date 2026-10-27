@@ -38,6 +38,7 @@ namespace SugarDrop
         [SerializeField] private WardrobePanel wardrobe;
         [SerializeField] private SettingsPanel settings;
         [SerializeField] private StoryPanel story;
+        [SerializeField] private LevelStartPanel levelStart;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -667,7 +668,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen || story.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen || story.IsOpen || levelStart.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -691,77 +692,93 @@ namespace SugarDrop
         /// Înainte de nivel: ce cere nivelul și boosterele de start (o rachetă sau o bombă puse pe tablă de la început).
         /// Dacă nu mai ai, le poți cumpăra cu monede.
         /// </summary>
+        /// <summary>Cartea de început a nivelului: pericolul, obiectivele ca iconițe, ajutoarele de la start, JOACĂ.</summary>
         private void ShowLevelStart(int level)
         {
-            UiThemeColors(out Color positive, out Color ad, out Color panel);
             LevelConfig config = LevelConfig.For(level);
-            string title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level);
-            string message = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!") : IntroText(config.Type);
-            // Nivelurile grele se anunță dinainte și dau mai multe monede.
-            Difficulty difficulty = config.IsBonus ? Difficulty.Normal : config.Difficulty;
-            if (difficulty == Difficulty.Hard) message = SugarLoc.T("Nivel greu: monede ×1,5!") + "\n" + message;
-            else if (difficulty == Difficulty.VeryHard) message = SugarLoc.T("Nivel foarte greu: monede ×2!") + "\n" + message;
-            // Pericolul ținutului (pe nivelurile fără borcan): de ce trebuie salvat Bobo.
-            if (!NeedsJar(config)) message = SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level)))) + "\n" + message;
-            // Prima întâlnire cu o mecanică: un „NOU!” scurt (fără tutorial), plus o frază pentru portaluri.
-            if (!config.IsBoss && IsNew(MechanicBit(config.Type))) message = SugarLoc.T("NOU!") + " " + message;
-            if (config.PortalIn.Length > 0 && IsNew(PortalBit))
-                message += "\n" + SugarLoc.T("NOU!") + " " + SugarLoc.T("Portalurile duc bomboanele dintr-o coloană în alta!");
-            if (StreakSpecials(config) > 0) message += "\n" + SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak);
-            // Pe nivelurile de salvare nu există piese speciale, deci nici ajutoare la start.
             bool rescue = config.Type == LevelType.Rescue;
+            // Pe nivelurile de salvare nu există piese speciale, deci nici ajutoare la start.
             if (rescue) _useRocket = _useBomb = false;
-            var startButtons = new List<DialogButton>();
-            if (!rescue)
+            var info = new LevelStartInfo
             {
-                startButtons.Add(StartBoosterButton(StartBooster.Rocket, "Rachetă la start", level));
-                startButtons.Add(StartBoosterButton(StartBooster.Bomb, "Bombă la start", level));
-            }
-            startButtons.Add(new DialogButton(SugarLoc.T("JOACĂ"), positive, () =>
+                Title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level),
+                Difficulty = config.Difficulty,
+                ShowDifficulty = !config.IsBoss && !config.IsBonus && config.Difficulty is Difficulty.Hard or Difficulty.VeryHard,
+                BestStars = SugarSave.GetStars(level),
+                Boosters = !rescue,
+                IsNew = !config.IsBoss && IsNew(MechanicBit(config.Type)),
+                Streak = StreakSpecials(config) > 0 ? SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak) : "",
+            };
+            // O singură propoziție: pericolul ținutului (fără borcan) sau ce e special la nivel.
+            info.Scenario = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!")
+                : !NeedsJar(config) && !config.IsBonus ? SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level))))
+                : IntroText(config.Type);
+            if (config.PortalIn.Length > 0 && IsNew(PortalBit)) info.Scenario += "\n" + SugarLoc.T("Portalurile duc bomboanele dintr-o coloană în alta!");
+            foreach ((Sprite icon, Color color, int count) goal in StartGoals(level, config)) info.Goals.Add(goal);
+
+            levelStart.Show(info, StartBoosterState, booster => ToggleStartBooster(booster), () =>
+            {
+                if (_useRocket) StartBoosters.Add(StartBooster.Rocket, -1);
+                if (_useBomb) StartBoosters.Add(StartBooster.Bomb, -1);
+                SugarSave.Save();
+                bool rocket = _useRocket, bomb = _useBomb;
+                Go(() =>
                 {
-                    if (_useRocket) StartBoosters.Add(StartBooster.Rocket, -1);
-                    if (_useBomb) StartBoosters.Add(StartBooster.Bomb, -1);
-                    SugarSave.Save();
-                    bool rocket = _useRocket, bomb = _useBomb;
-                    Go(() =>
-                    {
-                        StartLevel(level);
-                        if (rocket) board.TryMakeRandomSpecial(out _, TileKind.RocketH);
-                        if (bomb) board.TryMakeRandomSpecial(out _, TileKind.Bomb);
-                    });
-                }));
-            startButtons.Add(new DialogButton(SugarLoc.T("ÎNAPOI"), panel, null));
-            dialog.Show(title, message, startButtons.ToArray());
+                    StartLevel(level);
+                    if (rocket) board.TryMakeRandomSpecial(out _, TileKind.RocketH);
+                    if (bomb) board.TryMakeRandomSpecial(out _, TileKind.Bomb);
+                });
+            });
         }
 
-        private DialogButton StartBoosterButton(StartBooster booster, string nameKey, int level)
+        /// <summary>Obiectivele nivelului ca iconițe cu număr (tabla se simulează doar ca să se numere obstacolele).</summary>
+        private List<(Sprite, Color, int)> StartGoals(int level, LevelConfig config)
+        {
+            var goals = new List<(Sprite, Color, int)>();
+            if (config.IsBonus)
+            {
+                goals.Add((QuarryEmpire.ProceduralSprites.Star, QuarryEmpire.UiRoot.Theme.AccentColor, 0));
+                return goals;
+            }
+            if (config.Type == LevelType.Rescue)
+            {
+                goals.Add((SugarSprites.Cage, new Color(0.85f, 0.6f, 0.25f), 0));
+                return goals;
+            }
+            BossDefinition boss = config.Type == LevelType.Boss ? BossDefinition.For(level, config.Moves) : null;
+            var engine = new BlastEngine(config, 1);
+            var preview = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0, engine.CountObstacles());
+            foreach (GoalItem item in preview.Items)
+            {
+                Sprite icon = item.Kind == GoalKind.Boss ? SugarSprites.BossFace(boss.Look) : hud.GoalIcon(item);
+                goals.Add((icon, SugarHud.GoalColor(item), item.Target));
+            }
+            return goals;
+        }
+
+        private (bool selected, int count, int price) StartBoosterState(StartBooster booster) =>
+            (booster == StartBooster.Rocket ? _useRocket : _useBomb, StartBoosters.Count(booster), StartBoosters.Price);
+
+        /// <summary>Bifează sau debifează un ajutor de la start; dacă nu are niciunul, îl cumpără (dacă are monede).</summary>
+        private void ToggleStartBooster(StartBooster booster)
         {
             bool selected = booster == StartBooster.Rocket ? _useRocket : _useBomb;
-            int count = StartBoosters.Count(booster);
-            Color color = selected ? QuarryEmpire.UiRoot.Theme.AccentColor : QuarryEmpire.UiRoot.Theme.PanelColor;
-            string label = count > 0 || selected
-                ? SugarLoc.T(nameKey) + ": " + SugarLoc.T(selected ? "DA" : "NU") + "  (" + count + ")"
-                : SugarLoc.T(nameKey) + "  ·  " + SugarLoc.F("{0} monede", StartBoosters.Price);
-            return new DialogButton(label, color, () =>
+            if (!selected && StartBoosters.Count(booster) <= 0)
             {
-                if (!selected && StartBoosters.Count(booster) <= 0)
+                if (Data.coins < StartBoosters.Price)
                 {
-                    if (Data.coins < StartBoosters.Price)
-                    {
-                        SugarAudio.Buzz(1);
-                        if (Audio != null) Audio.Play(SugarSound.Invalid);
-                        return;
-                    }
-                    Data.coins -= StartBoosters.Price;
-                    StartBoosters.Add(booster, 1);
-                    SugarSave.Save();
-                    if (Audio != null) Audio.Play(SugarSound.Coin);
-                    RefreshHome();
+                    SugarAudio.Buzz(1);
+                    if (Audio != null) Audio.Play(SugarSound.Invalid);
+                    return;
                 }
-                if (booster == StartBooster.Rocket) _useRocket = !_useRocket;
-                else _useBomb = !_useBomb;
-                ShowLevelStart(level);
-            }, false);
+                Data.coins -= StartBoosters.Price;
+                StartBoosters.Add(booster, 1);
+                SugarSave.Save();
+                if (Audio != null) Audio.Play(SugarSound.Coin);
+                RefreshHome();
+            }
+            if (booster == StartBooster.Rocket) _useRocket = !_useRocket;
+            else _useBomb = !_useBomb;
         }
 
         // ------------------------------------------------------------ Roata, garderoba, evenimentul, profilul
@@ -1244,6 +1261,11 @@ namespace SugarDrop
             if (story.IsOpen)
             {
                 story.Skip();
+                return;
+            }
+            if (levelStart.IsOpen)
+            {
+                levelStart.Hide();
                 return;
             }
             if (settings.IsOpen)

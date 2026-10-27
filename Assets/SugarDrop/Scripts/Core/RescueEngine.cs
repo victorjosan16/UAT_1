@@ -460,7 +460,8 @@ namespace SugarDrop
             };
             // Gura rezervorului: într-o parte a tablei, ca drumul să aibă de cotit.
             layout.InletX = random.Next(2) == 0 ? random.Next(0, 3) : random.Next(width - 3, width);
-            int colors = level >= 150 ? 5 : 4;
+            // Primele salvări (din primele ținuturi) au 3 culori, deci grupuri mari și drumuri ușor de găsit.
+            int colors = level < 30 ? 3 : level >= 150 ? 5 : 4;
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
                 {
@@ -479,11 +480,14 @@ namespace SugarDrop
                 Difficulty.VeryHard => 1.6f,
                 _ => 1f,
             };
-            int walls = Mathf.Clamp(Mathf.RoundToInt((1 + stage / 3f) * hard), 1, 3);
+            // Înainte de nivelul 101 obstacolele cresc încet, pe ținuturi (labirinturi simple, fără slime).
+            bool early = level < LevelConfig.RescueFrom;
+            if (early) stage = 0;
+            int walls = early ? (level < 40 ? 1 : 2) : Mathf.Clamp(Mathf.RoundToInt((1 + stage / 3f) * hard), 1, 3);
             var gaps = new HashSet<Vector2Int>();
             Walls(layout, random, gaps, walls, difficulty == Difficulty.Easy ? 2 : 1, difficulty is Difficulty.Hard or Difficulty.VeryHard);
-            int stones = Mathf.RoundToInt((3 + Mathf.Min(stage, 5) * 0.6f) * hard);
-            int cages = Mathf.RoundToInt((2 + Mathf.Min(stage, 5) * 0.6f) * hard);
+            int stones = early ? Mathf.Min(level / 12, 5) : Mathf.RoundToInt((3 + Mathf.Min(stage, 5) * 0.6f) * hard);
+            int cages = early ? (level < 15 ? 0 : Mathf.Min(level / 20, 3)) : Mathf.RoundToInt((2 + Mathf.Min(stage, 5) * 0.6f) * hard);
             int slime = level >= 120 ? Mathf.RoundToInt((1 + Mathf.Min(stage / 2, 3)) * hard) : 0;
             Place(layout, random, gaps, RescueCell.Stone, stones);
             Place(layout, random, gaps, RescueCell.Cage, cages);
