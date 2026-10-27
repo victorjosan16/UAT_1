@@ -11,6 +11,9 @@ namespace QuarryEmpire
     /// </summary>
     public class UiLabel : MonoBehaviour
     {
+        /// <summary>Font folosit în locul celui din temă (ex. un font cu litere chirilice pentru rusă); null = fontul temei.</summary>
+        public static Font FontOverride { get; set; }
+
         private TMP_Text _tmp;
         private Text _legacy;
 
@@ -48,7 +51,7 @@ namespace QuarryEmpire
                 return label;
 
             var legacy = rect.gameObject.AddComponent<Text>();
-            legacy.font = theme != null && theme.Font != null ? theme.Font : UiFactory.BuiltinFont;
+            legacy.font = FontOverride != null ? FontOverride : theme != null && theme.Font != null ? theme.Font : UiFactory.BuiltinFont;
             legacy.text = text;
             legacy.fontSize = Mathf.RoundToInt(fontSize);
             legacy.alignment = alignment;

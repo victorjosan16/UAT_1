@@ -72,7 +72,7 @@ namespace SugarDrop
             UiFactory.Stretch((RectTransform)field.transform, 8f);
             field.raycastTarget = true;
 
-            Font font = theme.Font != null ? theme.Font : UiFactory.BuiltinFont;
+            Font font = UiLabel.FontOverride != null ? UiLabel.FontOverride : theme.Font != null ? theme.Font : UiFactory.BuiltinFont;
             Text text = FieldText("Text", field.transform, font, theme.TextDarkColor);
             _placeholder = FieldText("Placeholder", field.transform, font, new Color(theme.TextDarkColor.r, theme.TextDarkColor.g, theme.TextDarkColor.b, 0.4f));
 

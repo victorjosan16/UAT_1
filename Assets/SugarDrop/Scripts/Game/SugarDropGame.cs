@@ -174,6 +174,7 @@ namespace SugarDrop
 
         private void Start()
         {
+            SugarFonts.Apply();
             _state = State.Menu;
             input.enabled = false;
             result.Hide();
@@ -1076,6 +1077,7 @@ namespace SugarDrop
 
         private void RefreshTexts()
         {
+            SugarFonts.Apply();
             if (_state == State.Playing || _state == State.Result) hud.SetLevel(_level, _config.IsBoss);
             if ((_state == State.Playing || _state == State.Result) && _boss != null) hud.SetBoss(_boss);
             if (map.IsOpen) map.Refresh();
