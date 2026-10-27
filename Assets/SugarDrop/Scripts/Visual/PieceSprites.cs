@@ -19,7 +19,9 @@ namespace SugarDrop
         public static Sprite Piece(int color) => Get("piece" + color, () => Render(Size, color, PieceKind.Body));
 
         /// <summary>Umbra moale a piesei (albă; se colorează).</summary>
-        public static Sprite Shadow(int color) => Get("pieceshadow" + color, () => Render(Size, color, PieceKind.Shadow));
+        /// <summary>Umbra piesei: după forma desenată din cod, sau o umbră rotundă, moale, dacă piesa e o imagine pictată.</summary>
+        public static Sprite Shadow(int color) =>
+            color >= 0 && ArtLibrary.Find("piece" + color) != null ? SugarSprites.SoftDot : Get("pieceshadow" + color, () => Render(Size, color, PieceKind.Shadow));
 
         /// <summary>Dungi albe decupate după forma piesei (capac dungat), orizontale sau verticale.</summary>
         public static Sprite Stripes(int color, bool horizontal) =>

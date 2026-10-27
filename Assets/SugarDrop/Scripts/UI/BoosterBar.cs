@@ -8,7 +8,7 @@ namespace SugarDrop
     public enum Booster { Bomb, ExtraMoves, Shuffle }
 
     /// <summary>
-    /// Ajutoarele (stânga jos, lângă borcan): bomba (explozie 3×3), +5 mutări și amestecarea.
+    /// Ajutoarele, într-o tavă crem jos (stilul Drop Quest): bomba (explozie 3×3), +5 mutări și amestecarea.
     /// Fiecare are o bulină cu numărul rămas; la 0 apare „+” (se cumpără cu monede sau cu o reclamă).
     /// </summary>
     public class BoosterBar : MonoBehaviour
@@ -25,14 +25,16 @@ namespace SugarDrop
         {
             UiTheme theme = UiRoot.Theme;
             Sprite[] icons = { SugarSprites.Bomb, null, SugarSprites.ShuffleIcon };
-            Color[] colors = { Palette.Tile(4), Palette.Tile(2), Palette.Tile(1) };
+            Color[] colors = { QuestStyle.Blue, QuestStyle.Green, QuestStyle.Wood };
+            RectTransform tray = SugarUi.Card("Tray", transform, out _);
+            UiFactory.Place(tray, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-60f, 18f), new Vector2(560f, 176f));
             for (int i = 0; i < 3; i++)
             {
                 var booster = (Booster)i;
                 Button button = SugarUi.IconButton(booster.ToString(), transform, icons[i] != null ? icons[i] : UiFactory.WhiteSprite, colors[i],
                     () => Clicked?.Invoke(booster), i == 0 ? 0.7f : 0.55f);
                 var rect = (RectTransform)button.transform;
-                UiFactory.Place(rect, Vector2.zero, new Vector2(0.5f, 0.5f), new Vector2(120f, 110f + i * 170f), new Vector2(140f, 140f));
+                UiFactory.Place(rect, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-60f + (i - 1) * 170f, 108f), new Vector2(136f, 136f));
                 _buttons[i] = rect;
                 if (i == 0) button.transform.Find("Face/Icon").GetComponent<Image>().color = Color.white;
                 if (i == 1)
@@ -50,7 +52,7 @@ namespace SugarDrop
             }
 
             _hint = SugarUi.Outlined("BombHint", transform, "", 34, Color.white);
-            UiFactory.Place(_hint.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(60f, 50f), new Vector2(620f, 90f));
+            UiFactory.Place(_hint.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 210f), new Vector2(760f, 90f));
             _hint.gameObject.SetActive(false);
         }
 

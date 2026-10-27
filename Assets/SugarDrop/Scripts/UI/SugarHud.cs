@@ -16,11 +16,10 @@ namespace SugarDrop
         /// <summary>Jucătorul a atins butonul Puterii lui Bobo.</summary>
         public event Action PowerClicked;
 
-        // Mini-traseul nivelurilor (stânga sus): nivelul curent mare, apoi următoarele trei.
-        private readonly Image[] _trackDots = new Image[4];
-        private readonly UiLabel[] _trackNumbers = new UiLabel[4];
-        private readonly Image[] _trackIcons = new Image[4];
-        private readonly Image[] _trackFlames = new Image[4];
+        // Cardurile de sus (stilul Drop Quest): eticheta mică deasupra numărului.
+        private UiLabel _levelCaption;
+        private UiLabel _goalCaption;
+        private Image _levelFlame;
 
         // Puterea lui Bobo (dreapta jos): cercul se umple jucând; plin, pulsează.
         private RectTransform _power;
@@ -98,27 +97,31 @@ namespace SugarDrop
         {
             UiTheme theme = UiRoot.Theme;
 
-            // Nivelul (stânga sus).
-            _levelPill = UiFactory.CreatePanel("LevelPill", transform, theme.PanelColor);
-            UiFactory.Place((RectTransform)_levelPill.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(300f, 96f));
-            _level = UiFactory.CreateText("Level", _levelPill.transform, "", 40);
-            UiFactory.Stretch(_level.RectTransform, 6f);
-            _level.gameObject.SetActive(false);
-            BuildTrack(theme);
+            // Sus, trei carduri crem: Nivel (stânga), Obiectiv (centru), Mutări (dreapta); pauza, mică, în colț.
+            RectTransform levelCard = SugarUi.Card("LevelCard", transform, out _levelPill);
+            UiFactory.Place(levelCard, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(176f, 146f));
+            _levelCaption = UiFactory.CreateText("Caption", _levelPill.transform, "", 28, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_levelCaption.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(170f, 40f));
+            _level = UiFactory.CreateText("Level", _levelPill.transform, "", 58, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_level.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(170f, 80f));
+            _levelFlame = UiFactory.CreateImage("Flame", levelCard, SugarSprites.Flame, Color.white);
+            UiFactory.Place(_levelFlame.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-14f, -6f), new Vector2(54f, 54f));
+            _levelFlame.gameObject.AddComponent<UiFlicker>();
             BuildPower(theme);
 
-            // Obiectivele nivelului (centru sus): iconiță + câte au mai rămas.
-            Image card = UiFactory.CreatePanel("GoalCard", transform, theme.PanelLightColor);
-            _goalCard = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(420f, 136f));
+            RectTransform goalRoot = SugarUi.Card("GoalCard", transform, out Image goalFace);
+            UiFactory.Place(goalRoot, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-6f, -20f), new Vector2(500f, 146f));
+            _goalCard = (RectTransform)goalFace.transform;
+            _goalCaption = UiFactory.CreateText("Caption", _goalCard, "", 26, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_goalCaption.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(300f, 36f));
 
-            // Mutările rămase (dreapta sus) și butonul de pauză.
-            Image movesDisc = UiFactory.CreateImage("MovesDisc", transform, theme.Circle, theme.AccentColor);
-            MovesArea = UiFactory.Place(movesDisc.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-148f, -14f), new Vector2(124f, 124f));
-            _movesPunch = movesDisc.gameObject.AddComponent<PunchScale>();
-            _moves = UiFactory.CreateText("Moves", movesDisc.transform, "", 54, TextAnchor.MiddleCenter, theme.TextDarkColor);
-            UiFactory.Place(_moves.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(110f, 66f));
-            _movesCaption = UiFactory.CreateText("Caption", movesDisc.transform, "", 22, TextAnchor.MiddleCenter, theme.TextDarkColor);
-            UiFactory.Place(_movesCaption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -32f), new Vector2(110f, 30f));
+            RectTransform movesRoot = SugarUi.Card("MovesCard", transform, out Image movesFace);
+            MovesArea = UiFactory.Place(movesRoot, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-106f, -20f), new Vector2(176f, 146f));
+            _movesPunch = movesRoot.gameObject.AddComponent<PunchScale>();
+            _movesCaption = UiFactory.CreateText("Caption", movesFace.transform, "", 28, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_movesCaption.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(170f, 40f));
+            _moves = UiFactory.CreateText("Moves", movesFace.transform, "", 60, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_moves.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(170f, 84f));
 
             Button pause = SugarUi.IconButton("Pause", transform, ProceduralSprites.Pause, theme.PanelColor,
                 () =>
@@ -126,14 +129,14 @@ namespace SugarDrop
                     SugarUi.Click();
                     PauseClicked?.Invoke();
                 }, 0.45f);
-            UiFactory.Place((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(104f, 104f));
+            UiFactory.Place((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -16f), new Vector2(82f, 82f));
 
             BuildScore(theme);
             BuildBoss(theme);
 
             // Textul tutorialului (sub HUD).
             _tutorial = SugarUi.Outlined("Tutorial", transform, "", 40, Color.white);
-            UiFactory.Place(_tutorial.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(980f, 90f));
+            UiFactory.Place(_tutorial.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -246f), new Vector2(980f, 90f));
             _tutorial.gameObject.SetActive(false);
 
             // Cuvântul de combo (centru) și bannerul („Ultimele mutări!”).
@@ -147,21 +150,22 @@ namespace SugarDrop
 
         private void BuildScore(UiTheme theme)
         {
-            Image pill = UiFactory.CreatePanel("ScorePill", transform, theme.PanelColor);
-            var pillRect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -172f), new Vector2(620f, 56f));
+            // Bara de scor: pistă închisă, umplere albastră, stelele pe pistă și scorul în dreapta.
+            Image pill = UiFactory.CreatePanel("ScorePill", transform, QuestStyle.Board);
+            var pillRect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-6f, -180f), new Vector2(760f, 52f));
             _scorePunch = pill.gameObject.AddComponent<PunchScale>();
-            _score = UiFactory.CreateText("Score", pillRect, "0", 34);
-            UiFactory.Place(_score.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(150f, 50f));
-            _scoreBar = UiFactory.CreateProgressBar("ScoreBar", pillRect, theme.AccentColor);
+            _score = SugarUi.Outlined("Score", pillRect, "0", 34, Color.white, 2.5f);
+            UiFactory.Place(_score.RectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-16f, 0f), new Vector2(170f, 50f));
+            _scoreBar = UiFactory.CreateProgressBar("ScoreBar", pillRect, QuestStyle.Blue);
             _scoreBarRect = (RectTransform)_scoreBar.transform;
             _scoreBarRect.anchorMin = new Vector2(0f, 0.5f);
             _scoreBarRect.anchorMax = new Vector2(1f, 0.5f);
             _scoreBarRect.pivot = new Vector2(0.5f, 0.5f);
-            _scoreBarRect.offsetMin = new Vector2(176f, -11f);
-            _scoreBarRect.offsetMax = new Vector2(-30f, 11f);
+            _scoreBarRect.offsetMin = new Vector2(18f, -11f);
+            _scoreBarRect.offsetMax = new Vector2(-196f, 11f);
             for (int i = 0; i < 2; i++)
             {
-                _scoreStars[i] = UiFactory.CreateImage("Star" + (i + 2), _scoreBarRect, ProceduralSprites.Star, Color.white);
+                _scoreStars[i] = UiFactory.CreateImage("Star" + (i + 2), _scoreBarRect, ProceduralSprites.Star, QuestStyle.Gold);
                 UiFactory.Place(_scoreStars[i].rectTransform, new Vector2(i == 0 ? 0.62f : 1f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(46f, 46f));
             }
 
@@ -177,7 +181,7 @@ namespace SugarDrop
         private void BuildBoss(UiTheme theme)
         {
             Image panel = UiFactory.CreatePanel("BossPanel", transform, new Color(QuestStyle.Text.r, QuestStyle.Text.g, QuestStyle.Text.b, 0.92f));
-            _bossPanel = UiFactory.Place((RectTransform)panel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(900f, 124f));
+            _bossPanel = UiFactory.Place((RectTransform)panel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -246f), new Vector2(900f, 124f));
             _bossFace = UiFactory.CreateImage("Face", _bossPanel, SugarSprites.BossFace(0), Color.white);
             UiFactory.Place(_bossFace.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(72f, 6f), new Vector2(124f, 124f));
             _bossName = SugarUi.Outlined("Name", _bossPanel, "", 32, Color.white, 3f);
@@ -360,51 +364,13 @@ namespace SugarDrop
 
         public void SetLevel(int level, bool boss)
         {
-            _level.Text = boss ? SugarLoc.T("BOSS") + " " + level : SugarLoc.F("NIVELUL {0}", level);
-            _levelPill.color = UiRoot.Theme.PanelColor;
-            _movesCaption.Text = SugarLoc.T("mutări");
-            for (int i = 0; i < _trackDots.Length; i++) SetTrackDot(i, level + i, i == 0);
-        }
-
-        // ------------------------------------------------------------ Mini-traseul nivelurilor
-
-        private void BuildTrack(UiTheme theme)
-        {
-            var pill = (RectTransform)_levelPill.transform;
-            Image line = UiFactory.CreatePanel("Line", pill, new Color(1f, 1f, 1f, 0.35f));
-            UiFactory.Place((RectTransform)line.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(60f, 0f), new Vector2(220f, 10f));
-            for (int i = 0; i < _trackDots.Length; i++)
-            {
-                bool current = i == 0;
-                float size = current ? 80f : 52f;
-                float x = current ? 48f : 112f + (i - 1) * 64f;
-                _trackFlames[i] = UiFactory.CreateImage("Flame", pill, SugarSprites.Flame, Color.white);
-                UiFactory.Place(_trackFlames[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0f), new Vector2(x, size * 0.2f), Vector2.one * size * 0.75f);
-                _trackFlames[i].gameObject.AddComponent<UiFlicker>();
-                _trackDots[i] = UiFactory.CreateImage("Dot", pill, theme.Circle, Color.white);
-                UiFactory.Place(_trackDots[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, 0f), Vector2.one * size);
-                _trackNumbers[i] = SugarUi.Outlined("Number", _trackDots[i].transform, "", current ? 36 : 22, Color.white, current ? 3f : 2f);
-                UiFactory.Stretch(_trackNumbers[i].RectTransform);
-                _trackIcons[i] = UiFactory.CreateImage("Icon", _trackDots[i].transform, SugarSprites.BossFace(0), Color.white);
-                UiFactory.Place(_trackIcons[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.8f);
-            }
-        }
-
-        /// <summary>Un punct de pe traseu: Boss (față), nivel greu (roșu, cu flacără) sau obișnuit.</summary>
-        private void SetTrackDot(int index, int level, bool current)
-        {
-            bool boss = LevelConfig.IsBossLevel(level);
+            _levelCaption.Text = SugarLoc.T(boss ? "BOSS" : "Nivel");
+            _level.Text = level.ToString();
+            _goalCaption.Text = SugarLoc.T("Obiectiv");
+            _movesCaption.Text = SugarLoc.T("Mutări");
+            // Nivelurile grele au o flăcăruie pe cardul nivelului.
             Difficulty difficulty = LevelConfig.DifficultyFor(level);
-            bool hard = !boss && !LevelConfig.IsBonusLevel(level) && difficulty is Difficulty.Hard or Difficulty.VeryHard;
-            Color color = boss ? Palette.Tile(4)
-                : hard ? new Color(0.95f, 0.35f, 0.2f)
-                : current ? UiRoot.Theme.AccentColor : new Color(0.72f, 0.66f, 0.78f);
-            _trackDots[index].color = color;
-            _trackNumbers[index].Text = level.ToString();
-            _trackNumbers[index].gameObject.SetActive(!boss);
-            _trackIcons[index].gameObject.SetActive(boss);
-            if (boss) _trackIcons[index].sprite = SugarSprites.BossFace(BossDefinition.For(level, 20).Look);
-            _trackFlames[index].gameObject.SetActive(hard);
+            _levelFlame.gameObject.SetActive(!boss && !LevelConfig.IsBonusLevel(level) && difficulty is Difficulty.Hard or Difficulty.VeryHard);
         }
 
         // ------------------------------------------------------------ Puterea lui Bobo
@@ -462,16 +428,16 @@ namespace SugarDrop
             foreach (GoalView view in _goalViews) Destroy(view.Root.gameObject);
             _goalViews.Clear();
             int count = goals.Items.Count;
-            const float spacing = 130f;
+            const float spacing = 150f;
             for (int i = 0; i < count; i++)
             {
                 GoalItem item = goals.Items[i];
                 RectTransform root = UiFactory.CreateRect("Goal" + i, _goalCard);
-                UiFactory.Place(root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2((i - (count - 1) * 0.5f) * spacing, 12f), new Vector2(120f, 120f));
+                UiFactory.Place(root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2((i - (count - 1) * 0.5f) * spacing, -6f), new Vector2(120f, 110f));
                 Image icon = UiFactory.CreateImage("Icon", root, GoalIcon(item), GoalColor(item));
-                UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(76f, 76f));
-                UiLabel label = SugarUi.Outlined("Count", root, "", item.Kind is GoalKind.Score or GoalKind.Boss ? 28 : 38, Color.white, 3f);
-                UiFactory.Place(label.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -8f), new Vector2(150f, 50f));
+                UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 14f), new Vector2(70f, 70f));
+                UiLabel label = UiFactory.CreateText("Count", root, "", item.Kind is GoalKind.Score or GoalKind.Boss ? 28 : 34, TextAnchor.MiddleCenter, UiRoot.Theme.TextDarkColor);
+                UiFactory.Place(label.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -2f), new Vector2(150f, 44f));
                 Image check = UiFactory.CreateImage("Check", root, SugarSprites.Check, UiRoot.Theme.PositiveColor);
                 UiFactory.Place(check.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-16f, 18f), new Vector2(54f, 54f));
                 var view = new GoalView { Item = item, Root = root, Count = label, Check = check, Punch = root.gameObject.AddComponent<PunchScale>() };
