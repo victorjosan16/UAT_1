@@ -42,6 +42,7 @@ namespace SugarDrop
             public Image Portrait;
             public Image[] Stars;
             public Image Sparkle;
+            public Image Flame;
             public LevelNodeAnimator Animator;
         }
 
@@ -388,6 +389,19 @@ namespace SugarDrop
             view.Sparkle = UiFactory.CreateImage("Sparkle", view.Visual, SugarSprites.Sparkle, Color.white);
             UiFactory.Place(view.Sparkle.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-12f, -12f), Vector2.one * 46f);
 
+            // Nivelurile grele: o flacără deasupra nodului și un inel roșu (se știe dinainte ce vine).
+            Difficulty difficulty = LevelConfig.DifficultyFor(level);
+            if (!boss && !LevelConfig.IsBonusLevel(level) && difficulty is Difficulty.Hard or Difficulty.VeryHard)
+            {
+                view.Flame = UiFactory.CreateImage("Flame", view.Visual, SugarSprites.Flame, Color.white);
+                bool veryHard = difficulty == Difficulty.VeryHard;
+                UiFactory.Place(view.Flame.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, -size * 0.12f),
+                    Vector2.one * size * (veryHard ? 0.7f : 0.55f));
+                view.Flame.rectTransform.SetSiblingIndex(0);
+                view.Flame.gameObject.AddComponent<UiFlicker>();
+                view.Ring.gameObject.SetActive(true);
+            }
+
             view.Boss = SugarUi.Outlined("Boss", view.Visual, SugarLoc.T("BOSS"), 34, theme.AccentColor);
             UiFactory.Place(view.Boss.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(220f, 48f));
             view.Boss.gameObject.SetActive(boss);
@@ -609,6 +623,12 @@ namespace SugarDrop
             };
             node.Face.color = face;
             node.Ring.color = state == LevelNodeState.Locked ? new Color(0.71f, 0.48f, 1f, 0.45f) : Palette.Tile(4);
+            if (node.Flame != null)
+            {
+                // Inel roșu-portocaliu pentru nivelurile grele; flacăra se stinge după ce nivelul e trecut.
+                node.Ring.color = new Color(0.95f, 0.35f, 0.2f, state == LevelNodeState.Locked ? 0.55f : 1f);
+                node.Flame.gameObject.SetActive(state != LevelNodeState.Completed);
+            }
             node.Number.gameObject.SetActive(state != LevelNodeState.Locked);
             node.Lock.gameObject.SetActive(state == LevelNodeState.Locked);
             // Mega-Boss (la fiecare 50 de niveluri): etichetă proprie, aurie, și inel auriu.

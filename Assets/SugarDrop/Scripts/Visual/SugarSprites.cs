@@ -805,6 +805,28 @@ namespace SugarDrop
             return d;
         }));
 
+        /// <summary>Flacără (nivel greu): limbă de foc portocalie cu miez galben.</summary>
+        public static Sprite Flame => Get("flame", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            // Formă de picătură întoarsă: un cerc jos care se subțiază spre un vârf ondulat sus.
+            float Shape(Vector2 q, float radius, float tip)
+            {
+                float t = Mathf.Clamp01((q.y - 50f) / (tip - 50f));
+                float half = Mathf.Lerp(radius, 0f, t * t) + Mathf.Sin(q.y * 0.12f) * 4f * t;
+                float body = Vector2.Distance(q, new Vector2(64f, 50f)) - radius;
+                float cone = Mathf.Max(Mathf.Abs(q.x - 64f - Mathf.Sin(q.y * 0.05f) * 8f * t) - half, Mathf.Max(50f - q.y, q.y - tip));
+                return Mathf.Min(body, cone);
+            }
+            float outer = Shape(p, 40f, 124f);
+            float a = Alpha(outer);
+            if (a <= 0f) return Color.clear;
+            Color c = Color.Lerp(new Color(0.95f, 0.25f, 0.15f), new Color(1f, 0.55f, 0.15f), Mathf.Clamp01(-outer / 14f));
+            c = Over(c, new Color(1f, 0.88f, 0.3f), Alpha(Shape(new Vector2(p.x, p.y + 12f), 20f, 104f)));
+            c.a = a;
+            return c;
+        }));
+
         // ------------------------------------------------------------ Salvează-l pe Bobo
 
         /// <summary>Piatră: bolovan rotunjit, gri-violet, cu umbră jos și două crăpături.</summary>

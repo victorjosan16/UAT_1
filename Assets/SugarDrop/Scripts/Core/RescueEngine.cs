@@ -11,6 +11,8 @@ namespace SugarDrop
     public sealed class RescueStep
     {
         public readonly List<Vector2Int> Removed = new();
+        /// <summary>Culoarea fiecărei bomboane din Removed (aceeași ordine).</summary>
+        public readonly List<int> RemovedColors = new();
         public int Color;
         public readonly List<Vector2Int> CageHits = new();
         public readonly List<Vector2Int> CagesOpened = new();
@@ -156,6 +158,7 @@ namespace SugarDrop
             {
                 _kind[c.x, c.y] = RescueCell.Empty;
                 step.Removed.Add(c);
+                step.RemovedColors.Add(_color[c.x, c.y]);
             }
             // Vecinii grupului: cuștile primesc o lovitură, slime-ul dispare.
             var touched = new HashSet<Vector2Int>();
@@ -258,12 +261,31 @@ namespace SugarDrop
         /// Cât mai e de săpat: cel mai ieftin drum de la sirop (sau gura rezervorului) până la Bobo, unde un gol costă 0,
         /// o bomboană sau slime-ul 1, o cușcă 2 (câte lovituri mai are), iar pietrele nu se pot traversa.
         /// </summary>
-        public int PathCost()
+        public int PathCost() => Dijkstra(out _);
+
+        /// <summary>Celulele de pe cel mai ieftin drum (de la sirop spre Bobo), fără cele deja goale.</summary>
+        public List<Vector2Int> CheapestPath()
+        {
+            var path = new List<Vector2Int>();
+            if (Dijkstra(out Vector2Int[,] previous) >= int.MaxValue / 4) return path;
+            var none = new Vector2Int(-1, -1);
+            for (Vector2Int c = Outlet; c != none; c = previous[c.x, c.y])
+                if (_kind[c.x, c.y] != RescueCell.Empty) path.Insert(0, c);
+            return path;
+        }
+
+        private int Dijkstra(out Vector2Int[,] previous)
         {
             const int Infinite = int.MaxValue / 4;
+            var none = new Vector2Int(-1, -1);
             var cost = new int[Width, Height];
+            previous = new Vector2Int[Width, Height];
             for (int x = 0; x < Width; x++)
-                for (int y = 0; y < Height; y++) cost[x, y] = Infinite;
+                for (int y = 0; y < Height; y++)
+                {
+                    cost[x, y] = Infinite;
+                    previous[x, y] = none;
+                }
             var open = new List<Vector2Int>();
             Vector2Int inlet = Inlet;
             int start = CellCost(inlet);
@@ -298,10 +320,43 @@ namespace SugarDrop
                     int total = cost[c.x, c.y] + step;
                     if (total >= cost[n.x, n.y]) continue;
                     cost[n.x, n.y] = total;
+                    previous[n.x, n.y] = c;
                     open.Add(n);
                 }
             }
             return Infinite;
+        }
+
+        /// <summary>
+        /// Puterea lui Bobo: curăță primele celule care mai blochează cel mai bun drum (bomboane, slime, cuști),
+        /// fără să coste o mutare și fără să crească slime-ul.
+        /// </summary>
+        public RescueStep PowerClear(int count)
+        {
+            if (Rescued) return null;
+            List<Vector2Int> path = CheapestPath();
+            if (path.Count == 0) return null;
+            var step = new RescueStep { Color = -1 };
+            for (int i = 0; i < path.Count && i < count; i++)
+            {
+                Vector2Int c = path[i];
+                switch (_kind[c.x, c.y])
+                {
+                    case RescueCell.Piece:
+                        step.Removed.Add(c);
+                        step.RemovedColors.Add(_color[c.x, c.y]);
+                        break;
+                    case RescueCell.Cage:
+                        step.CagesOpened.Add(c);
+                        break;
+                    case RescueCell.Slime:
+                        step.SlimeCleared.Add(c);
+                        break;
+                }
+                _kind[c.x, c.y] = RescueCell.Empty;
+            }
+            Flow(step);
+            return step;
         }
 
         private int CellCost(Vector2Int c) => _kind[c.x, c.y] switch

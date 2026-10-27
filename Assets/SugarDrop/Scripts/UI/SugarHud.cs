@@ -13,6 +13,20 @@ namespace SugarDrop
     public class SugarHud : MonoBehaviour
     {
         public event Action PauseClicked;
+        /// <summary>Jucătorul a atins butonul Puterii lui Bobo.</summary>
+        public event Action PowerClicked;
+
+        // Mini-traseul nivelurilor (stânga sus): nivelul curent mare, apoi următoarele trei.
+        private readonly Image[] _trackDots = new Image[4];
+        private readonly UiLabel[] _trackNumbers = new UiLabel[4];
+        private readonly Image[] _trackIcons = new Image[4];
+        private readonly Image[] _trackFlames = new Image[4];
+
+        // Puterea lui Bobo (dreapta jos): cercul se umple jucând; plin, pulsează.
+        private RectTransform _power;
+        private Image _powerFill;
+        private Image _powerGlow;
+        private float _powerValue;
 
         private UiLabel _level;
         private Image _levelPill;
@@ -86,9 +100,12 @@ namespace SugarDrop
 
             // Nivelul (stânga sus).
             _levelPill = UiFactory.CreatePanel("LevelPill", transform, theme.PanelColor);
-            UiFactory.Place((RectTransform)_levelPill.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(270f, 96f));
+            UiFactory.Place((RectTransform)_levelPill.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(300f, 96f));
             _level = UiFactory.CreateText("Level", _levelPill.transform, "", 40);
             UiFactory.Stretch(_level.RectTransform, 6f);
+            _level.gameObject.SetActive(false);
+            BuildTrack(theme);
+            BuildPower(theme);
 
             // Obiectivele nivelului (centru sus): iconiță + câte au mai rămas.
             Image card = UiFactory.CreatePanel("GoalCard", transform, theme.PanelLightColor);
@@ -344,8 +361,88 @@ namespace SugarDrop
         public void SetLevel(int level, bool boss)
         {
             _level.Text = boss ? SugarLoc.T("BOSS") + " " + level : SugarLoc.F("NIVELUL {0}", level);
-            _levelPill.color = boss ? Palette.Tile(4) : UiRoot.Theme.PanelColor;
+            _levelPill.color = UiRoot.Theme.PanelColor;
             _movesCaption.Text = SugarLoc.T("mutări");
+            for (int i = 0; i < _trackDots.Length; i++) SetTrackDot(i, level + i, i == 0);
+        }
+
+        // ------------------------------------------------------------ Mini-traseul nivelurilor
+
+        private void BuildTrack(UiTheme theme)
+        {
+            var pill = (RectTransform)_levelPill.transform;
+            Image line = UiFactory.CreatePanel("Line", pill, new Color(1f, 1f, 1f, 0.35f));
+            UiFactory.Place((RectTransform)line.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(60f, 0f), new Vector2(220f, 10f));
+            for (int i = 0; i < _trackDots.Length; i++)
+            {
+                bool current = i == 0;
+                float size = current ? 80f : 52f;
+                float x = current ? 48f : 112f + (i - 1) * 64f;
+                _trackFlames[i] = UiFactory.CreateImage("Flame", pill, SugarSprites.Flame, Color.white);
+                UiFactory.Place(_trackFlames[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0f), new Vector2(x, size * 0.2f), Vector2.one * size * 0.75f);
+                _trackFlames[i].gameObject.AddComponent<UiFlicker>();
+                _trackDots[i] = UiFactory.CreateImage("Dot", pill, theme.Circle, Color.white);
+                UiFactory.Place(_trackDots[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, 0f), Vector2.one * size);
+                _trackNumbers[i] = SugarUi.Outlined("Number", _trackDots[i].transform, "", current ? 36 : 22, Color.white, current ? 3f : 2f);
+                UiFactory.Stretch(_trackNumbers[i].RectTransform);
+                _trackIcons[i] = UiFactory.CreateImage("Icon", _trackDots[i].transform, SugarSprites.BossFace(0), Color.white);
+                UiFactory.Place(_trackIcons[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.8f);
+            }
+        }
+
+        /// <summary>Un punct de pe traseu: Boss (față), nivel greu (roșu, cu flacără), salvare (roz) sau obișnuit.</summary>
+        private void SetTrackDot(int index, int level, bool current)
+        {
+            bool boss = LevelConfig.IsBossLevel(level);
+            Difficulty difficulty = LevelConfig.DifficultyFor(level);
+            bool hard = !boss && !LevelConfig.IsBonusLevel(level) && difficulty is Difficulty.Hard or Difficulty.VeryHard;
+            Color color = boss ? Palette.Tile(4)
+                : hard ? new Color(0.95f, 0.35f, 0.2f)
+                : LevelConfig.IsRescueLevel(level) ? new Color(0.96f, 0.45f, 0.62f)
+                : current ? UiRoot.Theme.AccentColor : new Color(0.72f, 0.66f, 0.78f);
+            _trackDots[index].color = color;
+            _trackNumbers[index].Text = level.ToString();
+            _trackNumbers[index].gameObject.SetActive(!boss);
+            _trackIcons[index].gameObject.SetActive(boss);
+            if (boss) _trackIcons[index].sprite = SugarSprites.BossFace(BossDefinition.For(level, 20).Look);
+            _trackFlames[index].gameObject.SetActive(hard);
+        }
+
+        // ------------------------------------------------------------ Puterea lui Bobo
+
+        private void BuildPower(UiTheme theme)
+        {
+            _power = UiFactory.CreateRect("BoboPower", transform);
+            UiFactory.Place(_power, Vector2.right, new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
+            _powerGlow = UiFactory.CreateImage("Glow", _power, SugarSprites.SoftDot, new Color(1f, 0.85f, 0.4f, 0f));
+            UiFactory.Place(_powerGlow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * 240f);
+            Image back = UiFactory.CreateImage("Back", _power, theme.Circle, new Color(0.25f, 0.1f, 0.25f, 0.55f));
+            UiFactory.Stretch(back.rectTransform);
+            back.raycastTarget = true;
+            _powerFill = UiFactory.CreateImage("Fill", _power, theme.Circle, theme.AccentColor);
+            UiFactory.Stretch(_powerFill.rectTransform);
+            _powerFill.type = Image.Type.Filled;
+            _powerFill.fillMethod = Image.FillMethod.Radial360;
+            _powerFill.fillOrigin = (int)Image.Origin360.Top;
+            _powerFill.fillClockwise = true;
+            Image face = UiFactory.CreateImage("Face", _power, theme.Circle, Color.white);
+            UiFactory.Place(face.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * 112f);
+            Image frosting = UiFactory.CreateImage("Bobo", face.transform, SugarSprites.Frosting, Color.white);
+            UiFactory.Place(frosting.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -4f), Vector2.one * 92f);
+            Image cherry = UiFactory.CreateImage("Cherry", face.transform, SugarSprites.Circle, new Color(0.93f, 0.2f, 0.32f));
+            UiFactory.Place(cherry.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(3f, 34f), Vector2.one * 26f);
+            var button = _power.gameObject.AddComponent<Button>();
+            button.targetGraphic = back;
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => PowerClicked?.Invoke());
+        }
+
+        /// <param name="value">0..1 (plin = gata de folosit).</param>
+        public void SetPower(float value, bool visible)
+        {
+            _power.gameObject.SetActive(visible);
+            _powerValue = Mathf.Clamp01(value);
+            _powerFill.fillAmount = _powerValue;
         }
 
         /// <summary>Textul de sub numărul din disc („mutări”, sau „sec” în Sugar Rush).</summary>
@@ -469,6 +566,14 @@ namespace SugarDrop
 
         private void Update()
         {
+            // Puterea lui Bobo plină: cercul strălucește și pulsează ca să fie observată.
+            if (_power != null && _power.gameObject.activeSelf)
+            {
+                bool ready = _powerValue >= 1f;
+                float pulse = ready ? Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3.5f)) : 0f;
+                _powerGlow.color = new Color(1f, 0.85f, 0.4f, ready ? 0.35f + pulse * 0.4f : 0f);
+                _power.localScale = Vector3.one * (1f + pulse * 0.08f);
+            }
             // Puține mutări: cifra bate ca o inimă, ca jucătorul să fie atent la ultimele mișcări.
             if (_lowMoves) _moves.RectTransform.localScale = Vector3.one * (1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f)));
             if (_wordT >= 0f)

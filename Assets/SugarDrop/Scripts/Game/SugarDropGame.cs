@@ -109,9 +109,76 @@ namespace SugarDrop
         private bool Rescue => _config.Type == LevelType.Rescue;
         private bool BoardBusy => board.Busy || (_rescue != null && _rescue.Busy);
 
+        // ------------------------------------------------------------ Puterea lui Bobo
+
+        /// <summary>De la ce nivel apare Puterea lui Bobo (după ce jucătorul a învățat jocul).</summary>
+        private const int PowerFrom = 6;
+        private float _power;
+        private bool _powerAnnounced;
+        private bool _powerRunning;
+
+        private void AddPower(float amount)
+        {
+            if (_state != State.Playing || _level < PowerFrom || _powerRunning) return;
+            bool wasReady = _power >= 1f;
+            _power = Mathf.Min(1f, _power + amount);
+            hud.SetPower(_power, true);
+            if (_power >= 1f && !wasReady && !_powerAnnounced)
+            {
+                _powerAnnounced = true;
+                hud.ShowBanner(SugarLoc.T("Puterea lui Bobo e gata!"));
+                mascot.Cheer(1.5f);
+            }
+        }
+
+        private void OnPowerClicked()
+        {
+            if (_state != State.Playing || _powerRunning || BoardBusy || _moves <= 0 || _goals.IsComplete) return;
+            if (_power < 1f)
+            {
+                SugarAudio.Buzz(0);
+                hud.ShowBanner(SugarLoc.T("Umple cercul cu grupuri mari și piese speciale!"));
+                return;
+            }
+            _power = 0f;
+            hud.SetPower(0f, true);
+            StartCoroutine(PowerRoutine());
+        }
+
+        /// <summary>
+        /// Bobo își folosește puterea (fără să coste o mutare): pe tabla obișnuită aruncă o bombă și o rachetă care
+        /// explodează imediat; în salvare sparge următoarele obstacole de pe cel mai bun drum al siropului.
+        /// </summary>
+        private IEnumerator PowerRoutine()
+        {
+            _powerRunning = true;
+            hud.ShowWord(SugarLoc.T("Puterea lui Bobo!"), Palette.Tile(3));
+            mascot.Cheer(2f);
+            SugarAudio.Buzz(2);
+            if (Audio != null) Audio.Play(SugarSound.SpecialCreated);
+            yield return new WaitForSeconds(0.35f);
+            if (Rescue) _rescue.PowerBlast();
+            else
+            {
+                foreach (TileKind kind in new[] { TileKind.Bomb, TileKind.RocketH })
+                {
+                    while (board.Busy) yield return null;
+                    if (!board.TryMakeRandomSpecial(out Vector3 at, kind)) continue;
+                    if (Vfx != null) Vfx.SpecialCreated(at);
+                    yield return new WaitForSeconds(0.3f);
+                    while (board.Busy) yield return null;
+                    board.DetonateNextSpecial();
+                    yield return new WaitForSeconds(0.15f);
+                }
+            }
+            while (BoardBusy) yield return null;
+            _powerRunning = false;
+        }
+
         private void OnEnable()
         {
             if (_rescue == null) _rescue = new GameObject("RescueBoard").AddComponent<RescueBoard>();
+            hud.PowerClicked += OnPowerClicked;
             _rescue.MoveMade += OnMoveMade;
             _rescue.InvalidTap += OnInvalidTap;
             _rescue.Touched += OnTouched;
@@ -165,6 +232,7 @@ namespace SugarDrop
 
         private void OnDisable()
         {
+            hud.PowerClicked -= OnPowerClicked;
             if (_rescue != null)
             {
                 _rescue.MoveMade -= OnMoveMade;
@@ -615,6 +683,10 @@ namespace SugarDrop
             LevelConfig config = LevelConfig.For(level);
             string title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level);
             string message = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!") : IntroText(config.Type);
+            // Nivelurile grele se anunță dinainte și dau mai multe monede.
+            Difficulty difficulty = config.IsBonus ? Difficulty.Normal : config.Difficulty;
+            if (difficulty == Difficulty.Hard) message = SugarLoc.T("Nivel greu: monede ×1,5!") + "\n" + message;
+            else if (difficulty == Difficulty.VeryHard) message = SugarLoc.T("Nivel foarte greu: monede ×2!") + "\n" + message;
             // Prima întâlnire cu o mecanică: un „NOU!” scurt (fără tutorial), plus o frază pentru portaluri.
             if (!config.IsBoss && IsNew(MechanicBit(config.Type))) message = SugarLoc.T("NOU!") + " " + message;
             if (config.PortalIn.Length > 0 && IsNew(PortalBit))
@@ -796,6 +868,10 @@ namespace SugarDrop
             _popChain = 0;
             _continuedWithAd = false;
             _warnedLastMoves = false;
+            _power = 0f;
+            _powerAnnounced = false;
+            _powerRunning = false;
+            hud.SetPower(0f, _level >= PowerFrom);
             input.enabled = true;
             CancelBomb();
             RefreshBoosters();
@@ -1052,7 +1128,7 @@ namespace SugarDrop
             // Fără mutări rămase (sau cu obiectivele îndeplinite) tabla nu mai primește atingeri: altfel, cât timp
             // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
             if (_config.IsBonus) TickBonus(dt);
-            bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired;
+            bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired && !_powerRunning;
             if (input.enabled != (canTap && !Rescue)) input.enabled = canTap && !Rescue;
             _rescue.Interactable = canTap && Rescue && !_rescue.Busy;
 
@@ -1086,7 +1162,7 @@ namespace SugarDrop
             // Așteptăm să se termine animațiile tablei.
             bool complete = _config.IsBonus ? _bonusTime <= 0f || board.Stuck : _goals.IsComplete;
             bool outOfMoves = !_config.IsBonus && (_moves <= 0 || board.Stuck || board.TimeBombExpired);
-            if (BoardBusy || (!complete && !outOfMoves))
+            if (BoardBusy || _powerRunning || (!complete && !outOfMoves))
             {
                 _endTimer = 0f;
                 return;
@@ -1167,6 +1243,9 @@ namespace SugarDrop
                 Data.extraMoves += bonus;
                 Data.shuffles += bonus;
             }
+            // Nivelurile grele plătesc mai bine (×1,5 și ×2).
+            if (!_config.IsBonus && _config.Difficulty == Difficulty.Hard) coins = coins * 3 / 2;
+            else if (!_config.IsBonus && _config.Difficulty == Difficulty.VeryHard) coins *= 2;
             // Weekend dulce: monede duble.
             coins *= SugarEvents.CoinMultiplier(System.DateTime.Now);
             Data.coins += coins;
@@ -1517,6 +1596,7 @@ namespace SugarDrop
         /// </summary>
         private void OnGroupBlasted(int size, Vector3 center, int color)
         {
+            if (size >= 3) AddPower((size - 2) * 0.035f);
             if (Vfx != null)
             {
                 Vfx.GroupBurst(center, size, color);
@@ -1529,6 +1609,7 @@ namespace SugarDrop
 
         private void OnComboTriggered(Vector3 position)
         {
+            AddPower(0.12f);
             if (Vfx != null) Vfx.ComboFlash(position);
             if (Audio != null) Audio.Play(SugarSound.Rainbow, 1f, 0.9f);
             hud.ShowWord(SugarLoc.T("Combo!"), Palette.Tile(3));
@@ -1582,6 +1663,7 @@ namespace SugarDrop
 
         private void OnSpecialActivated(TileKind kind, Vector3 position, int color, List<Vector3> targets)
         {
+            AddPower(0.06f);
             if (Vfx != null) Vfx.LandBurst(position, 8);
             switch (kind)
             {

@@ -104,6 +104,22 @@ namespace SugarDrop.Tests
         }
 
         [Test]
+        public void BoboPower_ClearsTheNextBlockersOnTheBestPath_WithoutCountingAMove()
+        {
+            RescueLayout layout = Column(6);
+            for (int y = 0; y < 6; y++) layout.Color[1, y] = y % 2 + 1; // coloana din mijloc: culori alternante
+            var engine = new RescueEngine(layout);
+            int before = engine.PathCost();
+            RescueStep step = engine.PowerClear(4);
+            Assert.AreEqual(4, step.Removed.Count);
+            Assert.AreEqual(4, step.RemovedColors.Count);
+            Assert.AreEqual(0, engine.Taps, "puterea nu e o mutare");
+            Assert.Less(engine.PathCost(), before);
+            engine.PowerClear(4);
+            Assert.IsTrue(engine.Rescued);
+        }
+
+        [Test]
         public void GeneratedLevels_AreSolvable_Deterministic_AndFair()
         {
             for (int level = LevelConfig.RescueFrom; level <= 260; level++)

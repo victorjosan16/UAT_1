@@ -227,17 +227,35 @@ namespace SugarDrop
                 InvalidTap?.Invoke();
                 return;
             }
+            MoveMade?.Invoke();
+            Apply(step);
+        }
+
+        /// <summary>Puterea lui Bobo: sparge următoarele 4 obstacole de pe cel mai bun drum (fără să coste o mutare).</summary>
+        public bool PowerBlast()
+        {
+            if (_engine == null || Busy) return false;
+            RescueStep step = _engine.PowerClear(4);
+            if (step == null) return false;
+            if (SugarVfx.Instance != null)
+                foreach (Vector2Int c in step.Removed) SugarVfx.Instance.SpecialCreated(transform.TransformPoint(Center(c)));
+            Apply(step);
+            return true;
+        }
+
+        /// <summary>Animațiile și evenimentele unui pas (atingere sau putere).</summary>
+        private void Apply(RescueStep step)
+        {
             _hint.Clear();
             float now = Time.time;
-            MoveMade?.Invoke();
-
             Vector3 sum = Vector3.zero;
-            foreach (Vector2Int c in step.Removed)
+            for (int i = 0; i < step.Removed.Count; i++)
             {
+                Vector2Int c = step.Removed[i];
                 Vector3 position = transform.TransformPoint(Center(c));
                 sum += position;
                 _popAt[c.x, c.y] = now;
-                TileCleared?.Invoke(step.Color, position);
+                TileCleared?.Invoke(step.RemovedColors[i], position);
             }
             if (step.Removed.Count > 0)
                 GroupBlasted?.Invoke(step.Removed.Count, sum / step.Removed.Count, step.Color);
