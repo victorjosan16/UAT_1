@@ -109,6 +109,7 @@ namespace SugarDrop
 
         public void SetHappy()
         {
+            _scared = false;
             _mood = Mood.Happy;
             _mouth.sprite = SugarSprites.Smile;
         }
@@ -121,11 +122,26 @@ namespace SugarDrop
 
         public void SetIdle()
         {
+            _scared = false;
             _mood = Mood.Idle;
             _mouth.sprite = SugarSprites.Smile;
         }
 
         private readonly System.Collections.Generic.Dictionary<SpriteRenderer, Color> _colors = new();
+
+        /// <summary>Speriat (pericolul se apropie): gura în jos și tremur ușor.</summary>
+        public bool Scared
+        {
+            get => _scared;
+            set
+            {
+                if (_scared == value) return;
+                _scared = value;
+                if (_mood != Mood.Sad) _mouth.sprite = value ? SugarSprites.Frown : SugarSprites.Smile;
+            }
+        }
+
+        private bool _scared;
 
         /// <summary>Salvează-l pe Bobo: cât e prins, Bobo e doar o siluetă întunecată; salvat, își recapătă culorile.</summary>
         public void SetSilhouette(bool silhouette)
@@ -163,6 +179,13 @@ namespace SugarDrop
                 y = -0.08f;
                 scale = new Vector3(1.06f, 0.9f, 1f);
                 angle = Mathf.Sin(time * 1.2f) * 3f;
+            }
+            else if (_scared)
+            {
+                // Tremură de frică și se uită în jos, spre pericol.
+                angle = Mathf.Sin(time * 38f) * 2.5f;
+                _lookTarget = transform.position + Vector3.down * 3f;
+                _lookTimer = 0.2f;
             }
 
             if (_jumpT >= 0f)

@@ -109,6 +109,17 @@ namespace SugarDrop
         private bool Rescue => _config.Type == LevelType.Rescue;
         private bool BoardBusy => board.Busy || (_rescue != null && _rescue.Busy);
 
+        /// <summary>Pericolul de sub tablă (pe nivelurile fără borcan) și dacă nivelul are borcan.</summary>
+        private DangerScene _danger;
+        private bool _jarLevel;
+
+        /// <summary>Nivelurile cu borcan: bomboane-ingredient și salvarea cu sirop; restul au pericolul lui Bobo.</summary>
+        private static bool NeedsJar(LevelConfig config) => config.Type == LevelType.Rescue || config.Ingredients > 0;
+
+        private float DangerProgress => _config.IsBonus
+            ? 1f - _bonusTime / Mathf.Max(1f, _config.BonusSeconds)
+            : 1f - _moves / (float)Mathf.Max(1, _config.Moves);
+
         // ------------------------------------------------------------ Puterea lui Bobo
 
         /// <summary>De la ce nivel apare Puterea lui Bobo (după ce jucătorul a învățat jocul).</summary>
@@ -178,6 +189,7 @@ namespace SugarDrop
         private void OnEnable()
         {
             if (_rescue == null) _rescue = new GameObject("RescueBoard").AddComponent<RescueBoard>();
+            if (_danger == null) _danger = new GameObject("Danger").AddComponent<DangerScene>();
             hud.PowerClicked += OnPowerClicked;
             _rescue.MoveMade += OnMoveMade;
             _rescue.InvalidTap += OnInvalidTap;
@@ -627,6 +639,8 @@ namespace SugarDrop
 
         private void OpenMap()
         {
+            if (_danger != null) _danger.Hide();
+            if (mascot != null) mascot.Scared = false;
             Time.timeScale = 1f;
             _state = State.Map;
             input.enabled = false;
@@ -687,6 +701,8 @@ namespace SugarDrop
             Difficulty difficulty = config.IsBonus ? Difficulty.Normal : config.Difficulty;
             if (difficulty == Difficulty.Hard) message = SugarLoc.T("Nivel greu: monede ×1,5!") + "\n" + message;
             else if (difficulty == Difficulty.VeryHard) message = SugarLoc.T("Nivel foarte greu: monede ×2!") + "\n" + message;
+            // Pericolul ținutului (pe nivelurile fără borcan): de ce trebuie salvat Bobo.
+            if (!NeedsJar(config)) message = SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level)))) + "\n" + message;
             // Prima întâlnire cu o mecanică: un „NOU!” scurt (fără tutorial), plus o frază pentru portaluri.
             if (!config.IsBoss && IsNew(MechanicBit(config.Type))) message = SugarLoc.T("NOU!") + " " + message;
             if (config.PortalIn.Length > 0 && IsNew(PortalBit))
@@ -846,6 +862,23 @@ namespace SugarDrop
             }
             playfield.ApplyTheme(chapter);
             mascot.ApplyCostume();
+
+            // Sub tablă: borcanul (unde are rost) sau Bobo pe un suport de tort, cu pericolul ținutului care urcă.
+            _jarLevel = NeedsJar(_config);
+            playfield.SetJarVisible(_jarLevel);
+            mascot.Scared = false;
+            if (_jarLevel)
+            {
+                mascot.transform.position = playfield.JarCenter + (Vector3)mascotOffset;
+                _danger.Hide();
+            }
+            else
+            {
+                mascot.transform.position = playfield.JarCenter + new Vector3(0f, 0.4f, 0f);
+                Camera view = Camera.main;
+                float screenBottom = view != null ? view.transform.position.y - view.orthographicSize - 0.5f : -11f;
+                _danger.Show(ChapterTheme.IndexOf(chapter), mascot.transform.position + Vector3.down * 0.85f, 2f, board.Width + 0.8f, screenBottom);
+            }
 
             // Salvează-l pe Bobo: tabla obișnuită se golește, în locul ei vine tabla fără gravitație.
             if (Rescue)
@@ -1131,6 +1164,12 @@ namespace SugarDrop
             bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired && !_powerRunning;
             if (input.enabled != (canTap && !Rescue)) input.enabled = canTap && !Rescue;
             _rescue.Interactable = canTap && Rescue && !_rescue.Busy;
+            if (_danger.Visible)
+            {
+                float danger = DangerProgress;
+                _danger.SetProgress(danger);
+                mascot.Scared = danger > 0.65f;
+            }
 
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
             if (_bossTurnPending && !BoardBusy)
@@ -1223,6 +1262,7 @@ namespace SugarDrop
 
         private void Win()
         {
+            if (_danger.Visible) _danger.PlayRescue();
             _state = State.Finale;
             input.enabled = false;
             CancelBomb();
@@ -1350,6 +1390,7 @@ namespace SugarDrop
             if (Audio != null) Audio.Play(SugarSound.Lose);
             SugarAudio.Buzz(1);
             mascot.SetSad();
+            if (_danger.Visible) _danger.PlayCaught();
             bool canContinue = !_continuedWithAd && !board.Stuck && !exploded;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
             // Arătăm exact ce a mai lipsit (de ex. 2 ghivece): jucătorul vede cât de aproape a fost.
@@ -1370,6 +1411,7 @@ namespace SugarDrop
             input.enabled = true;
             result.Hide();
             mascot.SetIdle();
+            if (_danger.Visible) _danger.Recover(DangerProgress);
             hud.SetMoves(_moves, true);
         }
 
@@ -1642,7 +1684,7 @@ namespace SugarDrop
             }
             _popChain++;
             // Bomboanele din culorile cerute „cad” spre borcan și se adună acolo (doar decor; obiectivul e deja numărat).
-            if (color >= 0 && IsCollectColor(color) && _decorCounter++ % 2 == 0) candies.SpawnDecorative(position, Palette.TileLight(color));
+            if (_jarLevel && color >= 0 && IsCollectColor(color) && _decorCounter++ % 2 == 0) candies.SpawnDecorative(position, Palette.TileLight(color));
             mascot.LookAt(position);
             if (Time.unscaledTime - _lastBuzz > 0.09f)
             {

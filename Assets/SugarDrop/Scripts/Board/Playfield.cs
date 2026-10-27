@@ -80,6 +80,19 @@ namespace SugarDrop
             trigger.size = new Vector2(jarHalfWidth * 2f, jarTop - jarBottom);
         }
 
+        private static readonly string[] JarParts =
+            { "FunnelLeft", "FunnelRight", "JarLeft", "JarRight", "JarBottom", "JarGlass", "JarShine", "JarShine2", "RimLeft", "RimRight", "Label" };
+
+        /// <summary>
+        /// Pâlnia și borcanul apar doar unde au rost (bomboane-ingredient, salvarea cu sirop); în rest, sub tablă
+        /// e scena cu pericolul lui Bobo.
+        /// </summary>
+        public void SetJarVisible(bool visible)
+        {
+            foreach (Transform child in transform)
+                if (System.Array.IndexOf(JarParts, child.name) >= 0) child.gameObject.SetActive(visible);
+        }
+
         /// <summary>Culorile capitolului: fundalul tablei, bastoanele, gulerul borcanului.</summary>
         public void ApplyTheme(int chapter)
         {

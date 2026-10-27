@@ -35,16 +35,18 @@ namespace SugarDrop
 
         private static readonly ChapterTheme[] Themes =
         {
-            new("Câmpia de Căpșuni", "#D6C2FF", "#FFDBE6", "#F6C5D8", "#66307A", "#783D8C", "#FF8FB1", 0.92f),
-            new("Pădurea de Mentă", "#B9F0D5", "#EAFBE0", "#C5EBD2", "#2E6B4F", "#38805E", "#4CCB8A", 0.38f),
-            new("Lacul de Afine", "#AFC8FF", "#DDF1FF", "#C3D6F6", "#2F4C8A", "#3A5CA0", "#5A9BFF", 0.6f),
-            new("Deșertul de Lămâie", "#FFE29A", "#FFF6D6", "#F6E3B0", "#8A6420", "#9C7428", "#FFC23C", 0.13f),
-            new("Castelul de Struguri", "#C9A7FF", "#F0DEFF", "#DCC8F2", "#4E2D85", "#5E3999", "#B57BFF", 0.75f),
-            new("Muntele de Ciocolată", "#E2C1A8", "#FBEADC", "#E8CDB8", "#5C3420", "#6E4028", "#B97A50", 0.07f),
-            new("Regatul de Gheață", "#B7ECF7", "#F1FCFF", "#CDEFF7", "#2D6E82", "#358096", "#5CD2F0", 0.53f),
-            new("Canionul de Caramel", "#FFC79A", "#FFEBD9", "#F5D2B5", "#874322", "#9A5129", "#FF9550", 0.06f),
-            new("Norii de Vată de Zahăr", "#F5C6F0", "#E4E9FF", "#EED2F2", "#6A3A88", "#7A4799", "#F78FD8", 0.85f),
-            new("Galaxia Curcubeu", "#8F7BE8", "#F7C6E8", "#CFC4F2", "#36296E", "#433382", "#FFD45A", 0.7f),
+            // Culori vii: cer saturat (jos la orizont mai cald, sus mai adânc), tablă închisă la culoare pe care
+            // bomboanele colorate ies în evidență, dungi intense.
+            new("Câmpia de Căpșuni", "#FFC2DA", "#4FB3FF", "#7A1F4F", "#A8326E", "#B83E7C", "#FF3D7F", 0.92f),
+            new("Pădurea de Mentă", "#C6F7A0", "#2FC4E8", "#1F5E3A", "#2E8A55", "#36996A", "#22C55E", 0.38f),
+            new("Lacul de Afine", "#9AE6FF", "#2F6BFF", "#1B2F78", "#2E4FB0", "#3A5DC2", "#3D8BFF", 0.6f),
+            new("Deșertul de Lămâie", "#FFE65C", "#FF9E3D", "#7A4A10", "#A8701E", "#B88028", "#FFB400", 0.13f),
+            new("Castelul de Struguri", "#F0A8FF", "#5B2BCF", "#3A1670", "#5A2BA0", "#6835B0", "#A855F7", 0.75f),
+            new("Muntele de Ciocolată", "#FFD1A3", "#E8743B", "#4A2414", "#6E3A22", "#7C452A", "#D9772F", 0.07f),
+            new("Regatul de Gheață", "#D2F8FF", "#2AA8F0", "#154A66", "#2479A0", "#2C88B0", "#38D1F5", 0.53f),
+            new("Canionul de Caramel", "#FFC98A", "#FF6A2B", "#6A2A0E", "#93441A", "#A35022", "#FF7A1A", 0.06f),
+            new("Norii de Vată de Zahăr", "#B3D0FF", "#FF7AD9", "#5A2178", "#7E35A0", "#8C3FB0", "#FF5FCB", 0.85f),
+            new("Galaxia Curcubeu", "#9A5CFF", "#1A1150", "#1E1550", "#3A2A8A", "#45339A", "#FFD23C", 0.7f),
         };
 
         public static int Count => Themes.Length;

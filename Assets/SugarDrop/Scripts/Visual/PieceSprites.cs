@@ -43,11 +43,11 @@ namespace SugarDrop
 
         private static readonly Color[] Colors =
         {
-            new(1f, 0.33f, 0.43f),   // căpșună
-            new(0.27f, 0.62f, 1f),   // afină
-            new(0.33f, 0.8f, 0.38f), // mentă
-            new(1f, 0.77f, 0.18f),   // lămâie
-            new(0.68f, 0.45f, 1f),   // strugure
+            new(1f, 0.2f, 0.32f),    // căpșună
+            new(0.12f, 0.56f, 1f),   // afină
+            new(0.18f, 0.8f, 0.31f), // mentă
+            new(1f, 0.76f, 0.05f),   // lămâie
+            new(0.62f, 0.3f, 1f),    // strugure
         };
 
         // ------------------------------------------------------------ Forme (distanță semnată, spațiu 128×128)

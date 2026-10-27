@@ -7,11 +7,11 @@ namespace SugarDrop
     {
         private static readonly Color[] TileColors =
         {
-            Hex("#FF5A6E"), // căpșună
-            Hex("#4DA8FF"), // afine
-            Hex("#5FD068"), // mentă
-            Hex("#FFC93C"), // lămâie
-            Hex("#B57BFF"), // strugure
+            Hex("#FF3352"), // căpșună
+            Hex("#1F8FFF"), // afine
+            Hex("#2ECC4F"), // mentă
+            Hex("#FFC20E"), // lămâie
+            Hex("#9D4DFF"), // strugure
         };
 
         private static readonly Color[] CandyColors =
