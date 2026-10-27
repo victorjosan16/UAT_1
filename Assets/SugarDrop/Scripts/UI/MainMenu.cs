@@ -32,7 +32,7 @@ namespace SugarDrop
 
         private static readonly string[] TapLines = { "Hihi, gâdilă!", "Hai să jucăm!", "Ești cel mai tare!", "Bomboane, bomboane!", "Încă un nivel?" };
 
-        private class Tile
+        private class DashTile
         {
             public RectTransform Rect;
             public UiLabel Caption;
@@ -55,8 +55,8 @@ namespace SugarDrop
         private BoboView _bobo;
         private RectTransform _bubble;
         private UiLabel _bubbleText;
-        private Tile _wheel, _gift, _missions, _event, _wardrobe, _ranking, _profile, _settings;
-        private readonly List<Tile> _tiles = new();
+        private DashTile _wheel, _gift, _missions, _event, _wardrobe, _ranking, _profile, _settings;
+        private readonly List<DashTile> _tiles = new();
         private UIParticleController _bursts;
 
         private RectTransform[] _floaters;
@@ -225,7 +225,7 @@ namespace SugarDrop
             _settings = AddTile("Settings", SugarSprites.Gear, Color.white, theme.PanelColor, 7, "Setări", () => SettingsClicked?.Invoke(), false);
         }
 
-        private Tile AddTile(string name, Sprite icon, Color iconColor, Color color, int index, string captionKey, Action onClick, bool badge)
+        private DashTile AddTile(string name, Sprite icon, Color iconColor, Color color, int index, string captionKey, Action onClick, bool badge)
         {
             int row = index / 4, column = index % 4;
             Vector2 position = new((column - 1.5f) * 240f, -390f - row * 230f);
@@ -238,7 +238,7 @@ namespace SugarDrop
             Transform face = button.transform.Find("Face");
             Image image = UiFactory.CreateImage("Icon", face, icon, iconColor);
             UiFactory.Place(image.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(100f, 100f));
-            var tile = new Tile { Rect = rect, Key = captionKey };
+            var tile = new DashTile { Rect = rect, Key = captionKey };
             tile.Caption = SugarUi.Outlined("Caption", face, "", 30, Color.white, 3f);
             UiFactory.Place(tile.Caption.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(215f, 44f));
             tile.Sub = UiFactory.CreateText("Sub", face, "", 22, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.9f));
@@ -258,7 +258,7 @@ namespace SugarDrop
 
         public void Show()
         {
-            foreach (Tile tile in _tiles) tile.Caption.Text = SugarLoc.T(tile.Key);
+            foreach (DashTile tile in _tiles) tile.Caption.Text = SugarLoc.T(tile.Key);
             RefreshCounters();
             _bobo.SetCostume(CostumeRules.Current);
             _line = 0;
