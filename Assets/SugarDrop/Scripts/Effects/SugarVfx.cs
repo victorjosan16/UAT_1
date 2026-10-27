@@ -416,6 +416,60 @@ namespace SugarDrop
             }
         }
 
+        /// <summary>Ținutul curent (stabilit la începutul nivelului): dă forma exploziilor mari.</summary>
+        public int Theme { get; set; }
+
+        /// <summary>
+        /// Explozia specifică ținutului, peste cea obișnuită: petale care plutesc, frunze, bule care urcă, nisip
+        /// suflat de vânt, gemuri pe orbită, stropi de ciocolată, fulgi, caramel, nori de vată, stele.
+        /// </summary>
+        public void LandBurst(Vector3 center, int size)
+        {
+            int count = Mathf.Clamp(4 + size, 6, 16);
+            AmbientMotion motion = LandStyle.Motion(Theme);
+            for (int i = 0; i < count; i++)
+            {
+                Color c = LandStyle.AmbientColor(Theme, i);
+                c.a = 1f;
+                Particle p = Emit(LandStyle.Ambient(Theme, i), center, Random.Range(0.8f, 1.3f), c);
+                Vector3 direction = Random.insideUnitCircle.normalized;
+                p.Phase = Random.value * 6f;
+                switch (motion)
+                {
+                    case AmbientMotion.Flutter:
+                        p.Motion = Motion.Flutter;
+                        p.Velocity = direction * Random.Range(1.5f, 3f) + Vector3.up * 1.5f;
+                        p.Gravity = 3f;
+                        p.Drag = 2f;
+                        break;
+                    case AmbientMotion.Rise:
+                        p.Motion = Motion.Bubble;
+                        p.Center = center + direction * Random.Range(0.1f, 0.8f);
+                        p.Position = p.Center;
+                        p.Velocity = Vector3.up * Random.Range(1.2f, 2.4f);
+                        break;
+                    case AmbientMotion.Fall:
+                        p.Velocity = direction * Random.Range(2f, 3.5f) + Vector3.up * 2f;
+                        p.Gravity = 9f;
+                        p.Spin = Random.Range(-200f, 200f);
+                        break;
+                    case AmbientMotion.Drift:
+                        p.Velocity = new Vector3(Random.Range(2f, 4.5f), Random.Range(-1f, 1.5f), 0f);
+                        p.Drag = 1.5f;
+                        p.Spin = Random.Range(-90f, 90f);
+                        break;
+                    default:
+                        p.Motion = Motion.Orbit;
+                        p.OrbitRadius = Random.Range(0.6f, 1.4f) + size * 0.05f;
+                        p.OrbitAngle = i / (float)count * 360f;
+                        p.OrbitSpeed = Random.Range(200f, 320f);
+                        break;
+                }
+                float scale = Theme == 8 ? 0.7f : 0.38f;
+                Size(p, scale * 0.5f, scale, 0f);
+            }
+        }
+
         /// <summary>Două piese speciale combinate: blitz alb mare, inele curcubeu, impuls de cameră.</summary>
         public void ComboFlash(Vector3 position)
         {

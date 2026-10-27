@@ -20,6 +20,10 @@ namespace SugarDrop
         private SpriteRenderer _boardBack;
         private readonly System.Collections.Generic.List<SpriteRenderer> _canes = new();
         private readonly System.Collections.Generic.List<SpriteRenderer> _stripes = new();
+        /// <summary>Ornamentele ținutului de pe marginea de sus a tablei (se leagănă ușor).</summary>
+        private readonly System.Collections.Generic.List<SpriteRenderer> _ornaments = new();
+        private readonly System.Collections.Generic.List<Vector3> _ornamentBase = new();
+        private int _theme;
 
         /// <summary>Gura borcanului (pentru sclipiri și mascotă).</summary>
         public Vector3 JarMouth { get; private set; }
@@ -42,6 +46,7 @@ namespace SugarDrop
             Cane("WallRight", new Vector2(halfWidth + t * 0.5f, (wallBottom + topY) * 0.5f), new Vector2(t, topY - wallBottom), 0f);
             Knob(new Vector2(-halfWidth - t * 0.5f, topY));
             Knob(new Vector2(halfWidth + t * 0.5f, topY));
+            Ornaments(halfWidth + t * 0.5f, topY);
 
             // Pâlnia: două pante care duc bomboanele spre gura borcanului.
             float jarTop = wallBottom - funnelDrop;
@@ -83,6 +88,65 @@ namespace SugarDrop
             Sprite cane = SugarSprites.Cane(chapter);
             foreach (SpriteRenderer renderer in _canes) renderer.sprite = cane;
             foreach (SpriteRenderer renderer in _stripes) renderer.color = theme.Stripe;
+            _theme = ChapterTheme.IndexOf(chapter);
+            Sprite ornament = LandStyle.Ornament(_theme);
+            Color color = LandStyle.OrnamentColor(_theme);
+            foreach (SpriteRenderer renderer in _ornaments)
+            {
+                renderer.sprite = ornament;
+                renderer.color = color;
+                renderer.transform.localScale = Vector3.one * (0.62f / ornament.bounds.size.x);
+            }
+        }
+
+        /// <summary>Câte un ornament deasupra fiecărui stâlp, plus doi mai mici alături.</summary>
+        private void Ornaments(float x, float topY)
+        {
+            Vector2[] offsets = { new(0f, 0.45f), new(-0.35f, 0.25f), new(0.35f, 0.25f) };
+            for (int side = -1; side <= 1; side += 2)
+                foreach (Vector2 offset in offsets)
+                {
+                    var go = new GameObject("Ornament");
+                    go.transform.SetParent(transform, false);
+                    Vector3 position = new Vector3(side * x + offset.x * side, topY + offset.y, 0f);
+                    go.transform.position = position;
+                    var renderer = go.AddComponent<SpriteRenderer>();
+                    renderer.sprite = SugarSprites.Heart;
+                    renderer.sortingOrder = 10;
+                    _ornaments.Add(renderer);
+                    _ornamentBase.Add(position);
+                }
+        }
+
+        /// <summary>Animația ornamentelor după ținut: plutesc, se rotesc sau sclipesc.</summary>
+        private void Update()
+        {
+            float time = Time.time;
+            AmbientMotion motion = LandStyle.Motion(_theme);
+            for (int i = 0; i < _ornaments.Count; i++)
+            {
+                Transform ornament = _ornaments[i].transform;
+                float phase = i * 1.3f;
+                float small = i % 3 == 0 ? 1f : 0.65f;
+                Sprite sprite = _ornaments[i].sprite;
+                float scale = 0.62f * small / sprite.bounds.size.x;
+                switch (motion)
+                {
+                    case AmbientMotion.Twinkle:
+                        ornament.localScale = Vector3.one * scale * (0.8f + 0.25f * Mathf.Abs(Mathf.Sin(time * 2.2f + phase)));
+                        ornament.localRotation = Quaternion.Euler(0f, 0f, time * 30f + phase * 40f);
+                        break;
+                    case AmbientMotion.Flutter:
+                        ornament.localScale = Vector3.one * scale;
+                        ornament.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(time * 2f + phase) * 18f);
+                        break;
+                    default:
+                        ornament.localScale = Vector3.one * scale * (1f + 0.06f * Mathf.Sin(time * 3f + phase));
+                        ornament.localRotation = Quaternion.identity;
+                        break;
+                }
+                ornament.position = _ornamentBase[i] + Vector3.up * (Mathf.Sin(time * 1.6f + phase) * 0.07f);
+            }
         }
 
         private void Solid(string name, Vector2 center, Vector2 size, float angle, Color? color = null)

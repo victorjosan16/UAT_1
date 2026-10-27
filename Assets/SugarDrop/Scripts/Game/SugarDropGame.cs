@@ -698,6 +698,7 @@ namespace SugarDrop
             _config = LevelConfig.For(_level);
             int chapter = ChapterTheme.ChapterOf(_level);
             if (Backdrop.Instance != null) Backdrop.Instance.ApplyTheme(chapter);
+            if (Vfx != null) Vfx.Theme = ChapterTheme.IndexOf(chapter);
             // Antrenamentul de la nivelul 1 are tabla pregătită (mutări clare pentru fiecare pas).
             bool tutorial = _level == 1 && !Data.tutorialDone;
             board.Build(_config, new Vector2(0f, boardBottomY), Random.Range(1, int.MaxValue), tutorial ? (System.Func<Vector2Int, int>)TutorialBoard.ColorAt : null);
@@ -1423,7 +1424,11 @@ namespace SugarDrop
         /// </summary>
         private void OnGroupBlasted(int size, Vector3 center, int color)
         {
-            if (Vfx != null) Vfx.GroupBurst(center, size, color);
+            if (Vfx != null)
+            {
+                Vfx.GroupBurst(center, size, color);
+                if (size >= 5) Vfx.LandBurst(center, size);
+            }
             if (Audio != null) Audio.Play(size >= 7 ? SugarSound.Wrapped : SugarSound.Click, size >= 7 ? 0.7f : 0.5f, 1f + Mathf.Min(size, 12) * 0.03f);
             SugarAudio.Buzz(size >= 10 ? 2 : size >= 5 ? 1 : 0);
             if (size >= 7) mascot.Cheer(size >= 10 ? 2f : 1.5f);
@@ -1469,6 +1474,7 @@ namespace SugarDrop
 
         private void OnSpecialActivated(TileKind kind, Vector3 position, int color, List<Vector3> targets)
         {
+            if (Vfx != null) Vfx.LandBurst(position, 8);
             switch (kind)
             {
                 case TileKind.RocketH:
