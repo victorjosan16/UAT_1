@@ -11,7 +11,7 @@ namespace SugarDrop
         /// <summary>Strat semi-transparent pe tot ecranul care blochează atingerile.</summary>
         public static Image Dim(Transform parent, float alpha = 0.55f)
         {
-            Image dim = UiFactory.CreateImage("Dim", parent, UiFactory.WhiteSprite, new Color(0.15f, 0.05f, 0.12f, alpha));
+            Image dim = UiFactory.CreateImage("Dim", parent, UiFactory.WhiteSprite, new Color(SoftPop.Scrim.r, SoftPop.Scrim.g, SoftPop.Scrim.b, alpha * 0.8f));
             dim.preserveAspect = false;
             dim.raycastTarget = true;
             UiFactory.Stretch(dim.rectTransform, -300f);
@@ -26,7 +26,7 @@ namespace SugarDrop
             UiFactory.Place(holder, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
             holder.gameObject.AddComponent<CanvasGroup>();
             holder.gameObject.AddComponent<PopIn>();
-            Image shadow = UiFactory.CreatePanel("BoxShadow", holder, new Color(0.35f, 0.1f, 0.25f, 0.35f));
+            Image shadow = UiFactory.CreatePanel("BoxShadow", holder, SoftPop.Shadow);
             UiFactory.Place((RectTransform)shadow.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -14f), size);
             Image box = UiFactory.CreatePanel("Box", holder, UiRoot.Theme.PanelLightColor);
             var rect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
@@ -51,7 +51,7 @@ namespace SugarDrop
         {
             UiLabel label = UiFactory.CreateText(name, parent, text, size, TextAnchor.MiddleCenter, color);
             var effect = label.gameObject.AddComponent<Outline>();
-            effect.effectColor = new Color(0.35f, 0.12f, 0.3f, 0.9f);
+            effect.effectColor = new Color(0.3f, 0.24f, 0.42f, 0.8f);
             effect.effectDistance = new Vector2(outline, -outline);
             return label;
         }

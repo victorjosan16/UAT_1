@@ -27,26 +27,25 @@ namespace SugarDrop
             SkyBottom = Hex(skyBottom);
             SkyTop = Hex(skyTop);
             BoardBack = Hex(boardBack);
-            CellA = Hex(cellA, 0.5f);
-            CellB = Hex(cellB, 0.5f);
+            CellA = Hex(cellA);
+            CellB = Hex(cellB);
             Stripe = Hex(stripe);
             GlowHue = glowHue;
         }
 
         private static readonly ChapterTheme[] Themes =
         {
-            // Culori vii: cer saturat (jos la orizont mai cald, sus mai adânc), tablă închisă la culoare pe care
-            // bomboanele colorate ies în evidență, dungi intense.
-            new("Câmpia de Căpșuni", "#FFC2DA", "#4FB3FF", "#7A1F4F", "#A8326E", "#B83E7C", "#FF3D7F", 0.92f),
-            new("Pădurea de Mentă", "#C6F7A0", "#2FC4E8", "#1F5E3A", "#2E8A55", "#36996A", "#22C55E", 0.38f),
-            new("Lacul de Afine", "#9AE6FF", "#2F6BFF", "#1B2F78", "#2E4FB0", "#3A5DC2", "#3D8BFF", 0.6f),
-            new("Deșertul de Lămâie", "#FFE65C", "#FF9E3D", "#7A4A10", "#A8701E", "#B88028", "#FFB400", 0.13f),
-            new("Castelul de Struguri", "#F0A8FF", "#5B2BCF", "#3A1670", "#5A2BA0", "#6835B0", "#A855F7", 0.75f),
-            new("Muntele de Ciocolată", "#FFD1A3", "#E8743B", "#4A2414", "#6E3A22", "#7C452A", "#D9772F", 0.07f),
-            new("Regatul de Gheață", "#D2F8FF", "#2AA8F0", "#154A66", "#2479A0", "#2C88B0", "#38D1F5", 0.53f),
-            new("Canionul de Caramel", "#FFC98A", "#FF6A2B", "#6A2A0E", "#93441A", "#A35022", "#FF7A1A", 0.06f),
-            new("Norii de Vată de Zahăr", "#B3D0FF", "#FF7AD9", "#5A2178", "#7E35A0", "#8C3FB0", "#FF5FCB", 0.85f),
-            new("Galaxia Curcubeu", "#9A5CFF", "#1A1150", "#1E1550", "#3A2A8A", "#45339A", "#FFD23C", 0.7f),
+            // Soft Pop: cer pastel, tablă albă cu celule lavandă discrete, câte o culoare de accent pe ținut.
+            new("Câmpia de Căpșuni", "#FFE3E6", "#CFE8FF", "#FFFFFF", "#F3EEFC", "#ECE5FA", "#FF8D9E", 0.95f),
+            new("Pădurea de Mentă", "#DDF7EC", "#CDEFFF", "#FFFFFF", "#EEF8F3", "#E4F3EC", "#66D7B5", 0.42f),
+            new("Lacul de Afine", "#D6EEFF", "#E9E3FF", "#FFFFFF", "#EDF3FD", "#E3ECFA", "#5FB0F5", 0.58f),
+            new("Deșertul de Lămâie", "#FFF1CC", "#FFE0D2", "#FFFFFF", "#FCF6E8", "#F8EFDB", "#FFD36B", 0.12f),
+            new("Castelul de Struguri", "#E9E0FF", "#F9E4F4", "#FFFFFF", "#F1ECFC", "#E8E0F8", "#A58AE0", 0.75f),
+            new("Muntele de Ciocolată", "#F4E6DA", "#FFE9DE", "#FFFFFF", "#F7F0EA", "#F0E6DD", "#C99A7A", 0.07f),
+            new("Regatul de Gheață", "#E0F8FC", "#E6EEFF", "#FFFFFF", "#ECF7FA", "#E1F1F6", "#7FD6EA", 0.52f),
+            new("Canionul de Caramel", "#FFE6D2", "#FFF3D6", "#FFFFFF", "#FBF1E8", "#F6E7DA", "#F7A86A", 0.07f),
+            new("Norii de Vată de Zahăr", "#F2E4FF", "#DDEBFF", "#FFFFFF", "#F2ECFC", "#EAE3FA", "#E89BE0", 0.82f),
+            new("Galaxia Curcubeu", "#7E6FD8", "#2E2A6B", "#FFFFFF", "#ECE8FB", "#E2DCF7", "#FFD36B", 0.7f),
         };
 
         public static int Count => Themes.Length;

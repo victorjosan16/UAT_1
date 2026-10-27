@@ -136,7 +136,7 @@ namespace SugarDrop
             var rect = UiFactory.Place(tile.Back.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(x, 0f), new Vector2(180f, 180f));
             Image image = UiFactory.CreateImage("Icon", rect, icon, Color.white);
             UiFactory.Place(image.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(110f, 110f));
-            Image chip = UiFactory.CreatePanel("Chip", rect, new Color(0.3f, 0.12f, 0.3f));
+            Image chip = UiFactory.CreatePanel("Chip", rect, SoftPop.Text);
             UiFactory.Place(chip.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 14f), new Vector2(150f, 52f));
             tile.Coin = UiFactory.CreateImage("Coin", chip.transform, ProceduralSprites.Coin, Color.white);
             UiFactory.Place(tile.Coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(24f, 0f), new Vector2(40f, 40f));

@@ -74,7 +74,7 @@ namespace SugarDrop
             _arrow = arrow.rectTransform;
             _arrow.sizeDelta = new Vector2(120f, 120f);
             var outline = arrow.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.35f, 0.12f, 0.3f, 0.9f);
+            outline.effectColor = new Color(0.3f, 0.24f, 0.42f, 0.8f);
             outline.effectDistance = new Vector2(3f, -3f);
 
             Hide();

@@ -52,7 +52,7 @@ namespace SugarDrop
             // Roata (se rotește) cu iconițele premiilor, butucul din mijloc și indicatorul de sus (fix).
             RectTransform holder = UiFactory.CreateRect("Wheel", box);
             UiFactory.Place(holder, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -620f), new Vector2(WheelSize, WheelSize));
-            Image shadow = UiFactory.CreateImage("Shadow", holder, SugarSprites.Circle, new Color(0.3f, 0.08f, 0.25f, 0.3f));
+            Image shadow = UiFactory.CreateImage("Shadow", holder, SugarSprites.Circle, SoftPop.Shadow);
             UiFactory.Place(shadow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -14f), Vector2.one * WheelSize);
             Image wheel = UiFactory.CreateImage("Spinner", holder, SugarSprites.Wheel(WheelRules.Slices.Length), Color.white);
             _spinner = UiFactory.Place(wheel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * WheelSize);

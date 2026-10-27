@@ -65,7 +65,7 @@ namespace SugarDrop
             _glow.color = new Color(1f, 1f, 0.85f, 0f);
             _shadow = Layer("Shadow", SugarSprites.CapShadow, 9, size * 0.94f);
             _shadow.transform.localPosition = new Vector3(0f, -size * 0.06f, 0f);
-            _shadow.color = new Color(0.25f, 0.06f, 0.2f, 0.3f);
+            _shadow.color = SoftPop.Shadow;
             _base = Layer("Base", SugarSprites.Cap, 10, size * 0.94f);
             _overlay = Layer("Overlay", SugarSprites.Stripes, 12, size * 0.94f);
             _ice = Layer("Ice", SugarSprites.Ice, 13, size * 0.98f);

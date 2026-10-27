@@ -41,13 +41,17 @@ namespace SugarDrop
 
         private enum PieceKind { Body, Shadow, StripesH, StripesV }
 
+        /// <summary>Direcția luminii (din stânga sus), pentru fațete.</summary>
+        private const float LightX = -0.5547f, LightY = 0.8321f;
+
         private static readonly Color[] Colors =
         {
-            new(1f, 0.2f, 0.32f),    // căpșună
-            new(0.12f, 0.56f, 1f),   // afină
-            new(0.18f, 0.8f, 0.31f), // mentă
-            new(1f, 0.76f, 0.05f),   // lămâie
-            new(0.62f, 0.3f, 1f),    // strugure
+            // Soft Pop: inimă-gemă coral, picătură de apă, cristal mentă, gemă aurie, prismă violet.
+            new(1f, 0.42f, 0.5f),
+            new(0.25f, 0.62f, 1f),
+            new(0.22f, 0.8f, 0.58f),
+            new(1f, 0.77f, 0.25f),
+            new(0.6f, 0.46f, 0.92f),
         };
 
         // ------------------------------------------------------------ Forme (distanță semnată, spațiu 128×128)
@@ -57,10 +61,10 @@ namespace SugarDrop
             switch (color)
             {
                 case 0: return HeartShape(p);
-                case 1: return UnevenCapsule(new Vector2(p.x - 64f, p.y - 46f), 38f, 7f, 66f) - 2f;
-                case 2: return Hexagon(new Vector2(p.x - 64f, p.y - 64f), 46f) - 10f;
-                case 3: return Star5(new Vector2(p.x - 64f, p.y - 60f), 54f, 0.5f) - 8f;
-                case 4: return Ellipse(Rotate(new Vector2(p.x - 64f, p.y - 64f), 28f), 56f, 40f);
+                case 1: return UnevenCapsule(new Vector2(p.x - 64f, p.y - 44f), 38f, 7f, 66f) - 2f;
+                case 2: return Polygon(new Vector2(p.x - 64f, p.y - 64f), 6, 48f) - 8f;
+                case 3: return Polygon(new Vector2(p.x - 64f, p.y - 64f), 8, 48f) - 6f;
+                case 4: return Polygon(new Vector2(p.x - 64f, p.y - 54f), 3, 43f) - 13f;
                 default: return (p - new Vector2(64f, 64f)).magnitude - 54f;
             }
         }
@@ -75,6 +79,30 @@ namespace SugarDrop
             float c2 = (q - new Vector2(half, 0f)).magnitude - half;
             return Mathf.Min(square, Mathf.Min(c1, c2)) - 6f;
         }
+
+        /// <summary>Poligon regulat cu un vârf în sus (intersecția semiplanelor laturilor).</summary>
+        private static float Polygon(Vector2 p, int sides, float radius)
+        {
+            float d = float.MinValue;
+            float apothem = radius * Mathf.Cos(Mathf.PI / sides);
+            for (int i = 0; i < sides; i++)
+            {
+                float a = Mathf.PI * 0.5f + Mathf.PI * 2f * i / sides + Mathf.PI / sides;
+                d = Mathf.Max(d, p.x * Mathf.Cos(a) + p.y * Mathf.Sin(a) - apothem);
+            }
+            return d;
+        }
+
+        /// <summary>Centrul vizual și numărul de fațete al fiecărei forme (0 = suprafață netedă, picătura).</summary>
+        private static Vector2 Center(int color) => color switch
+        {
+            0 => new Vector2(64f, 60f),
+            1 => new Vector2(64f, 56f),
+            4 => new Vector2(64f, 56f),
+            _ => new Vector2(64f, 64f),
+        };
+
+        private static int Facets(int color) => color switch { 0 => 8, 2 => 6, 3 => 8, 4 => 3, _ => 0 };
 
         private static float Box(Vector2 p, Vector2 b)
         {
@@ -93,33 +121,6 @@ namespace SugarDrop
             if (k > a * h) return (p - new Vector2(0f, h)).magnitude - r2;
             return Vector2.Dot(p, new Vector2(a, b)) - r1;
         }
-
-        private static float Hexagon(Vector2 p, float r)
-        {
-            const float kx = -0.866025404f, ky = 0.5f, kz = 0.577350269f;
-            p = new Vector2(Mathf.Abs(p.x), Mathf.Abs(p.y));
-            float dot = Mathf.Min(kx * p.x + ky * p.y, 0f);
-            p -= 2f * dot * new Vector2(kx, ky);
-            p -= new Vector2(Mathf.Clamp(p.x, -kz * r, kz * r), r);
-            return p.magnitude * Mathf.Sign(p.y);
-        }
-
-        private static float Star5(Vector2 p, float r, float rf)
-        {
-            var k1 = new Vector2(0.809016994375f, -0.587785252292f);
-            var k2 = new Vector2(-k1.x, k1.y);
-            p.x = Mathf.Abs(p.x);
-            p -= 2f * Mathf.Max(Vector2.Dot(k1, p), 0f) * k1;
-            p -= 2f * Mathf.Max(Vector2.Dot(k2, p), 0f) * k2;
-            p.x = Mathf.Abs(p.x);
-            p.y -= r;
-            Vector2 ba = rf * new Vector2(-k1.y, k1.x) - new Vector2(0f, 1f);
-            float h = Mathf.Clamp(Vector2.Dot(p, ba) / Vector2.Dot(ba, ba), 0f, r);
-            return (p - ba * h).magnitude * Mathf.Sign(p.y * ba.x - p.x * ba.y);
-        }
-
-        private static float Ellipse(Vector2 p, float a, float b) =>
-            (new Vector2(p.x / a, p.y / b).magnitude - 1f) * Mathf.Min(a, b);
 
         private static Vector2 Rotate(Vector2 p, float degrees)
         {
@@ -153,20 +154,42 @@ namespace SugarDrop
             }
 
             Color baseColor = color >= 0 && color < Colors.Length ? Colors[color] : new Color(0.97f, 0.95f, 1f);
-            float depth = Mathf.Clamp01(-d / 16f);
-            // Margine mai închisă (contur de jeleu) care se luminează spre interior.
-            float body = Mathf.Lerp(0.6f, 1f, SmoothStep(depth));
-            // Lumină de sus, ușor mai închis jos.
-            float vertical = Mathf.Lerp(0.88f, 1.06f, p.y / 128f);
-            Color c = baseColor * (body * vertical);
-            // Lumină reflectată jos (jeleul pare translucid).
-            float bounce = Mathf.Clamp01(1f - (p - new Vector2(64f, 22f)).magnitude / 34f) * depth;
-            c = Color.Lerp(c, Color.Lerp(baseColor, Color.white, 0.45f), bounce * 0.45f);
-            // Luciul mare, oblic, sus-stânga, și o sclipire mică.
-            Vector2 g = Rotate(p - new Vector2(46f, 88f), 35f);
-            float gloss = Mathf.Clamp01(1.15f - new Vector2(g.x / 26f, g.y / 12f).magnitude) * Mathf.Clamp01((-d - 3f) / 4f);
-            float spark = Mathf.Clamp01(1f - (p - new Vector2(84f, 92f)).magnitude / 5f) * Mathf.Clamp01(-d / 6f);
-            c = Color.Lerp(c, Color.white, Mathf.Clamp01(SmoothStep(gloss) * 0.85f + spark * 0.9f));
+            float depth = -d;
+            Vector2 v = p - Center(color);
+            int facets = color >= 0 && color < Colors.Length ? Facets(color) : 0;
+            Color c;
+            if (facets == 0)
+            {
+                // Suprafață netedă (picătura de apă, perla): o cupolă luminată din stânga sus, cu lumină în adânc jos.
+                float rx = v.x / 40f, ry = (v.y + 6f) / 44f;
+                float r = Mathf.Clamp01(Mathf.Sqrt(rx * rx + ry * ry));
+                float nz = Mathf.Sqrt(1f - r * r);
+                float lambert = Mathf.Clamp(( -0.45f * rx + 0.6f * ry) * 0.5f + nz * 0.7f, 0f, 1.2f);
+                c = baseColor * (0.55f + 0.6f * lambert);
+                float glow = Mathf.Clamp01(1f - (v + new Vector2(0f, 24f)).magnitude / 30f) * 0.35f;
+                c = Color.Lerp(c, new Color(0.75f, 0.9f, 1f), glow);
+            }
+            else
+            {
+                // Gemă cu fațete: o „masă” plată în mijloc și fațete în jur, fiecare luminată după orientarea ei.
+                float step = Mathf.PI * 2f / facets;
+                float angle = Mathf.Atan2(v.y, v.x);
+                float middle = (Mathf.Floor((angle + Mathf.PI) / step) + 0.5f) * step - Mathf.PI;
+                float facet = Mathf.Cos(middle) * LightX + Mathf.Sin(middle) * LightY;
+                const float bevel = 14f;
+                float light = depth > bevel ? 0.18f + 0.12f * (v.y / 60f) : facet * 0.32f;
+                c = baseColor * (0.92f + light);
+                // O linie fină și luminoasă între masă și fațete.
+                float edge = Mathf.Clamp01(1f - Mathf.Abs(depth - bevel) / 1.5f) * 0.25f;
+                c = Color.Lerp(c, Color.white, edge);
+            }
+            // Margine subțire, puțin mai închisă (fără contur gros de desen animat).
+            c *= 1f - 0.3f * Mathf.Clamp01(1f - depth / 3f);
+            // Luciu oblic sus-stânga și o sclipire mică.
+            Vector2 g = Rotate(p - new Vector2(46f, 90f), 35f);
+            float gloss = Mathf.Clamp01(1.1f - new Vector2(g.x / 20f, g.y / 9f).magnitude) * Mathf.Clamp01((depth - 4f) / 4f);
+            float spark = Mathf.Clamp01(1f - (p - new Vector2(86f, 92f)).magnitude / 4.5f) * Mathf.Clamp01(depth / 6f);
+            c = Color.Lerp(c, Color.white, Mathf.Clamp01(SmoothStep(gloss) * 0.75f + spark * 0.9f));
             c.a = alpha;
             return c;
         }

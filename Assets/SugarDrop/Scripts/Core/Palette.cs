@@ -7,11 +7,11 @@ namespace SugarDrop
     {
         private static readonly Color[] TileColors =
         {
-            Hex("#FF3352"), // căpșună
-            Hex("#1F8FFF"), // afine
-            Hex("#2ECC4F"), // mentă
-            Hex("#FFC20E"), // lămâie
-            Hex("#9D4DFF"), // strugure
+            Hex("#FF6B80"), // inimă-gemă coral
+            Hex("#409EFF"), // picătură de apă
+            Hex("#38CC94"), // cristal mentă
+            Hex("#FFC440"), // gemă aurie
+            Hex("#9975EB"), // prismă violet
         };
 
         private static readonly Color[] CandyColors =
@@ -25,10 +25,10 @@ namespace SugarDrop
         public static Color Candy(int index) => CandyColors[((index % CandyColors.Length) + CandyColors.Length) % CandyColors.Length];
         public static Color RandomCandy() => CandyColors[Random.Range(0, CandyColors.Length)];
 
-        public static readonly Color Background = Hex("#FFE6EE");
+        public static readonly Color Background = SoftPop.Background;
         public static readonly Color BoardBack = Hex("#F6C5D8");
         public static readonly Color Wall = Hex("#FFFFFF");
-        public static readonly Color WallStripe = Hex("#FF8FB1");
+        public static readonly Color WallStripe = SoftPop.Lavender;
         public static readonly Color Glass = new(1f, 1f, 1f, 0.35f);
 
         private static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out Color c) ? c : Color.magenta;

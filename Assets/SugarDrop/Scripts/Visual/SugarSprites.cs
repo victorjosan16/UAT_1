@@ -236,13 +236,14 @@ namespace SugarDrop
         public static Sprite Cane(int chapter)
         {
             ChapterTheme theme = ChapterTheme.For(chapter);
-            return Get("cane" + ChapterTheme.IndexOf(chapter), () => PaintRepeat(64, (x, y) =>
-                Mathf.Repeat(x + y, 32f) < 16f ? theme.Stripe : Color.white));
+            // Soft Pop: cadru plin, în culoarea de accent a ținutului (fără dungi de baston).
+            Color frame = Color.Lerp(theme.Stripe, Color.white, 0.2f);
+            return Get("cane" + ChapterTheme.IndexOf(chapter), () => PaintRepeat(64, (x, y) => frame));
         }
 
-        /// <summary>Dungi diagonale roz/alb (ca un baston de bomboană), repetabile.</summary>
+        /// <summary>Cadrul implicit al tablei (lavandă plin), până se aplică tema ținutului.</summary>
         public static Sprite CandyCane => Get("candycane", () => PaintRepeat(64, (x, y) =>
-            Mathf.Repeat(x + y, 32f) < 16f ? new Color(1f, 0.56f, 0.69f) : Color.white));
+            SoftPop.Lavender));
 
         public static Sprite Beam => Get("beam", () => Paint(128, 32, (x, y) =>
         {

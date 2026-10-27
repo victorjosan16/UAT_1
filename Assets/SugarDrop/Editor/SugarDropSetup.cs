@@ -115,7 +115,7 @@ namespace SugarDrop.EditorTools
 
             PlayerSettings.SplashScreen.show = true;
             PlayerSettings.SplashScreen.showUnityLogo = false;
-            PlayerSettings.SplashScreen.backgroundColor = Hex("#FF8FB1");
+            PlayerSettings.SplashScreen.backgroundColor = SoftPop.Lavender;
             PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
             if (logo != null) PlayerSettings.SplashScreen.logos = new[] { PlayerSettings.SplashScreenLogo.Create(1.5f, logo) };
         }
@@ -127,14 +127,15 @@ namespace SugarDrop.EditorTools
             {
                 P(so, "Font").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
                 P(so, "TmpFont").objectReferenceValue = null;
-                P(so, "PanelColor").colorValue = new Color(0.45f, 0.2f, 0.38f, 0.92f);
-                P(so, "PanelLightColor").colorValue = new Color(1f, 0.97f, 0.93f, 1f);
-                P(so, "AccentColor").colorValue = Hex("#FFC93C");
-                P(so, "PositiveColor").colorValue = Hex("#5FD068");
-                P(so, "NegativeColor").colorValue = Hex("#FF5A6E");
+                // Soft Pop: butoane și panouri lavandă (text alb), suprafețe albe, accent galben, mentă, coral.
+                P(so, "PanelColor").colorValue = SoftPop.LavenderDeep;
+                P(so, "PanelLightColor").colorValue = SoftPop.Surface;
+                P(so, "AccentColor").colorValue = SoftPop.YellowDeep;
+                P(so, "PositiveColor").colorValue = SoftPop.MintDeep;
+                P(so, "NegativeColor").colorValue = SoftPop.CoralDeep;
                 P(so, "TextColor").colorValue = Color.white;
-                P(so, "TextDarkColor").colorValue = Hex("#5A2D4E");
-                P(so, "AdColor").colorValue = Hex("#4DA8FF");
+                P(so, "TextDarkColor").colorValue = SoftPop.Text;
+                P(so, "AdColor").colorValue = SoftPop.Sky;
             });
             return theme;
         }

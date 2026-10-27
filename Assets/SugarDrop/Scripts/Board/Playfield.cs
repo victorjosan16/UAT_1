@@ -36,6 +36,9 @@ namespace SugarDrop
             _panel = ProceduralSprites.RoundedRect;
             float t = wallThickness;
 
+            // Umbra moale a tablei (Soft Pop: tabla e o tavă albă care plutește puțin deasupra fundalului).
+            Visual("BoardShadow", new Vector2(0f, (boardBottom + topY) * 0.5f - 0.12f), new Vector2(halfWidth * 2f + 0.5f, topY - boardBottom + 0.5f),
+                SoftPop.Shadow, -1, 0f);
             // Fundalul tablei (ușor transparent, ca să se vadă degradeul).
             _boardBack = Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
                 new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f).GetComponent<SpriteRenderer>();
