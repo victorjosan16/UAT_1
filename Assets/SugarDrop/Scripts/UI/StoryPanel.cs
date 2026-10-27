@@ -473,7 +473,7 @@ namespace SugarDrop
             int look = BossDefinition.For((chapter + 1) * LevelConfig.ChapterSize, 22).Look;
             RectTransform villain = Actor(scene, SugarSprites.BossFace(look), Color.white, new Vector2(-80f, 600f), 300f);
             BoboView bobo = BoboView.Build(scene, 0.42f);
-            bobo.SetPose(2);
+            bobo.SetPose(BoboPose.Worried);
             Image flash = UiFactory.CreateImage("Flash", scene, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0f));
             flash.preserveAspect = false;
             UiFactory.Stretch(flash.rectTransform);
@@ -495,7 +495,9 @@ namespace SugarDrop
             RectTransform glow = Actor(scene, SugarSprites.SoftDot, new Color(1f, 0.95f, 0.6f, 0.7f), new Vector2(0f, 200f), 300f);
             RectTransform shard = Actor(scene, SugarSprites.Gem, Color.white, new Vector2(0f, 200f), 130f);
             BoboView bobo = BoboView.Build(scene, 0.6f);
-            bobo.SetPose(1);
+            bobo.SetPose(BoboPose.Crystal);
+            // Bobo pictat ține deja cristalul în brațe: bucata care plutește ar fi în plus.
+            if (BoboArt.Available) shard.gameObject.SetActive(false);
             Action<float> confetti = Floaters(scene, SugarSprites.Sparkle,
                 new[] { Palette.TileLight(0), Palette.TileLight(1), Palette.TileLight(2), Palette.TileLight(3), Palette.TileLight(4) }, 14, -0.9f, 34f);
             return t =>
@@ -519,6 +521,7 @@ namespace SugarDrop
             Actor(scene, SugarSprites.Leaf, new Color(0.3f, 0.7f, 0.4f), new Vector2(-360f, 250f), 120f);
             Actor(scene, SugarSprites.Leaf, new Color(0.4f, 0.8f, 0.5f), new Vector2(380f, 200f), 100f).localRotation = Quaternion.Euler(0f, 0f, 140f);
             BoboView bobo = BoboView.Build(scene, 0.55f);
+            bobo.SetPose(BoboPose.Run);
             Action<float> sparkles = Floaters(scene, SugarSprites.Sparkle, new[] { Color.white, new Color(1f, 0.9f, 0.5f) }, 6, 0.5f, 34f);
             return t =>
             {
@@ -544,7 +547,7 @@ namespace SugarDrop
             var ring = new List<RectTransform>();
             for (int i = 0; i < 8; i++) ring.Add(Actor(scene, ProceduralSprites.Star, new Color(1f, 0.85f, 0.35f), Vector2.zero, 60f));
             BoboView bobo = BoboView.Build(scene, 0.62f);
-            bobo.SetPose(1);
+            bobo.SetPose(BoboPose.Wave);
             Action<float> confetti = Floaters(scene, SugarSprites.Sparkle,
                 new[] { Palette.TileLight(0), Palette.TileLight(1), Palette.TileLight(2), Palette.TileLight(3), Palette.TileLight(4) }, 14, -0.9f, 34f);
             return t =>

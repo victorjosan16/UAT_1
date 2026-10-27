@@ -346,6 +346,7 @@ namespace SugarDrop
             string message = SugarLoc.F("Stele: {0}/30", stars) + "  ·  " + SugarLoc.F("+{0} monede", coins)
                 + "\n" + SugarLoc.T("+1 rachetă la start") + (boosters ? "  ·  " + SugarLoc.T("+1 la fiecare ajutor") : "")
                 + "\n" + SugarLoc.F("Urmează: {0}", SugarLoc.T(ChapterTheme.For(chapter + 1).Name));
+            dialog.NextBobo = BoboPose.Star;
             dialog.Show(SugarLoc.F("Capitolul {0} terminat!", chapter + 1), message,
                 new DialogButton(SugarLoc.T("SUPER!"), positive, null));
         }
@@ -378,6 +379,7 @@ namespace SugarDrop
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             if (!SugarDaily.GiftAvailable)
             {
+                dialog.NextBobo = BoboPose.Love;
                 dialog.Show(SugarLoc.T("Cadou zilnic"), null,
                     () => SugarLoc.F("Următorul cadou în {0}", Clock(DailyRules.UntilTomorrow)),
                     new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
@@ -387,6 +389,7 @@ namespace SugarDrop
             DailyGift gift = DailyRules.GiftFor(day);
             var buttons = new List<DialogButton> { new(SugarLoc.T("REVENDICĂ"), positive, () => ClaimGift(1)) };
             if (gift.Coins > 0) buttons.Add(new DialogButton(SugarLoc.T("x2 MONEDE (reclamă)"), ad, () => SugarUi.RewardedAd("daily_gift", () => ClaimGift(2))));
+            dialog.NextBobo = BoboPose.Love;
             dialog.Show(SugarLoc.T("Cadou zilnic"), SugarLoc.F("Ziua {0} din 7", day) + "\n" + GiftText(gift, 1), buttons.ToArray());
         }
 
@@ -399,6 +402,7 @@ namespace SugarDrop
             if (Audio != null) Audio.Play(SugarSound.Win);
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
             UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.NextBobo = BoboPose.Love;
             dialog.Show(SugarLoc.T("Cadou zilnic"), GiftText(gift, multiplier), new DialogButton(SugarLoc.T("SUPER!"), positive, null));
         }
 
@@ -435,6 +439,7 @@ namespace SugarDrop
                     buttons.Add(new DialogButton(text + "\n" + SugarDaily.Progress(i) + "/" + mission.Target + "  ·  +" + mission.Reward, panel, null, false));
             }
             buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), QuarryEmpire.UiRoot.Theme.AccentColor, null));
+            dialog.NextBobo = BoboPose.Star;
             dialog.Show(SugarLoc.T("Misiuni zilnice"), null,
                 () => SugarLoc.F("Toate trei: +{0} bonus", DailyRules.AllMissionsBonus) + "\n" + SugarLoc.F("Misiuni noi în {0}", Clock(DailyRules.UntilTomorrow)),
                 buttons.ToArray());
@@ -493,6 +498,7 @@ namespace SugarDrop
         private void AskRating()
         {
             UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.NextBobo = BoboPose.Wave;
             dialog.Show(SugarLoc.T("Îți place Drop Quest?"), SugarLoc.T("Bobo e curios ce părere ai!"),
                 new DialogButton(SugarLoc.T("DA, ÎMI PLACE!"), positive, AskReview),
                 new DialogButton(SugarLoc.T("NU PREA"), panel, () => SetRateState(2)));
@@ -569,6 +575,7 @@ namespace SugarDrop
         private void OnAdUnavailable()
         {
             UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.NextBobo = BoboPose.Worried;
             dialog.Show(SugarLoc.T("Nicio reclamă acum"), SugarLoc.T("Nu e nicio reclamă disponibilă. Verifică internetul și încearcă din nou puțin mai târziu."),
                 new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
         }
@@ -835,6 +842,7 @@ namespace SugarDrop
             string points = SugarSave.TotalScore.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture).Replace(',', '.');
             string message = SugarLoc.F("Nivelul {0}  ·  {1} stele", Mathf.Max(1, Data.level), stars) + "\n"
                 + SugarLoc.F("{0} puncte  ·  {1} capitole", points, Data.chaptersRewarded);
+            dialog.NextBobo = BoboPose.Wave;
             dialog.Show(string.IsNullOrEmpty(Data.nickname) ? SugarLoc.T("Profil") : Data.nickname, message,
                 new DialogButton(SugarLoc.T("SCHIMBĂ NICKNAME-UL"), panel, () => welcome.Show(false, SetNickname)),
                 new DialogButton(SugarLoc.T("Garderoba lui Bobo"), Palette.Tile(2), ShowWardrobe),
@@ -845,6 +853,7 @@ namespace SugarDrop
         private void ShowNoLives()
         {
             UiThemeColors(out Color positive, out Color ad, out Color panel);
+            dialog.NextBobo = BoboPose.Sleep;
             dialog.Show(SugarLoc.T("Fără vieți!"), null, () =>
                 {
                     SugarSave.UpdateLives();
@@ -1648,6 +1657,7 @@ namespace SugarDrop
                     if (Data.coins < boosterPrice)
                     {
                         if (Audio != null) Audio.Play(SugarSound.Invalid);
+                        dialog.NextBobo = BoboPose.Worried;
                         dialog.Show(SugarLoc.T("Nu ai destule monede"), null,
                             new DialogButton(SugarLoc.T("GRATIS (reclamă)"), ad, () => SugarUi.RewardedAd("booster", () => Grant(booster))),
                             new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));

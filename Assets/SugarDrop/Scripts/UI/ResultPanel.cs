@@ -39,6 +39,8 @@ namespace SugarDrop
         private LevelCompleteAnimator _animator;
         /// <summary>Ce i-a mai lipsit jucătorului (iconița obiectivului și câte au rămas), pe ecranul de pierdere.</summary>
         private readonly Image[] _missingIcons = new Image[3];
+        /// <summary>Bobo pictat lângă cutie: sărbătorește la victorie, plânge la pierdere (null fără imagini).</summary>
+        private Image _bobo;
         private readonly UiLabel[] _missingCounts = new UiLabel[3];
         private float _lockedUntil;
 
@@ -80,6 +82,8 @@ namespace SugarDrop
             UiFactory.Place(_score.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(600f, 92f));
 
             // Recompensa: plăcuța crem cu moneda și câte s-au câștigat.
+            if (BoboArt.Available)
+                _bobo = BoboArt.AddTo(_box, 250f, new Vector2(-Width * 0.5f + 40f, 360f), BoboPose.Happy);
             _reward = SugarUi.Card("Reward", _box, out Image rewardFace, QuestStyle.SurfaceTint);
             UiFactory.Place(_reward, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -506f), new Vector2(300f, 130f));
             Image coin = UiFactory.CreateImage("CoinIcon", rewardFace.transform, ProceduralSprites.Coin, Color.white);
@@ -152,6 +156,7 @@ namespace SugarDrop
             SetRound(onHome, onReplay, onMap);
             _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
+            if (_bobo != null) _bobo.sprite = BoboArt.Get(stars == 3 ? BoboPose.Star : BoboPose.Happy);
             _animator.PlayWin(stars, coins, "+{0}");
         }
 
@@ -176,6 +181,7 @@ namespace SugarDrop
             SetRound(onHome, null, onMap);
             _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
+            if (_bobo != null) _bobo.sprite = BoboArt.Get(BoboPose.Sad);
             _animator.PlayLose();
         }
 

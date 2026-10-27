@@ -42,7 +42,7 @@ namespace SugarDrop
 
             _bobo = UiFactory.CreateRect("Bobo", _card);
             UiFactory.Place(_bobo, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(95f, 0f), new Vector2(150f, 150f));
-            if (BoboArt.Available) BoboArt.AddTo(_bobo, 170f, new Vector2(0f, -10f));
+            if (BoboArt.Available) BoboArt.AddTo(_bobo, 170f, new Vector2(0f, -10f), BoboPose.Think);
             else BuildDrawnBobo();
 
             _text = UiFactory.CreateText("Text", _card, "", 40, TextAnchor.MiddleLeft, theme.TextDarkColor);

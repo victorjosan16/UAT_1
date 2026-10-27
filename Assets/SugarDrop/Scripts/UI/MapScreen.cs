@@ -204,7 +204,7 @@ namespace SugarDrop
             shadow.preserveAspect = false;
             if (BoboArt.Available)
             {
-                BoboArt.AddTo(_marker, 150f, new Vector2(0f, -4f));
+                BoboArt.AddTo(_marker, 150f, new Vector2(0f, -4f), BoboPose.Wave);
                 return;
             }
             Image cup = UiFactory.CreateImage("Cup", _marker, SugarSprites.CupWrapper, Color.white);

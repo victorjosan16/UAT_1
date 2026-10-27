@@ -47,8 +47,19 @@ Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de
 | Fișier | Descriere |
 |---|---|
 | `bobo.png` | Bobo în picioare, liniștit: blănos alb, urechi și moț ca niște frunze albastre, eșarfă albastră cu stea aurie (pătrat, picioarele la ~4% de jos) |
-| `bobohappy.png` | Același Bobo, bucuros (ochi închiși de râs, o mână sus) |
-| `boboscared.png` | Același Bobo, surprins / speriat (gura „O”) |
+| `bobohappy.png` | Bucuros, sărbătorește (victorie, combo mare) |
+| `boboscared.png` | Surprins / speriat (pericol, foc aproape) |
+| `bobosad.png` | Plânge (nivel eșuat, Bobo sub tablă la pierdere) |
+| `bobowave.png` | Salută (meniul principal, salutul, harta, invitația din poveste) |
+| `bobothumbs.png` | Cu degetul mare (când îl atingi în meniu) |
+| `bobothink.png` | Gânditor, cu „?” (antrenamentul) |
+| `boboworried.png` | Îngrijorat (pagina cu răufăcătorul, fără monede, fără reclamă) |
+| `bobosleep.png` | Doarme (fără vieți) |
+| `bobolove.png` | Ține o inimă (cadoul zilnic) |
+| `bobocrystal.png` | Ține cristalul albastru (finalul episodului) |
+| `bobogem.png` | Ține gema verde (rezervă) |
+| `bobostar.png` | Ține steaua (3 stele, misiuni, capitol terminat) |
+| `boborun.png` | Fuge (pagina „Bobo pornește la drum”) |
 | `bobotoken.png` | Capul lui Bobo, zâmbind (piesa de pe tablă, butonul Puterea lui Bobo) |
 | `bobotokenscared.png` | Capul lui Bobo, speriat (nivelurile cu foc) |
 | `boss0.png` … `boss6.png` | Fețele boșilor: 0 Regele Noroiului, 1 Regina Gheții, 2 Dragonul de Foc, 3 Monstrul Mlaștinii, 4 Împăratul Furtunii, 5 Regina Spinilor, 6 Titanul de Piatră. Prieten-amenințători, nu înfricoșători. |

@@ -155,6 +155,7 @@ namespace SugarDrop
         private void BuildBobo()
         {
             _bobo = BoboView.Build(_root.transform, 0.7f);
+            _bobo.SetPose(BoboPose.Wave);
             UiFactory.Place(_bobo.Root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, BoboY), _bobo.Root.sizeDelta);
             // Toată silueta lui Bobo se poate atinge.
             var hit = _bobo.Root.gameObject.AddComponent<Image>();
@@ -297,7 +298,7 @@ namespace SugarDrop
 
         private void PokeBobo()
         {
-            _bobo.SetPose(1);
+            _bobo.SetPose(BoboPose.Thumbs);
             _happyUntil = Time.unscaledTime + 1.2f;
             _jumpVelocity = 1400f;
             _blinkT = 0f;
@@ -365,7 +366,7 @@ namespace SugarDrop
             if (_happyUntil > 0f && time >= _happyUntil)
             {
                 _happyUntil = 0f;
-                _bobo.SetPose(0);
+                _bobo.SetPose(BoboPose.Wave);
             }
 
             if (time >= _nextLine)

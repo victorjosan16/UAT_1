@@ -159,7 +159,8 @@ namespace SugarDrop
         {
             if (_art != null)
             {
-                _art.sprite = worried ? BoboArt.Scared : _mood == Mood.Happy ? BoboArt.Happy : BoboArt.Idle;
+                _art.sprite = _mood == Mood.Sad ? BoboArt.Get(BoboPose.Sad)
+                    : worried ? BoboArt.Scared : _mood == Mood.Happy ? BoboArt.Happy : BoboArt.Idle;
                 return;
             }
             _mouth.sprite = worried ? SugarSprites.Frown : SugarSprites.Smile;

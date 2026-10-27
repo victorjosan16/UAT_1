@@ -39,6 +39,10 @@ namespace SugarDrop
         private UiLabel _message;
         private readonly List<GameObject> _buttons = new();
         private Func<string> _liveMessage;
+        private Image _bobo;
+
+        /// <summary>Ipostaza lui Bobo pentru următorul Show (apare în colțul ferestrei); se consumă la Show.</summary>
+        public BoboPose? NextBobo { get; set; }
         private float _refresh;
 
         public bool IsOpen => _root != null && _root.activeSelf;
@@ -55,6 +59,14 @@ namespace SugarDrop
             UiFactory.Place(_title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(Width - 60f, 100f));
             _message = UiFactory.CreateText("Message", _box, "", 40, TextAnchor.MiddleCenter, Color.Lerp(theme.TextDarkColor, Color.white, 0.3f));
             UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(Width - 80f, 110f));
+            if (BoboArt.Available)
+            {
+                // Bobo „se sprijină” de colțul din stânga-sus al ferestrei.
+                _bobo = UiFactory.CreateImage("Bobo", _box, BoboArt.Idle, Color.white);
+                _bobo.raycastTarget = false;
+                UiFactory.Place(_bobo.rectTransform, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(30f, 10f), new Vector2(210f, 210f));
+                _bobo.gameObject.SetActive(false);
+            }
             _root.SetActive(false);
         }
 
@@ -63,6 +75,13 @@ namespace SugarDrop
         public void Show(string title, string message, Func<string> liveMessage, params DialogButton[] buttons)
         {
             DismissAction = null;
+            if (_bobo != null)
+            {
+                _bobo.gameObject.SetActive(NextBobo.HasValue);
+                if (NextBobo.HasValue) _bobo.sprite = BoboArt.Get(NextBobo.Value);
+                _bobo.transform.SetAsLastSibling();
+            }
+            NextBobo = null;
             foreach (GameObject button in _buttons) Destroy(button);
             _buttons.Clear();
 

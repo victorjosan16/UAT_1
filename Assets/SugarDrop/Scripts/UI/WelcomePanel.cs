@@ -111,7 +111,7 @@ namespace SugarDrop
         {
             if (BoboArt.Available)
             {
-                BoboArt.AddTo(parent, 270f, new Vector2(0f, 0f));
+                BoboArt.AddTo(parent, 270f, new Vector2(0f, 0f), BoboPose.Wave);
                 return;
             }
             Image cup = UiFactory.CreateImage("Cup", parent, SugarSprites.CupWrapper, Color.white);

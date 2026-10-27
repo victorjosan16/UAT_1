@@ -64,11 +64,11 @@ namespace SugarDrop
 
         public void SetCostume(Costume costume) => SetCostume(costume, Scale);
 
-        /// <summary>Ipostaza imaginii pictate: 0 liniștit, 1 bucuros, 2 speriat (fără imagini nu face nimic).</summary>
-        public void SetPose(int pose)
+        /// <summary>Ipostaza imaginii pictate (fără imagini nu face nimic).</summary>
+        public void SetPose(BoboPose pose)
         {
             if (_art == null) return;
-            _art.sprite = pose == 1 ? BoboArt.Happy : pose == 2 ? BoboArt.Scared : BoboArt.Idle;
+            _art.sprite = BoboArt.Get(pose);
         }
 
         /// <summary>Pune costumul: pălăriile și fundița pe cap (în locul cireșei), ochelarii pe ochi.</summary>
