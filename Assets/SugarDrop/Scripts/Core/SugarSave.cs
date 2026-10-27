@@ -21,7 +21,7 @@ namespace SugarDrop
         public bool vibration = true;
         /// <summary>Fără tremurat și zoom de cameră (pentru cine preferă mișcare redusă).</summary>
         public bool reducedMotion;
-        /// <summary>„ro”, „en” sau gol (după limba telefonului).</summary>
+        /// <summary>„ro”, „en” etc. sau gol (= engleza, limba implicită).</summary>
         public string language = "";
         public bool tutorialDone;
         /// <summary>Un nivel a început (s-a făcut prima mutare) și încă nu s-a terminat: dacă aplicația e închisă

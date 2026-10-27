@@ -8,8 +8,7 @@ namespace SugarDrop
 
     /// <summary>
     /// Traducerile Sugar Drop. Textele din cod sunt în română și servesc drept chei; fiecare rând din tabel are
-    /// traducerea în toate limbile. Limba vine din Setări sau, la prima pornire, din limba telefonului
-    /// (engleza pentru limbile pe care jocul nu le are).
+    /// traducerea în toate limbile. Implicit jocul e în engleză; jucătorul alege altă limbă din Setări.
     /// </summary>
     public static class SugarLoc
     {
@@ -36,7 +35,8 @@ namespace SugarDrop
                 string saved = SugarSave.Data.language;
                 for (int i = 0; i < Codes.Length; i++)
                     if (Codes[i] == saved) return (SugarLanguage)i;
-                return FromSystem(Application.systemLanguage);
+                // Implicit: engleza (jucătorul își alege altă limbă din Setări).
+                return SugarLanguage.English;
             }
         }
 
@@ -174,6 +174,14 @@ namespace SugarDrop
                 "Супер!", "Супер!"),
             R("Fabulos!", "Fabulous!", "¡Fabuloso!", "Fabuloso!", "Fabuleux !", "Fabelhaft!", "Favoloso!", "Muhteşem!", "Luar biasa!",
                 "Сказочно!", "Казково!"),
+            R("SUNET", "SOUND", "SONIDO", "SOM", "SON", "TON", "SUONO", "SES", "SUARA", "ЗВУК", "ЗВУК"),
+            R("MUZICĂ", "MUSIC", "MÚSICA", "MÚSICA", "MUSIQUE", "MUSIK", "MUSICA", "MÜZİK", "MUSIK", "МУЗЫКА", "МУЗИКА"),
+            R("VIBRAȚII", "VIBRATION", "VIBRACIÓN", "VIBRAÇÃO", "VIBRATION", "VIBRATION", "VIBRAZIONE", "TİTREŞİM", "GETAR", "ВИБРАЦИЯ", "ВІБРАЦІЯ"),
+            R("NOTIFICĂRI", "ALERTS", "AVISOS", "AVISOS", "ALERTES", "HINWEISE", "AVVISI", "BİLDİRİM", "NOTIFIKASI", "УВЕДОМЛ.", "СПОВІЩ."),
+            R("EFECTE", "EFFECTS", "EFECTOS", "EFEITOS", "EFFETS", "EFFEKTE", "EFFETTI", "EFEKTLER", "EFEK", "ЭФФЕКТЫ", "ЕФЕКТИ"),
+            R("GRAFICĂ", "GRAPHICS", "GRÁFICOS", "GRÁFICOS", "GRAPHISMES", "GRAFIK", "GRAFICA", "GRAFİK", "GRAFIS", "ГРАФИКА", "ГРАФІКА"),
+            R("RECLAME", "ADS", "ANUNCIOS", "ANÚNCIOS", "PUBS", "WERBUNG", "PUBBLICITÀ", "REKLAM", "IKLAN", "РЕКЛАМА", "РЕКЛАМА"),
+            R("TUTORIAL", "TUTORIAL", "TUTORIAL", "TUTORIAL", "TUTORIEL", "TUTORIAL", "TUTORIAL", "EĞİTİM", "TUTORIAL", "ОБУЧЕНИЕ", "НАВЧАННЯ"),
             R("NOU!", "NEW!", "¡NUEVO!", "NOVO!", "NOUVEAU !", "NEU!", "NUOVO!", "YENİ!", "BARU!", "НОВОЕ!", "НОВЕ!"),
             R("Portalurile duc bomboanele dintr-o coloană în alta!", "Portals carry candies from one column to another!",
                 "¡Los portales llevan los caramelos de una columna a otra!", "Os portais levam os doces de uma coluna para outra!",

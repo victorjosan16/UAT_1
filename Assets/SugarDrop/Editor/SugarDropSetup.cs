@@ -183,6 +183,7 @@ namespace SugarDrop.EditorTools
             public TutorialCoach Coach;
             public WheelPanel Wheel;
             public WardrobePanel Wardrobe;
+            public SettingsPanel Settings;
         }
 
         private static void BuildGame(Camera camera, PhysicsMaterial2D material, Ui ui)
@@ -223,6 +224,7 @@ namespace SugarDrop.EditorTools
             Set(game, "coach", ui.Coach);
             Set(game, "wheel", ui.Wheel);
             Set(game, "wardrobe", ui.Wardrobe);
+            Set(game, "settings", ui.Settings);
         }
 
         private static Ui BuildUi(UiTheme theme)
@@ -255,6 +257,7 @@ namespace SugarDrop.EditorTools
                 Leaderboard = UiComponent<LeaderboardPanel>(canvasGo.transform, "Leaderboard"),
                 Wheel = UiComponent<WheelPanel>(canvasGo.transform, "Wheel"),
                 Wardrobe = UiComponent<WardrobePanel>(canvasGo.transform, "Wardrobe"),
+                Settings = UiComponent<SettingsPanel>(canvasGo.transform, "Settings"),
                 Welcome = UiComponent<WelcomePanel>(canvasGo.transform, "Welcome"),
                 Dialog = UiComponent<DialogPanel>(canvasGo.transform, "Dialog"),
             };

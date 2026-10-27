@@ -36,6 +36,7 @@ namespace SugarDrop
         [SerializeField] private TutorialCoach coach;
         [SerializeField] private WheelPanel wheel;
         [SerializeField] private WardrobePanel wardrobe;
+        [SerializeField] private SettingsPanel settings;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -536,7 +537,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -1056,6 +1057,11 @@ namespace SugarDrop
                 wardrobe.Hide();
                 return;
             }
+            if (settings.IsOpen)
+            {
+                settings.Dismiss();
+                return;
+            }
             switch (_state)
             {
                 case State.Playing: ShowPause(); break;
@@ -1212,7 +1218,7 @@ namespace SugarDrop
 
         private void ShowPause()
         {
-            if (_state != State.Playing || dialog.IsOpen) return;
+            if (_state != State.Playing || dialog.IsOpen || settings.IsOpen) return;
             Time.timeScale = 0f;
             CancelBomb();
             ShowSettings(true);
@@ -1222,77 +1228,30 @@ namespace SugarDrop
 
         private void ShowSettings(bool inGame)
         {
-            UiThemeColors(out Color positive, out Color ad, out Color panel);
-            Color accent = QuarryEmpire.UiRoot.Theme.AccentColor;
-            var buttons = new List<DialogButton>();
-            if (inGame)
+            var host = new SettingsHost
             {
-                buttons.Add(new DialogButton(SugarLoc.T("CONTINUĂ"), positive, Resume));
-                buttons.Add(new DialogButton(SugarLoc.T("RELUARE NIVEL"), accent, () =>
+                Resume = Resume,
+                Retry = () =>
                 {
                     Time.timeScale = 1f;
                     Go(RetryLevel);
-                }));
-                buttons.Add(new DialogButton(SugarLoc.T("ÎNAPOI LA HARTĂ"), accent, () =>
+                },
+                Map = () =>
                 {
                     Time.timeScale = 1f;
                     Go(LeaveToMap);
-                }));
-            }
-            buttons.Add(Toggle(Data.sound ? "SUNET: PORNIT" : "SUNET: OPRIT", () => Data.sound = !Data.sound, inGame));
-            buttons.Add(Toggle(Data.music ? "MUZICĂ: PORNITĂ" : "MUZICĂ: OPRITĂ", () =>
-            {
-                Data.music = !Data.music;
-                if (Audio != null) Audio.ApplySettings();
-            }, inGame));
-            buttons.Add(Toggle(Data.vibration ? "VIBRAȚII: PORNITE" : "VIBRAȚII: OPRITE", () => Data.vibration = !Data.vibration, inGame));
-            buttons.Add(Toggle(Data.reducedMotion ? "MIȘCARE REDUSĂ: DA" : "MIȘCARE REDUSĂ: NU", () => Data.reducedMotion = !Data.reducedMotion, inGame));
-            buttons.Add(Toggle(SugarQuality.LabelKey, SugarQuality.Cycle, inGame));
-            buttons.Add(Toggle(Data.notifications ? "NOTIFICĂRI: PORNITE" : "NOTIFICĂRI: OPRITE", () => Data.notifications = !Data.notifications, inGame));
-            if (SugarAds.RealAds)
-                buttons.Add(Toggle(Data.adsConsent == 1 ? "RECLAME PERSONALIZATE: DA" : "RECLAME PERSONALIZATE: NU", () => SetAdsConsent(Data.adsConsent != 1), inGame));
-            buttons.Add(new DialogButton(SugarLoc.T("LIMBA") + ": " + SugarLoc.NativeName(SugarLoc.Current).ToUpperInvariant(), panel,
-                () => ShowLanguages(inGame), false));
-            if (!inGame)
-            {
-                buttons.Add(new DialogButton(SugarLoc.F("NICKNAME: {0}", Data.nickname), panel, () => welcome.Show(false, SetNickname)));
-                buttons.Add(new DialogButton(SugarLoc.T("REVEZI TUTORIALUL"), panel, ReplayTutorial));
-                buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
-            }
-
-            string message = (inGame ? SugarLoc.T("Nivelul costă o viață.") + "\n" : "") + SugarLoc.F("Versiunea {0}", ErrorReporter.BuildId);
-            dialog.Show(SugarLoc.T(inGame ? "PAUZĂ" : "SETĂRI"), message, buttons.ToArray());
-            if (inGame) dialog.DismissAction = Resume;
-        }
-
-        /// <summary>Lista limbilor (fiecare scrisă în limba ei); alegerea traduce imediat tot jocul.</summary>
-        private void ShowLanguages(bool inGame)
-        {
-            UiThemeColors(out Color positive, out Color ad, out Color panel);
-            var buttons = new List<DialogButton>();
-            foreach (SugarLanguage language in SugarLoc.Languages)
-            {
-                bool current = language == SugarLoc.Current;
-                buttons.Add(new DialogButton(SugarLoc.NativeName(language), current ? positive : panel, () =>
+                },
+                EditNickname = () => welcome.Show(false, SetNickname),
+                ReplayTutorial = ReplayTutorial,
+                AudioChanged = () =>
                 {
-                    Data.language = SugarLoc.Code(language);
-                    SugarSave.Save();
-                    RefreshTexts();
-                    ShowSettings(inGame);
-                }, false));
-            }
-            buttons.Add(new DialogButton(SugarLoc.T("ÎNAPOI"), QuarryEmpire.UiRoot.Theme.AccentColor, () => ShowSettings(inGame), false));
-            dialog.Show(SugarLoc.T("LIMBA"), null, buttons.ToArray());
-            dialog.DismissAction = () => ShowSettings(inGame);
+                    if (Audio != null) Audio.ApplySettings();
+                },
+                LanguageChanged = RefreshTexts,
+                SetAdsConsent = SugarAds.RealAds ? SetAdsConsent : null,
+            };
+            settings.Show(inGame, host);
         }
-
-        private DialogButton Toggle(string label, System.Action change, bool inGame) =>
-            new(SugarLoc.T(label), QuarryEmpire.UiRoot.Theme.PanelColor, () =>
-            {
-                change();
-                SugarSave.Save();
-                ShowSettings(inGame);
-            }, false);
 
         private void Resume()
         {

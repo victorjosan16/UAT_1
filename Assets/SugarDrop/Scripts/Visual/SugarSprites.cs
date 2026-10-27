@@ -805,6 +805,100 @@ namespace SugarDrop
             return d;
         }));
 
+        // ------------------------------------------------------------ Iconițe pentru Setări
+
+        /// <summary>Difuzor cu două unde (sunet).</summary>
+        public static Sprite Speaker => Get("speaker", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float body = RoundRect(x, y, 14, 46, 28, 36, 5);
+            // Pâlnia: se lărgește spre dreapta (de la ±18 la ±40 în jurul lui y = 64).
+            float half = Mathf.Lerp(18f, 40f, (x - 40f) / 30f);
+            float cone = Mathf.Max(Mathf.Max(40f - x, x - 70f), Mathf.Abs(y - 64f) - half);
+            float d = Mathf.Min(body, cone);
+            for (int i = 0; i < 2; i++)
+            {
+                float radius = 20f + i * 18f;
+                float arc = Mathf.Max(Mathf.Abs(Vector2.Distance(p, new Vector2(72f, 64f)) - radius) - 4.5f, Mathf.Abs(y - 64f) - (x - 72f) * 1.1f);
+                d = Mathf.Min(d, arc);
+            }
+            return d;
+        }));
+
+        /// <summary>Notă muzicală dublă (muzică).</summary>
+        public static Sprite Note => Get("note", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float headA = Vector2.Distance(new Vector2(p.x * 0.85f, p.y), new Vector2(38f * 0.85f, 32f)) - 14f;
+            float headB = Vector2.Distance(new Vector2(p.x * 0.85f, p.y), new Vector2(92f * 0.85f, 44f)) - 14f;
+            float stemA = RoundRect(x, y, 46, 32, 9, 70, 3);
+            float stemB = RoundRect(x, y, 100, 44, 9, 70, 3);
+            float beam = SegmentDistance(p, new Vector2(50f, 98f), new Vector2(104f, 110f)) - 8f;
+            return Mathf.Min(Mathf.Min(headA, headB), Mathf.Min(Mathf.Min(stemA, stemB), beam));
+        }));
+
+        /// <summary>Telefon care vibrează (vibrații).</summary>
+        public static Sprite Vibrate => Get("vibrate", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float phone = Mathf.Max(RoundRect(x, y, 42, 18, 44, 92, 10), -RoundRect(x, y, 50, 32, 28, 64, 3));
+            float d = phone;
+            for (int side = -1; side <= 1; side += 2)
+                for (int i = 0; i < 2; i++)
+                {
+                    float cx = 64f + side * (34f + i * 14f);
+                    float wave = Mathf.Min(SegmentDistance(p, new Vector2(cx, 44f), new Vector2(cx + side * 5f, 56f)),
+                        Mathf.Min(SegmentDistance(p, new Vector2(cx + side * 5f, 56f), new Vector2(cx, 70f)),
+                            SegmentDistance(p, new Vector2(cx, 70f), new Vector2(cx + side * 5f, 84f)))) - 3.5f;
+                    d = Mathf.Min(d, wave);
+                }
+            return d;
+        }));
+
+        /// <summary>Clopoțel (notificări).</summary>
+        public static Sprite Bell => Get("bell", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float dome = Mathf.Max(Vector2.Distance(p, new Vector2(64f, 76f)) - 30f, 76f - y);
+            float half = Mathf.Lerp(40f, 30f, (y - 38f) / 38f);
+            float skirt = Mathf.Max(Mathf.Max(38f - y, y - 77f), Mathf.Abs(x - 64f) - half);
+            float rim = RoundRect(x, y, 18, 32, 92, 12, 6);
+            float clapper = Vector2.Distance(p, new Vector2(64f, 22f)) - 10f;
+            float knob = Vector2.Distance(p, new Vector2(64f, 110f)) - 7f;
+            return Mathf.Min(Mathf.Min(Mathf.Min(dome, skirt), rim), Mathf.Min(clapper, knob));
+        }));
+
+        /// <summary>Glob cu meridiane (limba).</summary>
+        public static Sprite Globe => Get("globe", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float circle = Vector2.Distance(p, new Vector2(64f, 64f)) - 48f;
+            float outline = Mathf.Abs(circle + 4f) - 4f;
+            float inside = circle;
+            float meridian = (Mathf.Sqrt(Mathf.Pow((x - 64f) / 22f, 2) + Mathf.Pow((y - 64f) / 46f, 2)) - 1f) * 22f;
+            float lines = Mathf.Min(Mathf.Abs(meridian) - 3.5f, Mathf.Abs(x - 64f) - 3.5f);
+            lines = Mathf.Min(lines, Mathf.Min(Mathf.Abs(y - 64f) - 3.5f, Mathf.Min(Mathf.Abs(y - 88f) - 3.5f, Mathf.Abs(y - 40f) - 3.5f)));
+            return Mathf.Min(outline, Mathf.Max(lines, inside));
+        }));
+
+        /// <summary>„X” rotunjit (închide).</summary>
+        public static Sprite Cross => Get("cross", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            return Mathf.Min(SegmentDistance(p, new Vector2(32f, 32f), new Vector2(96f, 96f)),
+                SegmentDistance(p, new Vector2(32f, 96f), new Vector2(96f, 32f))) - 11f;
+        }));
+
+        /// <summary>Căsuță (înapoi la hartă).</summary>
+        public static Sprite Home => Get("home", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float roof = Mathf.Min(SegmentDistance(p, new Vector2(16f, 62f), new Vector2(64f, 106f)),
+                SegmentDistance(p, new Vector2(64f, 106f), new Vector2(112f, 62f))) - 8f;
+            float body = Mathf.Max(RoundRect(x, y, 30, 16, 68, 56, 6), -RoundRect(x, y, 54, 10, 20, 34, 4));
+            return Mathf.Min(roof, body);
+        }));
+
         /// <summary>Trofeu (clasament): cupă cu toarte, picior și soclu.</summary>
         public static Sprite Trophy => Get("trophy", () => Mask(128, (x, y) =>
         {
