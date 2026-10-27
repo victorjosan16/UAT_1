@@ -402,6 +402,13 @@ namespace SugarDrop
                 view.Ring.gameObject.SetActive(true);
             }
 
+            // Nivelurile cu Bobo pe tablă: o mică insignă cu el în colț (speriat la cele cu foc).
+            if (LevelConfig.BoboTypeFor(level) is LevelType boboType && !boss && !LevelConfig.IsBonusLevel(level))
+            {
+                Image badge = UiFactory.CreateImage("Bobo", view.Visual, boboType == LevelType.Blaze ? SugarSprites.BoboTokenScared : SugarSprites.BoboToken, Color.white);
+                UiFactory.Place(badge.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-size * 0.08f, size * 0.12f), Vector2.one * size * 0.5f);
+            }
+
             view.Boss = SugarUi.Outlined("Boss", view.Visual, SugarLoc.T("BOSS"), 34, theme.AccentColor);
             UiFactory.Place(view.Boss.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(220f, 48f));
             view.Boss.gameObject.SetActive(boss);

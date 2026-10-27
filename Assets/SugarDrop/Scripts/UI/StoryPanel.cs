@@ -54,6 +54,8 @@ namespace SugarDrop
         private bool _flipSwapped;
         private float _open;
         private bool _welcomeBack;
+        /// <summary>Textele paginilor sunt deja traduse (episoade, revenire).</summary>
+        private bool _pretranslated;
 
         public bool IsOpen => _root != null && _root.activeSelf;
 
@@ -130,6 +132,7 @@ namespace SugarDrop
         public void ShowStory(Action onDone)
         {
             _welcomeBack = false;
+            _pretranslated = false;
             _pages.Clear();
             _pages.Add(new Page { Title = "A fost odată...", Text = "A fost odată un Tărâm Dulce, unde copacii purtau acadele, iar râurile curgeau cu sirop de căpșuni.", Build = BuildLand });
             _pages.Add(new Page { Title = "Vrăjitorul Acrișor", Text = "Dar într-o noapte, Vrăjitorul Acrișor a furat Borcanul Fermecat și a împrăștiat bomboanele prin toate cele zece ținuturi.", Build = BuildWizard });
@@ -143,6 +146,7 @@ namespace SugarDrop
         public void ShowWelcomeBack(string nickname, int level, TimeSpan away, Action onDone)
         {
             _welcomeBack = true;
+            _pretranslated = true;
             _pages.Clear();
             int chapter = ChapterTheme.ChapterOf(Mathf.Max(1, level));
             string line = (away.TotalHours >= 24 ? SugarLoc.T("Ne-a fost dor de tine!") + "\n" : "")
@@ -160,6 +164,63 @@ namespace SugarDrop
             Open(onDone);
         }
 
+        // ------------------------------------------------------------ Aventurile lui Bobo: episoadele
+
+        /// <summary>Titlurile episoadelor (un episod = un ținut, nivelurile 1–100).</summary>
+        private static readonly string[] EpisodeTitles =
+        {
+            "Bobo și Gemul Fermecat", "Focul din Pădurea de Mentă", "Misterul Lacului Înghețat", "Furtuna din Deșert",
+            "Castelul cu Uși Fermecate", "Lava de Ciocolată", "Regatul Înghețat", "Capcana de Caramel", "Furtuna din Nori",
+            "Bătălia din Galaxie",
+        };
+
+        private static readonly string[] EpisodeIntros =
+        {
+            "Bobo pornește la drum prin Câmpia de Căpșuni, unde gemul curge ca un râu și bomboanele cad din cer.",
+            "În Pădurea de Mentă arde un foc ciudat. Doar apa din bomboanele albastre îl poate stinge!",
+            "Lacul de Afine a înghețat peste noapte, iar Bobo a rămas prins în gheață!",
+            "În Deșertul de Lămâie, nisipul acru ascunde capcane și bombe care ticăie.",
+            "Castelul de Struguri e plin de coridoare și uși care se închid singure.",
+            "Muntele de Ciocolată fierbe, iar ciocolata topită curge peste tot.",
+            "În Regatul de Gheață, chiar și vântul a înghețat.",
+            "Canionul de Caramel e lipicios: un pas greșit și rămâi prins.",
+            "Bobo urcă pe Norii de Vată de Zahăr, deasupra întregii lumi.",
+            "Ultima bucată din Borcanul Fermecat e chiar în Galaxia Curcubeu, în castelul Vrăjitorului.",
+        };
+
+        /// <summary>
+        /// Episodul ținutului: la început două pagini (ținutul, apoi răufăcătorul lui — Boss-ul de la final), iar după
+        /// prima victorie împotriva Boss-ului o pagină de final (încă o bucată din Borcanul Fermecat).
+        /// </summary>
+        public static bool HasEpisode(int chapter) => chapter >= 0 && chapter < EpisodeTitles.Length;
+
+        public void ShowEpisode(int chapter, bool ending, Action onDone)
+        {
+            _welcomeBack = false;
+            _pretranslated = true;
+            _pages.Clear();
+            string title = SugarLoc.F("Episodul {0}", chapter + 1) + ": " + SugarLoc.T(EpisodeTitles[chapter]);
+            string villain = SugarLoc.T(BossDefinition.For((chapter + 1) * LevelConfig.ChapterSize, 22).Name);
+            if (!ending)
+            {
+                _pages.Add(new Page { Title = title, Text = SugarLoc.T(EpisodeIntros[chapter]), Build = scene => BuildEpisodeLand(scene, chapter) });
+                _pages.Add(new Page
+                {
+                    Title = title,
+                    Text = SugarLoc.F("Dar {0}, slujitorul Vrăjitorului, păzește aici o bucată din Borcanul Fermecat!", villain),
+                    Build = scene => BuildEpisodeVillain(scene, chapter),
+                });
+            }
+            else
+            {
+                string text = chapter == EpisodeTitles.Length - 1
+                    ? SugarLoc.T("Borcanul Fermecat e întreg din nou! Tărâmul Dulce e salvat, iar Bobo e un erou!")
+                    : SugarLoc.F("{0} a fost învins! Bobo are {1} din 10 bucăți ale Borcanului Fermecat.", villain, chapter + 1);
+                _pages.Add(new Page { Title = title, Text = text, Build = scene => BuildEpisodeEnd(scene, chapter) });
+            }
+            Open(onDone);
+        }
+
         private void Open(Action onDone)
         {
             _onDone = onDone;
@@ -168,7 +229,7 @@ namespace SugarDrop
             _flip = -1f;
             _skip.SetActive(!_welcomeBack);
             _skipLabel.Text = SugarLoc.T("SARI") + " ›";
-            foreach (Image dot in _dots) dot.gameObject.SetActive(!_welcomeBack);
+            for (int i = 0; i < _dots.Count; i++) _dots[i].gameObject.SetActive(!_welcomeBack && i < _pages.Count && _pages.Count > 1);
             _root.SetActive(true);
             ShowPage();
         }
@@ -217,8 +278,8 @@ namespace SugarDrop
             _sky.color = Color.white;
             _sky.sprite = SugarSprites.Sky(0);
             _animate = page.Build(_scene);
-            _title.Text = _welcomeBack ? page.Title : SugarLoc.T(page.Title);
-            _fullText = _welcomeBack ? page.Text : SugarLoc.T(page.Text);
+            _title.Text = _pretranslated ? page.Title : SugarLoc.T(page.Title);
+            _fullText = _pretranslated ? page.Text : SugarLoc.T(page.Text);
             _typed = _welcomeBack ? _fullText.Length : 0f;
             _text.Text = _welcomeBack ? _fullText : "";
             _pageTime = 0f;
@@ -393,6 +454,54 @@ namespace SugarDrop
                     candies[i].localRotation = Quaternion.Euler(0f, 0f, t * 200f + i * 40f);
                     candies[i].localScale = Vector3.one * (1f - k * 0.5f);
                 }
+            };
+        }
+
+        /// <summary>Episod, pagina 1: ținutul, cu Bobo țopăind printre ornamentele lui.</summary>
+        private Action<float> BuildEpisodeLand(RectTransform scene, int chapter)
+        {
+            _sky.sprite = SugarSprites.Sky(chapter);
+            return BuildReunion(scene, chapter);
+        }
+
+        /// <summary>Episod, pagina 2: răufăcătorul coboară amenințător, fulgere, Bobo tremură într-un colț.</summary>
+        private Action<float> BuildEpisodeVillain(RectTransform scene, int chapter)
+        {
+            _sky.sprite = SugarSprites.Sky(chapter);
+            _sky.color = new Color(0.55f, 0.45f, 0.65f);
+            int look = BossDefinition.For((chapter + 1) * LevelConfig.ChapterSize, 22).Look;
+            RectTransform villain = Actor(scene, SugarSprites.BossFace(look), Color.white, new Vector2(-80f, 600f), 300f);
+            BoboView bobo = BoboView.Build(scene, 0.42f);
+            Image flash = UiFactory.CreateImage("Flash", scene, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0f));
+            flash.preserveAspect = false;
+            UiFactory.Stretch(flash.rectTransform);
+            return t =>
+            {
+                float enter = Mathf.Clamp01(t / 1.1f);
+                villain.anchoredPosition = new Vector2(-80f + Mathf.Sin(t * 1.4f) * 50f, Mathf.Lerp(600f, 110f, UiEase.OutBack(enter, 1.4f)));
+                villain.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 2.6f) * 7f);
+                bobo.Root.anchoredPosition = new Vector2(270f + Mathf.Sin(t * 40f) * 4f, -230f);
+                float cycle = Mathf.Repeat(t, 2.8f);
+                flash.color = new Color(1f, 1f, 1f, cycle < 0.07f || (cycle > 0.14f && cycle < 0.2f) ? 0.5f : 0f);
+            };
+        }
+
+        /// <summary>Final de episod: Bobo sare de bucurie, deasupra lui strălucește bucata din Borcanul Fermecat.</summary>
+        private Action<float> BuildEpisodeEnd(RectTransform scene, int chapter)
+        {
+            _sky.sprite = SugarSprites.Sky(chapter);
+            RectTransform glow = Actor(scene, SugarSprites.SoftDot, new Color(1f, 0.95f, 0.6f, 0.7f), new Vector2(0f, 200f), 300f);
+            RectTransform shard = Actor(scene, SugarSprites.Gem, Color.white, new Vector2(0f, 200f), 130f);
+            BoboView bobo = BoboView.Build(scene, 0.6f);
+            Action<float> confetti = Floaters(scene, SugarSprites.Sparkle,
+                new[] { Palette.TileLight(0), Palette.TileLight(1), Palette.TileLight(2), Palette.TileLight(3), Palette.TileLight(4) }, 14, -0.9f, 34f);
+            return t =>
+            {
+                shard.localRotation = Quaternion.Euler(0f, 0f, t * 60f);
+                shard.anchoredPosition = new Vector2(0f, 200f + Mathf.Sin(t * 2f) * 16f);
+                glow.localScale = Vector3.one * (1f + Mathf.Sin(t * 3f) * 0.12f);
+                bobo.Root.anchoredPosition = new Vector2(0f, -170f + Mathf.Abs(Mathf.Sin(t * 3.5f)) * 50f);
+                confetti(t);
             };
         }
 

@@ -669,8 +669,27 @@ namespace SugarDrop
         /// Înainte de nivel: ce cere nivelul și boosterele de start (o rachetă sau o bombă puse pe tablă de la început).
         /// Dacă nu mai ai, le poți cumpăra cu monede.
         /// </summary>
-        /// <summary>Cartea de început a nivelului: pericolul, obiectivele ca iconițe, ajutoarele de la start, JOACĂ.</summary>
+        /// <summary>
+        /// Înainte de primul nivel dintr-un ținut nou: episodul lui (povestea), apoi cartea de început a nivelului.
+        /// </summary>
         private void ShowLevelStart(int level)
+        {
+            int chapter = ChapterTheme.ChapterOf(level);
+            if (StoryPanel.HasEpisode(chapter) && chapter >= Data.episodesStarted)
+            {
+                story.ShowEpisode(chapter, false, () =>
+                {
+                    Data.episodesStarted = chapter + 1;
+                    SugarSave.Save();
+                    ShowLevelCard(level);
+                });
+                return;
+            }
+            ShowLevelCard(level);
+        }
+
+        /// <summary>Cartea de început a nivelului: pericolul, obiectivele ca iconițe, ajutoarele de la start, JOACĂ.</summary>
+        private void ShowLevelCard(int level)
         {
             LevelConfig config = LevelConfig.For(level);
             var info = new LevelStartInfo
@@ -1352,7 +1371,15 @@ namespace SugarDrop
             result.ShowWin(_level, stars, coins, () => Go(() =>
             {
                 OpenMap();
-                if (chest) ShowChapterChest(chapter);
+                // Primul Boss învins din ținut: finalul episodului, apoi cufărul capitolului.
+                if (chest && StoryPanel.HasEpisode(chapter) && chapter >= Data.episodesFinished)
+                    story.ShowEpisode(chapter, true, () =>
+                    {
+                        Data.episodesFinished = chapter + 1;
+                        SugarSave.Save();
+                        ShowChapterChest(chapter);
+                    });
+                else if (chest) ShowChapterChest(chapter);
                 else if (rating) AskRating();
             }));
         }

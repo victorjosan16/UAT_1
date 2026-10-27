@@ -31,6 +31,9 @@ namespace SugarDrop
         public int winStreak;
         /// <summary>Mecanicile pe care jucătorul le-a întâlnit deja (biți; vezi SugarDropGame.MechanicBit).</summary>
         public int seenMechanics;
+        /// <summary>Câte episoade (ținuturi 1–10) au avut deja povestea de început și pe cea de final.</summary>
+        public int episodesStarted;
+        public int episodesFinished;
         /// <summary>Ultima dată când jucătorul a fost în joc (secunde Unix): pentru „Bine ai revenit”.</summary>
         public long lastVisit;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
