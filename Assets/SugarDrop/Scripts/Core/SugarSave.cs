@@ -24,6 +24,9 @@ namespace SugarDrop
         /// <summary>„ro”, „en” sau gol (după limba telefonului).</summary>
         public string language = "";
         public bool tutorialDone;
+        /// <summary>Un nivel a început (s-a făcut prima mutare) și încă nu s-a terminat: dacă aplicația e închisă
+        /// forțat, la următoarea pornire viața se pierde (altfel s-ar putea ocoli pierderea vieții).</summary>
+        public bool levelInProgress;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
         public int adsConsent = -1;
         /// <summary>Numele afișat în clasament (gol = încă neales: la prima pornire apare fereastra de bun venit).</summary>

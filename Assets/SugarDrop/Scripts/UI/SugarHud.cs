@@ -19,6 +19,9 @@ namespace SugarDrop
         private UiLabel _moves;
         private UiLabel _movesCaption;
         private PunchScale _movesPunch;
+        /// <summary>De la câte mutări rămase contorul devine roșu și pulsează.</summary>
+        public const int LowMoves = 5;
+        private bool _lowMoves;
         private RectTransform _goalCard;
         private readonly List<GoalView> _goalViews = new();
 
@@ -351,8 +354,10 @@ namespace SugarDrop
         public void SetMoves(int moves, bool punch)
         {
             _moves.Text = moves.ToString();
-            _moves.Color = moves <= 3 ? UiRoot.Theme.NegativeColor : UiRoot.Theme.TextDarkColor;
-            if (punch) _movesPunch.Punch(moves <= 3 ? 2f : 1f);
+            _lowMoves = moves <= LowMoves;
+            _moves.Color = _lowMoves ? UiRoot.Theme.NegativeColor : UiRoot.Theme.TextDarkColor;
+            if (punch) _movesPunch.Punch(_lowMoves ? 2f : 1f);
+            if (!_lowMoves) _moves.RectTransform.localScale = Vector3.one;
         }
 
         /// <summary>Construiește obiectivele nivelului (1–3 iconițe în cardul de sus).</summary>
@@ -462,6 +467,8 @@ namespace SugarDrop
 
         private void Update()
         {
+            // Puține mutări: cifra bate ca o inimă, ca jucătorul să fie atent la ultimele mișcări.
+            if (_lowMoves) _moves.RectTransform.localScale = Vector3.one * (1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f)));
             if (_wordT >= 0f)
             {
                 _wordT += Time.unscaledDeltaTime / 1.1f;

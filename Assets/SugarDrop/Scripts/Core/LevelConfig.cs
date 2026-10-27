@@ -188,7 +188,8 @@ namespace SugarDrop
             int index = (level - 1) % ChapterSize;
             var random = new System.Random(chapter * 31337 + 7);
             int hard = 3 + random.Next(3); // 3, 4 sau 5
-            bool hardEnding = chapter == 0 ? false : random.Next(4) != 0;
+            // Primele două capitole se termină cu un nivel greu, nu foarte greu (jucătorul abia învață mecanicile).
+            bool hardEnding = chapter <= 1 ? false : random.Next(4) != 0;
             bool secondEasyIsNormal = chapter >= 2 && random.Next(2) == 0;
             if (index == 0) return Difficulty.Easy;
             if (index == 1) return secondEasyIsNormal ? Difficulty.Normal : Difficulty.Easy;
@@ -211,10 +212,10 @@ namespace SugarDrop
             float movesFactor = difficulty switch
             {
                 // Raportat la câte mutări îi trebuie în mod obișnuit jucătorului automat din teste (mediana):
-                // ușor ≈ 1,5×, normal ≈ 1,2×, greu ≈ 1,05×, foarte greu ≈ 0,95×.
+                // ușor ≈ 1,5×, normal ≈ 1,2×, greu ≈ 0,98×, foarte greu ≈ 0,95×.
                 Difficulty.Easy => 1.5f,
                 Difficulty.Normal => 1.2f,
-                Difficulty.Hard => 1.05f,
+                Difficulty.Hard => 0.98f,
                 Difficulty.VeryHard => 0.95f,
                 _ => 1.15f,
             };
@@ -256,6 +257,8 @@ namespace SugarDrop
                 case LevelType.Ingredients:
                     ingredients = level <= 4 ? 1 : level <= 30 ? 2 : 3;
                     moves = 4 + ingredients * 7;
+                    // De la capitolul 2 apar obstacole care țin ingredientele pe loc: două mutări în plus.
+                    if (chapter >= 1) moves += 2;
                     break;
                 case LevelType.Frosting:
                     frosting = Mathf.Min(valid / 2, Mathf.RoundToInt(Mathf.Min(24f, 10 + level / 3f) * goalFactor));

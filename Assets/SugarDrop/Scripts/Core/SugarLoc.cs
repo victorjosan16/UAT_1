@@ -174,6 +174,8 @@ namespace SugarDrop
                 "Супер!", "Супер!"),
             R("Fabulos!", "Fabulous!", "¡Fabuloso!", "Fabuloso!", "Fabuleux !", "Fabelhaft!", "Favoloso!", "Muhteşem!", "Luar biasa!",
                 "Сказочно!", "Казково!"),
+            R("Încă {0} mutări!", "{0} moves left!", "¡Quedan {0} movimientos!", "Faltam {0} jogadas!", "Plus que {0} coups !", "Noch {0} Züge!",
+                "Ancora {0} mosse!", "{0} hamle kaldı!", "Sisa {0} langkah!", "Осталось {0} ходов!", "Залишилось {0} ходів!"),
             R("Ultimele mutări!", "Last moves!", "¡Últimos movimientos!", "Últimas jogadas!", "Derniers coups !", "Letzte Züge!",
                 "Ultime mosse!", "Son hamleler!", "Langkah terakhir!",
                 "Последние ходы!", "Останні ходи!"),

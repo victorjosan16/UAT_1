@@ -197,6 +197,8 @@ namespace SugarDrop
         private void Start()
         {
             SugarFonts.Apply();
+            // Aplicația a fost închisă în mijlocul unui nivel: nivelul se socotește pierdut.
+            ForfeitLevel();
             _state = State.Menu;
             input.enabled = false;
             result.Hide();
@@ -900,9 +902,17 @@ namespace SugarDrop
             _ => SugarLoc.T("Atinge scorul!"),
         };
 
+        /// <summary>Renunțarea la nivel costă o viață doar dacă s-a făcut măcar o mutare.</summary>
+        private static void ForfeitLevel()
+        {
+            if (!Data.levelInProgress) return;
+            Data.levelInProgress = false;
+            SugarSave.LoseLife();
+        }
+
         private void RetryLevel()
         {
-            SugarSave.LoseLife();
+            ForfeitLevel();
             if (Data.lives > 0) StartLevel(_level);
             else
             {
@@ -913,7 +923,7 @@ namespace SugarDrop
 
         private void LeaveToMap()
         {
-            SugarSave.LoseLife();
+            ForfeitLevel();
             OpenMap();
         }
 
@@ -1051,6 +1061,7 @@ namespace SugarDrop
             coins *= SugarEvents.CoinMultiplier(System.DateTime.Now);
             Data.coins += coins;
             if (_level >= Data.level) Data.level = _level + 1;
+            Data.levelInProgress = false;
             SugarSave.SetStars(_level, 1);
             SugarSave.Save();
             RefreshBoosters();
@@ -1393,6 +1404,12 @@ namespace SugarDrop
         {
             if (_state != State.Playing) return;
             if (!_config.IsBonus) _moves = Mathf.Max(0, _moves - 1);
+            // Viața se pune „în joc” abia la prima mutare: cine intră și iese imediat nu pierde nimic.
+            if (!Data.levelInProgress)
+            {
+                Data.levelInProgress = true;
+                SugarSave.Save();
+            }
             _idleTime = 0f;
             _popChain = 0;
             if (!_config.IsBonus) hud.SetMoves(_moves, true);
@@ -1405,11 +1422,12 @@ namespace SugarDrop
                 hintGuide.Hide();
                 _tutorialWaiting = true;
             }
-            if (_moves == 3 && !_warnedLastMoves && !_config.IsBonus)
+            if (_moves == SugarHud.LowMoves && !_warnedLastMoves && !_config.IsBonus && _config.Moves > SugarHud.LowMoves * 2)
             {
                 _warnedLastMoves = true;
-                hud.ShowBanner(SugarLoc.T("Ultimele mutări!"));
+                hud.ShowBanner(SugarLoc.F("Încă {0} mutări!", _moves));
             }
+            else if (_moves == 1 && !_config.IsBonus) hud.ShowBanner(SugarLoc.T("Ultimele mutări!"));
         }
 
         private void OnInvalidTap()
