@@ -135,7 +135,7 @@ namespace SugarDrop
 
             _title.Text = SugarLoc.T(firstTime ? "Bine ai venit!" : "Nickname");
             _message.Text = SugarLoc.T(firstTime
-                ? "Salut! Eu sunt Bobo, cupcake-ul care te însoțește prin Drop Quest. Cum să-ți spun? Numele tău va apărea în clasament."
+                ? "Salut! Eu sunt Bobo, micul aventurier care te însoțește prin Drop Quest. Cum să-ți spun? Numele tău va apărea în clasament."
                 : "Alege numele cu care apari în clasament.");
             _placeholder.text = _suggested;
             _input.text = firstTime ? "" : current;

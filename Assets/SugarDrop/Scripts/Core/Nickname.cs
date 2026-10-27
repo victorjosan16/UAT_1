@@ -8,7 +8,7 @@ namespace SugarDrop
         public const int MinLength = 3;
         public const int MaxLength = 16;
 
-        private static readonly string[] Words = { "Bomboana", "Jeleu", "Caramel", "Cupcake", "Acadea", "Praline", "Fondant", "Bezea" };
+        private static readonly string[] Words = { "Picatura", "Frunza", "Smarald", "Ametist", "Izvor", "Feriga", "Floare", "Ciuperca" };
 
         /// <summary>Curăță textul scris de jucător: scoate caracterele nepermise, spațiile duble și taie la lungimea maximă.</summary>
         public static string Clean(string text)
@@ -33,7 +33,7 @@ namespace SugarDrop
             return clean.Length >= MinLength && clean == text;
         }
 
-        /// <summary>Un nume propus din oficiu (ex. „Jeleu4821”), pe care jucătorul îl poate păstra sau schimba.</summary>
+        /// <summary>Un nume propus din oficiu (ex. „Izvor4821”), pe care jucătorul îl poate păstra sau schimba.</summary>
         public static string Suggest(System.Random random) => Words[random.Next(Words.Length)] + random.Next(100, 10000);
 
         private static bool IsAllowed(char c) => char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == '.';

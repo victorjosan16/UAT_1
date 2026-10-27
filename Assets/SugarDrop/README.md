@@ -113,8 +113,8 @@ Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, fra
   **Setări → Revezi tutorialul**.
 
 ## Capitole, obiective, zilnic
-- **Capitole:** la fiecare 10 niveluri se schimbă tema (cer, tablă, bastoane, harta): Câmpia de Căpșuni, Pădurea de
-  Mentă, Lacul de Afine ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol
+- **Capitole:** la fiecare 10 niveluri se schimbă tema (cer, tablă, bastoane, harta): Câmpia cu Flori, Pădurea de
+  Mentă, Lacul Albastru ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol
   dă **cufărul capitolului** (monede după stele, ajutoare la 24+ stele).
 - **Obiective:** pe lângă bomboanele în borcan, culori, glazură și scor, nivelurile cer și: **sparge lăzile** (de la 4),
   **folosește piese speciale** (de la 5), **sparge gheața** (de la 7), **rupe lanțurile** (de la 12), **oprește
@@ -187,8 +187,8 @@ Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, fra
 3. ✅ Rachete, bombe, curcubeu și cele șase combinații
 4. ✅ Borcanul de colectare (bomboane cu fizică, număr limitat)
 5. ✅ Valuri de dificultate; obstacole: gheață 1–3, lanțuri, lăzi, ciocolată
-6. ✅ Bătăliile cu Boss: la fiecare 10 niveluri (Regele Ciocolată, Regina Gheții, Dragonul de Bomboane,
-   Monstrul de Jeleu), Mega-Boss cu 3 faze la fiecare 50 (Împăratul Zahărului la 50). Viață din daunele mutărilor,
+6. ✅ Bătăliile cu Boss: la fiecare 10 niveluri (Regele Noroiului, Regina Gheții, Dragonul de Foc,
+   Monstrul Mlaștinii), Mega-Boss cu 3 faze la fiecare 50 (Împăratul Furtunii la 50). Viață din daunele mutărilor,
    atacuri (ciocolată, gheață, lanțuri, amestecare) anunțate cu o mutare înainte și aplicate doar după ce mutarea
    s-a rezolvat complet; limitate, tabla rămâne mereu jucabilă. Intrarea Boss-ului, panou cu portret și viață,
    portrete pe hartă, cufăr la victorie (Mega: triplu). Reguli în `Core/BossBattle.cs`, teste în `BossBattleTests`.

@@ -28,7 +28,7 @@ namespace SugarDrop
         private const float PlayY = -250f;
         private const int NavEvents = 2;
 
-        private static readonly string[] TapLines = { "Hihi, gâdilă!", "Hai să jucăm!", "Ești cel mai tare!", "Bomboane, bomboane!", "Încă un nivel?" };
+        private static readonly string[] TapLines = { "Hihi, gâdilă!", "Hai să jucăm!", "Ești cel mai tare!", "Picături, picături!", "Încă un nivel?" };
 
         private GameObject _root;
         private Image _background;
@@ -282,7 +282,7 @@ namespace SugarDrop
             if (SugarWheel.FreeSpinsLeft > 0) lines.Add(SugarLoc.T("Roata norocului e gratis azi!"));
             if (SugarDaily.GiftAvailable) lines.Add(SugarLoc.T("Te așteaptă un cadou!"));
             if (SugarDaily.AnyClaimable) lines.Add(SugarLoc.T("Ai misiuni de revendicat!"));
-            if (SugarEvents.WeekendNow) lines.Add(SugarLoc.T("E weekend dulce: monede duble!"));
+            if (SugarEvents.WeekendNow) lines.Add(SugarLoc.T("E weekend norocos: monede duble!"));
             lines.Add(SugarLoc.F("Nivelul {0} te așteaptă!", Mathf.Max(1, SugarSave.Data.level)));
             lines.Add(SugarLoc.T("Atinge-mă!"));
             return lines[index % lines.Count];

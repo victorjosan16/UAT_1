@@ -37,8 +37,8 @@ namespace SugarDrop
         public BossPhase[] Phases;
 
         /// <summary>
-        /// Boss-ul nivelului (la fiecare 10). 10 Regele Ciocolată, 20 Regina Gheții, 30 Dragonul de Bomboane,
-        /// 40 Monstrul de Jeleu, 50 Împăratul Zahărului (Mega). De la 60, aceleași personaje combină atacurile,
+        /// Boss-ul nivelului (la fiecare 10). 10 Regele Noroiului, 20 Regina Gheții, 30 Dragonul de Foc,
+        /// 40 Monstrul Mlaștinii, 50 Împăratul Furtunii (Mega). De la 60, aceleași personaje combină atacurile,
         /// iar la fiecare 50 vine un Mega-Boss cu trei faze, tot mai puternic.
         /// </summary>
         public static BossDefinition For(int level, int moves)
@@ -50,7 +50,7 @@ namespace SugarDrop
 
             if (mega)
             {
-                boss.Name = tier == 0 ? "Împăratul Zahărului" : tier == 1 ? "Regina Dulciurilor" : "Titanul de Caramel";
+                boss.Name = tier == 0 ? "Împăratul Furtunii" : tier == 1 ? "Regina Spinilor" : "Titanul de Piatră";
                 boss.Look = 4 + Math.Min(2, tier);
                 int every = Math.Max(2, 4 - tier);
                 boss.Phases = new[]
@@ -67,10 +67,10 @@ namespace SugarDrop
                 boss.Look = character;
                 boss.Name = character switch
                 {
-                    0 => "Regele Ciocolată",
+                    0 => "Regele Noroiului",
                     1 => "Regina Gheții",
-                    2 => "Dragonul de Bomboane",
-                    _ => "Monstrul de Jeleu",
+                    2 => "Dragonul de Foc",
+                    _ => "Monstrul Mlaștinii",
                 };
                 BossAttack[] attacks = character switch
                 {
@@ -113,9 +113,9 @@ namespace SugarDrop
         }
 
         /// <summary>
-        /// Atacul fiecărui ținut: Pădurea de Mentă leagă (liane), Lacul de Afine amestecă (valuri), Deșertul de Lămâie
-        /// și Galaxia pun bombe cu ceas, Castelul și Muntele de Ciocolată întind ciocolată, Regatul de Gheață
-        /// îngheață, Canionul de Caramel lipește (lanțuri), Norii de Vată amestecă.
+        /// Atacul fiecărui ținut: Pădurea de Smarald leagă (liane), Lacul Albastru amestecă (valuri), Deșertul Auriu
+        /// și Galaxia pun bombe cu ceas, Castelul de Ametist și Muntele de Foc întind piatra, Regatul de Gheață
+        /// îngheață, Canionul de Chihlimbar lipește (liane), Insulele din Nori amestecă.
         /// </summary>
         public static BossAttack? LandAttack(int level) => ((Math.Max(1, level) - 1) / LevelConfig.ChapterSize % 10) switch
         {

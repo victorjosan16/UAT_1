@@ -311,14 +311,14 @@ namespace SugarDrop
         /// <summary>Numele pericolului (cheie SugarLoc), pentru fereastra de start.</summary>
         public static string DangerKey(int theme) => theme switch
         {
-            0 => "Gemul de căpșuni urcă!",
+            0 => "Apa noroioasă urcă!",
             1 => "Slime-ul acru urcă!",
             2 => "Apa lacului urcă!",
             3 => "Nisipul îl îngroapă pe Bobo!",
             4 => "Spiridușul Vrăjitorului vine!",
-            5 => "Ciocolata fierbinte urcă!",
+            5 => "Lava fierbinte urcă!",
             6 => "Gheața îl îngheață pe Bobo!",
-            7 => "Caramelul urcă!",
+            7 => "Rășina lipicioasă urcă!",
             8 => "Vine furtuna!",
             _ => "Gaura neagră îl trage!",
         };

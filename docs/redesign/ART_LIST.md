@@ -48,7 +48,7 @@ Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de
 |---|---|
 | `bobotoken.png` | Bobo, mascota: cupcake roz cu cireașă, ochi mari, zâmbet (pe tablă) |
 | `bobotokenscared.png` | Același Bobo, speriat: gura „O”, o picătură de sudoare |
-| `boss0.png` … `boss6.png` | Fețele boșilor: 0 Regele Ciocolată, 1 Regina Gheții, 2 Dragonul de Bomboane, 3 Monstrul de Jeleu, 4 Împăratul Zahărului, 5 Regina Dulciurilor, 6 Titanul de Caramel. Prieten-amenințători, nu înfricoșători. |
+| `boss0.png` … `boss6.png` | Fețele boșilor: 0 Regele Noroiului, 1 Regina Gheții, 2 Dragonul de Foc, 3 Monstrul Mlaștinii, 4 Împăratul Furtunii, 5 Regina Spinilor, 6 Titanul de Piatră. Prieten-amenințători, nu înfricoșători. |
 
 ## Iconițe (256×256)
 `gift.png` (cadou), `trophy.png` (trofeu), `lifeheart.png` (inimă roșie, vieți).
@@ -57,15 +57,15 @@ Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de
 | Fișier | Ținut | Prompt (după stilul comun, fără „transparent background”) |
 |---|---|---|
 | `bggradient.png` | meniul principal | Floating islands with waterfalls and a wooden bridge, blue sky, lush greenery |
-| `sky0.png` | 1. Câmpia de Căpșuni | Sunny meadow with strawberry bushes, rolling hills, soft clouds |
-| `sky1.png` | 2. Pădurea de Mentă | Enchanted mint-green forest, tall trees, light rays |
-| `sky2.png` | 3. Lacul de Afine | Calm blueberry lake, waterfalls, misty mountains |
-| `sky3.png` | 4. Deșertul de Lămâie | Warm lemon desert, dunes, palm oasis |
-| `sky4.png` | 5. Castelul de Struguri | Purple fairytale castle on a hill, vineyards |
-| `sky5.png` | 6. Muntele de Ciocolată | Brown rocky mountains with chocolate rivers |
+| `sky0.png` | 1. Câmpia cu Flori | Sunny meadow with strawberry bushes, rolling hills, soft clouds |
+| `sky1.png` | 2. Pădurea de Smarald | Enchanted mint-green forest, tall trees, light rays |
+| `sky2.png` | 3. Lacul Albastru | Calm blueberry lake, waterfalls, misty mountains |
+| `sky3.png` | 4. Deșertul Auriu | Warm lemon desert, dunes, palm oasis |
+| `sky4.png` | 5. Castelul de Ametist | Purple fairytale castle on a hill, vineyards |
+| `sky5.png` | 6. Muntele de Foc | Brown rocky mountains with chocolate rivers |
 | `sky6.png` | 7. Regatul de Gheață | Snowy ice kingdom, crystal spires, aurora |
-| `sky7.png` | 8. Canionul de Caramel | Orange canyon, layered rocks, warm sunset |
-| `sky8.png` | 9. Norii de Vată de Zahăr | Pastel cloud kingdom, floating islands |
+| `sky7.png` | 8. Canionul de Chihlimbar | Orange canyon, layered rocks, warm sunset |
+| `sky8.png` | 9. Insulele din Nori | Pastel cloud kingdom, floating islands |
 | `sky9.png` | 10. Galaxia Curcubeu | Starry rainbow galaxy, planets, night sky |
 
 ## Logo (1024×600, transparent)

@@ -124,7 +124,7 @@ namespace SugarDrop
             bool gift = SugarDaily.GiftAvailable;
             Fill(_gift, "Cadou zilnic", gift ? SugarLoc.F("Ziua {0} din 7", SugarDaily.GiftStreakDay) : "", gift);
             Fill(_missions, "Misiuni zilnice", MissionsDone() + "/" + DailyRules.MissionsPerDay, SugarDaily.AnyClaimable);
-            Fill(_weekend, "Weekend dulce", MainMenu.Countdown(SugarEvents.Countdown(DateTime.Now)), false);
+            Fill(_weekend, "Weekend norocos", MainMenu.Countdown(SugarEvents.Countdown(DateTime.Now)), false);
         }
 
         private static void Fill(Row row, string titleKey, string sub, bool badge)

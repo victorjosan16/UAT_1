@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace SugarDrop
 {
     /// <summary>
-    /// Cartea de povești de la pornire. Prima dată: povestea Tărâmului Dulce în patru pagini ilustrate și animate
+    /// Cartea de povești de la pornire. Prima dată: povestea Izvorului Fermecat în patru pagini ilustrate și animate
     /// (textul apare literă cu literă, paginile se întorc ca într-o carte). La revenire: o singură pagină,
     /// „Bine ai revenit!”, cu Bobo bucuros și nivelul care te așteaptă.
     /// </summary>
@@ -134,9 +134,9 @@ namespace SugarDrop
             _welcomeBack = false;
             _pretranslated = false;
             _pages.Clear();
-            _pages.Add(new Page { Title = "A fost odată...", Text = "A fost odată un Tărâm Dulce, unde copacii purtau acadele, iar râurile curgeau cu sirop de căpșuni.", Build = BuildLand });
-            _pages.Add(new Page { Title = "Vrăjitorul Acrișor", Text = "Dar într-o noapte, Vrăjitorul Acrișor a furat Borcanul Fermecat și a împrăștiat bomboanele prin toate cele zece ținuturi.", Build = BuildWizard });
-            _pages.Add(new Page { Title = "Bobo, eroul dulce", Text = "Atunci, un cupcake mic și curajos, pe nume Bobo, a pornit la drum să le adune înapoi...", Build = BuildJourney });
+            _pages.Add(new Page { Title = "A fost odată...", Text = "A fost odată un tărâm verde, unde florile cântau, iar râurile curgeau limpezi din Izvorul Fermecat.", Build = BuildLand });
+            _pages.Add(new Page { Title = "Vrăjitorul Secetei", Text = "Dar într-o noapte, Vrăjitorul Secetei a spart Cristalul Izvorului și i-a împrăștiat bucățile prin toate cele zece ținuturi.", Build = BuildWizard });
+            _pages.Add(new Page { Title = "Bobo, micul erou", Text = "Atunci, un aventurier mic și curajos, pe nume Bobo, a pornit la drum să le adune înapoi...", Build = BuildJourney });
             _pages.Add(new Page { Title = "Povestea ta începe", Text = "...dar nu poate reuși singur. Vrei să fii eroul care îl ajută?", Build = BuildInvitation });
             Open(onDone);
         }
@@ -169,28 +169,28 @@ namespace SugarDrop
         /// <summary>Titlurile episoadelor (un episod = un ținut, nivelurile 1–100).</summary>
         private static readonly string[] EpisodeTitles =
         {
-            "Bobo și Gemul Fermecat", "Focul din Pădurea de Mentă", "Misterul Lacului Înghețat", "Furtuna din Deșert",
-            "Castelul cu Uși Fermecate", "Lava de Ciocolată", "Regatul Înghețat", "Capcana de Caramel", "Furtuna din Nori",
+            "Bobo și Izvorul Fermecat", "Focul din Pădurea de Smarald", "Misterul Lacului Înghețat", "Furtuna din Deșert",
+            "Castelul cu Uși Fermecate", "Lava din Munte", "Regatul Înghețat", "Capcana de Rășină", "Furtuna din Nori",
             "Bătălia din Galaxie",
         };
 
         private static readonly string[] EpisodeIntros =
         {
-            "Bobo pornește la drum prin Câmpia de Căpșuni, unde gemul curge ca un râu și bomboanele cad din cer.",
-            "În Pădurea de Mentă arde un foc ciudat. Doar apa din bomboanele albastre îl poate stinge!",
-            "Lacul de Afine a înghețat peste noapte, iar Bobo a rămas prins în gheață!",
-            "În Deșertul de Lămâie, nisipul acru ascunde capcane și bombe care ticăie.",
-            "Castelul de Struguri e plin de coridoare și uși care se închid singure.",
-            "Muntele de Ciocolată fierbe, iar ciocolata topită curge peste tot.",
+            "Bobo pornește la drum prin Câmpia cu Flori, unde râul a început să sece, iar picăturile cad din cer.",
+            "În Pădurea de Smarald arde un foc ciudat. Doar picăturile de apă îl pot stinge!",
+            "Lacul Albastru a înghețat peste noapte, iar Bobo a rămas prins în gheață!",
+            "În Deșertul Auriu, nisipul fierbinte ascunde capcane și bombe care ticăie.",
+            "Castelul de Ametist e plin de coridoare și uși care se închid singure.",
+            "Muntele de Foc fierbe, iar lava curge peste tot.",
             "În Regatul de Gheață, chiar și vântul a înghețat.",
-            "Canionul de Caramel e lipicios: un pas greșit și rămâi prins.",
-            "Bobo urcă pe Norii de Vată de Zahăr, deasupra întregii lumi.",
-            "Ultima bucată din Borcanul Fermecat e chiar în Galaxia Curcubeu, în castelul Vrăjitorului.",
+            "Canionul de Chihlimbar e lipicios: un pas greșit și rămâi prins.",
+            "Bobo urcă pe Insulele din Nori, deasupra întregii lumi.",
+            "Ultima bucată din Cristalul Izvorului e chiar în Galaxia Curcubeu, în castelul Vrăjitorului.",
         };
 
         /// <summary>
         /// Episodul ținutului: la început două pagini (ținutul, apoi răufăcătorul lui — Boss-ul de la final), iar după
-        /// prima victorie împotriva Boss-ului o pagină de final (încă o bucată din Borcanul Fermecat).
+        /// prima victorie împotriva Boss-ului o pagină de final (încă o bucată din Cristalul Izvorului).
         /// </summary>
         public static bool HasEpisode(int chapter) => chapter >= 0 && chapter < EpisodeTitles.Length;
 
@@ -207,15 +207,15 @@ namespace SugarDrop
                 _pages.Add(new Page
                 {
                     Title = title,
-                    Text = SugarLoc.F("Dar {0}, slujitorul Vrăjitorului, păzește aici o bucată din Borcanul Fermecat!", villain),
+                    Text = SugarLoc.F("Dar {0}, slujitorul Vrăjitorului, păzește aici o bucată din Cristalul Izvorului!", villain),
                     Build = scene => BuildEpisodeVillain(scene, chapter),
                 });
             }
             else
             {
                 string text = chapter == EpisodeTitles.Length - 1
-                    ? SugarLoc.T("Borcanul Fermecat e întreg din nou! Tărâmul Dulce e salvat, iar Bobo e un erou!")
-                    : SugarLoc.F("{0} a fost învins! Bobo are {1} din 10 bucăți ale Borcanului Fermecat.", villain, chapter + 1);
+                    ? SugarLoc.T("Cristalul Izvorului e întreg din nou! Râurile curg iar, tărâmul e salvat, iar Bobo e un erou!")
+                    : SugarLoc.F("{0} a fost învins! Bobo are {1} din 10 bucăți ale Cristalului Izvorului.", villain, chapter + 1);
                 _pages.Add(new Page { Title = title, Text = text, Build = scene => BuildEpisodeEnd(scene, chapter) });
             }
             Open(onDone);
@@ -395,15 +395,16 @@ namespace SugarDrop
             Block(scene, new Color(0.62f, 0.86f, 0.55f), new Vector2(-250f, -380f), new Vector2(700f, 260f), new Vector2(0.5f, 0.5f));
             Block(scene, new Color(1f, 0.72f, 0.8f), new Vector2(260f, -400f), new Vector2(760f, 260f), new Vector2(0.5f, 0.5f));
             var trees = new List<RectTransform>();
-            Color[] crowns = { Palette.Tile(0), Palette.Tile(3), Palette.Tile(4), Palette.Tile(2) };
+            // Copaci rotunzi, verzi, cu o frunză lucioasă în coroană (tărâmul verde al Izvorului Fermecat).
+            Color[] crowns = { Palette.Tile(2), new Color(0.42f, 0.78f, 0.36f), Palette.Tile(2), new Color(0.3f, 0.66f, 0.3f) };
             for (int i = 0; i < 4; i++)
             {
                 float x = -330f + i * 220f;
-                RectTransform stick = Block(scene, Color.white, new Vector2(x, -330f), new Vector2(22f, 230f), new Vector2(0.5f, 0f));
+                RectTransform stick = Block(scene, QuestStyle.Wood, new Vector2(x, -330f), new Vector2(30f, 230f), new Vector2(0.5f, 0f));
                 RectTransform crown = Actor(stick, SugarSprites.Circle, crowns[i], new Vector2(0f, 0f), 150f);
                 crown.anchorMin = crown.anchorMax = new Vector2(0.5f, 1f);
                 crown.anchoredPosition = new Vector2(0f, 40f);
-                RectTransform swirl = Actor(crown, SugarSprites.CandySwirl, new Color(1f, 1f, 1f, 0.75f), Vector2.zero, 120f);
+                RectTransform swirl = Actor(crown, SugarSprites.Leaf, new Color(1f, 1f, 1f, 0.45f), Vector2.zero, 90f);
                 trees.Add(stick);
                 trees.Add(swirl);
             }
@@ -415,7 +416,7 @@ namespace SugarDrop
                 for (int i = 0; i < trees.Count; i += 2)
                 {
                     trees[i].localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 1.4f + i) * 6f);
-                    trees[i + 1].localRotation = Quaternion.Euler(0f, 0f, t * 60f);
+                    trees[i + 1].localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * 2f + i) * 12f);
                 }
                 hearts(t);
             };
@@ -431,7 +432,7 @@ namespace SugarDrop
             Block(jar, Palette.WallStripe, new Vector2(0f, 135f), new Vector2(240f, 40f), new Vector2(0.5f, 0.5f));
             var candies = new List<RectTransform>();
             for (int i = 0; i < 10; i++)
-                candies.Add(Actor(scene, i % 2 == 0 ? PieceSprites.Piece(i % 5) : SugarSprites.CandyWrapped, i % 2 == 0 ? Color.white : Palette.Candy(i % 5), new Vector2(0f, -250f), 70f));
+                candies.Add(Actor(scene, PieceSprites.Piece(i % 5), Color.white, new Vector2(0f, -250f), 70f));
             RectTransform wizard = Actor(scene, SugarSprites.BossFace(0), Color.white, new Vector2(0f, 600f), 270f);
             Image flash = UiFactory.CreateImage("Flash", scene, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0f));
             flash.preserveAspect = false;
@@ -486,7 +487,7 @@ namespace SugarDrop
             };
         }
 
-        /// <summary>Final de episod: Bobo sare de bucurie, deasupra lui strălucește bucata din Borcanul Fermecat.</summary>
+        /// <summary>Final de episod: Bobo sare de bucurie, deasupra lui strălucește bucata din Cristalul Izvorului.</summary>
         private Action<float> BuildEpisodeEnd(RectTransform scene, int chapter)
         {
             _sky.sprite = SugarSprites.Sky(chapter);

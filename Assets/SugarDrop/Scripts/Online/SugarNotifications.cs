@@ -110,7 +110,7 @@ namespace SugarDrop
                 if (full.HasValue) Send(SugarLoc.T("Viețile tale sunt pline!"), SugarLoc.T("Bobo te așteaptă la următorul nivel."), full.Value);
                 Send(SugarLoc.T("Cadoul zilnic te așteaptă!"), SugarLoc.T("Ia-ți cadoul și vezi misiunile noi de azi."),
                     GiftReminderAt(now, SugarDaily.GiftAvailable));
-                Send(SugarLoc.T("Bobo îți duce dorul!"), SugarLoc.T("Bomboanele sunt gata de potrivit. Revii la o partidă?"),
+                Send(SugarLoc.T("Bobo îți duce dorul!"), SugarLoc.T("Piesele sunt gata de potrivit. Revii la o partidă?"),
                     now.AddDays(ComebackDays));
             }
             catch (Exception e)

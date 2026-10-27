@@ -8,7 +8,7 @@ namespace SugarDrop
 {
     /// <summary>
     /// HUD-ul de sus: nivelul, progresul bomboanelor în borcan (x/obiectiv), mutările rămase și pauza.
-    /// Tot aici apar cuvintele de combo („Delicios!”), bannerele și textul tutorialului.
+    /// Tot aici apar cuvintele de combo („Grozav!”), bannerele și textul tutorialului.
     /// </summary>
     public class SugarHud : MonoBehaviour
     {

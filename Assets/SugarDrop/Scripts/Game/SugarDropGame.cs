@@ -288,7 +288,7 @@ namespace SugarDrop
             RefreshBoosters();
             SugarLeaderboard.Ensure();
 
-            // Prima pornire: povestea Tărâmului Dulce, apoi Bobo ne cere nickname-ul; abia apoi întrebarea despre reclame.
+            // Prima pornire: povestea Izvorului Fermecat, apoi Bobo ne cere nickname-ul; abia apoi întrebarea despre reclame.
             // La revenire: „Bine ai revenit!” (pagina se închide singură).
             long away = Data.lastVisit > 0 ? SugarSave.Now - Data.lastVisit : 0;
             MarkVisit();
@@ -705,7 +705,7 @@ namespace SugarDrop
                 : boboOnBoard ? IntroText(config.Type)
                 : !NeedsJar(config) && !config.IsBonus ? SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level))))
                 : IntroText(config.Type);
-            if (config.PortalIn.Length > 0 && IsNew(PortalBit)) info.Scenario += "\n" + SugarLoc.T("Portalurile duc bomboanele dintr-o coloană în alta!");
+            if (config.PortalIn.Length > 0 && IsNew(PortalBit)) info.Scenario += "\n" + SugarLoc.T("Portalurile duc piesele dintr-o coloană în alta!");
             foreach ((Sprite icon, Color color, int count) goal in StartGoals(level, config)) info.Goals.Add(goal);
 
             levelStart.Show(info, StartBoosterState, booster => ToggleStartBooster(booster), () =>
@@ -814,7 +814,7 @@ namespace SugarDrop
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             if (SugarEvents.WeekendNow)
             {
-                dialog.Show(SugarLoc.T("Weekend dulce"), null,
+                dialog.Show(SugarLoc.T("Weekend norocos"), null,
                     () => SugarLoc.T("Monede duble la fiecare nivel câștigat și o rotire gratuită în plus la roată!") + "\n"
                         + SugarLoc.F("Se termină în {0}", MainMenu.Countdown(SugarEvents.Countdown(System.DateTime.Now))),
                     new DialogButton(SugarLoc.T("LA ROATĂ"), positive, ShowWheel),
@@ -985,7 +985,7 @@ namespace SugarDrop
             switch (_tutorial)
             {
                 case TutorialStep.Match:
-                    coach.ShowAction(SugarLoc.T("Trage o bomboană ca să faci 3 la fel în linie!"));
+                    coach.ShowAction(SugarLoc.T("Trage o piesă ca să faci 3 la fel în linie!"));
                     ShowSwapHint(TutorialBoard.MatchFrom, TutorialBoard.MatchTo);
                     break;
                 case TutorialStep.Rocket:
@@ -1107,20 +1107,20 @@ namespace SugarDrop
 
         private static string IntroText(LevelType type) => type switch
         {
-            LevelType.Ingredients => SugarLoc.T("Adu bomboanele jos, în borcan!"),
+            LevelType.Ingredients => SugarLoc.T("Adu piesele jos, în borcan!"),
             LevelType.Collect => SugarLoc.T("Strânge piesele cerute!"),
             LevelType.Frosting => SugarLoc.T("Topește toată glazura!"),
             LevelType.Crates => SugarLoc.T("Sparge toate lăzile!"),
             LevelType.Ice => SugarLoc.T("Sparge toată gheața!"),
             LevelType.Chains => SugarLoc.T("Rupe toate lanțurile!"),
-            LevelType.Chocolate => SugarLoc.T("Oprește ciocolata!"),
+            LevelType.Chocolate => SugarLoc.T("Oprește pietrele care cresc!"),
             LevelType.Specials => SugarLoc.T("Folosește piese speciale!"),
             LevelType.Garden => SugarLoc.T("Udă ghivecele până înfloresc!"),
             LevelType.Defuse => SugarLoc.T("Dezamorsează bombele cu ceas!"),
-            LevelType.Bonus => SugarLoc.T("Sugar Rush! Cât mai multe puncte până expiră timpul!"),
+            LevelType.Bonus => SugarLoc.T("Goană contra timpului! Cât mai multe puncte până expiră timpul!"),
             LevelType.Descent => SugarLoc.T("Ajută-l pe Bobo să coboare până jos!"),
             LevelType.Frozen => SugarLoc.T("Sparge gheața din jurul lui Bobo, apoi du-l jos!"),
-            LevelType.Blaze => SugarLoc.T("Stinge focul cu bomboane albastre înainte să ajungă la Bobo!"),
+            LevelType.Blaze => SugarLoc.T("Stinge focul cu picături de apă înainte să ajungă la Bobo!"),
             _ => SugarLoc.T("Atinge scorul!"),
         };
 
@@ -1331,7 +1331,7 @@ namespace SugarDrop
         /// </summary>
         private IEnumerator FinaleRoutine(int coins)
         {
-            if (_moves > 0) hud.ShowBanner(SugarLoc.T("Final dulce!"));
+            if (_moves > 0) hud.ShowBanner(SugarLoc.T("Final fericit!"));
             while (board.Busy) yield return null;
             yield return new WaitForSeconds(0.4f);
 
@@ -1878,7 +1878,7 @@ namespace SugarDrop
             hud.BossAttacked();
             hud.ShowWord(SugarLoc.T(attack.Value switch
             {
-                BossAttack.ChocolateSpread => "Ploaie de ciocolată!",
+                BossAttack.ChocolateSpread => "Ploaie de pietre!",
                 BossAttack.Freeze => "Înghețare!",
                 BossAttack.Lock => "Lanțuri!",
                 BossAttack.TimeBomb => "Bombe cu ceas!",
@@ -2018,8 +2018,8 @@ namespace SugarDrop
             Color color = Color.white;
             if (count >= 20) { word = "Fabulos!"; color = Palette.Tile(4); }
             else if (count >= 14) { word = "Super!"; color = Palette.Tile(3); }
-            else if (count >= 9) { word = "Delicios!"; color = Palette.Tile(0); }
-            else if (count >= 6) { word = "Dulce!"; color = Palette.Tile(2); }
+            else if (count >= 9) { word = "Grozav!"; color = Palette.Tile(0); }
+            else if (count >= 6) { word = "Minunat!"; color = Palette.Tile(2); }
             if (word == null) return;
             hud.ShowWord(SugarLoc.T(word), Color.Lerp(color, Color.white, 0.25f));
             mascot.Cheer(count >= 14 ? 2f : 1f);

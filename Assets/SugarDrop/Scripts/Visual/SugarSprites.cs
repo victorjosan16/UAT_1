@@ -386,8 +386,8 @@ namespace SugarDrop
         }));
 
         /// <summary>
-        /// Portretul unui Boss: 0 Regele Ciocolată, 1 Regina Gheții, 2 Dragonul de Bomboane, 3 Monstrul de Jeleu,
-        /// 4–6 Mega-Boss-urile (Împăratul Zahărului, Regina Dulciurilor, Titanul de Caramel).
+        /// Portretul unui Boss: 0 Regele Noroiului, 1 Regina Gheții, 2 Dragonul de Foc, 3 Monstrul Mlaștinii,
+        /// 4–6 Mega-Boss-urile (Împăratul Furtunii, Regina Spinilor, Titanul de Piatră).
         /// </summary>
         public static Sprite BossFace(int look) => Get("boss" + look, () => Paint(128, (x, y) => BossPixel(look, x, y)));
 

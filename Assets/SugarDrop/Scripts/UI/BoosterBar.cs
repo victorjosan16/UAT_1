@@ -74,7 +74,7 @@ namespace SugarDrop
         {
             _targeting = targeting;
             _hint.gameObject.SetActive(targeting);
-            if (targeting) _hint.Text = SugarLoc.T("Atinge un capac pentru bombă");
+            if (targeting) _hint.Text = SugarLoc.T("Atinge o piesă pentru bombă");
             if (!targeting) _buttons[0].localScale = Vector3.one;
         }
 

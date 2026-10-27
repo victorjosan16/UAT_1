@@ -10,12 +10,12 @@ namespace SugarDrop.Tests
         [Test]
         public void Bosses_AppearInOrder_WithMegaBossesEveryFifty()
         {
-            Assert.AreEqual("Regele Ciocolată", BossDefinition.For(10, 25).Name);
+            Assert.AreEqual("Regele Noroiului", BossDefinition.For(10, 25).Name);
             Assert.AreEqual("Regina Gheții", BossDefinition.For(20, 25).Name);
-            Assert.AreEqual("Dragonul de Bomboane", BossDefinition.For(30, 25).Name);
-            Assert.AreEqual("Monstrul de Jeleu", BossDefinition.For(40, 25).Name);
+            Assert.AreEqual("Dragonul de Foc", BossDefinition.For(30, 25).Name);
+            Assert.AreEqual("Monstrul Mlaștinii", BossDefinition.For(40, 25).Name);
             BossDefinition emperor = BossDefinition.For(50, 30);
-            Assert.AreEqual("Împăratul Zahărului", emperor.Name);
+            Assert.AreEqual("Împăratul Furtunii", emperor.Name);
             Assert.IsTrue(emperor.Mega);
             Assert.AreEqual(3, emperor.Phases.Length);
             foreach (int level in new[] { 100, 150, 200 })

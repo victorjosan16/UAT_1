@@ -23,7 +23,7 @@ namespace SugarDrop
         public string TextKey => Kind switch
         {
             MissionKind.WinLevels => "Câștigă {0} niveluri",
-            MissionKind.ClearCandies => "Elimină {0} bomboane",
+            MissionKind.ClearCandies => "Elimină {0} piese",
             MissionKind.UseSpecials => "Activează {0} piese speciale",
             MissionKind.BreakObstacles => "Sparge {0} obstacole",
             MissionKind.EarnStars => "Strânge {0} stele",
