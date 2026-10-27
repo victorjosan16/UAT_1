@@ -553,6 +553,137 @@ namespace SugarDrop
             return Mathf.Max(outer, hole);
         }));
 
+        // ------------------------------------------------------------ Roata norocului și costume
+
+        /// <summary>Roata norocului: felii colorate (în sensul acelor de ceasornic, de sus), separatoare albe și margine aurie.</summary>
+        public static Sprite Wheel(int slices) => Get("wheel" + slices, () => Paint(512, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f - 256f, y + 0.5f - 256f);
+            float r = p.magnitude;
+            if (r > 254f) return Color.clear;
+            float edge = Mathf.Clamp01(254f - r);
+            if (r > 236f)
+            {
+                // Margine aurie cu becuri.
+                float bulbAngle = Mathf.Repeat(Mathf.Atan2(p.x, p.y) * Mathf.Rad2Deg, 360f);
+                float bulb = Mathf.Abs(Mathf.Repeat(bulbAngle, 360f / (slices * 2)) - 180f / (slices * 2));
+                bool on = bulb < 3.5f && r > 240f && r < 251f;
+                Color rim = on ? new Color(1f, 0.98f, 0.8f) : new Color(1f, 0.78f, 0.25f);
+                rim.a = edge;
+                return rim;
+            }
+            float angle = Mathf.Repeat(Mathf.Atan2(p.x, p.y) * Mathf.Rad2Deg, 360f);
+            float slice = 360f / slices;
+            int index = Mathf.FloorToInt(angle / slice);
+            float fromEdge = Mathf.Min(angle - index * slice, (index + 1) * slice - angle) * Mathf.Deg2Rad * r;
+            Color c = index % 2 == 0 ? Palette.Tile(index / 2 % Palette.TileColorCount) : Palette.TileLight(index / 2 % Palette.TileColorCount);
+            // Separatoare albe și o umbră ușoară spre centru.
+            c = Color.Lerp(Color.white, c, Mathf.Clamp01((fromEdge - 3f) / 2f));
+            c = Color.Lerp(c * 0.85f, c, Mathf.Clamp01(r / 120f));
+            c.a = 1f;
+            return c;
+        }));
+
+        private static Color Over(Color under, Color over, float alpha)
+        {
+            Color c = Color.Lerp(under, over, alpha);
+            c.a = Mathf.Max(under.a, alpha);
+            return c;
+        }
+
+        /// <summary>Costumele lui Bobo (desenate din cod, 128×128, cu baza în partea de jos a imaginii).</summary>
+        public static Sprite CostumeSprite(Costume costume) => costume switch
+        {
+            Costume.PartyHat => Get("partyhat", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                Color c = Color.clear;
+                float cone = ConeDistance(p, new Vector2(64f, 112f), 34f, 14f);
+                bool stripe = Mathf.Repeat(p.x * 0.6f + p.y, 28f) < 14f;
+                c = Over(c, stripe ? new Color(1f, 0.42f, 0.62f) : new Color(1f, 0.82f, 0.3f), Alpha(cone));
+                c = Over(c, new Color(0.45f, 0.75f, 1f), Alpha(RoundRect(x, y, 26, 8, 76, 12, 6)));
+                c = Over(c, Color.white, Alpha(Vector2.Distance(p, new Vector2(64f, 114f)) - 11f));
+                return c;
+            })),
+            Costume.Bow => Get("bow", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                Color pink = new(1f, 0.38f, 0.6f);
+                float left = Vector2.Distance(new Vector2((p.x - 38f) * 0.8f, p.y - 44f), Vector2.zero) - 26f;
+                float right = Vector2.Distance(new Vector2((p.x - 90f) * 0.8f, p.y - 44f), Vector2.zero) - 26f;
+                Color c = Over(Color.clear, pink, Alpha(Mathf.Min(left, right)));
+                c = Over(c, new Color(0.85f, 0.2f, 0.45f), Alpha(Vector2.Distance(p, new Vector2(64f, 44f)) - 14f));
+                c = Over(c, new Color(1f, 1f, 1f, 0.6f), Alpha(Vector2.Distance(p, new Vector2(30f, 54f)) - 6f));
+                return c;
+            })),
+            Costume.Crown => Get("crown", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                Color gold = new(1f, 0.8f, 0.25f);
+                float band = RoundRect(x, y, 22, 10, 84, 30, 6);
+                float spikes = Mathf.Min(ConeDistance(p, new Vector2(30f, 80f), 14f, 34f),
+                    Mathf.Min(ConeDistance(p, new Vector2(64f, 92f), 15f, 34f), ConeDistance(p, new Vector2(98f, 80f), 14f, 34f)));
+                Color c = Over(Color.clear, gold, Alpha(Mathf.Min(band, spikes)));
+                c = Over(c, new Color(0.95f, 0.25f, 0.35f), Alpha(Vector2.Distance(p, new Vector2(64f, 25f)) - 8f));
+                c = Over(c, new Color(0.3f, 0.6f, 1f), Alpha(Mathf.Min(Vector2.Distance(p, new Vector2(38f, 25f)), Vector2.Distance(p, new Vector2(90f, 25f))) - 6f));
+                foreach (float tx in new[] { 30f, 64f, 98f })
+                    c = Over(c, Color.white, Alpha(Vector2.Distance(p, new Vector2(tx, tx == 64f ? 94f : 82f)) - 6f));
+                return c;
+            })),
+            Costume.ChefHat => Get("chefhat", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                float puff = Mathf.Min(Vector2.Distance(p, new Vector2(40f, 66f)) - 24f,
+                    Mathf.Min(Vector2.Distance(p, new Vector2(64f, 80f)) - 28f, Vector2.Distance(p, new Vector2(88f, 66f)) - 24f));
+                Color c = Over(Color.clear, new Color(0.96f, 0.96f, 1f), Alpha(Mathf.Min(puff, RoundRect(x, y, 30, 34, 68, 30, 4))));
+                c = Over(c, new Color(0.85f, 0.87f, 0.95f), Alpha(RoundRect(x, y, 28, 10, 72, 26, 6)));
+                return c;
+            })),
+            Costume.Sunglasses => Get("sunglasses", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                float lenses = Mathf.Min(RoundRect(x, y, 8, 44, 50, 36, 14), RoundRect(x, y, 70, 44, 50, 36, 14));
+                float bridge = RoundRect(x, y, 54, 66, 20, 8, 4);
+                Color c = Over(Color.clear, new Color(0.12f, 0.1f, 0.2f), Alpha(Mathf.Min(lenses, bridge)));
+                c = Over(c, new Color(1f, 1f, 1f, 0.55f), Alpha(Mathf.Min(SegmentDistance(p, new Vector2(18f, 70f), new Vector2(30f, 58f)),
+                    SegmentDistance(p, new Vector2(80f, 70f), new Vector2(92f, 58f))) - 3f));
+                return c;
+            })),
+            Costume.WizardHat => Get("wizardhat", () => Paint(128, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                Color c = Over(Color.clear, new Color(0.45f, 0.3f, 0.85f), Alpha(ConeDistance(p, new Vector2(70f, 122f), 30f, 18f)));
+                c = Over(c, new Color(0.35f, 0.22f, 0.7f), Alpha(Vector2.Distance(new Vector2(p.x - 64f, (p.y - 16f) * 3f), Vector2.zero) - 54f));
+                Vector2 s = p - new Vector2(64f, 56f);
+                float a = Mathf.Atan2(s.y, s.x);
+                float star = s.magnitude - (9f + 6f * Mathf.Cos(a * 5f));
+                c = Over(c, new Color(1f, 0.88f, 0.3f), Alpha(star));
+                return c;
+            })),
+            _ => null,
+        };
+
+        /// <summary>Con (triunghi isoscel) cu vârful sus: jumătatea bazei și înălțimea date; baza la y = top - height.</summary>
+        private static float ConeDistance(Vector2 p, Vector2 apex, float halfBase, float bottomY)
+        {
+            float height = apex.y - bottomY;
+            if (height <= 0f) return 1f;
+            float t = Mathf.Clamp01((apex.y - p.y) / height);
+            float halfWidth = halfBase * t;
+            float horizontal = Mathf.Abs(p.x - apex.x) - halfWidth;
+            float vertical = Mathf.Max(p.y - apex.y, bottomY - p.y);
+            return Mathf.Max(horizontal, vertical);
+        }
+
+        /// <summary>Siluetă de om (profil): cap și umeri.</summary>
+        public static Sprite Person => Get("person", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f, y + 0.5f);
+            float head = Vector2.Distance(p, new Vector2(64f, 84f)) - 24f;
+            float body = Mathf.Max(Vector2.Distance(new Vector2(p.x - 64f, (p.y - 18f) * 1.25f), Vector2.zero) - 46f, 16f - p.y);
+            return Mathf.Min(head, Mathf.Max(body, -(Vector2.Distance(p, new Vector2(64f, 84f)) - 30f)));
+        }));
+
         /// <summary>Cadou: cutie cu capac, panglică și fundă.</summary>
         public static Sprite Gift => Get("gift", () => Mask(128, (x, y) =>
         {

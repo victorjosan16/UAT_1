@@ -591,7 +591,8 @@ namespace SugarDrop
         }
 
         /// <summary>Finalul: transformă o bomboană obișnuită, la întâmplare, într-o rachetă.</summary>
-        public BoardStep MakeRandomSpecial()
+        /// <param name="kind">Ce piesă specială (rachetă orizontală/verticală sau bombă); null = rachetă aleatoare (finalul dulce).</param>
+        public BoardStep MakeRandomSpecial(TileKind? kind = null)
         {
             var candidates = new List<Vector2Int>();
             foreach (Vector2Int c in ValidCells())
@@ -599,7 +600,7 @@ namespace SugarDrop
             if (candidates.Count == 0) return null;
             Vector2Int cell = candidates[_random.Next(candidates.Count)];
             Piece p = At(cell);
-            p.Kind = _random.Next(2) == 0 ? TileKind.RocketH : TileKind.RocketV;
+            p.Kind = kind == TileKind.Bomb ? TileKind.Bomb : _random.Next(2) == 0 ? TileKind.RocketH : TileKind.RocketV;
             p.Color = -1;
             var step = new BoardStep(StepKind.Clear);
             step.Changed.Add(Info(p, cell));

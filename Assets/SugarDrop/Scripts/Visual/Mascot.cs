@@ -18,6 +18,8 @@ namespace SugarDrop
         private Transform _eyeLeft, _eyeRight;
         private SpriteRenderer _mouth;
         private Transform _cherry;
+        private SpriteRenderer _costume;
+        private Vector3 _costumeHead, _costumeEyes;
         private Mood _mood;
         private float _jumpT = -1f;
         private float _jumpHeight;
@@ -50,6 +52,24 @@ namespace SugarDrop
             Part("CheekL", SugarSprites.SoftDot, new Vector3(-0.3f * size, -0.1f * size, 0f), Vector2.one * size * 0.16f, new Color(1f, 0.4f, 0.55f, 0.6f), 5, _body);
             Part("CheekR", SugarSprites.SoftDot, new Vector3(0.3f * size, -0.1f * size, 0f), Vector2.one * size * 0.16f, new Color(1f, 0.4f, 0.55f, 0.6f), 5, _body);
             _mouth = Part("Mouth", SugarSprites.Smile, new Vector3(0f, -0.12f * size, 0f), Vector2.one * size * 0.22f, new Color(0.35f, 0.12f, 0.22f), 6, _body);
+            // Costumul din garderobă (pălăria în locul cireșei, ochelarii pe ochi).
+            _costume = Part("Costume", SugarSprites.Circle, new Vector3(0f, 0.7f * size, 0f), Vector2.one * size * 0.54f, Color.white, 8, _body);
+            _costumeHead = _costume.transform.localPosition;
+            _costumeEyes = new Vector3(_costumeHead.x, _costumeHead.y * (0.02f / 0.7f), 0f);
+            ApplyCostume();
+        }
+
+        /// <summary>Pune costumul ales în garderobă (sau niciunul).</summary>
+        public void ApplyCostume()
+        {
+            if (_costume == null) return;
+            Costume costume = CostumeRules.Current;
+            Sprite sprite = SugarSprites.CostumeSprite(costume);
+            _costume.gameObject.SetActive(sprite != null);
+            _cherry.gameObject.SetActive(sprite == null || CostumeRules.OnEyes(costume));
+            if (sprite == null) return;
+            _costume.sprite = sprite;
+            _costume.transform.localPosition = CostumeRules.OnEyes(costume) ? _costumeEyes : _costumeHead;
         }
 
         private SpriteRenderer Part(string name, Sprite sprite, Vector3 localPosition, Vector2 worldSize, Color color, int order, Transform parent)

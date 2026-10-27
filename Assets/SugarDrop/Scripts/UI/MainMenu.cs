@@ -7,56 +7,69 @@ using UnityEngine.UI;
 namespace SugarDrop
 {
     /// <summary>
-    /// Ecranul de titlu: cerul capitolului curent, ploaie de bomboane, logo-ul „Sugar Drop” colorat, Bobo care
-    /// clipește, sare când îl atingi și vorbește (salut, cadoul zilei, misiunile), butonul „Joacă” care pulsează
-    /// și strălucește, stelele și monedele, plus scurtături spre cadou, misiuni, clasament și setări.
+    /// Dashboard-ul (ecranul principal): vieți (cu cronometru), monede și stele sus; Bobo cu costumul ales, care
+    /// clipește, sare când îl atingi și spune ce te așteaptă; progresul capitolului; butonul „Joacă” (spre harta
+    /// nivelurilor) și 8 plăci: Roata norocului, Cadou, Misiuni, Eveniment, Garderoba lui Bobo, Clasament, Profil,
+    /// Setări. Fundalul are cerul capitolului și o ploaie de bomboane.
     /// </summary>
     public class MainMenu : MonoBehaviour
     {
         public event Action PlayClicked;
+        public event Action WheelClicked;
         public event Action GiftClicked;
         public event Action MissionsClicked;
+        public event Action EventClicked;
+        public event Action WardrobeClicked;
         public event Action LeaderboardClicked;
+        public event Action ProfileClicked;
         public event Action SettingsClicked;
 
-        private const int FloaterCount = 18;
+        private const int FloaterCount = 16;
         private const float RainTop = 1150f;
         private const float RainBottom = -1150f;
+        private const float BoboY = 300f;
+        private const float PlayY = -150f;
 
         private static readonly string[] TapLines = { "Hihi, gâdilă!", "Hai să jucăm!", "Ești cel mai tare!", "Bomboane, bomboane!", "Încă un nivel?" };
+
+        private class Tile
+        {
+            public RectTransform Rect;
+            public UiLabel Caption;
+            public UiLabel Sub;
+            public GameObject Badge;
+            public string Key;
+        }
 
         private GameObject _root;
         private Image _background;
         private int _backgroundChapter = -1;
         private UiLabel _logo;
-        private UiLabel _tagline;
+        private UiLabel _lives, _lifeTimer, _coins, _stars;
         private UiLabel _chapter;
-        private UiLabel _stars, _coins;
+        private UiProgressBar _chapterBar;
+        private UiLabel _chapterStars;
         private UiLabel _playLabel;
         private RectTransform _playRect;
         private RectTransform _shine;
-        private RectTransform _bobo;
-        private RectTransform[] _eyes;
+        private BoboView _bobo;
         private RectTransform _bubble;
         private UiLabel _bubbleText;
-        private GameObject _giftBadge, _missionsBadge;
-        private readonly List<(RectTransform Rect, UiLabel Caption, string Key)> _quick = new();
+        private Tile _wheel, _gift, _missions, _event, _wardrobe, _ranking, _profile, _settings;
+        private readonly List<Tile> _tiles = new();
         private UIParticleController _bursts;
 
         private RectTransform[] _floaters;
-        private float[] _floaterSpeed;
-        private float[] _floaterSpin;
-        private float[] _floaterPhase;
+        private float[] _floaterSpeed, _floaterSpin, _floaterPhase;
 
         private float _enterT = -1f;
-        private float _jump;
-        private float _jumpVelocity;
-        private float _nextBlink;
-        private float _blinkT = -1f;
+        private float _jump, _jumpVelocity;
+        private float _nextBlink, _blinkT = -1f;
         private float _nextLine;
         private int _line;
         private float _bubblePop;
         private int _tapLine;
+        private float _refresh;
 
         public bool IsOpen => _root.activeSelf;
 
@@ -70,46 +83,44 @@ namespace SugarDrop
             _root = _background.gameObject;
 
             BuildCandyRain();
-
-            // Sclipiri care plutesc peste fundal (și exploziile când atingi Bobo).
             RectTransform sparkleLayer = UiFactory.CreateRect("Sparkles", _root.transform);
             UiFactory.Stretch(sparkleLayer, 300f);
             _bursts = sparkleLayer.gameObject.AddComponent<UIParticleController>();
             _bursts.Initialize(60, SugarSprites.Sparkle, new[] { Color.white, new Color(1f, 0.9f, 0.6f), new Color(1f, 0.75f, 0.85f) }, 4f);
             _bursts.SetAmbientSize(16f, 36f);
 
-            _stars = Pill("StarsPill", ProceduralSprites.Star, theme.AccentColor, new Vector2(-250f, 770f), theme);
-            _coins = Pill("CoinsPill", ProceduralSprites.Coin, Color.white, new Vector2(250f, 770f), theme);
-
-            _logo = SugarUi.Outlined("Logo", _root.transform, SugarUi.Logo("Sugar Drop"), 170, Color.white, 7f);
-            UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 520f), new Vector2(1060f, 240f));
-            _tagline = SugarUi.Outlined("Tagline", _root.transform, "", 42, Color.white, 3f);
-            UiFactory.Place(_tagline.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 370f), new Vector2(980f, 110f));
-
-            Image chip = UiFactory.CreatePanel("ChapterChip", _root.transform, new Color(1f, 1f, 1f, 0.55f));
-            UiFactory.Place((RectTransform)chip.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 270f), new Vector2(700f, 74f));
-            _chapter = UiFactory.CreateText("Chapter", chip.transform, "", 32, TextAnchor.MiddleCenter, theme.TextDarkColor);
-            UiFactory.Stretch(_chapter.RectTransform, 6f);
-
+            BuildTopBar(theme);
+            _logo = SugarUi.Outlined("Logo", _root.transform, SugarUi.Logo("Sugar Drop"), 140, Color.white, 6f);
+            UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 700f), new Vector2(1060f, 200f));
             BuildBobo();
             BuildBubble(theme);
+            BuildChapterCard(theme);
             BuildPlayButton(theme);
-            BuildQuickButtons(theme);
+            BuildTiles(theme);
 
             _root.SetActive(false);
         }
 
         // ------------------------------------------------------------ Construire
 
-        private UiLabel Pill(string name, Sprite icon, Color iconColor, Vector2 position, UiTheme theme)
+        private void BuildTopBar(UiTheme theme)
+        {
+            RectTransform lives = Pill("LivesPill", SugarSprites.LifeHeart, Color.white, new Vector2(-330f, 850f), theme, out _lives);
+            _lifeTimer = UiFactory.CreateText("Timer", lives, "", 28, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.85f));
+            UiFactory.Place(_lifeTimer.RectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-14f, 0f), new Vector2(120f, 40f));
+            Pill("CoinsPill", ProceduralSprites.Coin, Color.white, new Vector2(0f, 850f), theme, out _coins);
+            Pill("StarsPill", ProceduralSprites.Star, theme.AccentColor, new Vector2(330f, 850f), theme, out _stars);
+        }
+
+        private RectTransform Pill(string name, Sprite icon, Color iconColor, Vector2 position, UiTheme theme, out UiLabel label)
         {
             Image pill = UiFactory.CreatePanel(name, _root.transform, theme.PanelColor);
-            UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, new Vector2(300f, 92f));
-            Image image = UiFactory.CreateImage("Icon", pill.transform, icon, iconColor);
-            UiFactory.Place(image.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 0f), new Vector2(96f, 96f));
-            UiLabel label = UiFactory.CreateText("Count", pill.transform, "0", 44);
-            UiFactory.Place(label.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(70f, 0f), new Vector2(220f, 80f));
-            return label;
+            var rect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, new Vector2(290f, 88f));
+            Image image = UiFactory.CreateImage("Icon", rect, icon, iconColor);
+            UiFactory.Place(image.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 0f), new Vector2(92f, 92f));
+            label = UiFactory.CreateText("Count", rect, "0", 42);
+            UiFactory.Place(label.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(64f, 0f), new Vector2(120f, 76f));
+            return rect;
         }
 
         /// <summary>Bomboane și capace care cad încet și se rotesc (cele mici cad mai încet: adâncime).</summary>
@@ -124,8 +135,8 @@ namespace SugarDrop
                 bool cap = i % 3 == 2;
                 Sprite sprite = cap ? SugarSprites.Cap : SugarSprites.CandyVariant(i);
                 Color color = cap ? Palette.Tile(i % Palette.TileColorCount) : Palette.RandomCandy();
-                float size = UnityEngine.Random.Range(60f, 150f);
-                Image image = UiFactory.CreateImage("Candy", _root.transform, sprite, new Color(color.r, color.g, color.b, Mathf.Lerp(0.45f, 0.85f, size / 150f)));
+                float size = UnityEngine.Random.Range(60f, 140f);
+                Image image = UiFactory.CreateImage("Candy", _root.transform, sprite, new Color(color.r, color.g, color.b, Mathf.Lerp(0.4f, 0.8f, size / 140f)));
                 UiFactory.Place(image.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(UnityEngine.Random.Range(-500f, 500f), UnityEngine.Random.Range(RainBottom, RainTop)), new Vector2(size, size));
                 if (cap)
@@ -141,42 +152,15 @@ namespace SugarDrop
             }
         }
 
-        /// <summary>Bobo, cupcake-ul: ochii se închid separat (clipește), iar tot corpul sare când îl atingi.</summary>
         private void BuildBobo()
         {
-            _bobo = UiFactory.CreateRect("Bobo", _root.transform);
-            UiFactory.Place(_bobo, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(380f, 420f));
-            Image shadow = UiFactory.CreateImage("Shadow", _bobo, SugarSprites.SoftDot, new Color(0.3f, 0.1f, 0.25f, 0.3f));
-            UiFactory.Place(shadow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -200f), new Vector2(300f, 70f));
-            shadow.preserveAspect = false;
-            Image cup = UiFactory.CreateImage("Cup", _bobo, SugarSprites.CupWrapper, Color.white);
-            UiFactory.Place(cup.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -80f), new Vector2(340f, 340f));
-            Image frosting = UiFactory.CreateImage("Frosting", _bobo, SugarSprites.Frosting, Color.white);
-            UiFactory.Place(frosting.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 50f), new Vector2(360f, 360f));
-            Image cherry = UiFactory.CreateImage("Cherry", _bobo, SugarSprites.Circle, new Color(0.93f, 0.2f, 0.32f));
-            UiFactory.Place(cherry.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 205f), new Vector2(80f, 80f));
-            Image smile = UiFactory.CreateImage("Smile", _bobo, SugarSprites.Smile, new Color(0.35f, 0.12f, 0.22f));
-            UiFactory.Place(smile.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -120f), new Vector2(110f, 110f));
-            _eyes = new RectTransform[2];
-            for (int e = 0; e < 2; e++)
-            {
-                Image eye = UiFactory.CreateImage("Eye", _bobo, SugarSprites.Circle, new Color(0.25f, 0.12f, 0.2f));
-                _eyes[e] = UiFactory.Place(eye.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2((e * 2 - 1) * 60f, -60f), new Vector2(40f, 40f));
-                Image glint = UiFactory.CreateImage("Glint", eye.transform, SugarSprites.Circle, Color.white);
-                UiFactory.Place(glint.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-7f, 8f), new Vector2(12f, 12f));
-            }
-            for (int e = -1; e <= 1; e += 2)
-            {
-                Image cheek = UiFactory.CreateImage("Cheek", _bobo, SugarSprites.SoftDot, new Color(1f, 0.45f, 0.6f, 0.55f));
-                UiFactory.Place(cheek.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(e * 105f, -105f), new Vector2(70f, 46f));
-                cheek.preserveAspect = false;
-            }
-
+            _bobo = BoboView.Build(_root.transform, 0.7f);
+            UiFactory.Place(_bobo.Root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, BoboY), _bobo.Root.sizeDelta);
             // Toată silueta lui Bobo se poate atinge.
-            var hit = _bobo.gameObject.AddComponent<Image>();
+            var hit = _bobo.Root.gameObject.AddComponent<Image>();
             hit.color = new Color(1f, 1f, 1f, 0f);
             hit.raycastTarget = true;
-            var button = _bobo.gameObject.AddComponent<Button>();
+            var button = _bobo.Root.gameObject.AddComponent<Button>();
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(PokeBobo);
         }
@@ -184,27 +168,41 @@ namespace SugarDrop
         private void BuildBubble(UiTheme theme)
         {
             Image bubble = UiFactory.CreatePanel("Bubble", _root.transform, Color.white);
-            _bubble = UiFactory.Place((RectTransform)bubble.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(165f, 70f), new Vector2(390f, 150f));
+            _bubble = UiFactory.Place((RectTransform)bubble.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(130f, 330f), new Vector2(380f, 140f));
             Image tail = UiFactory.CreateImage("Tail", _bubble, UiFactory.WhiteSprite, Color.white);
             UiFactory.Place(tail.rectTransform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(46f, 6f), new Vector2(36f, 36f));
             tail.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            _bubbleText = UiFactory.CreateText("Text", _bubble, "", 34, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            _bubbleText = UiFactory.CreateText("Text", _bubble, "", 32, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Stretch(_bubbleText.RectTransform, 14f);
+        }
+
+        /// <summary>Capitolul curent: numele ținutului și câte stele ai strâns în el (din 30).</summary>
+        private void BuildChapterCard(UiTheme theme)
+        {
+            Image card = UiFactory.CreatePanel("ChapterCard", _root.transform, new Color(1f, 1f, 1f, 0.7f));
+            var rect = UiFactory.Place((RectTransform)card.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(780f, 120f));
+            _chapter = UiFactory.CreateText("Chapter", rect, "", 32, TextAnchor.MiddleCenter, theme.TextDarkColor);
+            UiFactory.Place(_chapter.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(760f, 50f));
+            _chapterBar = UiFactory.CreateProgressBar("Progress", rect, theme.AccentColor);
+            UiFactory.Place((RectTransform)_chapterBar.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-50f, 18f), new Vector2(560f, 34f));
+            Image star = UiFactory.CreateImage("Star", rect, ProceduralSprites.Star, theme.AccentColor);
+            UiFactory.Place(star.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(262f, 35f), new Vector2(56f, 56f));
+            _chapterStars = UiFactory.CreateText("Stars", rect, "", 28, TextAnchor.MiddleLeft, theme.TextDarkColor);
+            UiFactory.Place(_chapterStars.RectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 0.5f), new Vector2(294f, 35f), new Vector2(100f, 40f));
         }
 
         private void BuildPlayButton(UiTheme theme)
         {
             Image glow = UiFactory.CreateImage("PlayGlow", _root.transform, SugarSprites.SoftDot, new Color(1f, 0.95f, 0.55f, 0.55f));
-            UiFactory.Place(glow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -420f), new Vector2(900f, 330f));
+            UiFactory.Place(glow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, PlayY), new Vector2(900f, 320f));
             glow.preserveAspect = false;
             Button play = SugarUi.Button("Play", _root.transform, "", theme.PositiveColor, () =>
             {
                 SugarUi.Click();
                 PlayClicked?.Invoke();
-            }, 62);
-            _playRect = UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -420f), new Vector2(640f, 190f));
+            }, 60);
+            _playRect = UiFactory.Place((RectTransform)play.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, PlayY), new Vector2(640f, 175f));
             _playLabel = UiFactory.GetButtonLabel(play);
-
             // O dungă de lumină care trece peste buton, din când în când.
             Transform face = play.transform.Find("Face");
             face.gameObject.AddComponent<RectMask2D>();
@@ -215,49 +213,54 @@ namespace SugarDrop
             _playLabel.transform.SetAsLastSibling();
         }
 
-        private void BuildQuickButtons(UiTheme theme)
+        private void BuildTiles(UiTheme theme)
         {
-            _giftBadge = Quick("Gift", SugarSprites.Gift, Palette.Tile(0), -330f, "Cadou", () => GiftClicked?.Invoke(), true);
-            _missionsBadge = Quick("Missions", SugarSprites.Checklist, Palette.Tile(1), -110f, "Misiuni", () => MissionsClicked?.Invoke(), true);
-            Quick("Leaderboard", SugarSprites.Trophy, theme.AccentColor, 110f, "Clasament", () => LeaderboardClicked?.Invoke(), false);
-            Quick("Settings", SugarSprites.Gear, theme.PanelColor, 330f, "Setări", () => SettingsClicked?.Invoke(), false);
+            _wheel = AddTile("Wheel", SugarSprites.Wheel(8), Color.white, Palette.Tile(3), 0, "Roata", () => WheelClicked?.Invoke(), true);
+            _gift = AddTile("Gift", SugarSprites.Gift, Color.white, Palette.Tile(0), 1, "Cadou", () => GiftClicked?.Invoke(), true);
+            _missions = AddTile("Missions", SugarSprites.Checklist, Color.white, Palette.Tile(1), 2, "Misiuni", () => MissionsClicked?.Invoke(), true);
+            _event = AddTile("Event", ProceduralSprites.Star, Color.white, Palette.Tile(4), 3, "Eveniment", () => EventClicked?.Invoke(), false);
+            _wardrobe = AddTile("Wardrobe", SugarSprites.CostumeSprite(Costume.PartyHat), Color.white, Palette.Tile(2), 4, "Bobo", () => WardrobeClicked?.Invoke(), false);
+            _ranking = AddTile("Leaderboard", SugarSprites.Trophy, theme.AccentColor, theme.PanelColor, 5, "Clasament", () => LeaderboardClicked?.Invoke(), false);
+            _profile = AddTile("Profile", SugarSprites.Person, Color.white, Color.Lerp(Palette.Tile(1), Palette.Tile(4), 0.5f), 6, "Profil", () => ProfileClicked?.Invoke(), false);
+            _settings = AddTile("Settings", SugarSprites.Gear, Color.white, theme.PanelColor, 7, "Setări", () => SettingsClicked?.Invoke(), false);
         }
 
-        private GameObject Quick(string name, Sprite icon, Color color, float x, string captionKey, Action onClick, bool badge)
+        private Tile AddTile(string name, Sprite icon, Color iconColor, Color color, int index, string captionKey, Action onClick, bool badge)
         {
-            Button button = SugarUi.IconButton(name, _root.transform, icon, color, () =>
+            int row = index / 4, column = index % 4;
+            Vector2 position = new((column - 1.5f) * 240f, -390f - row * 230f);
+            Button button = SugarUi.Button(name, _root.transform, "", color, () =>
             {
                 SugarUi.Click();
                 onClick();
-            }, 0.6f);
-            var rect = UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, -660f), new Vector2(136f, 136f));
-            UiLabel caption = SugarUi.Outlined("Caption", _root.transform, "", 30, Color.white, 3f);
-            UiFactory.Place(caption.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, -762f), new Vector2(220f, 50f));
-            _quick.Add((rect, caption, captionKey));
-            if (!badge) return null;
-            Image dot = UiFactory.CreateImage("Badge", button.transform, SugarSprites.Circle, UiRoot.Theme.NegativeColor);
-            UiFactory.Place(dot.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-16f, -16f), new Vector2(40f, 40f));
-            dot.gameObject.SetActive(false);
-            return dot.gameObject;
+            }, 28);
+            var rect = UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, new Vector2(225f, 205f));
+            Transform face = button.transform.Find("Face");
+            Image image = UiFactory.CreateImage("Icon", face, icon, iconColor);
+            UiFactory.Place(image.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(100f, 100f));
+            var tile = new Tile { Rect = rect, Key = captionKey };
+            tile.Caption = SugarUi.Outlined("Caption", face, "", 30, Color.white, 3f);
+            UiFactory.Place(tile.Caption.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(215f, 44f));
+            tile.Sub = UiFactory.CreateText("Sub", face, "", 22, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.9f));
+            UiFactory.Place(tile.Sub.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(215f, 30f));
+            if (badge)
+            {
+                Image dot = UiFactory.CreateImage("Badge", button.transform, SugarSprites.Circle, UiRoot.Theme.NegativeColor);
+                UiFactory.Place(dot.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-14f, -14f), new Vector2(40f, 40f));
+                dot.gameObject.SetActive(false);
+                tile.Badge = dot.gameObject;
+            }
+            _tiles.Add(tile);
+            return tile;
         }
 
         // ------------------------------------------------------------ Afișare
 
         public void Show()
         {
-            SugarSaveData data = SugarSave.Data;
-            int level = Mathf.Max(1, data.level);
-            int chapter = ChapterTheme.ChapterOf(level);
-            if (chapter != _backgroundChapter)
-            {
-                _backgroundChapter = chapter;
-                _background.sprite = SugarSprites.Sky(chapter);
-            }
-            _tagline.Text = SugarLoc.T("Aliniază 3 capace la fel ca să eliberezi bomboanele!");
-            _chapter.Text = SugarLoc.F("CAPITOLUL {0}", chapter + 1) + "  ·  " + SugarLoc.T(ChapterTheme.For(chapter).Name);
-            _playLabel.Text = SugarLoc.T("JOACĂ") + "\n<size=34>" + SugarLoc.F("NIVELUL {0}", level) + "</size>";
-            foreach (var (_, caption, key) in _quick) caption.Text = SugarLoc.T(key);
+            foreach (Tile tile in _tiles) tile.Caption.Text = SugarLoc.T(tile.Key);
             RefreshCounters();
+            _bobo.SetCostume(CostumeRules.Current);
             _line = 0;
             Say(BoboLine(0));
             _nextLine = Time.unscaledTime + 4.5f;
@@ -268,15 +271,57 @@ namespace SugarDrop
 
         public void Hide() => _root.SetActive(false);
 
-        /// <summary>Stelele, monedele și punctele roșii (după cadou, misiuni sau restaurarea din cloud).</summary>
+        /// <summary>Vieți, monede, stele, capitolul, punctele roșii și textele mici de pe plăci.</summary>
         public void RefreshCounters()
         {
             SugarSaveData data = SugarSave.Data;
-            _stars.Text = SugarSave.TotalStars(data).ToString();
+            SugarSave.UpdateLives();
+            int level = Mathf.Max(1, data.level);
+            int chapter = ChapterTheme.ChapterOf(level);
+            if (chapter != _backgroundChapter)
+            {
+                _backgroundChapter = chapter;
+                _background.sprite = SugarSprites.Sky(chapter);
+            }
+            _lives.Text = data.lives.ToString();
+            _lifeTimer.Text = data.lives >= SugarSave.MaxLives ? SugarLoc.T("PLIN") : SugarUi.Time(SugarSave.SecondsToNextLife);
             _coins.Text = data.coins.ToString();
-            _giftBadge.SetActive(SugarDaily.GiftAvailable);
-            _missionsBadge.SetActive(SugarDaily.AnyClaimable);
+            _stars.Text = SugarSave.TotalStars(data).ToString();
+
+            int chapterStars = 0;
+            for (int l = chapter * LevelConfig.ChapterSize + 1; l <= (chapter + 1) * LevelConfig.ChapterSize; l++) chapterStars += SugarSave.GetStars(l);
+            _chapter.Text = SugarLoc.F("CAPITOLUL {0}", chapter + 1) + "  ·  " + SugarLoc.T(ChapterTheme.For(chapter).Name);
+            _chapterBar.SetValue(chapterStars / 30f, true);
+            _chapterStars.Text = chapterStars + "/30";
+            _playLabel.Text = SugarLoc.T("JOACĂ") + "\n<size=32>" + SugarLoc.F("NIVELUL {0}", level) + "</size>";
+
+            int freeSpins = SugarWheel.FreeSpinsLeft;
+            _wheel.Badge.SetActive(freeSpins > 0);
+            _wheel.Sub.Text = freeSpins > 0 ? SugarLoc.T("GRATIS") : SugarWheel.AdSpinsLeft > 0 ? SugarLoc.T("cu reclamă") : "";
+            _gift.Badge.SetActive(SugarDaily.GiftAvailable);
+            _gift.Sub.Text = SugarDaily.GiftAvailable ? SugarLoc.F("Ziua {0} din 7", SugarDaily.GiftStreakDay) : "";
+            _missions.Badge.SetActive(SugarDaily.AnyClaimable);
+            _missions.Sub.Text = MissionsDone() + "/" + DailyRules.MissionsPerDay;
+            bool weekend = SugarEvents.WeekendNow;
+            _event.Sub.Text = Countdown(SugarEvents.Countdown(DateTime.Now));
+            _event.Caption.Text = SugarLoc.T(weekend ? "Weekend dulce" : "Eveniment");
+            _wardrobe.Sub.Text = SugarLoc.T(CostumeRules.NameKey(CostumeRules.Current));
+            _ranking.Sub.Text = SugarSave.TotalScore.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture).Replace(',', '.');
+            _profile.Sub.Text = data.nickname;
+            _settings.Sub.Text = SugarLoc.NativeName(SugarLoc.Current);
         }
+
+        private static int MissionsDone()
+        {
+            int done = 0;
+            for (int i = 0; i < DailyRules.MissionsPerDay; i++)
+                if (SugarDaily.Claimed(i) || SugarDaily.CanClaim(i)) done++;
+            return done;
+        }
+
+        /// <summary>„1z 5h” sau „5h 12m” (cât mai e până la începutul/sfârșitul weekendului).</summary>
+        public static string Countdown(TimeSpan time) =>
+            time.TotalDays >= 1 ? SugarLoc.F("{0}z {1}h", (int)time.TotalDays, time.Hours) : SugarLoc.F("{0}h {1}m", (int)time.TotalHours, time.Minutes);
 
         /// <summary>Ce spune Bobo, pe rând: salutul, apoi ce te așteaptă azi.</summary>
         private string BoboLine(int index)
@@ -284,8 +329,10 @@ namespace SugarDrop
             var lines = new List<string>();
             string nickname = SugarSave.Data.nickname;
             lines.Add(string.IsNullOrEmpty(nickname) ? SugarLoc.T("Bine ai venit!") : SugarLoc.F("Salut, {0}!", nickname));
+            if (SugarWheel.FreeSpinsLeft > 0) lines.Add(SugarLoc.T("Roata norocului e gratis azi!"));
             if (SugarDaily.GiftAvailable) lines.Add(SugarLoc.T("Te așteaptă un cadou!"));
             if (SugarDaily.AnyClaimable) lines.Add(SugarLoc.T("Ai misiuni de revendicat!"));
+            if (SugarEvents.WeekendNow) lines.Add(SugarLoc.T("E weekend dulce: monede duble!"));
             lines.Add(SugarLoc.F("Nivelul {0} te așteaptă!", Mathf.Max(1, SugarSave.Data.level)));
             lines.Add(SugarLoc.T("Atinge-mă!"));
             return lines[index % lines.Count];
@@ -305,7 +352,7 @@ namespace SugarDrop
             _nextLine = Time.unscaledTime + 4f;
             if (SugarAudio.Instance != null) SugarAudio.Instance.Play(SugarSound.SpecialCreated, 0.8f, UnityEngine.Random.Range(1.1f, 1.4f));
             SugarAudio.Buzz(0);
-            _bursts.BurstAt(_bobo, 16, SugarSprites.Sparkle, new[] { Color.white, Palette.TileLight(0), Palette.TileLight(3) });
+            _bursts.BurstAt(_bobo.Root, 16, SugarSprites.Sparkle, new[] { Color.white, Palette.TileLight(0), Palette.TileLight(3) });
         }
 
         // ------------------------------------------------------------ Animații
@@ -316,7 +363,13 @@ namespace SugarDrop
             float time = Time.unscaledTime;
             float dt = Time.unscaledDeltaTime;
 
-            // Ploaia de bomboane.
+            _refresh -= dt;
+            if (_refresh <= 0f)
+            {
+                _refresh = 1f;
+                RefreshCounters();
+            }
+
             for (int i = 0; i < _floaters.Length; i++)
             {
                 Vector2 p = _floaters[i].anchoredPosition;
@@ -339,10 +392,10 @@ namespace SugarDrop
             _jump = Mathf.Max(0f, _jump + _jumpVelocity * dt);
             if (_jump <= 0f) _jumpVelocity = 0f;
             float breathe = Mathf.Sin(time * 2.4f);
-            _bobo.anchoredPosition = new Vector2(0f, -40f + breathe * 8f + _jump);
+            _bobo.Root.anchoredPosition = new Vector2(0f, BoboY + breathe * 6f + _jump);
             float squash = _jump > 0f ? 0.04f : breathe * 0.025f;
-            _bobo.localScale = new Vector3(1f + squash, 1f - squash, 1f);
-            _bobo.localRotation = Quaternion.Euler(0f, 0f, _jump > 0f ? Mathf.Sin(_jump * 0.03f) * 8f : Mathf.Sin(time * 1.1f) * 2f);
+            _bobo.Root.localScale = new Vector3(1f + squash, 1f - squash, 1f);
+            _bobo.Root.localRotation = Quaternion.Euler(0f, 0f, _jump > 0f ? Mathf.Sin(_jump * 0.03f) * 8f : Mathf.Sin(time * 1.1f) * 2f);
             if (_blinkT < 0f && time >= _nextBlink) _blinkT = 0f;
             float eyeY = 1f;
             if (_blinkT >= 0f)
@@ -355,9 +408,8 @@ namespace SugarDrop
                     _nextBlink = time + UnityEngine.Random.Range(2f, 4.5f);
                 }
             }
-            foreach (RectTransform eye in _eyes) eye.localScale = new Vector3(1f, eyeY, 1f);
+            foreach (RectTransform eye in _bobo.Eyes) eye.localScale = new Vector3(1f, eyeY, 1f);
 
-            // Bula de vorbă: apare cu „pop” și își schimbă replica la câteva secunde.
             if (time >= _nextLine)
             {
                 _nextLine = time + 4.5f;
@@ -366,24 +418,25 @@ namespace SugarDrop
             _bubblePop = Mathf.Min(1f, _bubblePop + dt / 0.3f);
             _bubble.localScale = Vector3.one * UiEase.OutBack(_bubblePop, 2.2f);
 
-            // Butonul „Joacă”: pulsează, iar o dungă de lumină trece peste el.
-            float pulse = 1f + Mathf.Sin(time * 3.2f) * 0.035f;
             _shine.anchoredPosition = new Vector2(Mathf.Lerp(-600f, 600f, Mathf.Repeat(time / 2.6f, 1f) * 1.6f - 0.3f), 0f);
+            // Roata de pe placă se învârte încet, ca să atragă atenția când e gratis.
+            if (_wheel.Badge.activeSelf) _wheel.Rect.Find("Face/Icon").localRotation = Quaternion.Euler(0f, 0f, -time * 40f);
 
-            // Intrarea: logo-ul cade de sus, Bobo răsare, butoanele urcă pe rând.
+            // Intrarea: logo-ul cade de sus, butonul urcă, plăcile apar pe rând.
+            float pulse = 1f + Mathf.Sin(time * 3.2f) * 0.035f;
             if (_enterT >= 0f)
             {
                 _enterT += dt;
                 float logoT = Mathf.Clamp01(_enterT / 0.6f);
                 float playT = Mathf.Clamp01((_enterT - 0.25f) / 0.5f);
-                _logo.RectTransform.anchoredPosition = new Vector2(0f, 520f + (1f - UiEase.OutBack(logoT, 2f)) * 600f);
-                _playRect.anchoredPosition = new Vector2(0f, -420f - (1f - UiEase.OutBack(playT, 1.6f)) * 500f);
-                for (int i = 0; i < _quick.Count; i++)
+                _logo.RectTransform.anchoredPosition = new Vector2(0f, 700f + (1f - UiEase.OutBack(logoT, 2f)) * 600f);
+                _playRect.anchoredPosition = new Vector2(0f, PlayY - (1f - UiEase.OutBack(playT, 1.6f)) * 500f);
+                for (int i = 0; i < _tiles.Count; i++)
                 {
-                    float t = Mathf.Clamp01((_enterT - 0.4f - i * 0.07f) / 0.35f);
-                    _quick[i].Rect.localScale = Vector3.one * UiEase.OutBack(t, 2f);
+                    float t = Mathf.Clamp01((_enterT - 0.35f - i * 0.05f) / 0.35f);
+                    _tiles[i].Rect.localScale = Vector3.one * UiEase.OutBack(t, 2f);
                 }
-                if (_enterT > 1.1f) _enterT = -1f;
+                if (_enterT > 1.2f) _enterT = -1f;
             }
             _playRect.localScale = Vector3.one * pulse;
         }

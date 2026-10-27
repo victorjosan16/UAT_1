@@ -368,11 +368,11 @@ namespace SugarDrop
         }
 
         /// <summary>Finalul dulce: o bomboană devine rachetă.</summary>
-        public bool TryMakeRandomSpecial(out Vector3 position)
+        public bool TryMakeRandomSpecial(out Vector3 position, TileKind? kind = null)
         {
             position = default;
             if (_engine == null) return false;
-            BoardStep step = _engine.MakeRandomSpecial();
+            BoardStep step = _engine.MakeRandomSpecial(kind);
             if (step == null) return false;
             PieceInfo piece = step.Changed[0];
             position = World(piece.Cell);

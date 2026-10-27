@@ -51,6 +51,15 @@ namespace SugarDrop
         public int rateState;
         /// <summary>Momentul (Unix, secunde) ultimei schimbări de progres (pentru alegerea între salvarea locală și cea din cloud).</summary>
         public long savedAt;
+        /// <summary>Roata norocului: ziua, rotirile gratuite și cele cu reclamă folosite azi.</summary>
+        public int wheelDay = -1;
+        public int wheelFreeUsed;
+        public int wheelAdUsed;
+        /// <summary>Boosterele de start (piesă specială pusă pe tablă la începutul nivelului).</summary>
+        public int startRockets = 1;
+        public int startBombs = 1;
+        /// <summary>Costumul lui Bobo (Costume).</summary>
+        public int costume;
     }
 
     /// <summary>Încărcare/salvare + vieți cu regenerare în timp.</summary>

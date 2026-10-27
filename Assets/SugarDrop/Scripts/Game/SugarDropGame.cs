@@ -34,6 +34,8 @@ namespace SugarDrop
         [SerializeField] private WelcomePanel welcome;
         [SerializeField] private LeaderboardPanel leaderboard;
         [SerializeField] private TutorialCoach coach;
+        [SerializeField] private WheelPanel wheel;
+        [SerializeField] private WardrobePanel wardrobe;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -133,6 +135,12 @@ namespace SugarDrop
             menu.MissionsClicked += ShowMissions;
             menu.LeaderboardClicked += ShowLeaderboard;
             menu.SettingsClicked += ShowMapSettings;
+            menu.WheelClicked += ShowWheel;
+            menu.EventClicked += ShowEvent;
+            menu.WardrobeClicked += ShowWardrobe;
+            menu.ProfileClicked += ShowProfile;
+            wheel.PrizeWon += OnWheelPrize;
+            wardrobe.CostumeChanged += OnCostumeChanged;
             SugarCloudSave.Restored += OnCloudRestored;
         }
 
@@ -169,6 +177,12 @@ namespace SugarDrop
             menu.MissionsClicked -= ShowMissions;
             menu.LeaderboardClicked -= ShowLeaderboard;
             menu.SettingsClicked -= ShowMapSettings;
+            menu.WheelClicked -= ShowWheel;
+            menu.EventClicked -= ShowEvent;
+            menu.WardrobeClicked -= ShowWardrobe;
+            menu.ProfileClicked -= ShowProfile;
+            wheel.PrizeWon -= OnWheelPrize;
+            wardrobe.CostumeChanged -= OnCostumeChanged;
             SugarCloudSave.Restored -= OnCloudRestored;
         }
 
@@ -215,11 +229,13 @@ namespace SugarDrop
             int coins = 50 + stars * 5;
             bool boosters = stars >= 24;
             Data.coins += coins;
+            StartBoosters.Add(StartBooster.Rocket, 1);
             if (boosters)
             {
                 Data.bombs++;
                 Data.extraMoves++;
                 Data.shuffles++;
+                StartBoosters.Add(StartBooster.Bomb, 1);
             }
             Data.chaptersRewarded = chapter + 1;
             SugarSave.Save();
@@ -230,7 +246,7 @@ namespace SugarDrop
 
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             string message = SugarLoc.F("Stele: {0}/30", stars) + "  ·  " + SugarLoc.F("+{0} monede", coins)
-                + (boosters ? "\n" + SugarLoc.T("+1 la fiecare ajutor") : "")
+                + "\n" + SugarLoc.T("+1 rachetă la start") + (boosters ? "  ·  " + SugarLoc.T("+1 la fiecare ajutor") : "")
                 + "\n" + SugarLoc.F("Urmează: {0}", SugarLoc.T(ChapterTheme.For(chapter + 1).Name));
             dialog.Show(SugarLoc.F("Capitolul {0} terminat!", chapter + 1), message,
                 new DialogButton(SugarLoc.T("SUPER!"), positive, null));
@@ -510,7 +526,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -518,7 +534,135 @@ namespace SugarDrop
                 ShowNoLives();
                 return;
             }
-            Go(() => StartLevel(level));
+            if (StartBoosters.Offered(level) && Data.tutorialDone)
+            {
+                _useRocket = _useBomb = false;
+                ShowLevelStart(level);
+            }
+            else Go(() => StartLevel(level));
+        }
+
+        // ------------------------------------------------------------ Fereastra de start a nivelului (boostere de start)
+
+        private bool _useRocket, _useBomb;
+
+        /// <summary>
+        /// Înainte de nivel: ce cere nivelul și boosterele de start (o rachetă sau o bombă puse pe tablă de la început).
+        /// Dacă nu mai ai, le poți cumpăra cu monede.
+        /// </summary>
+        private void ShowLevelStart(int level)
+        {
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            LevelConfig config = LevelConfig.For(level);
+            string title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level);
+            string message = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!") : IntroText(config.Type);
+            dialog.Show(title, message,
+                StartBoosterButton(StartBooster.Rocket, "Rachetă la start", level),
+                StartBoosterButton(StartBooster.Bomb, "Bombă la start", level),
+                new DialogButton(SugarLoc.T("JOACĂ"), positive, () =>
+                {
+                    if (_useRocket) StartBoosters.Add(StartBooster.Rocket, -1);
+                    if (_useBomb) StartBoosters.Add(StartBooster.Bomb, -1);
+                    SugarSave.Save();
+                    bool rocket = _useRocket, bomb = _useBomb;
+                    Go(() =>
+                    {
+                        StartLevel(level);
+                        if (rocket) board.TryMakeRandomSpecial(out _, TileKind.RocketH);
+                        if (bomb) board.TryMakeRandomSpecial(out _, TileKind.Bomb);
+                    });
+                }),
+                new DialogButton(SugarLoc.T("ÎNAPOI"), panel, null));
+        }
+
+        private DialogButton StartBoosterButton(StartBooster booster, string nameKey, int level)
+        {
+            bool selected = booster == StartBooster.Rocket ? _useRocket : _useBomb;
+            int count = StartBoosters.Count(booster);
+            Color color = selected ? QuarryEmpire.UiRoot.Theme.AccentColor : QuarryEmpire.UiRoot.Theme.PanelColor;
+            string label = count > 0 || selected
+                ? SugarLoc.T(nameKey) + ": " + SugarLoc.T(selected ? "DA" : "NU") + "  (" + count + ")"
+                : SugarLoc.T(nameKey) + "  ·  " + SugarLoc.F("{0} monede", StartBoosters.Price);
+            return new DialogButton(label, color, () =>
+            {
+                if (!selected && StartBoosters.Count(booster) <= 0)
+                {
+                    if (Data.coins < StartBoosters.Price)
+                    {
+                        SugarAudio.Buzz(1);
+                        if (Audio != null) Audio.Play(SugarSound.Invalid);
+                        return;
+                    }
+                    Data.coins -= StartBoosters.Price;
+                    StartBoosters.Add(booster, 1);
+                    SugarSave.Save();
+                    if (Audio != null) Audio.Play(SugarSound.Coin);
+                    RefreshHome();
+                }
+                if (booster == StartBooster.Rocket) _useRocket = !_useRocket;
+                else _useBomb = !_useBomb;
+                ShowLevelStart(level);
+            }, false);
+        }
+
+        // ------------------------------------------------------------ Roata, garderoba, evenimentul, profilul
+
+        private void ShowWheel()
+        {
+            if (!OnHomeScreen || dialog.IsOpen) return;
+            wheel.Show();
+        }
+
+        private void OnWheelPrize()
+        {
+            RefreshBoosters();
+            RefreshHome();
+        }
+
+        private void ShowWardrobe()
+        {
+            if (!OnHomeScreen || dialog.IsOpen) return;
+            wardrobe.Show();
+        }
+
+        private void OnCostumeChanged()
+        {
+            mascot.ApplyCostume();
+            if (menu.IsOpen) menu.Show();
+        }
+
+        private void ShowEvent()
+        {
+            if (!OnHomeScreen || dialog.IsOpen) return;
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            if (SugarEvents.WeekendNow)
+            {
+                dialog.Show(SugarLoc.T("Weekend dulce"), null,
+                    () => SugarLoc.T("Monede duble la fiecare nivel câștigat și o rotire gratuită în plus la roată!") + "\n"
+                        + SugarLoc.F("Se termină în {0}", MainMenu.Countdown(SugarEvents.Countdown(System.DateTime.Now))),
+                    new DialogButton(SugarLoc.T("LA ROATĂ"), positive, ShowWheel),
+                    new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
+                return;
+            }
+            dialog.Show(SugarLoc.T("Eveniment"), null,
+                () => SugarLoc.T("În weekend: monede duble și o rotire gratuită în plus la roată.") + "\n"
+                    + SugarLoc.F("Începe în {0}", MainMenu.Countdown(SugarEvents.Countdown(System.DateTime.Now))),
+                new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
+        }
+
+        private void ShowProfile()
+        {
+            if (!OnHomeScreen || dialog.IsOpen) return;
+            UiThemeColors(out Color positive, out Color ad, out Color panel);
+            int stars = SugarSave.TotalStars(Data);
+            string points = SugarSave.TotalScore.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture).Replace(',', '.');
+            string message = SugarLoc.F("Nivelul {0}  ·  {1} stele", Mathf.Max(1, Data.level), stars) + "\n"
+                + SugarLoc.F("{0} puncte  ·  {1} capitole", points, Data.chaptersRewarded);
+            dialog.Show(string.IsNullOrEmpty(Data.nickname) ? SugarLoc.T("Profil") : Data.nickname, message,
+                new DialogButton(SugarLoc.T("SCHIMBĂ NICKNAME-UL"), panel, () => welcome.Show(false, SetNickname)),
+                new DialogButton(SugarLoc.T("Garderoba lui Bobo"), Palette.Tile(2), ShowWardrobe),
+                new DialogButton(SugarLoc.T("CLASAMENT"), QuarryEmpire.UiRoot.Theme.AccentColor, ShowLeaderboard),
+                new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
         }
 
         private void ShowNoLives()
@@ -557,6 +701,7 @@ namespace SugarDrop
                 _playfieldBuilt = true;
             }
             playfield.ApplyTheme(chapter);
+            mascot.ApplyCostume();
 
             candies.Clear();
             jar.ResetJar(_config.Ingredients);
@@ -843,6 +988,16 @@ namespace SugarDrop
                 leaderboard.Hide();
                 return;
             }
+            if (wheel.IsOpen)
+            {
+                wheel.Hide();
+                return;
+            }
+            if (wardrobe.IsOpen)
+            {
+                wardrobe.Hide();
+                return;
+            }
             switch (_state)
             {
                 case State.Playing: ShowPause(); break;
@@ -872,6 +1027,8 @@ namespace SugarDrop
                 Data.extraMoves += bonus;
                 Data.shuffles += bonus;
             }
+            // Weekend dulce: monede duble.
+            coins *= SugarEvents.CoinMultiplier(System.DateTime.Now);
             Data.coins += coins;
             if (_level >= Data.level) Data.level = _level + 1;
             SugarSave.SetStars(_level, 1);
