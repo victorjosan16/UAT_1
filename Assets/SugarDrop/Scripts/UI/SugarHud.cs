@@ -400,7 +400,7 @@ namespace SugarDrop
             }
         }
 
-        private Sprite GoalIcon(GoalItem item) => item.Kind switch
+        public Sprite GoalIcon(GoalItem item) => item.Kind switch
         {
             GoalKind.Ingredients => SugarSprites.CandyWrapped,
             GoalKind.Collect => PieceSprites.Piece(item.Color),
@@ -416,7 +416,7 @@ namespace SugarDrop
             _ => ProceduralSprites.Star,
         };
 
-        private static Color GoalColor(GoalItem item) => item.Kind switch
+        public static Color GoalColor(GoalItem item) => item.Kind switch
         {
             GoalKind.Ingredients => Palette.Candy(0),
             GoalKind.Frosting => new Color(1f, 0.82f, 0.9f),

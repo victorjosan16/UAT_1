@@ -27,6 +27,10 @@ namespace SugarDrop
         /// <summary>Un nivel a început (s-a făcut prima mutare) și încă nu s-a terminat: dacă aplicația e închisă
         /// forțat, la următoarea pornire viața se pierde (altfel s-ar putea ocoli pierderea vieții).</summary>
         public bool levelInProgress;
+        /// <summary>Niveluri câștigate la rând (o pierdere o resetează): de la 3 dă piese speciale la start.</summary>
+        public int winStreak;
+        /// <summary>Mecanicile pe care jucătorul le-a întâlnit deja (biți; vezi SugarDropGame.MechanicBit).</summary>
+        public int seenMechanics;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
         public int adsConsent = -1;
         /// <summary>Numele afișat în clasament (gol = încă neales: la prima pornire apare fereastra de bun venit).</summary>

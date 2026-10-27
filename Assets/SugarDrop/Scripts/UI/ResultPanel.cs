@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using QuarryEmpire;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,9 @@ namespace SugarDrop
         private readonly Image[] _buttonFaces = new Image[3];
         private readonly Action[] _actions = new Action[3];
         private LevelCompleteAnimator _animator;
+        /// <summary>Ce i-a mai lipsit jucătorului (iconița obiectivului și câte au rămas), pe ecranul de pierdere.</summary>
+        private readonly Image[] _missingIcons = new Image[3];
+        private readonly UiLabel[] _missingCounts = new UiLabel[3];
         private float _lockedUntil;
 
         private void Awake()
@@ -49,6 +53,16 @@ namespace SugarDrop
             UiFactory.Place(_coins.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(40f, -420f), new Vector2(500f, 80f));
             Image coin = UiFactory.CreateImage("CoinIcon", _coins.transform, ProceduralSprites.Coin, Color.white);
             UiFactory.Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(10f, 0f), new Vector2(70f, 70f));
+
+            for (int i = 0; i < 3; i++)
+            {
+                _missingIcons[i] = UiFactory.CreateImage("Missing" + i, box, ProceduralSprites.Star, Color.white);
+                UiFactory.Place(_missingIcons[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -440f), new Vector2(96f, 96f));
+                _missingIcons[i].preserveAspect = true;
+                _missingCounts[i] = SugarUi.Outlined("Count", _missingIcons[i].transform, "", 40, Color.white, 3f);
+                UiFactory.Place(_missingCounts[i].RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, -8f), new Vector2(170f, 56f));
+                _missingIcons[i].gameObject.SetActive(false);
+            }
 
             for (int i = 0; i < 3; i++)
             {
@@ -84,6 +98,7 @@ namespace SugarDrop
             _title.Color = theme.AccentColor;
             _subtitle.Text = SugarLoc.F("Nivelul {0} terminat", level);
             _coins.gameObject.SetActive(true);
+            ShowMissing(null);
             SetButtons(new DialogButton(SugarLoc.T("CONTINUĂ"), theme.PositiveColor, onNext));
             _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
@@ -91,8 +106,11 @@ namespace SugarDrop
         }
 
         /// <param name="onAdMoves">Null dacă nu se mai poate continua cu reclamă.</param>
-        public void ShowLose(string message, Action onRetry, Action onAdMoves, Action onMap)
+        /// <param name="missing">Obiectivele neterminate: iconița, culoarea și câte mai trebuiau.</param>
+        public void ShowLose(string message, Action onRetry, Action onAdMoves, Action onMap,
+            IReadOnlyList<(Sprite icon, Color color, int left)> missing = null)
         {
+            ShowMissing(missing);
             UiTheme theme = UiRoot.Theme;
             foreach (Image star in _stars) star.gameObject.SetActive(false);
             _title.Text = SugarLoc.T("AULEU!");
@@ -109,6 +127,21 @@ namespace SugarDrop
             _lockedUntil = Time.unscaledTime + 0.35f; // nu „prinde” atingerea care a încheiat nivelul
             _root.SetActive(true);
             _animator.PlayLose();
+        }
+
+        private void ShowMissing(IReadOnlyList<(Sprite icon, Color color, int left)> missing)
+        {
+            int count = missing == null ? 0 : Mathf.Min(3, missing.Count);
+            for (int i = 0; i < 3; i++)
+            {
+                bool on = i < count;
+                _missingIcons[i].gameObject.SetActive(on);
+                if (!on) continue;
+                _missingIcons[i].sprite = missing[i].icon;
+                _missingIcons[i].color = missing[i].color;
+                _missingIcons[i].rectTransform.anchoredPosition = new Vector2((i - (count - 1) * 0.5f) * 190f, -440f);
+                _missingCounts[i].Text = missing[i].left.ToString();
+            }
         }
 
         public void Hide()

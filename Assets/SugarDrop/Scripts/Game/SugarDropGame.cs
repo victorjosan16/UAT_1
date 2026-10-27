@@ -566,6 +566,11 @@ namespace SugarDrop
             LevelConfig config = LevelConfig.For(level);
             string title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level);
             string message = config.IsBoss ? SugarLoc.T("Învinge Boss-ul!") : IntroText(config.Type);
+            // Prima întâlnire cu o mecanică: un „NOU!” scurt (fără tutorial), plus o frază pentru portaluri.
+            if (!config.IsBoss && IsNew(MechanicBit(config.Type))) message = SugarLoc.T("NOU!") + " " + message;
+            if (config.PortalIn.Length > 0 && IsNew(PortalBit))
+                message += "\n" + SugarLoc.T("NOU!") + " " + SugarLoc.T("Portalurile duc bomboanele dintr-o coloană în alta!");
+            if (StreakSpecials(config) > 0) message += "\n" + SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak);
             dialog.Show(title, message,
                 StartBoosterButton(StartBooster.Rocket, "Rachetă la start", level),
                 StartBoosterButton(StartBooster.Bomb, "Bombă la start", level),
@@ -762,6 +767,14 @@ namespace SugarDrop
             }
             else hud.ShowBanner(IntroText(_config.Type));
 
+            // Mecanicile acestui nivel nu mai sunt „noi” data viitoare.
+            Data.seenMechanics |= MechanicBit(_config.Type) | (_config.PortalIn.Length > 0 ? PortalBit : 0);
+
+            // Seria de victorii: 3 la rând → o rachetă la start, 5 la rând → și o bombă.
+            int streakSpecials = tutorial ? 0 : StreakSpecials(_config);
+            for (int i = 0; i < streakSpecials; i++)
+                if (board.TryMakeRandomSpecial(out Vector3 at, i == 0 ? TileKind.RocketH : TileKind.Bomb) && Vfx != null) Vfx.SpecialCreated(at);
+
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
             hud.SetTutorial(null);
             hintGuide.Hide();
@@ -886,6 +899,22 @@ namespace SugarDrop
             TryPlayLevel(1);
         }
 
+        private const int PortalBit = 1 << 30;
+
+        /// <summary>Bitul unei mecanici (0 pentru nivelurile obișnuite, care nu au nimic nou de arătat).</summary>
+        private static int MechanicBit(LevelType type) => type switch
+        {
+            LevelType.Crates or LevelType.Ice or LevelType.Chains or LevelType.Chocolate or LevelType.Specials
+                or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients => 1 << (int)type,
+            _ => 0,
+        };
+
+        private static bool IsNew(int bit) => bit != 0 && (Data.seenMechanics & bit) == 0;
+
+        /// <summary>Câte piese speciale aduce seria de victorii (nu la Sugar Rush, care nu are obiective).</summary>
+        private static int StreakSpecials(LevelConfig config) =>
+            config.IsBonus ? 0 : Data.winStreak >= 5 ? 2 : Data.winStreak >= 3 ? 1 : 0;
+
         private static string IntroText(LevelType type) => type switch
         {
             LevelType.Ingredients => SugarLoc.T("Adu bomboanele jos, în borcan!"),
@@ -907,6 +936,7 @@ namespace SugarDrop
         {
             if (!Data.levelInProgress) return;
             Data.levelInProgress = false;
+            Data.winStreak = 0;
             SugarSave.LoseLife();
         }
 
@@ -1062,6 +1092,7 @@ namespace SugarDrop
             Data.coins += coins;
             if (_level >= Data.level) Data.level = _level + 1;
             Data.levelInProgress = false;
+            if (!_config.IsBonus) Data.winStreak++;
             SugarSave.SetStars(_level, 1);
             SugarSave.Save();
             RefreshBoosters();
@@ -1156,7 +1187,12 @@ namespace SugarDrop
             mascot.SetSad();
             bool canContinue = !_continuedWithAd && !board.Stuck && !exploded;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
-            result.ShowLose(SugarLoc.T(exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
+            // Arătăm exact ce a mai lipsit (de ex. 2 ghivece): jucătorul vede cât de aproape a fost.
+            var missing = new List<(Sprite, Color, int)>();
+            if (_goals != null)
+                foreach (GoalItem item in _goals.Items)
+                    if (!item.Done) missing.Add((hud.GoalIcon(item), SugarHud.GoalColor(item), item.Remaining));
+            result.ShowLose(SugarLoc.T(exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap), missing);
         }
 
         private void ContinueWithMoves()
