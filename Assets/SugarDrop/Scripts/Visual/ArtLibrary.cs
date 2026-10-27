@@ -21,7 +21,7 @@ namespace SugarDrop
             "crate", "chocolate", "ice", "chain", "pot", "flame", "bomb", "rocket", "rainbow",
             "bobo", "bobohappy", "boboscared", "bobosad", "bobowave", "bobothumbs", "bobothink", "boboworried",
             "bobosleep", "bobolove", "bobocrystal", "bobogem", "bobostar", "boborun", "bobotoken", "bobotokenscared", "boss0", "boss1", "boss2", "boss3", "boss4", "boss5", "boss6",
-            "gift", "trophy", "lifeheart", "flower", "portal", "logo",
+            "intro", "introbg", "gift", "trophy", "lifeheart", "flower", "portal", "logo",
         };
 
         private static readonly Dictionary<string, Sprite> Loaded = new();

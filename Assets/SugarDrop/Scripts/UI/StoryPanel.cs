@@ -278,13 +278,42 @@ namespace SugarDrop
             _sky.color = Color.white;
             _sky.sprite = SugarSprites.Sky(0);
             _animate = page.Build(_scene);
-            _title.Text = _pretranslated ? page.Title : SugarLoc.T(page.Title);
+            SetTitle(_pretranslated ? page.Title : SugarLoc.T(page.Title));
             _fullText = _pretranslated ? page.Text : SugarLoc.T(page.Text);
             _typed = _welcomeBack ? _fullText.Length : 0f;
             _text.Text = _welcomeBack ? _fullText : "";
             _pageTime = 0f;
             for (int i = 0; i < _dots.Count; i++)
                 _dots[i].color = i == _page ? UiRoot.Theme.AccentColor : new Color(0.85f, 0.78f, 0.8f);
+        }
+
+        /// <summary>
+        /// Titlul paginii pe un rând; dacă e prea lung („Episodul 1: Bobo și Izvorul Fermecat”), pe două rânduri
+        /// (după „:” sau la mijloc), cu litere mai mici, iar textul poveștii coboară sub el ca să nu se suprapună.
+        /// </summary>
+        private void SetTitle(string title)
+        {
+            const float width = BookWidth - 80f;
+            const float charWidth = 0.52f; // lățimea medie a unei litere, din mărimea fontului
+            bool twoLines = title.Length * charWidth * 60f > width;
+            if (twoLines)
+            {
+                int cut = title.IndexOf(": ", StringComparison.Ordinal);
+                if (cut > 0) title = title.Substring(0, cut + 1) + "\n" + title.Substring(cut + 2);
+                else
+                {
+                    int middle = title.LastIndexOf(' ', title.Length / 2);
+                    if (middle < 0) middle = title.IndexOf(' ');
+                    if (middle > 0) title = title.Substring(0, middle) + "\n" + title.Substring(middle + 1);
+                }
+            }
+            int longest = 1;
+            foreach (string line in title.Split('\n')) longest = Mathf.Max(longest, line.Length);
+            int size = Mathf.Clamp(Mathf.FloorToInt(width / (longest * charWidth)), 32, 60);
+            _title.Text = "<size=" + size + ">" + title + "</size>";
+            float titleHeight = twoLines ? size * 2.5f : 90f;
+            _title.RectTransform.sizeDelta = new Vector2(width, titleHeight);
+            _text.RectTransform.anchoredPosition = new Vector2(0f, -SceneHeight - 100f - titleHeight);
         }
 
         private void ClearScene()

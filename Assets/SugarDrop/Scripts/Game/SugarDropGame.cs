@@ -37,6 +37,7 @@ namespace SugarDrop
         [SerializeField] private WheelPanel wheel;
         [SerializeField] private WardrobePanel wardrobe;
         [SerializeField] private EventsPanel eventsPanel;
+        [SerializeField] private IntroPanel intro;
         [SerializeField] private SettingsPanel settings;
         [SerializeField] private StoryPanel story;
         [SerializeField] private LevelStartPanel levelStart;
@@ -292,6 +293,13 @@ namespace SugarDrop
             // La revenire: „Bine ai revenit!” (pagina se închide singură).
             long away = Data.lastVisit > 0 ? SugarSave.Now - Data.lastVisit : 0;
             MarkVisit();
+            // Întâi intro-ul Drop Quest (imaginea jocului), apoi povestea sau „Bine ai revenit”.
+            if (intro != null) intro.Show(() => AfterIntro(away));
+            else AfterIntro(away);
+        }
+
+        private void AfterIntro(long away)
+        {
             if (string.IsNullOrEmpty(Data.nickname))
             {
                 story.ShowStory(() => welcome.Show(true, nickname =>
@@ -1239,6 +1247,11 @@ namespace SugarDrop
         {
             if (UITransitionController.Instance != null && UITransitionController.Instance.IsBusy) return;
             if (QuarryEmpire.AdService.Instance != null && QuarryEmpire.AdService.Instance.IsShowing) return;
+            if (intro != null && intro.IsOpen)
+            {
+                intro.Close();
+                return;
+            }
             if (dialog.IsOpen)
             {
                 dialog.Dismiss();
