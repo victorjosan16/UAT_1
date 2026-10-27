@@ -1368,7 +1368,10 @@ namespace SugarDrop
             bool rating = !chest && ShouldAskRating(_level);
             SugarNotifications.AskPermissionOnce();
             if (SugarCloudSave.Instance != null) SugarCloudSave.Instance.RequestUpload();
-            result.ShowWin(_level, stars, coins, () => Go(() =>
+            // Finalul de episod și cufărul capitolului se arată pe hartă, deci atunci rămân doar „următorul” și harta.
+            bool pending = chest;
+            int level = _level;
+            System.Action afterWin = () =>
             {
                 OpenMap();
                 // Primul Boss învins din ținut: finalul episodului, apoi cufărul capitolului.
@@ -1381,7 +1384,45 @@ namespace SugarDrop
                     });
                 else if (chest) ShowChapterChest(chapter);
                 else if (rating) AskRating();
-            }));
+            };
+            result.ShowWin(level, stars, _score, coins,
+                () => Go(() =>
+                {
+                    afterWin();
+                    if (!chest && !rating) PlayFromResult(level + 1);
+                }),
+                pending ? null : () => Go(() =>
+                {
+                    afterWin();
+                    if (!rating) OpenMenu();
+                }),
+                pending ? null : () => Go(() =>
+                {
+                    afterWin();
+                    if (!rating) PlayFromResult(level);
+                }),
+                () => Go(afterWin));
+        }
+
+        /// <summary>
+        /// Pornește un nivel direct din fereastra de final (suntem deja în tranziție, pe hartă): fără vieți apare
+        /// fereastra de vieți, altfel cartea de start sau direct nivelul.
+        /// </summary>
+        private void PlayFromResult(int level)
+        {
+            level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
+            SugarSave.UpdateLives();
+            if (Data.lives <= 0)
+            {
+                ShowNoLives();
+                return;
+            }
+            if (StartBoosters.Offered(level) && Data.tutorialDone)
+            {
+                _useRocket = _useBomb = false;
+                ShowLevelStart(level);
+            }
+            else StartLevel(level);
         }
 
         /// <param name="inPopup">Punctele intră în cifra care sare la finalul mutării (bomboanele din borcan, nu).</param>
@@ -1412,7 +1453,11 @@ namespace SugarDrop
                 foreach (GoalItem item in _goals.Items)
                     if (!item.Done) missing.Add((hud.GoalIcon(item), SugarHud.GoalColor(item), item.Remaining));
             string reason = burned ? "Focul l-a ajuns pe Bobo!" : exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!";
-            result.ShowLose(SugarLoc.T(reason), () => Go(RetryLevel), onAd, () => Go(LeaveToMap), missing);
+            result.ShowLose(SugarLoc.T(reason), () => Go(RetryLevel), onAd, () => Go(LeaveToMap), () => Go(() =>
+            {
+                LeaveToMap();
+                OpenMenu();
+            }), missing);
         }
 
         private void ContinueWithMoves()

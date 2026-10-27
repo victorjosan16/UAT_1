@@ -995,6 +995,17 @@ namespace SugarDrop
             return Mathf.Min(roof, body);
         }));
 
+        /// <summary>Acul de hartă (butonul „Harta”): cap rotund cu gaură și vârf în jos.</summary>
+        public static Sprite MapPin => Get("mappin", () => Mask(128, (x, y) =>
+        {
+            Vector2 p = new(x, y);
+            float head = Vector2.Distance(p, new Vector2(64f, 82f)) - 34f;
+            float t = Mathf.Clamp01((82f - y) / 66f);
+            float tail = Mathf.Max(Mathf.Abs(x - 64f) - Mathf.Lerp(28f, 2f, t), Mathf.Max(y - 82f, 16f - y));
+            float hole = Vector2.Distance(p, new Vector2(64f, 84f)) - 14f;
+            return Mathf.Max(Mathf.Min(head, tail), -hole);
+        }));
+
         /// <summary>Trofeu (clasament): cupă cu toarte, picior și soclu.</summary>
         public static Sprite Trophy => Get("trophy", () => Mask(128, (x, y) =>
         {

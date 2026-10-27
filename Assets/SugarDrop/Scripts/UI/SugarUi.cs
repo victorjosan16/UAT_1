@@ -70,7 +70,6 @@ namespace SugarDrop
             return builder.ToString();
         }
 
-        /// <summary>Buton „3D” al jocului, cu animația de apăsare Sugar Drop (în locul celei generice).</summary>
         /// <summary>
         /// Card crem „în relief” (stilul Drop Quest): o muchie maro dedesubt și fața deasupra. Întoarce rădăcina
         /// (de așezat) și fața (unde se pune conținutul).
@@ -89,6 +88,7 @@ namespace SugarDrop
         /// <summary>Muchia de sub cardurile crem.</summary>
         public static readonly Color CardEdge = new(0.79f, 0.66f, 0.47f);
 
+        /// <summary>Buton „3D” al jocului, cu animația de apăsare a jocului (în locul celei generice).</summary>
         public static Button Button(string name, Transform parent, string text, Color color, System.Action onClick, float fontSize = 40f)
         {
             Button button = UiFactory.CreateButton(name, parent, text, color, onClick, fontSize);
