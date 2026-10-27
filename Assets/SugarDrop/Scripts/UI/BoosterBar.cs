@@ -54,6 +54,9 @@ namespace SugarDrop
             _hint.gameObject.SetActive(false);
         }
 
+        /// <summary>Butonul din mijloc (+5 mutări), spre care arată tutorialul.</summary>
+        public RectTransform MiddleButton => _buttons[1];
+
         public void SetCounts(int bombs, int moves, int shuffles)
         {
             int[] values = { bombs, moves, shuffles };

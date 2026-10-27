@@ -88,6 +88,15 @@ Jocul are 9 limbi: engleză (implicită), română, spaniolă, portugheză, fran
 - Limbi cu alt alfabet (rusă, japoneză, chineză, coreeană, arabă, hindi) ar avea nevoie de un font în plus:
   Baloo 2 are doar litere latine.
 
+## Meniul principal și antrenamentul
+- **Meniul** (`UI/MainMenu.cs`): cerul capitolului curent, ploaie de bomboane, Bobo care respiră, clipește, sare
+  când îl atingi și vorbește (salut, cadoul zilei, misiunile, nivelul următor), butonul „Joacă” care pulsează și
+  strălucește, stelele și monedele, plus scurtături: Cadou, Misiuni, Clasament, Setări (cu punct roșu când e ceva nou).
+- **Antrenamentul de la nivelul 1** (`UI/TutorialCoach.cs`, tabla din `Core/TutorialBoard.cs`): 3 la fel în linie →
+  4 la rând fac o rachetă → mută racheta → obiectivul (săgeată spre el) → mutările → ajutoarele → „Acum e rândul
+  tău!”. Pașii de joc arată gestul pe tablă; explicațiile opresc tabla până la „Am înțeles”. Se poate revedea din
+  **Setări → Revezi tutorialul**.
+
 ## Capitole, obiective, zilnic
 - **Capitole:** la fiecare 10 niveluri se schimbă tema (cer, tablă, bastoane, harta): Câmpia de Căpșuni, Pădurea de
   Mentă, Lacul de Afine ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol

@@ -90,13 +90,15 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Construire
 
-        public void Build(LevelConfig config, Vector2 bottomCenter, int seed)
+        /// <param name="layout">Culorile de start pentru fiecare celulă (tabla pregătită a tutorialului); null = tablă aleatoare.</param>
+        public void Build(LevelConfig config, Vector2 bottomCenter, int seed, Func<Vector2Int, int> layout = null)
         {
             Clear();
             Columns = config.Columns;
             Rows = config.Rows;
             _bottomCenter = bottomCenter;
             _engine = new BlastEngine(config, seed);
+            if (layout != null) _engine.DebugFill(layout);
             BuildMask();
             BuildCells(config);
             foreach (PieceInfo piece in _engine.AllPieces()) CreateTile(piece, CellCenter(piece.Cell));
@@ -249,6 +251,23 @@ namespace SugarDrop
         }
 
         public bool HasValidMove() => _engine != null && _engine.HasValidMove();
+
+        /// <summary>Prima piesă specială de pe tablă (pentru tutorial).</summary>
+        public bool TryFindSpecial(out Vector2Int cell)
+        {
+            cell = default;
+            if (_engine == null) return false;
+            foreach (PieceInfo piece in _engine.AllPieces())
+            {
+                if (!BlastRules.IsSpecial(piece.Kind) || piece.Ice > 0 || piece.Chained) continue;
+                cell = piece.Cell;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Schimbul e valid acum (pentru indiciile tutorialului).</summary>
+        public bool IsValidSwap(Vector2Int a, Vector2Int b) => _engine != null && _engine.IsValidSwap(a, b);
 
         /// <summary>Cel mai bun schimb: piesa de mutat și celula vecină spre care se mută.</summary>
         public bool TryFindBestHint(Func<int, int> colorWeight, out Vector2Int from, out Vector2Int to)

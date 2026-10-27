@@ -180,6 +180,7 @@ namespace SugarDrop.EditorTools
             public MainMenu Menu;
             public WelcomePanel Welcome;
             public LeaderboardPanel Leaderboard;
+            public TutorialCoach Coach;
         }
 
         private static void BuildGame(Camera camera, PhysicsMaterial2D material, Ui ui)
@@ -217,6 +218,7 @@ namespace SugarDrop.EditorTools
             Set(game, "menu", ui.Menu);
             Set(game, "welcome", ui.Welcome);
             Set(game, "leaderboard", ui.Leaderboard);
+            Set(game, "coach", ui.Coach);
         }
 
         private static Ui BuildUi(UiTheme theme)
@@ -242,6 +244,7 @@ namespace SugarDrop.EditorTools
             {
                 Hud = UiComponent<SugarHud>(safe, "Hud"),
                 Boosters = UiComponent<BoosterBar>(safe, "Boosters"),
+                Coach = UiComponent<TutorialCoach>(safe, "Coach"),
                 Result = UiComponent<ResultPanel>(canvasGo.transform, "Result"),
                 Map = UiComponent<MapScreen>(safe, "Map"),
                 Menu = UiComponent<MainMenu>(canvasGo.transform, "Menu"),

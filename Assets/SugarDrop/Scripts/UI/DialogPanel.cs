@@ -72,8 +72,12 @@ namespace SugarDrop
             bool hasMessage = !string.IsNullOrEmpty(_message.Text);
             _message.gameObject.SetActive(hasMessage);
 
+            // Multe butoane (Setări): rânduri mai joase, ca fereastra să încapă pe ecran.
+            bool compact = buttons.Length > 8;
+            float buttonHeight = compact ? 100f : ButtonHeight;
+            float gap = compact ? 14f : ButtonGap;
             float top = hasMessage ? 280f : 170f;
-            float height = top + buttons.Length * (ButtonHeight + ButtonGap) + 30f;
+            float height = top + buttons.Length * (buttonHeight + gap) + 30f;
             SugarUi.ResizeBox(_box, new Vector2(Width, height));
 
             for (int i = 0; i < buttons.Length; i++)
@@ -86,7 +90,7 @@ namespace SugarDrop
                     data.Action?.Invoke();
                 }, 42);
                 UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(0f, -top - i * (ButtonHeight + ButtonGap)), new Vector2(Width - 160f, ButtonHeight));
+                    new Vector2(0f, -top - i * (buttonHeight + gap)), new Vector2(Width - 160f, buttonHeight));
                 _buttons.Add(button.gameObject);
             }
 

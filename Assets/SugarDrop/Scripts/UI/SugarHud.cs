@@ -93,7 +93,7 @@ namespace SugarDrop
 
             // Mutările rămase (dreapta sus) și butonul de pauză.
             Image movesDisc = UiFactory.CreateImage("MovesDisc", transform, theme.Circle, theme.AccentColor);
-            UiFactory.Place(movesDisc.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-148f, -14f), new Vector2(124f, 124f));
+            MovesArea = UiFactory.Place(movesDisc.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-148f, -14f), new Vector2(124f, 124f));
             _movesPunch = movesDisc.gameObject.AddComponent<PunchScale>();
             _moves = UiFactory.CreateText("Moves", movesDisc.transform, "", 54, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Place(_moves.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(110f, 66f));
@@ -413,6 +413,10 @@ namespace SugarDrop
             GoalKind.Score => UiRoot.Theme.AccentColor,
             _ => Color.white,
         };
+
+        /// <summary>Cardul cu obiectivele și discul cu mutări (pentru săgețile tutorialului).</summary>
+        public RectTransform GoalArea => _goalCard;
+        public RectTransform MovesArea { get; private set; }
 
         public void SetTutorial(string text)
         {

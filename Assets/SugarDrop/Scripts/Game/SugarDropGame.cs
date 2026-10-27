@@ -33,6 +33,7 @@ namespace SugarDrop
         [SerializeField] private MainMenu menu;
         [SerializeField] private WelcomePanel welcome;
         [SerializeField] private LeaderboardPanel leaderboard;
+        [SerializeField] private TutorialCoach coach;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -58,7 +59,11 @@ namespace SugarDrop
         private bool _playfieldBuilt;
         private bool _continuedWithAd;
         private bool _warnedLastMoves;
-        private bool _tutorialActive;
+        private enum TutorialStep { None, Match, Rocket, Fire, Goal, Moves, Boosters }
+
+        private TutorialStep _tutorial;
+        /// <summary>O mutare din tutorial s-a făcut; pasul următor vine după ce tabla se liniștește.</summary>
+        private bool _tutorialWaiting;
         private int _popChain;
         private int _score;
         private int _movePoints;
@@ -124,6 +129,10 @@ namespace SugarDrop
             map.GiftClicked += ShowGift;
             map.MissionsClicked += ShowMissions;
             menu.PlayClicked += OpenMapAnimated;
+            menu.GiftClicked += ShowGift;
+            menu.MissionsClicked += ShowMissions;
+            menu.LeaderboardClicked += ShowLeaderboard;
+            menu.SettingsClicked += ShowMapSettings;
             SugarCloudSave.Restored += OnCloudRestored;
         }
 
@@ -156,6 +165,10 @@ namespace SugarDrop
             map.GiftClicked -= ShowGift;
             map.MissionsClicked -= ShowMissions;
             menu.PlayClicked -= OpenMapAnimated;
+            menu.GiftClicked -= ShowGift;
+            menu.MissionsClicked -= ShowMissions;
+            menu.LeaderboardClicked -= ShowLeaderboard;
+            menu.SettingsClicked -= ShowMapSettings;
             SugarCloudSave.Restored -= OnCloudRestored;
         }
 
@@ -224,6 +237,16 @@ namespace SugarDrop
 
         // ------------------------------------------------------------ Cadoul zilnic și misiunile
 
+        /// <summary>Meniul sau harta (de unde se deschid cadoul, misiunile, clasamentul și setările).</summary>
+        private bool OnHomeScreen => _state == State.Map || _state == State.Menu;
+
+        /// <summary>Monedele, stelele și punctele roșii de pe ecranul deschis.</summary>
+        private void RefreshHome()
+        {
+            map.Refresh();
+            if (menu.IsOpen) menu.RefreshCounters();
+        }
+
         private bool _giftOffered;
 
         /// <summary>La prima deschidere a hărții dintr-o zi nouă, cadoul apare singur.</summary>
@@ -236,7 +259,7 @@ namespace SugarDrop
 
         private void ShowGift()
         {
-            if (_state != State.Map || dialog.IsOpen) return;
+            if (!OnHomeScreen || dialog.IsOpen) return;
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             if (!SugarDaily.GiftAvailable)
             {
@@ -257,7 +280,7 @@ namespace SugarDrop
             if (!SugarDaily.GiftAvailable) return;
             DailyGift gift = SugarDaily.ClaimGift(multiplier);
             RefreshBoosters();
-            map.Refresh();
+            RefreshHome();
             if (Audio != null) Audio.Play(SugarSound.Win);
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
             UiThemeColors(out Color positive, out Color ad, out Color panel);
@@ -280,7 +303,7 @@ namespace SugarDrop
 
         private void ShowMissions()
         {
-            if (_state != State.Map) return;
+            if (!OnHomeScreen) return;
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             Mission[] missions = SugarDaily.Missions;
             var buttons = new List<DialogButton>();
@@ -308,7 +331,7 @@ namespace SugarDrop
             if (coins <= 0) return;
             if (Audio != null) Audio.Play(SugarSound.Win);
             SugarAudio.Buzz(1);
-            map.Refresh();
+            RefreshHome();
             ShowMissions();
         }
 
@@ -390,7 +413,7 @@ namespace SugarDrop
 
         private void ShowLeaderboard()
         {
-            if (_state != State.Map || dialog.IsOpen) return;
+            if (!OnHomeScreen || dialog.IsOpen) return;
             leaderboard.Show();
         }
 
@@ -468,6 +491,7 @@ namespace SugarDrop
             result.Hide();
             dialog.Hide();
             hintGuide.Hide();
+            StopTutorial();
             SetGameplayUi(false);
             mascot.SetIdle();
             map.Show();
@@ -521,7 +545,9 @@ namespace SugarDrop
             _config = LevelConfig.For(_level);
             int chapter = ChapterTheme.ChapterOf(_level);
             if (Backdrop.Instance != null) Backdrop.Instance.ApplyTheme(chapter);
-            board.Build(_config, new Vector2(0f, boardBottomY), Random.Range(1, int.MaxValue));
+            // Antrenamentul de la nivelul 1 are tabla pregătită (mutări clare pentru fiecare pas).
+            bool tutorial = _level == 1 && !Data.tutorialDone;
+            board.Build(_config, new Vector2(0f, boardBottomY), Random.Range(1, int.MaxValue), tutorial ? (System.Func<Vector2Int, int>)TutorialBoard.ColorAt : null);
 
             if (!_playfieldBuilt)
             {
@@ -575,20 +601,128 @@ namespace SugarDrop
             else hud.ShowBanner(IntroText(_config.Type));
 
             // Tutorialul: doar la primul nivel, până la prima mutare reușită.
-            _tutorialActive = _level == 1 && !Data.tutorialDone && board.TryFindBestHint(null, out _, out _);
-            if (_tutorialActive && board.TryFindBestHint(null, out Vector2Int from, out Vector2Int to))
+            hud.SetTutorial(null);
+            hintGuide.Hide();
+            coach.Hide();
+            _tutorialWaiting = false;
+            _tutorial = tutorial ? TutorialStep.Match : TutorialStep.None;
+            if (tutorial) ShowTutorialStep();
+        }
+
+        // ------------------------------------------------------------ Antrenamentul de la nivelul 1
+
+        /// <summary>
+        /// Pașii: 3 la fel în linie → 4 la rând fac o rachetă → mută racheta ca să explodeze → obiectivul → mutările →
+        /// ajutoarele. Pașii de joc au indiciul cu degetul pe tablă; explicațiile opresc tabla până la „Am înțeles”.
+        /// </summary>
+        private void ShowTutorialStep()
+        {
+            hintGuide.Hide();
+            switch (_tutorial)
             {
-                hud.SetTutorial(SugarLoc.T(TutorialText));
-                hintGuide.Show(board.transform.TransformPoint(board.CellCenter(from)), board.transform.TransformPoint(board.CellCenter(to)));
-            }
-            else
-            {
-                hud.SetTutorial(null);
-                hintGuide.Hide();
+                case TutorialStep.Match:
+                    coach.ShowAction(SugarLoc.T("Trage o bomboană ca să faci 3 la fel în linie!"));
+                    ShowSwapHint(TutorialBoard.MatchFrom, TutorialBoard.MatchTo);
+                    break;
+                case TutorialStep.Rocket:
+                    coach.ShowAction(SugarLoc.T("Bravo! Acum fă 4 la rând: așa se face o rachetă!"));
+                    ShowSwapHint(TutorialBoard.RocketFrom, TutorialBoard.RocketTo);
+                    break;
+                case TutorialStep.Fire:
+                    if (!board.TryFindSpecial(out Vector2Int rocket) || !TryNeighbour(rocket, out Vector2Int neighbour))
+                    {
+                        NextTutorialStep();
+                        return;
+                    }
+                    coach.ShowAction(SugarLoc.T("Ai o rachetă! Mut-o ca să explodeze și să curețe o linie întreagă."));
+                    ShowSwapHint(rocket, neighbour);
+                    break;
+                case TutorialStep.Goal:
+                    coach.ShowInfo(SugarLoc.T("Sus vezi obiectivul nivelului. Îndeplinește-l ca să câștigi!"), hud.GoalArea, true, NextTutorialStep);
+                    break;
+                case TutorialStep.Moves:
+                    coach.ShowInfo(SugarLoc.T("Aici vezi câte mutări mai ai. Fiecare schimb costă o mutare."), hud.MovesArea, true, NextTutorialStep);
+                    break;
+                case TutorialStep.Boosters:
+                    coach.ShowInfo(SugarLoc.T("Ajutoarele te scot din încurcătură: bombă, +5 mutări și amestecare."), boosters.MiddleButton, false, NextTutorialStep);
+                    break;
             }
         }
 
-        private const string TutorialText = "Trage o bomboană ca să faci 3 la fel în linie!";
+        /// <summary>Indiciul pe tablă: mutarea pregătită, sau cea mai bună mutare dacă tabla s-a schimbat între timp.</summary>
+        private void ShowSwapHint(Vector2Int from, Vector2Int to)
+        {
+            if (!board.IsValidSwap(from, to) && !board.TryFindBestHint(null, out from, out to)) return;
+            hintGuide.Show(board.transform.TransformPoint(board.CellCenter(from)), board.transform.TransformPoint(board.CellCenter(to)));
+        }
+
+        private bool TryNeighbour(Vector2Int cell, out Vector2Int neighbour)
+        {
+            foreach (Vector2Int d in new[] { Vector2Int.up, Vector2Int.left, Vector2Int.right, Vector2Int.down })
+            {
+                neighbour = cell + d;
+                if (board.IsValidSwap(cell, neighbour)) return true;
+            }
+            neighbour = cell;
+            return false;
+        }
+
+        /// <summary>După o mutare din tutorial (tabla liniștită): racheta apare doar dacă s-a făcut; altfel trecem la explicații.</summary>
+        private void AfterTutorialMove()
+        {
+            switch (_tutorial)
+            {
+                case TutorialStep.Match: _tutorial = TutorialStep.Rocket; break;
+                case TutorialStep.Rocket: _tutorial = board.TryFindSpecial(out _) ? TutorialStep.Fire : TutorialStep.Goal; break;
+                default: _tutorial = TutorialStep.Goal; break;
+            }
+            ShowTutorialStep();
+        }
+
+        private void NextTutorialStep()
+        {
+            _tutorial = _tutorial switch
+            {
+                TutorialStep.Fire => TutorialStep.Goal,
+                TutorialStep.Goal => TutorialStep.Moves,
+                TutorialStep.Moves => TutorialStep.Boosters,
+                _ => TutorialStep.None,
+            };
+            if (_tutorial != TutorialStep.None)
+            {
+                ShowTutorialStep();
+                return;
+            }
+            FinishTutorial();
+            hud.ShowBanner(SugarLoc.T("Acum e rândul tău! Atinge scorul."));
+        }
+
+        private void FinishTutorial()
+        {
+            _tutorial = TutorialStep.None;
+            _tutorialWaiting = false;
+            coach.Hide();
+            hintGuide.Hide();
+            if (Data.tutorialDone) return;
+            Data.tutorialDone = true;
+            SugarSave.Save();
+        }
+
+        /// <summary>Nivelul s-a terminat sau jucătorul a ieșit: antrenamentul nu mai apare.</summary>
+        private void StopTutorial()
+        {
+            if (_tutorial != TutorialStep.None) FinishTutorial();
+            coach.Hide();
+        }
+
+        /// <summary>Din Setări: antrenamentul apare din nou la nivelul 1.</summary>
+        private void ReplayTutorial()
+        {
+            Data.tutorialDone = false;
+            SugarSave.Save();
+            if (_state == State.Menu) OpenMap();
+            TryPlayLevel(1);
+        }
 
         private static string IntroText(LevelType type) => type switch
         {
@@ -646,7 +780,7 @@ namespace SugarDrop
 
             // Fără mutări rămase (sau cu obiectivele îndeplinite) tabla nu mai primește atingeri: altfel, cât timp
             // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
-            bool canTap = _moves > 0 && !_goals.IsComplete;
+            bool canTap = _moves > 0 && !_goals.IsComplete && !coach.Blocking;
             if (input.enabled != canTap) input.enabled = canTap;
 
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
@@ -657,7 +791,14 @@ namespace SugarDrop
             }
 
             // Indiciu după o pauză lungă: două capace care se pot schimba tremură.
-            if (!board.Busy && input.TapTarget == null && !_tutorialActive)
+            // Pasul următor al antrenamentului, după ce mutarea s-a rezolvat complet.
+            if (_tutorialWaiting && !board.Busy)
+            {
+                _tutorialWaiting = false;
+                AfterTutorialMove();
+            }
+
+            if (!board.Busy && input.TapTarget == null && _tutorial == TutorialStep.None)
             {
                 _idleTime += dt;
                 if (_idleTime >= (_level <= 3 ? 4f : idleHintSeconds))
@@ -717,6 +858,7 @@ namespace SugarDrop
             CancelBomb();
             hintGuide.Hide();
             hud.SetTutorial(null);
+            StopTutorial();
 
             // Progresul se salvează imediat (dacă aplicația se închide în timpul finalului, nivelul rămâne trecut).
             // Cufărul Boss-ului: monede duble și câte un ajutor din fiecare (Mega-Boss: triple și câte două).
@@ -818,6 +960,7 @@ namespace SugarDrop
             _state = State.Result;
             input.enabled = false;
             CancelBomb();
+            StopTutorial();
             if (Audio != null) Audio.Play(SugarSound.Lose);
             SugarAudio.Buzz(1);
             mascot.SetSad();
@@ -887,6 +1030,7 @@ namespace SugarDrop
             if (!inGame)
             {
                 buttons.Add(new DialogButton(SugarLoc.F("NICKNAME: {0}", Data.nickname), panel, () => welcome.Show(false, SetNickname)));
+                buttons.Add(new DialogButton(SugarLoc.T("REVEZI TUTORIALUL"), panel, ReplayTutorial));
                 buttons.Add(new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
             }
 
@@ -936,7 +1080,7 @@ namespace SugarDrop
             if ((_state == State.Playing || _state == State.Result) && _boss != null) hud.SetBoss(_boss);
             if (map.IsOpen) map.Refresh();
             if (menu.IsOpen) menu.Show();
-            if (_tutorialActive) hud.SetTutorial(SugarLoc.T(TutorialText));
+            if (_tutorial != TutorialStep.None) ShowTutorialStep();
         }
 
         private static void UiThemeColors(out Color positive, out Color ad, out Color panel)
@@ -1074,13 +1218,10 @@ namespace SugarDrop
             if (_boss != null) _bossTurnPending = true;
             if (_moves <= 0) input.enabled = false; // ultima mutare: nicio atingere în plus până la final
 
-            if (_tutorialActive)
+            if (_tutorial is TutorialStep.Match or TutorialStep.Rocket or TutorialStep.Fire)
             {
-                _tutorialActive = false;
-                Data.tutorialDone = true;
-                SugarSave.Save();
                 hintGuide.Hide();
-                hud.SetTutorial(null);
+                _tutorialWaiting = true;
             }
             if (_moves == 3 && !_warnedLastMoves)
             {
