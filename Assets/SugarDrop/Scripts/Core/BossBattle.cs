@@ -14,6 +14,8 @@ namespace SugarDrop
         Lock,
         /// <summary>Amestecă bomboanele.</summary>
         Shuffle,
+        /// <summary>Pune bombe cu ceas pe câteva bomboane (trebuie eliminate înainte să ajungă la 0).</summary>
+        TimeBomb,
     }
 
     /// <summary>O fază a luptei: de la ce procent de viață începe, ce atacuri folosește (pe rând) și cât de des.</summary>
@@ -55,7 +57,7 @@ namespace SugarDrop
                 {
                     new BossPhase { FromHealth = 1f, Attacks = new[] { BossAttack.ChocolateSpread }, AttackEvery = every + 1, Strength = 2 + tier },
                     new BossPhase { FromHealth = 0.66f, Attacks = new[] { BossAttack.Freeze, BossAttack.Lock }, AttackEvery = every, Strength = 3 + tier },
-                    new BossPhase { FromHealth = 0.33f, Attacks = new[] { BossAttack.ChocolateSpread, BossAttack.Freeze, BossAttack.Lock, BossAttack.Shuffle }, AttackEvery = every, Strength = 3 + tier },
+                    new BossPhase { FromHealth = 0.33f, Attacks = new[] { BossAttack.ChocolateSpread, BossAttack.Freeze, BossAttack.Lock, BossAttack.Shuffle, BossAttack.TimeBomb }, AttackEvery = every, Strength = 3 + tier },
                 };
             }
             else
@@ -91,6 +93,13 @@ namespace SugarDrop
                         if (!combined.Contains(extra)) combined.Add(extra);
                     attacks = combined.ToArray();
                 }
+                // Atacul ținutului: fiecare Boss aduce și „semnătura” locului în care stă.
+                BossAttack? land = LandAttack(level);
+                if (land.HasValue && Array.IndexOf(attacks, land.Value) < 0)
+                {
+                    var withLand = new List<BossAttack>(attacks) { land.Value };
+                    attacks = withLand.ToArray();
+                }
                 boss.Phases = new[]
                 {
                     new BossPhase { FromHealth = 1f, Attacks = attacks, AttackEvery = level > 50 ? 3 : 4, Strength = 2 + Math.Min(3, tier) },
@@ -102,6 +111,25 @@ namespace SugarDrop
             boss.Health = (int)(moves * BossRules.ExpectedDamagePerMove * (mega ? 0.8f : 0.72f));
             return boss;
         }
+
+        /// <summary>
+        /// Atacul fiecărui ținut: Pădurea de Mentă leagă (liane), Lacul de Afine amestecă (valuri), Deșertul de Lămâie
+        /// și Galaxia pun bombe cu ceas, Castelul și Muntele de Ciocolată întind ciocolată, Regatul de Gheață
+        /// îngheață, Canionul de Caramel lipește (lanțuri), Norii de Vată amestecă.
+        /// </summary>
+        public static BossAttack? LandAttack(int level) => ((Math.Max(1, level) - 1) / LevelConfig.ChapterSize % 10) switch
+        {
+            1 => BossAttack.Lock,
+            2 => BossAttack.Shuffle,
+            3 => BossAttack.TimeBomb,
+            4 => BossAttack.ChocolateSpread,
+            5 => BossAttack.ChocolateSpread,
+            6 => BossAttack.Freeze,
+            7 => BossAttack.Lock,
+            8 => BossAttack.Shuffle,
+            9 => BossAttack.TimeBomb,
+            _ => null,
+        };
 
         public BossPhase PhaseFor(float healthFraction)
         {

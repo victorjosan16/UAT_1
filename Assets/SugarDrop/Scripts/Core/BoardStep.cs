@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SugarDrop
 {
-    public enum StepKind { Clear, Fall, Exit, Shuffle, Grow, BossAttack, Swap }
+    public enum StepKind { Clear, Fall, Exit, Shuffle, Grow, BossAttack, Swap, Tick }
 
     /// <summary>Starea unei piese într-un pas (pentru animații).</summary>
     public struct PieceInfo
@@ -16,8 +16,10 @@ namespace SugarDrop
         public int Ice;
         /// <summary>Bomboană legată cu lanț: nu se poate atinge și nu cade până nu se rupe lanțul.</summary>
         public bool Chained;
-        /// <summary>Loviturile rămase ale unei lăzi / ciocolate.</summary>
+        /// <summary>Loviturile rămase ale unei lăzi / ciocolate / ghiveci.</summary>
         public int Hits;
+        /// <summary>Bombă cu ceas: câte mutări mai are (0 = bomboană obișnuită).</summary>
+        public int Timer;
     }
 
     /// <summary>O piesă care cade (sau una nouă care intră de sus: From e deasupra tablei).</summary>
@@ -27,6 +29,8 @@ namespace SugarDrop
         public Vector2Int From;
         public Vector2Int To;
         public bool Spawned;
+        /// <summary>Piesa a trecut printr-un portal (de jos, din coloana de intrare, sus, în coloana de ieșire).</summary>
+        public bool Portal;
     }
 
     /// <summary>Un capac special care s-a activat și celulele lovite.</summary>
@@ -68,6 +72,8 @@ namespace SugarDrop
         public readonly List<PieceMove> Moves = new();
         /// <summary>Bomboanele care au ieșit jos, spre borcan.</summary>
         public readonly List<PieceInfo> Exits = new();
+        /// <summary>Bombele cu ceas care au ajuns la 0 în acest pas (nivel pierdut).</summary>
+        public readonly List<PieceInfo> Expired = new();
         /// <summary>Straturi de gheață sparte și lanțuri rupte în acest pas (pentru obiective).</summary>
         public int IceLayersBroken;
         public int ChainsBroken;

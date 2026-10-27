@@ -19,6 +19,8 @@ namespace SugarDrop
         Crate,
         /// <summary>Ciocolată (obstacol): ca lada, dar crește dacă într-o mutare nu e lovită nicio ciocolată.</summary>
         Chocolate,
+        /// <summary>Ghiveci cu floare (Pădurea de Mentă): nu se mișcă; liniile vecine îl „udă” (3 lovituri) până înflorește.</summary>
+        Pot,
     }
 
     /// <summary>Pragurile pentru piesele speciale (configurabile într-un singur loc).</summary>
@@ -33,6 +35,8 @@ namespace SugarDrop
         public const int BombSize = 3;
         public const int BombComboSize = 5;
         public const int MaxIce = 3;
+        /// <summary>De câte ori trebuie „udat” un ghiveci până înflorește.</summary>
+        public const int PotHits = 3;
 
         /// <summary>Ce piesă specială iese dintr-un grup de mărimea dată (Normal = niciuna).</summary>
         public static TileKind SpecialForGroup(int size, bool horizontal) =>

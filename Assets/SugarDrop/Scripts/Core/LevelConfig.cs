@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -29,8 +29,14 @@ namespace SugarDrop
         {
             LevelType.Collect, LevelType.Ingredients, LevelType.Crates, LevelType.Frosting, LevelType.Specials,
             LevelType.Ice, LevelType.Score, LevelType.Ingredients, LevelType.Chains, LevelType.Frosting,
-            LevelType.Chocolate, LevelType.Collect, LevelType.Specials, LevelType.Crates,
+            LevelType.Chocolate, LevelType.Collect, LevelType.Specials, LevelType.Crates, LevelType.Garden, LevelType.Defuse,
         };
+
+        /// <summary>Nivelul bonus „Sugar Rush” (pe timp, fără pierdere): al 5-lea din fiecare capitol, de la nivelul 15.</summary>
+        public static bool IsBonusLevel(int level) => level >= 15 && level % ChapterSize == 5;
+
+        /// <summary>De la ce nivel apar portalurile (Lacul de Afine).</summary>
+        public const int PortalsFrom = 21;
 
         public readonly int Level;
         public readonly int Chapter;
@@ -56,6 +62,18 @@ namespace SugarDrop
         public readonly int ScoreTarget;
         /// <summary>Câte piese speciale trebuie activate (nivelurile „Piese speciale”).</summary>
         public readonly int SpecialsTarget;
+        /// <summary>Ghivece cu flori pe tablă (Pădurea de Mentă).</summary>
+        public readonly int Pots;
+        /// <summary>Bombe cu ceas: câte sunt pe tablă deodată, de la ce număr pornesc și câte trebuie dezamorsate.</summary>
+        public readonly int TimeBombs;
+        public readonly int TimeBombStart;
+        public readonly int TimeBombGoal;
+        /// <summary>Portaluri (Lacul de Afine): piesa de jos din coloana PortalIn[i] iese sus în coloana PortalOut[i].</summary>
+        public readonly int[] PortalIn;
+        public readonly int[] PortalOut;
+        /// <summary>Secundele nivelului bonus (0 = nivel obișnuit, cu mutări).</summary>
+        public readonly int BonusSeconds;
+        public bool IsBonus => Type == LevelType.Bonus;
 
         // Obstacole.
         public readonly int Crates;
@@ -70,7 +88,8 @@ namespace SugarDrop
 
         private LevelConfig(int level, Difficulty difficulty, int colors, int moves, LevelType type, int[] bottom, int[] top,
             int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget, int specialsTarget,
-            int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate)
+            int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate,
+            int pots, int timeBombs, int timeBombStart, int timeBombGoal, int[] portalIn, int[] portalOut, int bonusSeconds)
         {
             Level = level;
             Chapter = (level - 1) / ChapterSize;
@@ -96,6 +115,13 @@ namespace SugarDrop
             IceLayers = iceLayers;
             Chains = chains;
             Chocolate = chocolate;
+            Pots = pots;
+            TimeBombs = timeBombs;
+            TimeBombStart = timeBombStart;
+            TimeBombGoal = timeBombGoal;
+            PortalIn = portalIn;
+            PortalOut = portalOut;
+            BonusSeconds = bonusSeconds;
         }
 
         public static bool IsBossLevel(int level) => level > 0 && level % ChapterSize == 0;
@@ -118,12 +144,20 @@ namespace SugarDrop
             level = Mathf.Max(1, level);
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
+            if (IsBonusLevel(level)) return LevelType.Bonus;
+            // Mecanica ținutului e „vedeta” lui: în Pădurea de Mentă (11–20) grădinile, în Deșertul de Lămâie (31–40)
+            // bombele cu ceas apar la fiecare al treilea nivel; după aceea intră în rotația obișnuită.
+            int chapterIndex = (level - 1) % ChapterSize;
+            int chapterOfLevel = (level - 1) / ChapterSize;
+            if (chapterOfLevel == 1 && chapterIndex % 3 == 1) return LevelType.Garden;
+            if (chapterOfLevel == 3 && chapterIndex % 3 == 1) return LevelType.Defuse;
             LevelType type = Cycle[(level - 2) % Cycle.Length];
             return Unlocked(type, level) ? type : type switch
             {
                 LevelType.Chocolate => LevelType.Ingredients,
                 LevelType.Ice => LevelType.Frosting,
                 LevelType.Specials => LevelType.Score,
+                LevelType.Defuse => LevelType.Frosting,
                 _ => LevelType.Collect,
             };
         }
@@ -136,6 +170,8 @@ namespace SugarDrop
             LevelType.Ice => level >= 7,
             LevelType.Chains => level >= 12,
             LevelType.Chocolate => level >= 25,
+            LevelType.Garden => level >= 11,
+            LevelType.Defuse => level >= 31,
             _ => true,
         };
 
@@ -206,6 +242,7 @@ namespace SugarDrop
             for (int x = 0; x < BoardColumns; x++) valid += top[x] - bottom[x] + 1;
 
             int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0, specialsTarget = 0;
+            int pots = 0, timeBombs = 0, timeBombStart = 0, timeBombGoal = 0, bonusSeconds = 0;
             int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
             int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             // Câte obstacole are nivelul care le are ca obiectiv (lăzi, gheață, lanțuri, ciocolată).
@@ -250,6 +287,30 @@ namespace SugarDrop
                     specialsTarget = Focus(3 + level / 20f, 3, 8);
                     moves = 3 + specialsTarget * 2f;
                     break;
+                case LevelType.Garden:
+                    pots = Focus(3 + chapter * 0.4f, 3, 7);
+                    focus = pots;
+                    moves = 5 + pots * BlastRules.PotHits * 1.4f;
+                    break;
+                case LevelType.Defuse:
+                    timeBombGoal = Focus(4 + chapter * 0.3f, 4, 10);
+                    // În deșert (unde apar prima dată) e o singură bombă pe tablă la nivelurile ușoare și normale.
+                    timeBombs = level >= 60 ? 3 : chapter <= 3 && difficulty is Difficulty.Easy or Difficulty.Normal ? 1 : 2;
+                    timeBombStart = difficulty switch
+                    {
+                        Difficulty.Easy => 14,
+                        Difficulty.Normal => 12,
+                        Difficulty.Hard => 10,
+                        _ => 9,
+                    };
+                    // Cu o singură bombă pe tablă, următoarea trebuie întâi să intre: mai multe mutări pe bombă.
+                    moves = 4 + timeBombGoal * (timeBombs == 1 ? 3.4f : 2.6f);
+                    break;
+                case LevelType.Bonus:
+                    // Sugar Rush: pe timp; „mutările” sunt doar pentru pragurile de stele (TwoStars/ThreeStars).
+                    bonusSeconds = 40;
+                    moves = bonusSeconds / 1.2f;
+                    break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
                     moves = difficulty == Difficulty.MegaBoss ? 28 : 22;
@@ -275,7 +336,7 @@ namespace SugarDrop
                 }
                 moves = 3 + total / 5.5f;
             }
-            int finalMoves = Mathf.Clamp(Mathf.RoundToInt(moves * movesFactor), 12, 65);
+            int finalMoves = type == LevelType.Bonus ? 33 : Mathf.Clamp(Mathf.RoundToInt(moves * movesFactor), 12, 65);
             // Scorul țintă: cam cât adună jucătorul automat în ~16 mutări, ajustat după dificultate.
             if (type == LevelType.Score) scoreTarget = Mathf.RoundToInt((16 * 400 + level * 30) * goalFactor);
 
@@ -297,9 +358,11 @@ namespace SugarDrop
                 case LevelType.Ice: ice = focus; break;
                 case LevelType.Chains: chains = focus; break;
                 case LevelType.Chocolate: chocolate = focus; break;
+                case LevelType.Garden: crates = Mathf.Min(crates, 2); break;
             }
             // Cel mult un sfert din tablă acoperit de obstacole (formele mici nu se umplu); obstacolul-țintă se taie ultimul.
             int obstacleRoom = valid / 4;
+            obstacleRoom = Mathf.Max(0, obstacleRoom - pots);
             while (crates + ice + chains + chocolate > obstacleRoom)
             {
                 if (type != LevelType.Ice && ice > 0 && ice >= crates && ice >= chains) ice--;
@@ -318,8 +381,27 @@ namespace SugarDrop
                 }
             }
 
+            // Portalurile (de la Lacul de Afine): pe toate nivelurile din lac, apoi pe unele niveluri. Nu pe cele cu
+            // bomboane-ingredient (ar ieși prin portal în loc să ajungă jos), nici la Boss sau în bonus.
+            int[] portalIn = System.Array.Empty<int>(), portalOut = System.Array.Empty<int>();
+            bool portals = level >= PortalsFrom && type != LevelType.Ingredients && type != LevelType.Boss && type != LevelType.Bonus
+                && (chapter == 2 || random.Next(10) < 3);
+            if (portals)
+            {
+                int pairs = level >= 60 ? 2 : 1;
+                portalIn = new int[pairs];
+                portalOut = new int[pairs];
+                // Intrările în stânga, ieșirile în dreapta (fără cicluri): piesele trec de jos-stânga sus-dreapta.
+                for (int i = 0; i < pairs; i++)
+                {
+                    portalIn[i] = 1 + i * 2 + random.Next(2);
+                    portalOut[i] = BoardColumns - 2 - i * 2 - random.Next(2);
+                }
+            }
+
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
-                frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate);
+                frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate,
+                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds);
         }
 
         /// <summary>

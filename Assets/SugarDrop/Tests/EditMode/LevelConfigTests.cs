@@ -21,7 +21,8 @@ namespace SugarDrop.Tests
                 Assert.That(c.Crates + c.Chocolate + c.Ice + c.Chains, Is.LessThan(c.ValidCells / 3), $"nivel {level}");
                 bool hasGoal = c.Type == LevelType.Boss || c.Ingredients > 0 || c.CollectColors.Length > 0 || c.FrostingCells > 0 || c.ScoreTarget > 0
                     || c.SpecialsTarget > 0 || c.Type == LevelType.Crates && c.Crates > 0 || c.Type == LevelType.Ice && c.Ice > 0
-                    || c.Type == LevelType.Chains && c.Chains > 0 || c.Type == LevelType.Chocolate && c.Chocolate > 0;
+                    || c.Type == LevelType.Chains && c.Chains > 0 || c.Type == LevelType.Chocolate && c.Chocolate > 0
+                    || c.Type == LevelType.Garden && c.Pots > 0 || c.Type == LevelType.Defuse && c.TimeBombGoal > 0 || c.IsBonus;
                 Assert.IsTrue(hasGoal, $"nivel {level} fără obiectiv");
             }
         }

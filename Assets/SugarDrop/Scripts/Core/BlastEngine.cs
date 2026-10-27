@@ -22,8 +22,9 @@ namespace SugarDrop
             public int Ice;
             public bool Chained;
             public int Hits;
+            public int Timer;
 
-            public bool IsBlocker => Kind == TileKind.Crate || Kind == TileKind.Chocolate;
+            public bool IsBlocker => Kind == TileKind.Crate || Kind == TileKind.Chocolate || Kind == TileKind.Pot;
             public bool IsIngredient => Kind == TileKind.Ingredient;
             public bool IsSpecial => BlastRules.IsSpecial(Kind);
             public bool Locked => Ice > 0 || Chained;
@@ -43,6 +44,9 @@ namespace SugarDrop
         public int IngredientsOnBoard { get; private set; }
         public int IngredientsToSpawn { get; private set; }
         public int IngredientsExited { get; private set; }
+        /// <summary>O bombă cu ceas a ajuns la 0: nivelul e pierdut.</summary>
+        public bool TimeBombExpired { get; private set; }
+        public int TimeBombsOnBoard { get; private set; }
 
         private readonly Piece[,] _grid;
         private readonly int[,] _frosting;
@@ -85,17 +89,33 @@ namespace SugarDrop
 
             // Obstacolele nu stau în rândul de sus al coloanei (de acolo intră piesele noi) și nici jos, la ieșiri.
             bool Inner(Vector2Int c) => !frosted.Contains(c) && c.y < Config.ColumnTop[c.x] && c.y > Config.ColumnBottom[c.x];
-            int crates = 0, chocolate = 0, ice = 0, chains = 0;
+            int crates = 0, chocolate = 0, ice = 0, chains = 0, pots = 0, bombs = 0;
             for (; index < cells.Count; index++)
             {
                 Vector2Int c = cells[index];
                 if (!Inner(c)) continue;
                 Piece p = _grid[c.x, c.y];
-                if (crates < config.Crates) { Set(p, TileKind.Crate, -1, config.CrateHits); crates++; }
+                if (pots < config.Pots) { Set(p, TileKind.Pot, -1, BlastRules.PotHits); pots++; }
+                else if (crates < config.Crates) { Set(p, TileKind.Crate, -1, config.CrateHits); crates++; }
                 else if (chocolate < config.Chocolate && c.y < Rows / 2) { Set(p, TileKind.Chocolate, -1, 1); chocolate++; }
                 else if (ice < config.Ice) { p.Ice = 1 + layout.Next(Math.Max(1, config.IceLayers)); ice++; }
                 else if (chains < config.Chains) { p.Chained = true; chains++; }
-                if (crates >= config.Crates && chocolate >= config.Chocolate && ice >= config.Ice && chains >= config.Chains) break;
+                if (pots >= config.Pots && crates >= config.Crates && chocolate >= config.Chocolate && ice >= config.Ice && chains >= config.Chains) break;
+            }
+
+            // Bombele cu ceas de la start: bomboane obișnuite, libere, din jumătatea de sus.
+            if (config.TimeBombs > 0)
+            {
+                Shuffle(cells, layout);
+                foreach (Vector2Int c in cells)
+                {
+                    if (bombs >= config.TimeBombs) break;
+                    Piece p = _grid[c.x, c.y];
+                    if (p == null || p.Kind != TileKind.Normal || p.Locked || c.y < Rows / 2) continue;
+                    p.Timer = config.TimeBombStart;
+                    bombs++;
+                }
+                TimeBombsOnBoard = bombs;
             }
 
             // Bomboanele-ingredient pornesc de la mijlocul tablei, pe coloane diferite (drumul până jos e rezonabil).
@@ -164,7 +184,7 @@ namespace SugarDrop
         private Piece At(Vector2Int c) => IsValid(c) ? _grid[c.x, c.y] : null;
 
         private static PieceInfo Info(Piece p, Vector2Int c) =>
-            new() { Id = p.Id, Cell = c, Kind = p.Kind, Color = p.Color, Ice = p.Ice, Chained = p.Chained, Hits = p.Hits };
+            new() { Id = p.Id, Cell = c, Kind = p.Kind, Color = p.Color, Ice = p.Ice, Chained = p.Chained, Hits = p.Hits, Timer = p.Timer };
 
         private Piece NewPiece(TileKind kind, int color, int hits = 0) => new() { Id = _nextId++, Kind = kind, Color = color, Hits = hits };
 
@@ -175,6 +195,7 @@ namespace SugarDrop
             p.Hits = hits;
             p.Ice = 0;
             p.Chained = false;
+            p.Timer = 0;
         }
 
         private List<Vector2Int> ValidCells()
@@ -290,6 +311,7 @@ namespace SugarDrop
                 Piece p = At(c);
                 if (p == null) continue;
                 if (p.Kind == TileKind.Crate) counts.Crates++;
+                else if (p.Kind == TileKind.Pot) counts.Pots++;
                 else if (p.Kind == TileKind.Chocolate) counts.Chocolate++;
                 counts.IceLayers += p.Ice;
                 if (p.Chained) counts.Chains++;
@@ -370,6 +392,8 @@ namespace SugarDrop
                 foreach (Vector2Int c in g.Cells)
                 {
                     value += _frosting[c.x, c.y] * 3;
+                    // Bombele cu ceas: cu cât au mai puține mutări, cu atât sunt mai urgente.
+                    if (At(c).Timer > 0) value += 20 + (10 - At(c).Timer) * 4;
                     if (At(c).Locked) value += 4;
                     if (IngredientAbove(c)) value += 12;
                     foreach (Vector2Int d in FourWay)
@@ -425,6 +449,7 @@ namespace SugarDrop
             }
             else steps.Add(ResolveMatches(FindMatches(), 0, a, b));
             Settle(steps, true);
+            TickTimeBombs(steps);
             return steps;
         }
 
@@ -794,6 +819,7 @@ namespace SugarDrop
 
         private void Remove(Vector2Int c, Piece p, BoardStep step)
         {
+            if (p.Timer > 0) TimeBombsOnBoard = Math.Max(0, TimeBombsOnBoard - 1);
             _grid[c.x, c.y] = null;
             step.Cleared.Add(Info(p, c));
             HitFrosting(c, step);
@@ -882,6 +908,18 @@ namespace SugarDrop
                 int y = top;
                 while (y >= Config.ColumnBottom[x] && _grid[x, y] == null) y--;
                 int count = top - y;
+                // Portal: coloana de ieșire primește, în locul pieselor noi, piesa de jos a coloanei de intrare.
+                if (count > 0 && TryPortalPiece(x, out Vector2Int from))
+                {
+                    Piece moving = _grid[from.x, from.y];
+                    _grid[from.x, from.y] = null;
+                    var cell = new Vector2Int(x, y + 1);
+                    _grid[cell.x, cell.y] = moving;
+                    index[moving.Id] = step.Moves.Count;
+                    step.Moves.Add(new PieceMove { Piece = Info(moving, cell), From = from, To = cell, Portal = true });
+                    spawned = true;
+                    continue;
+                }
                 for (int i = 0; i < count; i++)
                 {
                     var cell = new Vector2Int(x, y + 1 + i);
@@ -903,6 +941,18 @@ namespace SugarDrop
             return true;
         }
 
+        /// <summary>Coloana are un portal de ieșire, iar la intrare (jos, în altă coloană) e o piesă care poate trece.</summary>
+        private bool TryPortalPiece(int column, out Vector2Int from)
+        {
+            from = default;
+            int pair = Array.IndexOf(Config.PortalOut, column);
+            if (pair < 0) return false;
+            int inColumn = Config.PortalIn[pair];
+            from = new Vector2Int(inColumn, Config.ColumnBottom[inColumn]);
+            Piece p = At(from);
+            return p != null && p.Falls && !p.IsIngredient;
+        }
+
         private Piece SpawnPiece(int column)
         {
             // Bomboanele-ingredient apar treptat, doar pe coloane fără obstacole: mereu cel puțin una pe tablă.
@@ -913,7 +963,45 @@ namespace SugarDrop
                 IngredientsOnBoard++;
                 return NewPiece(TileKind.Ingredient, _random.Next(6));
             }
-            return NewPiece(TileKind.Normal, _random.Next(Config.Colors));
+            Piece piece = NewPiece(TileKind.Normal, _random.Next(Config.Colors));
+            // Bombele cu ceas noi intră de sus, câte una, cât timp sunt mai puține decât cere nivelul.
+            if (Config.TimeBombs > 0 && TimeBombsOnBoard < Config.TimeBombs && _random.NextDouble() < 0.2)
+            {
+                piece.Timer = Config.TimeBombStart;
+                TimeBombsOnBoard++;
+            }
+            return piece;
+        }
+
+        /// <summary>
+        /// După fiecare mutare, bombele cu ceas scad cu unu; dacă una ajunge la 0, nivelul e pierdut
+        /// (<see cref="TimeBombExpired"/>). Pasul „Tick” actualizează numerele de pe tablă.
+        /// </summary>
+        private void TickTimeBombs(List<BoardStep> steps)
+        {
+            if (TimeBombsOnBoard <= 0 && !AnyTimeBomb()) return;
+            var tick = new BoardStep(StepKind.Tick);
+            foreach (Vector2Int c in ValidCells())
+            {
+                Piece p = At(c);
+                if (p == null || p.Timer <= 0) continue;
+                p.Timer--;
+                if (p.Timer <= 0)
+                {
+                    p.Timer = 0;
+                    TimeBombExpired = true;
+                    tick.Expired.Add(Info(p, c));
+                }
+                else tick.Changed.Add(Info(p, c));
+            }
+            if (tick.Changed.Count > 0 || tick.Expired.Count > 0) steps.Add(tick);
+        }
+
+        private bool AnyTimeBomb()
+        {
+            foreach (Vector2Int c in ValidCells())
+                if (At(c) is { Timer: > 0 }) return true;
+            return false;
         }
 
         private bool SlideDiagonal(BoardStep step, Dictionary<int, int> index)
@@ -991,6 +1079,7 @@ namespace SugarDrop
         // ------------------------------------------------------------ Atacurile Boss-ului
 
         public const int MaxBossChocolate = 8;
+        public const int MaxBossTimeBombs = 2;
         public const int MaxLockedPieces = 12;
 
         /// <summary>
@@ -1018,7 +1107,9 @@ namespace SugarDrop
                 // Nu atacăm rândul de sus (de acolo intră piesele noi) și nici piesele speciale.
                 if (p.Kind == TileKind.Normal && !p.Locked && c.y < Config.ColumnTop[c.x]) candidates.Add(c);
             }
-            int room = attack == BossAttack.ChocolateSpread ? MaxBossChocolate - chocolate : MaxLockedPieces - locked;
+            int room = attack == BossAttack.ChocolateSpread ? MaxBossChocolate - chocolate
+                : attack == BossAttack.TimeBomb ? MaxBossTimeBombs - TimeBombsOnBoard
+                : MaxLockedPieces - locked;
             int count = Math.Max(0, Math.Min(strength, room));
             Shuffle(candidates, _random);
 
@@ -1031,6 +1122,10 @@ namespace SugarDrop
                 {
                     case BossAttack.ChocolateSpread: Set(p, TileKind.Chocolate, -1, 1); break;
                     case BossAttack.Freeze: p.Ice = strength >= 4 ? 2 : 1; break;
+                    case BossAttack.TimeBomb:
+                        if (p.Timer <= 0) TimeBombsOnBoard++;
+                        p.Timer = Math.Max(4, 9 - strength);
+                        break;
                     default: p.Chained = true; break;
                 }
                 step.Changed.Add(Info(p, c));

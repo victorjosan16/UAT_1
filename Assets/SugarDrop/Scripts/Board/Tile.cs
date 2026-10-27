@@ -16,6 +16,9 @@ namespace SugarDrop
         public TileKind Kind { get; private set; }
         public int Ice { get; private set; }
         public bool Chained { get; private set; }
+        public int Hits { get; private set; }
+        /// <summary>Bombă cu ceas: mutările rămase (0 = bomboană obișnuită).</summary>
+        public int Timer { get; private set; }
         public Vector2Int Cell { get; set; }
 
         public bool IsRainbow => Kind == TileKind.Rainbow;
@@ -27,6 +30,8 @@ namespace SugarDrop
         private SpriteRenderer _overlay;
         private SpriteRenderer _ice;
         private SpriteRenderer _chain;
+        private SpriteRenderer _badge;
+        private SpriteRenderer _digitTens, _digitOnes;
         private SpriteRenderer[] _renderers;
         private Transform _visual;
         private float _size;
@@ -65,7 +70,12 @@ namespace SugarDrop
             _overlay = Layer("Overlay", SugarSprites.Stripes, 12, size * 0.94f);
             _ice = Layer("Ice", SugarSprites.Ice, 13, size * 0.98f);
             _chain = Layer("Chain", SugarSprites.Chain, 14, size * 0.98f);
-            _renderers = new[] { _shadow, _base, _overlay, _ice, _chain };
+            // Cronometrul bombei: o bulină închisă în colț, cu una sau două cifre.
+            _badge = Layer("TimerBadge", SugarSprites.Circle, 15, size * 0.5f);
+            _badge.transform.localPosition = new Vector3(size * 0.28f, -size * 0.26f, 0f);
+            _digitTens = Layer("Tens", SugarSprites.Digit(0), 16, size * 0.15f);
+            _digitOnes = Layer("Ones", SugarSprites.Digit(0), 16, size * 0.15f);
+            _renderers = new[] { _shadow, _base, _overlay, _ice, _chain, _badge, _digitTens, _digitOnes };
         }
 
         private SpriteRenderer Layer(string name, Sprite sprite, int order, float worldSize)
@@ -88,6 +98,8 @@ namespace SugarDrop
             ColorIndex = piece.Color;
             Ice = piece.Ice;
             Chained = piece.Chained;
+            Hits = piece.Hits;
+            Timer = piece.Timer;
             RefreshVisual(cracked);
         }
 
@@ -108,9 +120,16 @@ namespace SugarDrop
             _base.transform.localRotation = Quaternion.identity;
             _shadow.sprite = SugarSprites.CapShadow;
             _base.color = Color.white;
+            RefreshTimer();
 
             switch (Kind)
             {
+                case TileKind.Pot:
+                    // Ghiveciul și planta din el: crește la fiecare udare (linie vecină).
+                    _base.sprite = SugarSprites.Pot;
+                    ShowOverlay(SugarSprites.Sprout(Mathf.Clamp(BlastRules.PotHits - Hits, 0, 2)), Color.white);
+                    return;
+
                 case TileKind.Crate:
                     _base.sprite = SugarSprites.Crate;
                     if (cracked) ShowOverlay(SugarSprites.BiscuitCrack, new Color(0.3f, 0.17f, 0.08f, 0.9f));
@@ -151,6 +170,23 @@ namespace SugarDrop
             int color = Mathf.Max(0, ColorIndex);
             _base.sprite = PieceSprites.Piece(color);
             _shadow.sprite = PieceSprites.Shadow(color);
+        }
+
+        /// <summary>Bulina cu numărul de mutări al bombei (roșie când mai sunt 3 sau mai puține).</summary>
+        private void RefreshTimer()
+        {
+            bool on = Timer > 0;
+            _badge.enabled = on;
+            _digitTens.enabled = on && Timer >= 10;
+            _digitOnes.enabled = on;
+            if (!on) return;
+            _badge.color = Timer <= 3 ? new Color(0.9f, 0.15f, 0.2f) : new Color(0.2f, 0.12f, 0.25f, 0.92f);
+            Vector3 center = _badge.transform.localPosition;
+            float digitStep = _size * 0.1f;
+            _digitOnes.sprite = SugarSprites.Digit(Timer % 10);
+            _digitTens.sprite = SugarSprites.Digit(Timer / 10 % 10);
+            _digitOnes.transform.localPosition = center + new Vector3(Timer >= 10 ? digitStep * 0.55f : 0f, 0f, 0f);
+            _digitTens.transform.localPosition = center - new Vector3(digitStep * 0.55f, 0f, 0f);
         }
 
         private void ShowOverlay(Sprite sprite, Color color)
@@ -301,6 +337,12 @@ namespace SugarDrop
                 }
                 if (IsRainbow) _overlay.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 90f);
                 if (Kind == TileKind.Ingredient) angle += Mathf.Sin(Time.time * 2.5f + _phase) * 6f;
+                // Bomba cu ceas tremură când mai are puține mutări; bulina pulsează.
+                if (Timer > 0 && Timer <= 3)
+                {
+                    angle += Mathf.Sin(Time.time * 30f + _phase) * (4 - Timer) * 1.5f;
+                    _badge.transform.localScale = Vector3.one * (_size * 0.5f / _badge.sprite.bounds.size.x) * (1f + Mathf.Abs(Mathf.Sin(Time.time * 6f)) * 0.15f);
+                }
             }
 
             // Sub deget: se ridică imediat (răspuns rapid) și se turtește puțin, ca un jeleu apăsat.

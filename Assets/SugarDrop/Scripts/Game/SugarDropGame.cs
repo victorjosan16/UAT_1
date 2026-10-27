@@ -119,6 +119,10 @@ namespace SugarDrop
             board.FrostingMelted += OnFrostingMelted;
             board.IngredientExited += OnIngredientExited;
             board.ChocolateGrew += OnChocolateGrew;
+            board.PotWatered += OnPotWatered;
+            board.PotBloomed += OnPotBloomed;
+            board.TimeBombExploded += OnTimeBombExploded;
+            board.PortalUsed += OnPortalUsed;
             board.BossAttackLanded += OnBossAttackLanded;
             jar.CandyEntered += OnCandyEntered;
             input.Touched += OnTouched;
@@ -161,6 +165,10 @@ namespace SugarDrop
             board.FrostingMelted -= OnFrostingMelted;
             board.IngredientExited -= OnIngredientExited;
             board.ChocolateGrew -= OnChocolateGrew;
+            board.PotWatered -= OnPotWatered;
+            board.PotBloomed -= OnPotBloomed;
+            board.TimeBombExploded -= OnTimeBombExploded;
+            board.PortalUsed -= OnPortalUsed;
             board.BossAttackLanded -= OnBossAttackLanded;
             jar.CandyEntered -= OnCandyEntered;
             input.Touched -= OnTouched;
@@ -726,7 +734,12 @@ namespace SugarDrop
             SetGameplayUi(true);
             hud.HideTransient();
             hud.SetLevel(_level, _config.IsBoss);
-            hud.SetMoves(_moves, false);
+            // Sugar Rush: pe timp, fără mutări; cronometrul stă în discul mutărilor.
+            _bonusTime = _config.IsBonus ? _config.BonusSeconds : 0f;
+            _bonusShown = -1;
+            if (_config.IsBonus) _moves = 999;
+            hud.SetMoves(_config.IsBonus ? _config.BonusSeconds : _moves, false);
+            if (_config.IsBonus) hud.SetMovesCaption(SugarLoc.T("sec"));
             hud.SetBoss(_boss);
             hud.SetGoals(_goals);
             _score = 0;
@@ -880,6 +893,9 @@ namespace SugarDrop
             LevelType.Chains => SugarLoc.T("Rupe toate lanțurile!"),
             LevelType.Chocolate => SugarLoc.T("Oprește ciocolata!"),
             LevelType.Specials => SugarLoc.T("Folosește piese speciale!"),
+            LevelType.Garden => SugarLoc.T("Udă ghivecele până înfloresc!"),
+            LevelType.Defuse => SugarLoc.T("Dezamorsează bombele cu ceas!"),
+            LevelType.Bonus => SugarLoc.T("Sugar Rush! Cât mai multe puncte până expiră timpul!"),
             _ => SugarLoc.T("Atinge scorul!"),
         };
 
@@ -926,7 +942,8 @@ namespace SugarDrop
 
             // Fără mutări rămase (sau cu obiectivele îndeplinite) tabla nu mai primește atingeri: altfel, cât timp
             // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
-            bool canTap = _moves > 0 && !_goals.IsComplete && !coach.Blocking;
+            if (_config.IsBonus) TickBonus(dt);
+            bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired;
             if (input.enabled != canTap) input.enabled = canTap;
 
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
@@ -956,8 +973,8 @@ namespace SugarDrop
 
             // Finalul: obiective îndeplinite → victorie; fără mutări (sau tabla blocată) → înfrângere.
             // Așteptăm să se termine animațiile tablei.
-            bool complete = _goals.IsComplete;
-            bool outOfMoves = _moves <= 0 || board.Stuck;
+            bool complete = _config.IsBonus ? _bonusTime <= 0f || board.Stuck : _goals.IsComplete;
+            bool outOfMoves = !_config.IsBonus && (_moves <= 0 || board.Stuck || board.TimeBombExpired);
             if (board.Busy || (!complete && !outOfMoves))
             {
                 _endTimer = 0f;
@@ -1018,7 +1035,9 @@ namespace SugarDrop
 
             // Progresul se salvează imediat (dacă aplicația se închide în timpul finalului, nivelul rămâne trecut).
             // Cufărul Boss-ului: monede duble și câte un ajutor din fiecare (Mega-Boss: triple și câte două).
-            int coins = 20 + _moves * 5;
+            // Sugar Rush: monedele vin din scor; nu rămân mutări de transformat în finalul dulce.
+            if (_config.IsBonus) _moves = 0;
+            int coins = _config.IsBonus ? 20 + _score / 100 : 20 + _moves * 5;
             if (_config.IsBoss)
             {
                 int bonus = _config.IsMegaBoss ? 2 : 1;
@@ -1115,6 +1134,7 @@ namespace SugarDrop
 
         private void Lose()
         {
+            bool exploded = board.TimeBombExpired;
             _state = State.Result;
             input.enabled = false;
             CancelBomb();
@@ -1122,9 +1142,9 @@ namespace SugarDrop
             if (Audio != null) Audio.Play(SugarSound.Lose);
             SugarAudio.Buzz(1);
             mascot.SetSad();
-            bool canContinue = !_continuedWithAd && !board.Stuck;
+            bool canContinue = !_continuedWithAd && !board.Stuck && !exploded;
             System.Action onAd = canContinue ? () => SugarUi.RewardedAd("extra_moves", ContinueWithMoves) : null;
-            result.ShowLose(SugarLoc.T("Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
+            result.ShowLose(SugarLoc.T(exploded ? "Bomba cu ceas a explodat!" : "Mai aveai puțin!"), () => Go(RetryLevel), onAd, () => Go(LeaveToMap));
         }
 
         private void ContinueWithMoves()
@@ -1306,9 +1326,11 @@ namespace SugarDrop
 
                 case Booster.ExtraMoves:
                     AddBooster(Booster.ExtraMoves, -1);
-                    _moves += extraMoves;
+                    // În Sugar Rush ajutorul dă secunde în loc de mutări.
+                    if (_config.IsBonus) _bonusTime += extraMoves;
+                    else _moves += extraMoves;
                     _endTimer = 0f;
-                    hud.SetMoves(_moves, true);
+                    hud.SetMoves(_config.IsBonus ? Mathf.CeilToInt(_bonusTime) : _moves, true);
                     hud.ShowWord("+" + extraMoves, Palette.Tile(2));
                     if (Audio != null) Audio.Play(SugarSound.SpecialCreated);
                     mascot.Cheer();
@@ -1369,10 +1391,10 @@ namespace SugarDrop
         private void OnMoveMade()
         {
             if (_state != State.Playing) return;
-            _moves = Mathf.Max(0, _moves - 1);
+            if (!_config.IsBonus) _moves = Mathf.Max(0, _moves - 1);
             _idleTime = 0f;
             _popChain = 0;
-            hud.SetMoves(_moves, true);
+            if (!_config.IsBonus) hud.SetMoves(_moves, true);
             if (Audio != null) Audio.Play(SugarSound.Swap);
             if (_boss != null) _bossTurnPending = true;
             if (_moves <= 0) input.enabled = false; // ultima mutare: nicio atingere în plus până la final
@@ -1382,7 +1404,7 @@ namespace SugarDrop
                 hintGuide.Hide();
                 _tutorialWaiting = true;
             }
-            if (_moves == 3 && !_warnedLastMoves)
+            if (_moves == 3 && !_warnedLastMoves && !_config.IsBonus)
             {
                 _warnedLastMoves = true;
                 hud.ShowBanner(SugarLoc.T("Ultimele mutări!"));
@@ -1555,6 +1577,7 @@ namespace SugarDrop
                 BossAttack.ChocolateSpread => "Ploaie de ciocolată!",
                 BossAttack.Freeze => "Înghețare!",
                 BossAttack.Lock => "Lanțuri!",
+                BossAttack.TimeBomb => "Bombe cu ceas!",
                 _ => "Amestecă tabla!",
             }), QuarryEmpire.UiRoot.Theme.NegativeColor);
             if (Audio != null) Audio.Play(SugarSound.Wrapped, 0.9f, 0.6f);
@@ -1592,6 +1615,59 @@ namespace SugarDrop
             if (Audio != null) Audio.Play(SugarSound.Star, 1f, 1.1f);
             SugarAudio.Buzz(1);
             mascot.Cheer(2f);
+        }
+
+        // ------------------------------------------------------------ Mecanicile ținuturilor
+
+        private float _bonusTime;
+        private int _bonusShown = -1;
+
+        /// <summary>Sugar Rush: cronometrul scade (oprit în pauză); la ultimele 5 secunde se aude un „tic”.</summary>
+        private void TickBonus(float dt)
+        {
+            if (_bonusTime <= 0f || _waitingBossIntro) return;
+            _bonusTime = Mathf.Max(0f, _bonusTime - dt);
+            int shown = Mathf.CeilToInt(_bonusTime);
+            if (shown == _bonusShown) return;
+            _bonusShown = shown;
+            hud.SetMoves(shown, shown <= 5);
+            if (shown <= 5 && shown > 0 && Audio != null) Audio.Play(SugarSound.Click, 0.8f, 1.4f);
+            if (shown == 0) hud.ShowBanner(SugarLoc.T("Timpul a expirat!"));
+        }
+
+        private void OnPotWatered(Vector3 position)
+        {
+            if (Vfx != null) Vfx.WaterSplash(position);
+            if (Audio != null) Audio.Play(SugarSound.Ice, 0.6f, 1.3f);
+        }
+
+        private void OnPotBloomed(Vector3 position)
+        {
+            if (Vfx != null) Vfx.FlowerBloom(position);
+            if (Audio != null) Audio.Play(SugarSound.Star, 1f, 1.2f);
+            SugarAudio.Buzz(1);
+            mascot.Cheer(1.5f);
+        }
+
+        private void OnTimeBombExploded(Vector3 position)
+        {
+            if (Vfx != null)
+            {
+                Vfx.WrapBlast(position, 0, 2.2f);
+                Vfx.Shake(0.5f);
+            }
+            if (Audio != null) Audio.Play(SugarSound.Bomb, 1f, 0.7f);
+            SugarAudio.Buzz(2);
+            mascot.SetSad();
+        }
+
+        private void OnPortalUsed(Vector3 entry, Vector3 exit)
+        {
+            if (Vfx != null)
+            {
+                Vfx.SpecialCreated(entry);
+                Vfx.SpecialCreated(exit);
+            }
         }
 
         private void OnChocolateGrew(Vector3 position)

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs }
 
     /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
     public struct ObstacleCounts
@@ -11,6 +11,7 @@ namespace SugarDrop
         public int IceLayers;
         public int Chains;
         public int Chocolate;
+        public int Pots;
     }
 
     /// <summary>Un obiectiv din HUD: ce (și ce culoare), cât trebuie și cât a mai rămas.</summary>
@@ -45,19 +46,23 @@ namespace SugarDrop
                 case LevelType.Ice when obstacles.IceLayers > 0: Add(GoalKind.Ice, -1, obstacles.IceLayers); break;
                 case LevelType.Chains when obstacles.Chains > 0: Add(GoalKind.Chains, -1, obstacles.Chains); break;
                 case LevelType.Chocolate when obstacles.Chocolate > 0: Add(GoalKind.Chocolate, -1, obstacles.Chocolate); break;
+                case LevelType.Garden when obstacles.Pots > 0: Add(GoalKind.Flowers, -1, obstacles.Pots); break;
+                case LevelType.Defuse when config.TimeBombGoal > 0: Add(GoalKind.TimeBombs, -1, config.TimeBombGoal); break;
             }
             if (config.SpecialsTarget > 0) Add(GoalKind.Specials, -1, config.SpecialsTarget);
             if (config.ScoreTarget > 0) Add(GoalKind.Score, -1, config.ScoreTarget);
-            else if (Items.Count == 0 && config.Type != LevelType.Boss) Add(GoalKind.Score, -1, FallbackScore);
+            else if (Items.Count == 0 && config.Type != LevelType.Boss && config.Type != LevelType.Bonus) Add(GoalKind.Score, -1, FallbackScore);
         }
 
         private void Add(GoalKind kind, int color, int target) =>
             Items.Add(new GoalItem { Kind = kind, Color = color, Target = target, Remaining = target });
 
+        /// <summary>Toate obiectivele îndeplinite (nivelul bonus nu are obiective: se termină când expiră timpul).</summary>
         public bool IsComplete
         {
             get
             {
+                if (Items.Count == 0) return false;
                 foreach (GoalItem item in Items)
                     if (!item.Done) return false;
                 return true;
@@ -81,6 +86,8 @@ namespace SugarDrop
                 changed |= OnPieceCleared(piece.Color, piece.Kind);
                 if (piece.Kind == TileKind.Crate) changed |= Decrease(GoalKind.Crates, -1);
                 else if (piece.Kind == TileKind.Chocolate) changed |= Decrease(GoalKind.Chocolate, -1);
+                else if (piece.Kind == TileKind.Pot) changed |= Decrease(GoalKind.Flowers, -1);
+                if (piece.Timer > 0) changed |= Decrease(GoalKind.TimeBombs, -1);
             }
             for (int i = 0; i < step.IceLayersBroken; i++) changed |= Decrease(GoalKind.Ice, -1);
             for (int i = 0; i < step.ChainsBroken; i++) changed |= Decrease(GoalKind.Chains, -1);

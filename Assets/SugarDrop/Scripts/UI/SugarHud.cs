@@ -345,6 +345,9 @@ namespace SugarDrop
             _movesCaption.Text = SugarLoc.T("mutări");
         }
 
+        /// <summary>Textul de sub numărul din disc („mutări”, sau „sec” în Sugar Rush).</summary>
+        public void SetMovesCaption(string caption) => _movesCaption.Text = caption;
+
         public void SetMoves(int moves, bool punch)
         {
             _moves.Text = moves.ToString();
@@ -403,6 +406,8 @@ namespace SugarDrop
             GoalKind.Chains => SugarSprites.Chain,
             GoalKind.Chocolate => SugarSprites.Chocolate,
             GoalKind.Specials => SugarSprites.Rocket,
+            GoalKind.Flowers => SugarSprites.Flower,
+            GoalKind.TimeBombs => SugarSprites.Bomb,
             _ => ProceduralSprites.Star,
         };
 

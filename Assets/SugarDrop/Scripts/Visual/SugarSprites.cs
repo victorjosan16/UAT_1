@@ -675,6 +675,97 @@ namespace SugarDrop
             return Mathf.Max(horizontal, vertical);
         }
 
+        // ------------------------------------------------------------ Mecanicile ținuturilor
+
+        /// <summary>Ghiveci de lut (Pădurea de Mentă): buză lată și corp care se îngustează în jos.</summary>
+        public static Sprite Pot => Get("pot", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f, y + 0.5f);
+            float t = Mathf.Clamp01((p.y - 14f) / 54f);
+            float halfWidth = Mathf.Lerp(30f, 40f, t);
+            float body = Mathf.Max(Mathf.Abs(p.x - 64f) - halfWidth, Mathf.Max(14f - p.y, p.y - 68f));
+            float rim = RoundRect(x, y, 18, 62, 92, 22, 8);
+            Color clay = new(0.86f, 0.47f, 0.3f), rimColor = new(0.95f, 0.58f, 0.38f);
+            Color c = Over(Color.clear, Color.Lerp(clay * 0.85f, clay, t), Alpha(body));
+            c = Over(c, rimColor, Alpha(rim));
+            c = Over(c, new Color(1f, 1f, 1f, 0.35f), Alpha(RoundRect(x, y, 30, 26, 8, 30, 4)));
+            c.a = Mathf.Max(Alpha(body), Alpha(rim));
+            return c;
+        }));
+
+        /// <summary>Planta din ghiveci, după câte udări a primit: 0 = mlădiță, 1 = tulpină cu frunze, 2 = boboc.</summary>
+        public static Sprite Sprout(int stage) => Get("sprout" + stage, () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f, y + 0.5f);
+            float height = stage == 0 ? 88f : stage == 1 ? 104f : 116f;
+            Color green = new(0.35f, 0.75f, 0.35f);
+            float stem = Mathf.Max(Mathf.Abs(p.x - 64f) - 3.5f, Mathf.Max(80f - p.y, p.y - height));
+            Color c = Over(Color.clear, new Color(0.3f, 0.6f, 0.3f), Alpha(stem));
+            float leafY = stage == 0 ? 86f : 92f;
+            float leafL = Vector2.Distance(new Vector2((p.x - 50f) * 0.7f, p.y - leafY), Vector2.zero) - 9f;
+            float leafR = Vector2.Distance(new Vector2((p.x - 78f) * 0.7f, p.y - leafY - 4f), Vector2.zero) - 9f;
+            c = Over(c, green, Alpha(Mathf.Min(leafL, leafR)));
+            if (stage >= 1)
+            {
+                float leaf2 = Vector2.Distance(new Vector2((p.x - 52f) * 0.7f, p.y - 104f), Vector2.zero) - 8f;
+                c = Over(c, Color.Lerp(green, Color.white, 0.15f), Alpha(leaf2));
+            }
+            if (stage >= 2)
+                c = Over(c, new Color(1f, 0.45f, 0.65f), Alpha(Vector2.Distance(new Vector2(p.x - 64f, (p.y - 118f) * 0.8f), Vector2.zero) - 9f));
+            return c;
+        }));
+
+        /// <summary>Floare înflorită (5 petale și mijloc galben).</summary>
+        public static Sprite Flower => Get("flower", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f - 64f, y + 0.5f - 64f);
+            float angle = Mathf.Atan2(p.y, p.x);
+            float petals = p.magnitude - (34f + 18f * Mathf.Cos(angle * 5f));
+            Color c = Over(Color.clear, new Color(1f, 0.55f, 0.75f), Alpha(petals));
+            c = Over(c, new Color(1f, 0.85f, 0.3f), Alpha(p.magnitude - 16f));
+            return c;
+        }));
+
+        /// <summary>Cifră (0–9) în stil „afișaj cu segmente” rotunjite, albă, 48×64.</summary>
+        public static Sprite Digit(int digit) => Get("digit" + digit, () =>
+        {
+            // Segmentele: a (sus), b (dreapta sus), c (dreapta jos), d (jos), e (stânga jos), f (stânga sus), g (mijloc).
+            string[] map = { "abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc", "abcdefg", "abcdfg" };
+            string on = map[Mathf.Clamp(digit, 0, 9)];
+            return Build(48, 64, (x, y) =>
+            {
+                Vector2 p = new(x + 0.5f, y + 0.5f);
+                float d = float.MaxValue;
+                void Seg(char name, Vector2 a, Vector2 b)
+                {
+                    if (on.IndexOf(name) >= 0) d = Mathf.Min(d, SegmentDistance(p, a, b) - 5f);
+                }
+                Seg('a', new Vector2(14f, 54f), new Vector2(34f, 54f));
+                Seg('b', new Vector2(36f, 50f), new Vector2(36f, 36f));
+                Seg('c', new Vector2(36f, 28f), new Vector2(36f, 14f));
+                Seg('d', new Vector2(14f, 10f), new Vector2(34f, 10f));
+                Seg('e', new Vector2(12f, 28f), new Vector2(12f, 14f));
+                Seg('f', new Vector2(12f, 50f), new Vector2(12f, 36f));
+                Seg('g', new Vector2(14f, 32f), new Vector2(34f, 32f));
+                return new Color(1f, 1f, 1f, Alpha(d));
+            }, TextureWrapMode.Clamp);
+        });
+
+        /// <summary>Portal (Lacul de Afine): vârtej în spirală.</summary>
+        public static Sprite Portal => Get("portal", () => Paint(128, (x, y) =>
+        {
+            Vector2 p = new(x + 0.5f - 64f, y + 0.5f - 64f);
+            float r = p.magnitude;
+            if (r > 60f) return Color.clear;
+            float angle = Mathf.Atan2(p.y, p.x);
+            float spiral = Mathf.Repeat(angle / (Mathf.PI * 2f) * 3f + r / 22f, 1f);
+            Color deep = new(0.35f, 0.25f, 0.85f), light = new(0.55f, 0.85f, 1f);
+            Color c = Color.Lerp(deep, light, spiral < 0.5f ? spiral * 2f : (1f - spiral) * 2f);
+            c = Color.Lerp(c, Color.white, Mathf.Clamp01(1f - r / 14f));
+            c.a = Alpha(r - 60f) * Mathf.Lerp(0.95f, 0.6f, r / 60f);
+            return c;
+        }));
+
         /// <summary>Siluetă de om (profil): cap și umeri.</summary>
         public static Sprite Person => Get("person", () => Mask(128, (x, y) =>
         {

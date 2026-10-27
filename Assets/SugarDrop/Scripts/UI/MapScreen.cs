@@ -731,9 +731,9 @@ namespace SugarDrop
             {
                 bool on = i < lit;
                 Image dot = _dots[i];
-                Color lit = DotOnFor(_dotSegment[i]);
-                if (!on || dot.color == lit) continue;
-                dot.color = lit;
+                Color litColor = DotOnFor(_dotSegment[i]);
+                if (!on || dot.color == litColor) continue;
+                dot.color = litColor;
                 dot.rectTransform.sizeDelta = new Vector2(26f, 26f);
                 dot.rectTransform.localScale = Vector3.one * 1.8f;
                 _dotsPopUntil = Time.unscaledTime + 0.5f;

@@ -80,7 +80,7 @@ namespace SugarDrop.Tests
             Assert.IsTrue(battle.Damage(health / 3 + 1)); // sub 33%
             Assert.AreEqual(2, battle.PhaseIndex);
             Assert.LessOrEqual(battle.MovesUntilAttack, battle.Phase.AttackEvery);
-            Assert.AreEqual(4, battle.Phase.Attacks.Length);
+            Assert.AreEqual(5, battle.Phase.Attacks.Length, "faza finală are toate atacurile, inclusiv bombele cu ceas");
         }
 
         [Test]

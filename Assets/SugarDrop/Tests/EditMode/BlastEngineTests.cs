@@ -257,7 +257,12 @@ namespace SugarDrop.Tests
                     foreach (BoardStep step in steps)
                     {
                         if (step.Kind == StepKind.Swap) continue;
-                        foreach (PieceMove m in step.Moves) Assert.LessOrEqual(m.To.y, m.From.y, "piesele doar coboară");
+                        foreach (PieceMove m in step.Moves)
+                        {
+                            // Prin portal, piesa iese sus în altă coloană.
+                            if (m.Portal) Assert.AreNotEqual(m.From.x, m.To.x, "portalul duce în altă coloană");
+                            else Assert.LessOrEqual(m.To.y, m.From.y, "piesele doar coboară");
+                        }
                     }
                 }
             }

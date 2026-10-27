@@ -51,6 +51,13 @@ namespace SugarDrop
         /// <summary>O bomboană-ingredient a ieșit jos: poziția și culoarea (cade apoi în borcan).</summary>
         public event Action<Vector3, int> IngredientExited;
         public event Action<Vector3> ChocolateGrew;
+        /// <summary>Un ghiveci a fost udat (încă n-a înflorit) / a înflorit.</summary>
+        public event Action<Vector3> PotWatered;
+        public event Action<Vector3> PotBloomed;
+        /// <summary>O bombă cu ceas a ajuns la 0 (nivelul e pierdut).</summary>
+        public event Action<Vector3> TimeBombExploded;
+        /// <summary>O piesă a trecut printr-un portal (intrarea, ieșirea).</summary>
+        public event Action<Vector3, Vector3> PortalUsed;
         /// <summary>Sfârșitul unei acțiuni: câte piese au dispărut și unde (pentru puncte și laude).</summary>
         public event Action<int, Vector3> MoveResolved;
         public event Action Shuffled;
@@ -66,6 +73,7 @@ namespace SugarDrop
         public float Top => _bottomCenter.y + Rows * cellSize;
         public float Bottom => _bottomCenter.y;
         public int FrostingLeft => _engine != null ? _engine.FrostingLeft : 0;
+        public bool TimeBombExpired => _engine != null && _engine.TimeBombExpired;
         /// <summary>Obstacolele de pe tablă acum (la start: țintele nivelurilor cu obstacole).</summary>
         public ObstacleCounts Obstacles => _engine != null ? _engine.CountObstacles() : default;
 
@@ -163,6 +171,7 @@ namespace SugarDrop
                 }
             }
 
+            BuildPortals(config);
             if (config.Ingredients <= 0) return;
             for (int x = 0; x < Columns; x++)
             {
@@ -427,6 +436,7 @@ namespace SugarDrop
                     case StepKind.Grow: yield return AnimateGrow(step); break;
                     case StepKind.BossAttack: yield return AnimateBossAttack(step); break;
                     case StepKind.Swap: yield return AnimateSwap(step); break;
+                    case StepKind.Tick: yield return AnimateTick(step); break;
                 }
             }
             if (_clearedThisMove > 0) MoveResolved?.Invoke(_clearedThisMove, _clearedCenter / _clearedThisMove);
@@ -451,7 +461,8 @@ namespace SugarDrop
                 if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
                 _tiles.Remove(piece.Id);
                 Vector3 position = tile.transform.position;
-                if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate) BiscuitHit?.Invoke(position, true);
+                if (piece.Kind == TileKind.Pot) PotBloomed?.Invoke(position);
+                else if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate) BiscuitHit?.Invoke(position, true);
                 else
                 {
                     TileCleared?.Invoke(piece.Color, piece.Kind, position);
@@ -471,7 +482,8 @@ namespace SugarDrop
                 bool wasChain = tile.Chained;
                 tile.Setup(piece, piece.Kind == TileKind.Crate);
                 tile.Wiggle();
-                if (wasIce) IceBroken?.Invoke(tile.transform.position);
+                if (piece.Kind == TileKind.Pot) PotWatered?.Invoke(tile.transform.position);
+                else if (wasIce) IceBroken?.Invoke(tile.transform.position);
                 else BiscuitHit?.Invoke(tile.transform.position, wasChain);
             }
             for (int i = 0; i < step.FrostingCells.Count; i++)
@@ -518,6 +530,17 @@ namespace SugarDrop
                     tile.FadeIn(0.15f);
                 }
                 else if (!_tiles.TryGetValue(move.Piece.Id, out tile)) continue;
+                if (move.Portal)
+                {
+                    // Prin portal: piesa dispare jos, în coloana de intrare, și cade de sus în coloana de ieșire.
+                    tile.Cell = move.To;
+                    Vector3 entry = CellCenter(new Vector2Int(move.From.x, move.From.y - 1));
+                    Vector3 exit = CellCenter(new Vector2Int(move.To.x, Rows));
+                    float portalDelay = move.To.x * fallStagger;
+                    StartCoroutine(PortalTravel(tile, entry, exit, CellCenter(move.To), portalDelay));
+                    longest = Mathf.Max(longest, portalDelay + 0.5f);
+                    continue;
+                }
                 tile.Cell = move.To;
                 float cells = Vector2.Distance(move.From, move.To);
                 // Căderea: accelerată (rădăcină din distanță), în val de la stânga la dreapta și de jos în sus.
@@ -528,6 +551,68 @@ namespace SugarDrop
             }
             yield return new WaitForSeconds(longest + 0.05f);
         }
+
+        private IEnumerator PortalTravel(Tile tile, Vector3 entry, Vector3 exit, Vector3 target, float delay)
+        {
+            if (delay > 0f) yield return new WaitForSeconds(delay);
+            if (tile == null) yield break;
+            tile.MoveTo(entry, 0.14f, true);
+            yield return new WaitForSeconds(0.14f);
+            if (tile == null) yield break;
+            PortalUsed?.Invoke(transform.TransformPoint(entry), transform.TransformPoint(exit));
+            tile.transform.localPosition = exit;
+            tile.FadeIn(0.12f);
+            tile.MoveTo(target, fallPerCell * 2.2f, true);
+        }
+
+        /// <summary>Bombele cu ceas: numerele scad; cele care au ajuns la 0 explodează.</summary>
+        private IEnumerator AnimateTick(BoardStep step)
+        {
+            foreach (PieceInfo piece in step.Changed)
+            {
+                if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
+                tile.Setup(piece);
+                if (piece.Timer <= 3) tile.Wiggle();
+            }
+            foreach (PieceInfo piece in step.Expired)
+            {
+                if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
+                tile.Setup(piece);
+                tile.Bounce(0.5f);
+                TimeBombExploded?.Invoke(tile.transform.position);
+            }
+            yield return step.Expired.Count > 0 ? new WaitForSeconds(0.5f) : null;
+        }
+
+        /// <summary>Portalurile: vârtejuri sub coloana de intrare și deasupra coloanei de ieșire, care se rotesc.</summary>
+        private void BuildPortals(LevelConfig config)
+        {
+            _portals.Clear();
+            for (int i = 0; i < config.PortalIn.Length; i++)
+            {
+                int inColumn = config.PortalIn[i], outColumn = config.PortalOut[i];
+                Vector3 entry = CellCenter(new Vector2Int(inColumn, config.ColumnBottom[inColumn])) + Vector3.down * cellSize * 0.58f;
+                Vector3 exit = CellCenter(new Vector2Int(outColumn, config.ColumnTop[outColumn])) + Vector3.up * cellSize * 0.58f;
+                foreach (Vector3 position in new[] { entry, exit })
+                {
+                    SpriteRenderer portal = Sprite("Portal", SugarSprites.Portal, position, cellSize * 0.7f, 4);
+                    _portals.Add(portal.transform);
+                }
+            }
+        }
+
+        private void Update()
+        {
+            // Vârtejurile portalurilor se rotesc încet (în planul lor turtit).
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                Transform portal = _portals[i];
+                if (portal == null) continue;
+                portal.localRotation = Quaternion.Euler(0f, 0f, Time.time * (i % 2 == 0 ? 120f : -120f));
+            }
+        }
+
+        private readonly List<Transform> _portals = new();
 
         private IEnumerator AnimateExit(BoardStep step)
         {

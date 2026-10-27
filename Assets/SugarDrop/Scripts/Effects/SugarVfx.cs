@@ -305,6 +305,38 @@ namespace SugarDrop
         }
 
         /// <summary>Sclipire mică la gura borcanului când intră o bomboană.</summary>
+        /// <summary>Ghiveci udat: picături albastre care sar și cad.</summary>
+        public void WaterSplash(Vector3 position)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                Particle p = Emit(SugarSprites.Drop, position + new Vector3(0f, 0.2f, 0f), Random.Range(0.4f, 0.6f), new Color(0.45f, 0.75f, 1f));
+                p.Velocity = new Vector3(Random.Range(-1.6f, 1.6f), Random.Range(2.5f, 4f), 0f);
+                p.Gravity = -11f;
+                Size(p, 0.22f, 0.12f, 0f);
+            }
+        }
+
+        /// <summary>Ghiveci înflorit: o floare mare care se deschide și petale care zboară.</summary>
+        public void FlowerBloom(Vector3 position)
+        {
+            Particle flower = Emit(SugarSprites.Flower, position, 0.9f, Color.white);
+            flower.Motion = Motion.Static;
+            flower.Spin = 120f;
+            Size(flower, 0.2f, 1.3f, 0f);
+            for (int i = 0; i < 12; i++)
+            {
+                Particle p = Emit(SugarSprites.Heart, position, Random.Range(0.7f, 1.1f), i % 2 == 0 ? new Color(1f, 0.55f, 0.75f) : new Color(1f, 0.85f, 0.3f));
+                float angle = i / 12f * Mathf.PI * 2f;
+                p.Velocity = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * Random.Range(2.5f, 4f);
+                p.Drag = 2.5f;
+                p.Gravity = -2f;
+                p.Spin = Random.Range(-200f, 200f);
+                Size(p, 0.25f, 0.1f, 0f);
+            }
+            Shake(0.06f);
+        }
+
         public void JarSparkle(Vector3 position, Color color)
         {
             Particle p = Emit(SugarSprites.Sparkle, position, 0.4f, Color.Lerp(color, Color.white, 0.5f));

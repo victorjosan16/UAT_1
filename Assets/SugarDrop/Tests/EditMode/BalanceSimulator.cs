@@ -16,17 +16,19 @@ namespace SugarDrop.Tests
         {
             LevelConfig config = LevelConfig.For(level);
             var engine = new BlastEngine(config, seed);
-            BossBattle boss = config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(level, config.Moves)) : null;
-            var goals = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0, engine.CountObstacles());
             score = 0;
             movesUsed = 0;
+            // Nivelul bonus nu se poate pierde (se termină când expiră timpul).
+            if (config.IsBonus) return true;
+            BossBattle boss = config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(level, config.Moves)) : null;
+            var goals = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0, engine.CountObstacles());
             Func<int, int> weight = color =>
             {
                 foreach (GoalItem item in goals.Items)
                     if (item.Kind == GoalKind.Collect && item.Color == color && !item.Done) return 3;
                 return 0;
             };
-            for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck; move++)
+            for (int move = 0; move < config.Moves && !goals.IsComplete && !engine.Stuck && !engine.TimeBombExpired; move++)
             {
                 if (!engine.TryFindBestSwap(weight, out Vector2Int from, out Vector2Int to)) break;
                 movesUsed++;
@@ -42,7 +44,7 @@ namespace SugarDrop.Tests
                 BossAttack? attack = boss.EndOfMove();
                 if (attack.HasValue) engine.ApplyBossAttack(attack.Value, boss.Phase.Strength);
             }
-            return goals.IsComplete;
+            return goals.IsComplete && !engine.TimeBombExpired;
         }
     }
 }
