@@ -10,3 +10,5 @@
 *.sln
 *.apk
 *.aab
+Tools/CoreTests/bin/
+Tools/CoreTests/obj/

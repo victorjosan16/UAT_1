@@ -128,7 +128,8 @@ namespace SugarDrop
                     foreach (Vector2Int c in g.Cells)
                     {
                         Piece p = At(c);
-                        if (p.Locked || !HasMatchAt(c)) continue;
+                        // Și bomboanele cu gheață sau lanț se pot recolora (altfel o linie de bomboane legate ar rămâne pe tablă).
+                        if (p.Kind != TileKind.Normal || !HasMatchAt(c)) continue;
                         int start = _random.Next(Config.Colors);
                         for (int i = 0; i < Config.Colors && HasMatchAt(c); i++) p.Color = (start + i) % Config.Colors;
                     }

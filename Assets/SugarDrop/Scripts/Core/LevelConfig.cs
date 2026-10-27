@@ -28,8 +28,8 @@ namespace SugarDrop
         private static readonly LevelType[] Cycle =
         {
             LevelType.Collect, LevelType.Ingredients, LevelType.Crates, LevelType.Frosting, LevelType.Specials,
-            LevelType.Ice, LevelType.Collect, LevelType.Ingredients, LevelType.Chains, LevelType.Frosting,
-            LevelType.Chocolate, LevelType.Score, LevelType.Specials, LevelType.Crates,
+            LevelType.Ice, LevelType.Score, LevelType.Ingredients, LevelType.Chains, LevelType.Frosting,
+            LevelType.Chocolate, LevelType.Collect, LevelType.Specials, LevelType.Crates,
         };
 
         public readonly int Level;
@@ -232,23 +232,23 @@ namespace SugarDrop
                     break;
                 case LevelType.Crates:
                     focus = Focus(4 + chapter * 0.8f, 3, 10);
-                    moves = 6 + focus * crateHits * 2.2f;
+                    moves = 5 + focus * crateHits * 1.6f;
                     break;
                 case LevelType.Ice:
                     focus = Focus(4 + chapter * 0.8f, 3, 10);
-                    moves = 6 + focus * (1 + iceLayers) * 0.5f * 2.2f;
+                    moves = 4 + focus * (1 + iceLayers) * 0.5f * 1.2f;
                     break;
                 case LevelType.Chains:
                     focus = Focus(4 + chapter * 0.7f, 3, 9);
-                    moves = 6 + focus * 2.2f;
+                    moves = 4 + focus * 1.1f;
                     break;
                 case LevelType.Chocolate:
                     focus = Focus(2 + chapter * 0.3f, 2, 5);
-                    moves = 10 + focus * 4f;
+                    moves = 5 + focus * 1.6f;
                     break;
                 case LevelType.Specials:
                     specialsTarget = Focus(3 + level / 20f, 3, 8);
-                    moves = 6 + specialsTarget * 3.5f;
+                    moves = 3 + specialsTarget * 2f;
                     break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
@@ -260,7 +260,7 @@ namespace SugarDrop
             }
             if (type == LevelType.Collect)
             {
-                int kinds = 1 + (level >= 8 ? 1 : 0) + (level >= 20 ? 1 : 0);
+                int kinds = 1 + (level >= 11 ? 1 : 0) + (level >= 20 ? 1 : 0);
                 kinds = Mathf.Min(kinds, colors - 1);
                 collectColors = new int[kinds];
                 collectCounts = new int[kinds];
