@@ -827,35 +827,6 @@ namespace SugarDrop
             return c;
         }));
 
-        // ------------------------------------------------------------ Salvează-l pe Bobo
-
-        /// <summary>Piatră: bolovan rotunjit, gri-violet, cu umbră jos și două crăpături.</summary>
-        public static Sprite Stone => Get("stone", () => Paint(128, (x, y) =>
-        {
-            Vector2 p = new(x, y);
-            float body = RoundRect(x, y, 8, 10, 112, 106, 30) + Mathf.Sin(x * 0.11f) * 3f;
-            float a = Alpha(body);
-            if (a <= 0f) return Color.clear;
-            Color c = Color.Lerp(new Color(0.42f, 0.4f, 0.5f), new Color(0.7f, 0.68f, 0.78f), y / 127f);
-            float crack = Mathf.Min(Mathf.Min(SegmentDistance(p, new Vector2(40f, 92f), new Vector2(54f, 70f)), SegmentDistance(p, new Vector2(54f, 70f), new Vector2(46f, 52f))),
-                SegmentDistance(p, new Vector2(84f, 40f), new Vector2(96f, 58f))) - 2.5f;
-            c = Over(c, new Color(0.3f, 0.28f, 0.36f), Alpha(crack));
-            c = Over(c, new Color(1f, 1f, 1f), Alpha(Vector2.Distance(p, new Vector2(38f, 100f)) - 9f) * 0.35f);
-            c.a = a;
-            return c;
-        }));
-
-        /// <summary>Cușcă: ramă și gratii (desenată peste bomboana prinsă).</summary>
-        public static Sprite Cage => Get("cage", () => Mask(128, (x, y) =>
-        {
-            float frame = Mathf.Abs(RoundRect(x, y, 8, 8, 112, 112, 18)) - 6f;
-            float bars = float.MaxValue;
-            for (int i = 1; i <= 3; i++) bars = Mathf.Min(bars, Mathf.Abs(x - (8f + i * 28f)) - 4.5f);
-            bars = Mathf.Max(bars, RoundRect(x, y, 8, 8, 112, 112, 18));
-            float belt = Mathf.Max(Mathf.Abs(y - 64f) - 4f, RoundRect(x, y, 8, 8, 112, 112, 18));
-            return Mathf.Min(frame, Mathf.Min(bars, belt));
-        }));
-
         /// <summary>Slime acru: pată verde din câteva bule unite, cu luciu.</summary>
         public static Sprite Slime => Get("slime", () => Paint(128, (x, y) =>
         {

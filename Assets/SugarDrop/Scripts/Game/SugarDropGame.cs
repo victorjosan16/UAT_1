@@ -105,17 +105,12 @@ namespace SugarDrop
             return 0;
         }
 
-        /// <summary>Tabla nivelurilor „Salvează-l pe Bobo” (creată din cod, stă în locul tablei obișnuite).</summary>
-        private RescueBoard _rescue;
-        private bool Rescue => _config.Type == LevelType.Rescue;
-        private bool BoardBusy => board.Busy || (_rescue != null && _rescue.Busy);
-
         /// <summary>Pericolul de sub tablă (pe nivelurile fără borcan) și dacă nivelul are borcan.</summary>
         private DangerScene _danger;
         private bool _jarLevel;
 
-        /// <summary>Nivelurile cu borcan: bomboane-ingredient și salvarea cu sirop; restul au pericolul lui Bobo.</summary>
-        private static bool NeedsJar(LevelConfig config) => config.Type == LevelType.Rescue || config.Ingredients > 0;
+        /// <summary>Nivelurile cu borcan: bomboanele-ingredient cad în el; restul au pericolul lui Bobo.</summary>
+        private static bool NeedsJar(LevelConfig config) => config.Ingredients > 0;
 
         private float DangerProgress => _config.IsBonus
             ? 1f - _bonusTime / Mathf.Max(1f, _config.BonusSeconds)
@@ -145,7 +140,7 @@ namespace SugarDrop
 
         private void OnPowerClicked()
         {
-            if (_state != State.Playing || _powerRunning || BoardBusy || _moves <= 0 || _goals.IsComplete) return;
+            if (_state != State.Playing || _powerRunning || board.Busy || _moves <= 0 || _goals.IsComplete) return;
             if (_power < 1f)
             {
                 SugarAudio.Buzz(0);
@@ -158,8 +153,7 @@ namespace SugarDrop
         }
 
         /// <summary>
-        /// Bobo își folosește puterea (fără să coste o mutare): pe tabla obișnuită aruncă o bombă și o rachetă care
-        /// explodează imediat; în salvare sparge următoarele obstacole de pe cel mai bun drum al siropului.
+        /// Bobo își folosește puterea (fără să coste o mutare): aruncă o bombă și o rachetă care explodează imediat.
         /// </summary>
         private IEnumerator PowerRoutine()
         {
@@ -169,36 +163,24 @@ namespace SugarDrop
             SugarAudio.Buzz(2);
             if (Audio != null) Audio.Play(SugarSound.SpecialCreated);
             yield return new WaitForSeconds(0.35f);
-            if (Rescue) _rescue.PowerBlast();
-            else
+            foreach (TileKind kind in new[] { TileKind.Bomb, TileKind.RocketH })
             {
-                foreach (TileKind kind in new[] { TileKind.Bomb, TileKind.RocketH })
-                {
-                    while (board.Busy) yield return null;
-                    if (!board.TryMakeRandomSpecial(out Vector3 at, kind)) continue;
-                    if (Vfx != null) Vfx.SpecialCreated(at);
-                    yield return new WaitForSeconds(0.3f);
-                    while (board.Busy) yield return null;
-                    board.DetonateNextSpecial();
-                    yield return new WaitForSeconds(0.15f);
-                }
+                while (board.Busy) yield return null;
+                if (!board.TryMakeRandomSpecial(out Vector3 at, kind)) continue;
+                if (Vfx != null) Vfx.SpecialCreated(at);
+                yield return new WaitForSeconds(0.3f);
+                while (board.Busy) yield return null;
+                board.DetonateNextSpecial();
+                yield return new WaitForSeconds(0.15f);
             }
-            while (BoardBusy) yield return null;
+            while (board.Busy) yield return null;
             _powerRunning = false;
         }
 
         private void OnEnable()
         {
-            if (_rescue == null) _rescue = new GameObject("RescueBoard").AddComponent<RescueBoard>();
             if (_danger == null) _danger = new GameObject("Danger").AddComponent<DangerScene>();
             hud.PowerClicked += OnPowerClicked;
-            _rescue.MoveMade += OnMoveMade;
-            _rescue.InvalidTap += OnInvalidTap;
-            _rescue.Touched += OnTouched;
-            _rescue.TileCleared += OnRescueTileCleared;
-            _rescue.GroupBlasted += OnGroupBlasted;
-            _rescue.Points += OnRescuePoints;
-            _rescue.Rescued += OnBoboRescued;
             board.MoveMade += OnMoveMade;
             board.InvalidTap += OnInvalidTap;
             board.GroupBlasted += OnGroupBlasted;
@@ -246,16 +228,6 @@ namespace SugarDrop
         private void OnDisable()
         {
             hud.PowerClicked -= OnPowerClicked;
-            if (_rescue != null)
-            {
-                _rescue.MoveMade -= OnMoveMade;
-                _rescue.InvalidTap -= OnInvalidTap;
-                _rescue.Touched -= OnTouched;
-                _rescue.TileCleared -= OnRescueTileCleared;
-                _rescue.GroupBlasted -= OnGroupBlasted;
-                _rescue.Points -= OnRescuePoints;
-                _rescue.Rescued -= OnBoboRescued;
-            }
             board.MoveMade -= OnMoveMade;
             board.InvalidTap -= OnInvalidTap;
             board.GroupBlasted -= OnGroupBlasted;
@@ -696,16 +668,13 @@ namespace SugarDrop
         private void ShowLevelStart(int level)
         {
             LevelConfig config = LevelConfig.For(level);
-            bool rescue = config.Type == LevelType.Rescue;
-            // Pe nivelurile de salvare nu există piese speciale, deci nici ajutoare la start.
-            if (rescue) _useRocket = _useBomb = false;
             var info = new LevelStartInfo
             {
                 Title = config.IsBoss ? SugarLoc.T(config.IsMegaBoss ? "MEGA BOSS!" : "BOSS!") + " " + level : SugarLoc.F("NIVELUL {0}", level),
                 Difficulty = config.Difficulty,
                 ShowDifficulty = !config.IsBoss && !config.IsBonus && config.Difficulty is Difficulty.Hard or Difficulty.VeryHard,
                 BestStars = SugarSave.GetStars(level),
-                Boosters = !rescue,
+                Boosters = true,
                 IsNew = !config.IsBoss && IsNew(MechanicBit(config.Type)),
                 Streak = StreakSpecials(config) > 0 ? SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak) : "",
             };
@@ -738,11 +707,6 @@ namespace SugarDrop
             if (config.IsBonus)
             {
                 goals.Add((QuarryEmpire.ProceduralSprites.Star, QuarryEmpire.UiRoot.Theme.AccentColor, 0));
-                return goals;
-            }
-            if (config.Type == LevelType.Rescue)
-            {
-                goals.Add((SugarSprites.Cage, new Color(0.85f, 0.6f, 0.25f), 0));
                 return goals;
             }
             BossDefinition boss = config.Type == LevelType.Boss ? BossDefinition.For(level, config.Moves) : null;
@@ -897,15 +861,6 @@ namespace SugarDrop
                 _danger.Show(ChapterTheme.IndexOf(chapter), mascot.transform.position + Vector3.down * 0.85f, 2f, board.Width + 0.8f, screenBottom);
             }
 
-            // Salvează-l pe Bobo: tabla obișnuită se golește, în locul ei vine tabla fără gravitație.
-            if (Rescue)
-            {
-                board.Clear();
-                _rescue.Build(RescueLayout.For(_level, _config.Difficulty), new Vector2(0f, boardBottomY), board.CellSize, chapter,
-                    mascot, playfield.JarMouth, playfield.JarCenter, playfield.JarHalfWidth);
-            }
-            else _rescue.Clear();
-
             candies.Clear();
             jar.ResetJar(_config.Ingredients);
             _boss = _config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(_level, _config.Moves)) : null;
@@ -931,8 +886,6 @@ namespace SugarDrop
             result.Hide();
             dialog.Hide();
             SetGameplayUi(true);
-            // Ajutoarele (ciocan, bombă, amestecare) sunt pentru tabla obișnuită.
-            boosters.gameObject.SetActive(!Rescue);
             hud.HideTransient();
             hud.SetLevel(_level, _config.IsBoss);
             // Sugar Rush: pe timp, fără mutări; cronometrul stă în discul mutărilor.
@@ -964,7 +917,7 @@ namespace SugarDrop
             Data.seenMechanics |= MechanicBit(_config.Type) | (_config.PortalIn.Length > 0 ? PortalBit : 0);
 
             // Seria de victorii: 3 la rând → o rachetă la start, 5 la rând → și o bombă.
-            int streakSpecials = tutorial || Rescue ? 0 : StreakSpecials(_config);
+            int streakSpecials = tutorial ? 0 : StreakSpecials(_config);
             for (int i = 0; i < streakSpecials; i++)
                 if (board.TryMakeRandomSpecial(out Vector3 at, i == 0 ? TileKind.RocketH : TileKind.Bomb) && Vfx != null) Vfx.SpecialCreated(at);
 
@@ -1098,7 +1051,7 @@ namespace SugarDrop
         private static int MechanicBit(LevelType type) => type switch
         {
             LevelType.Crates or LevelType.Ice or LevelType.Chains or LevelType.Chocolate or LevelType.Specials
-                or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients or LevelType.Rescue => 1 << (int)type,
+                or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients => 1 << (int)type,
             _ => 0,
         };
 
@@ -1121,7 +1074,6 @@ namespace SugarDrop
             LevelType.Garden => SugarLoc.T("Udă ghivecele până înfloresc!"),
             LevelType.Defuse => SugarLoc.T("Dezamorsează bombele cu ceas!"),
             LevelType.Bonus => SugarLoc.T("Sugar Rush! Cât mai multe puncte până expiră timpul!"),
-            LevelType.Rescue => SugarLoc.T("Sapă drumul siropului până la Bobo și salvează-l!"),
             _ => SugarLoc.T("Atinge scorul!"),
         };
 
@@ -1179,8 +1131,7 @@ namespace SugarDrop
             // animațiile țin tabla ocupată, finalul n-ar mai veni și s-ar putea juca la nesfârșit.
             if (_config.IsBonus) TickBonus(dt);
             bool canTap = (_config.IsBonus ? _bonusTime > 0f : _moves > 0 && !_goals.IsComplete) && !coach.Blocking && !board.TimeBombExpired && !_powerRunning;
-            if (input.enabled != (canTap && !Rescue)) input.enabled = canTap && !Rescue;
-            _rescue.Interactable = canTap && Rescue && !_rescue.Busy;
+            if (input.enabled != canTap) input.enabled = canTap;
             if (_danger.Visible)
             {
                 float danger = DangerProgress;
@@ -1189,7 +1140,7 @@ namespace SugarDrop
             }
 
             // Rândul Boss-ului: abia după ce mutarea jucătorului s-a rezolvat complet (tabla liniștită).
-            if (_bossTurnPending && !BoardBusy)
+            if (_bossTurnPending && !board.Busy)
             {
                 _bossTurnPending = false;
                 BossTurn();
@@ -1197,20 +1148,19 @@ namespace SugarDrop
 
             // Indiciu după o pauză lungă: două capace care se pot schimba tremură.
             // Pasul următor al antrenamentului, după ce mutarea s-a rezolvat complet.
-            if (_tutorialWaiting && !BoardBusy)
+            if (_tutorialWaiting && !board.Busy)
             {
                 _tutorialWaiting = false;
                 AfterTutorialMove();
             }
 
-            if (!BoardBusy && input.TapTarget == null && _tutorial == TutorialStep.None)
+            if (!board.Busy && input.TapTarget == null && _tutorial == TutorialStep.None)
             {
                 _idleTime += dt;
                 if (_idleTime >= (_level <= 3 ? 4f : idleHintSeconds))
                 {
                     _idleTime = 0f;
-                    if (Rescue) _rescue.ShowHint();
-                    else board.ShowHint(_colorWeight);
+                    board.ShowHint(_colorWeight);
                 }
             }
 
@@ -1218,7 +1168,7 @@ namespace SugarDrop
             // Așteptăm să se termine animațiile tablei.
             bool complete = _config.IsBonus ? _bonusTime <= 0f || board.Stuck : _goals.IsComplete;
             bool outOfMoves = !_config.IsBonus && (_moves <= 0 || board.Stuck || board.TimeBombExpired);
-            if (BoardBusy || _powerRunning || (!complete && !outOfMoves))
+            if (board.Busy || _powerRunning || (!complete && !outOfMoves))
             {
                 _endTimer = 0f;
                 return;
@@ -1337,12 +1287,6 @@ namespace SugarDrop
                 _moves--;
                 hud.SetMoves(_moves, true);
                 AddScore(ScoreRules.FinaleMove);
-                // Salvarea lui Bobo: mutările rămase devin doar puncte (nu există piese speciale).
-                if (Rescue)
-                {
-                    yield return new WaitForSeconds(0.06f);
-                    continue;
-                }
                 if (converted < 15 && board.TryMakeRandomSpecial(out Vector3 position))
                 {
                     converted++;
@@ -1352,7 +1296,7 @@ namespace SugarDrop
             }
             yield return new WaitForSeconds(0.3f);
 
-            for (int guard = 0; guard < 60 && !Rescue; guard++)
+            for (int guard = 0; guard < 60; guard++)
             {
                 while (board.Busy) yield return null;
                 if (!board.DetonateNextSpecial()) break;
@@ -1679,21 +1623,6 @@ namespace SugarDrop
             hud.ShowWord(SugarLoc.T("Combo!"), Palette.Tile(3));
             SugarAudio.Buzz(2);
             mascot.Cheer(2f);
-        }
-
-        private void OnRescueTileCleared(int color, Vector3 position) => OnTileCleared(color, TileKind.Normal, position);
-
-        private void OnRescuePoints(int points) => AddScore(points);
-
-        /// <summary>Siropul a ajuns la Bobo: obiectivul e îndeplinit, Bobo sare de bucurie.</summary>
-        private void OnBoboRescued()
-        {
-            _goals?.MarkRescued();
-            hud.RefreshGoals(true);
-            hud.ShowWord(SugarLoc.T("Bobo e liber!"), Palette.Tile(0));
-            mascot.SetHappy();
-            mascot.Cheer(2f);
-            SugarAudio.Buzz(2);
         }
 
         private void OnTileCleared(int color, TileKind kind, Vector3 position)

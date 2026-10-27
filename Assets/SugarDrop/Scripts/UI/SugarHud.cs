@@ -390,7 +390,7 @@ namespace SugarDrop
             }
         }
 
-        /// <summary>Un punct de pe traseu: Boss (față), nivel greu (roșu, cu flacără), salvare (roz) sau obișnuit.</summary>
+        /// <summary>Un punct de pe traseu: Boss (față), nivel greu (roșu, cu flacără) sau obișnuit.</summary>
         private void SetTrackDot(int index, int level, bool current)
         {
             bool boss = LevelConfig.IsBossLevel(level);
@@ -398,7 +398,6 @@ namespace SugarDrop
             bool hard = !boss && !LevelConfig.IsBonusLevel(level) && difficulty is Difficulty.Hard or Difficulty.VeryHard;
             Color color = boss ? Palette.Tile(4)
                 : hard ? new Color(0.95f, 0.35f, 0.2f)
-                : LevelConfig.IsRescueLevel(level) ? new Color(0.96f, 0.45f, 0.62f)
                 : current ? UiRoot.Theme.AccentColor : new Color(0.72f, 0.66f, 0.78f);
             _trackDots[index].color = color;
             _trackNumbers[index].Text = level.ToString();
@@ -510,7 +509,6 @@ namespace SugarDrop
             GoalKind.Specials => SugarSprites.Rocket,
             GoalKind.Flowers => SugarSprites.Flower,
             GoalKind.TimeBombs => SugarSprites.Bomb,
-            GoalKind.Rescue => SugarSprites.Cage,
             _ => ProceduralSprites.Star,
         };
 
@@ -519,7 +517,6 @@ namespace SugarDrop
             GoalKind.Ingredients => Palette.Candy(0),
             GoalKind.Frosting => new Color(1f, 0.82f, 0.9f),
             GoalKind.Score => UiRoot.Theme.AccentColor,
-            GoalKind.Rescue => new Color(0.85f, 0.6f, 0.25f),
             _ => Color.white,
         };
 

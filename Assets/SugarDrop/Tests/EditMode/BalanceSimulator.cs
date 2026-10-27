@@ -20,7 +20,6 @@ namespace SugarDrop.Tests
             movesUsed = 0;
             // Nivelul bonus nu se poate pierde (se termină când expiră timpul).
             if (config.IsBonus) return true;
-            if (config.Type == LevelType.Rescue) return PlayRescue(level, config, seed, out movesUsed);
             BossBattle boss = config.Type == LevelType.Boss ? new BossBattle(BossDefinition.For(level, config.Moves)) : null;
             var goals = new LevelGoals(config, engine.FrostingLeft, boss?.Health ?? 0, engine.CountObstacles());
             Func<int, int> weight = color =>
@@ -46,26 +45,6 @@ namespace SugarDrop.Tests
                 if (attack.HasValue) engine.ApplyBossAttack(attack.Value, boss.Phase.Strength);
             }
             return goals.IsComplete && !engine.TimeBombExpired;
-        }
-    
-        /// <summary>
-        /// Salvarea lui Bobo: botul face cea mai bună atingere, dar 30% din mutări le face la întâmplare
-        /// (ca un jucător care nu vede din prima drumul cel mai bun).
-        /// </summary>
-        private static bool PlayRescue(int level, LevelConfig config, int seed, out int movesUsed)
-        {
-            var engine = new RescueEngine(RescueLayout.For(level, config.Difficulty));
-            var random = new System.Random(seed);
-            movesUsed = 0;
-            while (movesUsed < config.Moves && !engine.Rescued)
-            {
-                var groups = engine.Groups();
-                if (groups.Count == 0) break;
-                Vector2Int tap = random.NextDouble() < 0.3 ? groups[random.Next(groups.Count)][0] : engine.BestTap();
-                engine.Tap(tap);
-                movesUsed++;
-            }
-            return engine.Rescued;
         }
 }
 }

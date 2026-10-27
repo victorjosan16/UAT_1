@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Rescue }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs }
 
     /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
     public struct ObstacleCounts
@@ -48,18 +48,10 @@ namespace SugarDrop
                 case LevelType.Chocolate when obstacles.Chocolate > 0: Add(GoalKind.Chocolate, -1, obstacles.Chocolate); break;
                 case LevelType.Garden when obstacles.Pots > 0: Add(GoalKind.Flowers, -1, obstacles.Pots); break;
                 case LevelType.Defuse when config.TimeBombGoal > 0: Add(GoalKind.TimeBombs, -1, config.TimeBombGoal); break;
-                case LevelType.Rescue: Add(GoalKind.Rescue, -1, 1); break;
             }
             if (config.SpecialsTarget > 0) Add(GoalKind.Specials, -1, config.SpecialsTarget);
             if (config.ScoreTarget > 0) Add(GoalKind.Score, -1, config.ScoreTarget);
             else if (Items.Count == 0 && config.Type != LevelType.Boss && config.Type != LevelType.Bonus) Add(GoalKind.Score, -1, FallbackScore);
-        }
-
-        /// <summary>Bobo a fost salvat (nivelurile de salvare).</summary>
-        public void MarkRescued()
-        {
-            foreach (GoalItem item in Items)
-                if (item.Kind == GoalKind.Rescue) item.Remaining = 0;
         }
 
         private void Add(GoalKind kind, int color, int target) =>

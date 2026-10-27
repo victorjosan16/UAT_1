@@ -37,15 +37,12 @@ namespace SugarDrop
         public static int TwoStars(LevelConfig config) => config.Type switch
         {
             LevelType.Score => config.ScoreTarget * 3 / 2,
-            // Salvarea lui Bobo: stelele vin mai ales din mutările rămase (fiecare valorează FinaleMove).
-            LevelType.Rescue => config.Moves * 80,
             _ => config.Moves * 170 + config.Ingredients * Ingredient,
         };
 
         public static int ThreeStars(LevelConfig config) => config.Type switch
         {
             LevelType.Score => config.ScoreTarget * 11 / 5,
-            LevelType.Rescue => config.Moves * 110,
             _ => TwoStars(config) * 8 / 5,
         };
 
