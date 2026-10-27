@@ -1,0 +1,79 @@
+# Drop Quest — lista de imagini (opționale, înlocuiesc desenele din cod)
+
+**Unde:** `Assets/SugarDrop/Resources/Art/`, cu exact numele de mai jos (`.png`). Jocul le încarcă singur. Ce lipsește rămâne desenat din cod, deci le poți adăuga pe rând.
+
+**Format:**
+- PNG, sRGB.
+- **Obiectele** (piese, obstacole, iconițe): fundal transparent, obiectul centrat, cam 85% din imagine, fără umbră pe fundal și fără text.
+- **Fundalurile:** fără transparență, compoziție verticală, cu zona din mijloc mai liniștită (acolo stă tabla).
+
+**Stil comun (pune-l la începutul fiecărui prompt):**
+> Stylized 3D mobile puzzle game asset, glossy and polished, soft studio lighting from the top-left, vibrant but harmonious colors, clean silhouette, nature adventure theme, high detail, centered, transparent background, no text, no watermark.
+
+**Licență:** folosește doar un generator sau un ilustrator care îți dă **drept de utilizare comercială**. Nu copia elemente din jocuri existente.
+
+## Piesele (256×256)
+Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de la nivelurile cu foc.
+
+| Fișier | Descriere / prompt |
+|---|---|
+| `piece0.png` | Red mushroom with white spots, cute rounded cap, cream stem |
+| `piece1.png` | Blue water drop, translucent, glossy highlight |
+| `piece2.png` | Fresh green leaf, slightly tilted, visible veins |
+| `piece3.png` | Golden faceted gemstone (octagon cut), shiny |
+| `piece4.png` | Purple amethyst crystal, elongated hexagon, faceted |
+
+## Piesele speciale (256×256)
+| Fișier | Descriere |
+|---|---|
+| `rocket.png` | Small cartoon rocket, pointing **right**. Jocul o rotește pentru cea verticală. |
+| `bomb.png` | Round cartoon bomb with lit fuse |
+| `pearl.png` | Plain glossy white sphere (baza bilei curcubeu) |
+| `rainbow.png` | Rainbow swirl pattern on a sphere, transparent around. Se pune peste `pearl`. |
+
+## Obstacole (256×256)
+| Fișier | Descriere |
+|---|---|
+| `crate.png` | Wooden crate with metal corners |
+| `chocolate.png` | Grey spiral stone block (obstacolul care se întinde) |
+| `ice.png` | Translucent ice cube, **semi-transparent in the middle** (se pune peste o piesă) |
+| `chain.png` | Green vines wrapping a square, **empty center** (se pune peste o piesă) |
+| `pot.png` | Terracotta flower pot (fără plantă) |
+| `flame.png` | Bright cartoon flame, orange with a yellow core |
+| `portal.png` | Magic swirl portal ring, blue-violet |
+| `flower.png` | Pink five-petal flower |
+
+## Personaje (256×256)
+| Fișier | Descriere |
+|---|---|
+| `bobotoken.png` | Bobo, mascota: cupcake roz cu cireașă, ochi mari, zâmbet (pe tablă) |
+| `bobotokenscared.png` | Același Bobo, speriat: gura „O”, o picătură de sudoare |
+| `boss0.png` … `boss6.png` | Fețele boșilor: 0 Regele Ciocolată, 1 Regina Gheții, 2 Dragonul de Bomboane, 3 Monstrul de Jeleu, 4 Împăratul Zahărului, 5 Regina Dulciurilor, 6 Titanul de Caramel. Prieten-amenințători, nu înfricoșători. |
+
+## Iconițe (256×256)
+`gift.png` (cadou), `trophy.png` (trofeu), `lifeheart.png` (inimă roșie, vieți).
+
+## Fundaluri (1242×2688, vertical, fără transparență)
+| Fișier | Ținut | Prompt (după stilul comun, fără „transparent background”) |
+|---|---|---|
+| `bggradient.png` | meniul principal | Floating islands with waterfalls and a wooden bridge, blue sky, lush greenery |
+| `sky0.png` | 1. Câmpia de Căpșuni | Sunny meadow with strawberry bushes, rolling hills, soft clouds |
+| `sky1.png` | 2. Pădurea de Mentă | Enchanted mint-green forest, tall trees, light rays |
+| `sky2.png` | 3. Lacul de Afine | Calm blueberry lake, waterfalls, misty mountains |
+| `sky3.png` | 4. Deșertul de Lămâie | Warm lemon desert, dunes, palm oasis |
+| `sky4.png` | 5. Castelul de Struguri | Purple fairytale castle on a hill, vineyards |
+| `sky5.png` | 6. Muntele de Ciocolată | Brown rocky mountains with chocolate rivers |
+| `sky6.png` | 7. Regatul de Gheață | Snowy ice kingdom, crystal spires, aurora |
+| `sky7.png` | 8. Canionul de Caramel | Orange canyon, layered rocks, warm sunset |
+| `sky8.png` | 9. Norii de Vată de Zahăr | Pastel cloud kingdom, floating islands |
+| `sky9.png` | 10. Galaxia Curcubeu | Starry rainbow galaxy, planets, night sky |
+
+## Logo (1024×600, transparent)
+`logo.png`: titlul „DROP QUEST” în litere 3D groase, cu „DROP” albastru-apă și „QUEST” auriu, cu frunze și o picătură ca decor. Sau scris de un designer. Logo-ul generat cu AI are adesea litere greșite, așa că verifică textul.
+
+## După ce adaugi imaginile
+Fă un build. Pe telefon verifică:
+- dacă piesele au aceeași mărime vizuală;
+- dacă fundalurile nu acoperă tabla cu detalii prea aglomerate.
+
+Dacă ceva iese prea mare sau prea mic, spune-mi și ajustez dimensiunea din cod.

@@ -76,6 +76,11 @@ namespace SugarDrop
         {
             int theme = ChapterTheme.IndexOf(chapter);
             _gradient.sprite = SugarSprites.Sky(chapter);
+            // Degradeul se întinde pe tot ecranul; o imagine pictată (Resources/Art) acoperă ecranul păstrându-și proporțiile.
+            Vector2 spriteSize = _gradient.sprite.bounds.size;
+            bool painted = _gradient.sprite.texture.width > 8;
+            float cover = Mathf.Max(area.x / spriteSize.x, area.y / spriteSize.y);
+            _gradient.transform.localScale = painted ? new Vector3(cover, cover, 1f) : new Vector3(area.x / spriteSize.x, area.y / spriteSize.y, 1f);
             _motion = LandStyle.Motion(theme);
             Vector2 sizeRange = LandStyle.AmbientSize(theme);
             for (int i = 0; i < _dots.Length; i++)

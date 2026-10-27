@@ -243,7 +243,7 @@ namespace SugarDrop
 
         /// <summary>Cadrul implicit al tablei (lavandă plin), până se aplică tema ținutului.</summary>
         public static Sprite CandyCane => Get("candycane", () => PaintRepeat(64, (x, y) =>
-            SoftPop.Lavender));
+            QuestStyle.Wood));
 
         public static Sprite Beam => Get("beam", () => Paint(128, 32, (x, y) =>
         {
@@ -1023,7 +1023,8 @@ namespace SugarDrop
         private static Sprite Get(string key, Func<Sprite> create)
         {
             if (Cache.TryGetValue(key, out Sprite sprite) && sprite != null) return sprite;
-            sprite = create();
+            // O imagine PNG cu același nume (Resources/Art) are prioritate față de desenul din cod.
+            sprite = ArtLibrary.Find(key) ?? create();
             sprite.name = key;
             Cache[key] = sprite;
             return sprite;

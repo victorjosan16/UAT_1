@@ -7,7 +7,7 @@ namespace SugarDrop
     public enum SugarLanguage { Romanian, English, Spanish, Portuguese, French, German, Italian, Turkish, Indonesian, Russian, Ukrainian }
 
     /// <summary>
-    /// Traducerile Sugar Drop. Textele din cod sunt în română și servesc drept chei; fiecare rând din tabel are
+    /// Traducerile Drop Quest. Textele din cod sunt în română și servesc drept chei; fiecare rând din tabel are
     /// traducerea în toate limbile. Implicit jocul e în engleză; jucătorul alege altă limbă din Setări.
     /// </summary>
     public static class SugarLoc
@@ -743,9 +743,9 @@ namespace SugarDrop
                 "Le caramelle sono pronte da abbinare. Facciamo una partita?", "Şekerler eşleşmeye hazır. Bir el oynar mısın?",
                 "Permen sudah siap dicocokkan. Main sebentar?",
                 "Конфеты готовы. Сыграем партию?", "Цукерки готові. Зіграємо партію?"),
-            R("Îți place Sugar Drop?", "Enjoying Sugar Drop?", "¿Te gusta Sugar Drop?", "Está curtindo o Sugar Drop?", "Tu aimes Sugar Drop ?",
-                "Gefällt dir Sugar Drop?", "Ti piace Sugar Drop?", "Sugar Drop'u sevdin mi?", "Suka Sugar Drop?",
-                "Нравится Sugar Drop?", "Подобається Sugar Drop?"),
+            R("Îți place Drop Quest?", "Enjoying Drop Quest?", "¿Te gusta Drop Quest?", "Está curtindo o Drop Quest?", "Tu aimes Drop Quest ?",
+                "Gefällt dir Drop Quest?", "Ti piace Drop Quest?", "Drop Quest'u sevdin mi?", "Suka Drop Quest?",
+                "Нравится Drop Quest?", "Подобається Drop Quest?"),
             R("Bobo e curios ce părere ai!", "Bobo wants to know what you think!", "¡Bobo quiere saber qué opinas!", "O Bobo quer saber o que você acha!",
                 "Bobo veut savoir ce que tu en penses !", "Bobo will wissen, was du denkst!", "Bobo vuole sapere cosa ne pensi!",
                 "Bobo ne düşündüğünü merak ediyor!", "Bobo ingin tahu pendapatmu!",
@@ -1004,16 +1004,16 @@ namespace SugarDrop
                 "СОХРАНИТЬ", "ЗБЕРЕГТИ"),
             R("ANULEAZĂ", "CANCEL", "CANCELAR", "CANCELAR", "ANNULER", "ABBRECHEN", "ANNULLA", "İPTAL", "BATAL",
                 "ОТМЕНА", "СКАСУВАТИ"),
-            R("Salut! Eu sunt Bobo, cupcake-ul care te însoțește prin Sugar Drop. Cum să-ți spun? Numele tău va apărea în clasament.",
-                "Hi! I'm Bobo, the cupcake who'll keep you company in Sugar Drop. What should I call you? Your name will appear on the leaderboard.",
-                "¡Hola! Soy Bobo, el cupcake que te acompañará en Sugar Drop. ¿Cómo te llamo? Tu nombre aparecerá en la clasificación.",
-                "Oi! Eu sou o Bobo, o cupcake que vai te acompanhar no Sugar Drop. Como posso te chamar? Seu nome vai aparecer no ranking.",
-                "Salut ! Je suis Bobo, le cupcake qui t'accompagne dans Sugar Drop. Comment je t'appelle ? Ton nom apparaîtra dans le classement.",
-                "Hallo! Ich bin Bobo, der Cupcake, der dich durch Sugar Drop begleitet. Wie soll ich dich nennen? Dein Name erscheint in der Bestenliste.",
-                "Ciao! Sono Bobo, il cupcake che ti accompagna in Sugar Drop. Come ti chiamo? Il tuo nome apparirà in classifica.",
-                "Merhaba! Ben Bobo, Sugar Drop'ta sana eşlik edecek cupcake. Sana nasıl seslenelim? Adın sıralamada görünecek.",
-                "Hai! Aku Bobo, cupcake yang akan menemanimu di Sugar Drop. Aku harus memanggilmu apa? Namamu akan muncul di papan peringkat.",
-                "Привет! Я Бобо, кекс, который будет с тобой в Sugar Drop. Как тебя зовут? Твоё имя появится в рейтинге.", "Привіт! Я Бобо, кекс, який буде з тобою в Sugar Drop. Як тебе звати? Твоє ім'я з'явиться в рейтингу."),
+            R("Salut! Eu sunt Bobo, cupcake-ul care te însoțește prin Drop Quest. Cum să-ți spun? Numele tău va apărea în clasament.",
+                "Hi! I'm Bobo, the cupcake who'll keep you company in Drop Quest. What should I call you? Your name will appear on the leaderboard.",
+                "¡Hola! Soy Bobo, el cupcake que te acompañará en Drop Quest. ¿Cómo te llamo? Tu nombre aparecerá en la clasificación.",
+                "Oi! Eu sou o Bobo, o cupcake que vai te acompanhar no Drop Quest. Como posso te chamar? Seu nome vai aparecer no ranking.",
+                "Salut ! Je suis Bobo, le cupcake qui t'accompagne dans Drop Quest. Comment je t'appelle ? Ton nom apparaîtra dans le classement.",
+                "Hallo! Ich bin Bobo, der Cupcake, der dich durch Drop Quest begleitet. Wie soll ich dich nennen? Dein Name erscheint in der Bestenliste.",
+                "Ciao! Sono Bobo, il cupcake che ti accompagna in Drop Quest. Come ti chiamo? Il tuo nome apparirà in classifica.",
+                "Merhaba! Ben Bobo, Drop Quest'ta sana eşlik edecek cupcake. Sana nasıl seslenelim? Adın sıralamada görünecek.",
+                "Hai! Aku Bobo, cupcake yang akan menemanimu di Drop Quest. Aku harus memanggilmu apa? Namamu akan muncul di papan peringkat.",
+                "Привет! Я Бобо, кекс, который будет с тобой в Drop Quest. Как тебя зовут? Твоё имя появится в рейтинге.", "Привіт! Я Бобо, кекс, який буде з тобою в Drop Quest. Як тебе звати? Твоє ім'я з'явиться в рейтингу."),
             R("Alege numele cu care apari în clasament.", "Choose the name shown on the leaderboard.", "Elige el nombre que aparecerá en la clasificación.",
                 "Escolha o nome que aparece no ranking.", "Choisis le nom affiché dans le classement.", "Wähle den Namen für die Bestenliste.",
                 "Scegli il nome che appare in classifica.", "Sıralamada görünecek adı seç.", "Pilih nama yang tampil di papan peringkat.",

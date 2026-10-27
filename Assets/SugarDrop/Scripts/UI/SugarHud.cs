@@ -176,7 +176,7 @@ namespace SugarDrop
 
         private void BuildBoss(UiTheme theme)
         {
-            Image panel = UiFactory.CreatePanel("BossPanel", transform, new Color(SoftPop.Text.r, SoftPop.Text.g, SoftPop.Text.b, 0.92f));
+            Image panel = UiFactory.CreatePanel("BossPanel", transform, new Color(QuestStyle.Text.r, QuestStyle.Text.g, QuestStyle.Text.b, 0.92f));
             _bossPanel = UiFactory.Place((RectTransform)panel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(900f, 124f));
             _bossFace = UiFactory.CreateImage("Face", _bossPanel, SugarSprites.BossFace(0), Color.white);
             UiFactory.Place(_bossFace.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(72f, 6f), new Vector2(124f, 124f));
@@ -415,7 +415,7 @@ namespace SugarDrop
             UiFactory.Place(_power, Vector2.right, new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
             _powerGlow = UiFactory.CreateImage("Glow", _power, SugarSprites.SoftDot, new Color(1f, 0.85f, 0.4f, 0f));
             UiFactory.Place(_powerGlow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * 240f);
-            Image back = UiFactory.CreateImage("Back", _power, theme.Circle, SoftPop.Scrim);
+            Image back = UiFactory.CreateImage("Back", _power, theme.Circle, QuestStyle.Scrim);
             UiFactory.Stretch(back.rectTransform);
             back.raycastTarget = true;
             _powerFill = UiFactory.CreateImage("Fill", _power, theme.Circle, theme.AccentColor);

@@ -496,7 +496,7 @@ namespace SugarDrop
         private void AskRating()
         {
             UiThemeColors(out Color positive, out Color ad, out Color panel);
-            dialog.Show(SugarLoc.T("Îți place Sugar Drop?"), SugarLoc.T("Bobo e curios ce părere ai!"),
+            dialog.Show(SugarLoc.T("Îți place Drop Quest?"), SugarLoc.T("Bobo e curios ce părere ai!"),
                 new DialogButton(SugarLoc.T("DA, ÎMI PLACE!"), positive, AskReview),
                 new DialogButton(SugarLoc.T("NU PREA"), panel, () => SetRateState(2)));
             dialog.DismissAction = () => SetRateState(1);

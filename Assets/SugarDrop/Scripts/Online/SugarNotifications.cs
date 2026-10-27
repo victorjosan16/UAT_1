@@ -78,7 +78,7 @@ namespace SugarDrop
             AndroidNotificationCenter.RegisterNotificationChannel(new AndroidNotificationChannel
             {
                 Id = Channel,
-                Name = "Sugar Drop",
+                Name = "Drop Quest",
                 Importance = Importance.Default,
                 Description = SugarLoc.T("Vieți pline, cadoul zilnic și misiuni"),
             });

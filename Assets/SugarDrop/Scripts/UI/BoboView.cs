@@ -28,7 +28,7 @@ namespace SugarDrop
                 UiFactory.Place(image.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position * scale, size * scale);
                 return image;
             }
-            if (shadow) Part("Shadow", SugarSprites.SoftDot, SoftPop.Shadow, new Vector2(0f, -200f), new Vector2(300f, 70f)).preserveAspect = false;
+            if (shadow) Part("Shadow", SugarSprites.SoftDot, QuestStyle.Shadow, new Vector2(0f, -200f), new Vector2(300f, 70f)).preserveAspect = false;
             Part("Cup", SugarSprites.CupWrapper, Color.white, new Vector2(0f, -80f), new Vector2(340f, 340f));
             Part("Frosting", SugarSprites.Frosting, Color.white, new Vector2(0f, 50f), new Vector2(360f, 360f));
             view._cherry = Part("Cherry", SugarSprites.Circle, new Color(0.93f, 0.2f, 0.32f), new Vector2(10f, 205f), new Vector2(80f, 80f));

@@ -38,7 +38,7 @@ namespace SugarDrop
 
             // Umbra moale a tablei (Soft Pop: tabla e o tavă albă care plutește puțin deasupra fundalului).
             Visual("BoardShadow", new Vector2(0f, (boardBottom + topY) * 0.5f - 0.12f), new Vector2(halfWidth * 2f + 0.5f, topY - boardBottom + 0.5f),
-                SoftPop.Shadow, -1, 0f);
+                QuestStyle.Shadow, -1, 0f);
             // Fundalul tablei (ușor transparent, ca să se vadă degradeul).
             _boardBack = Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
                 new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f).GetComponent<SpriteRenderer>();
@@ -100,7 +100,7 @@ namespace SugarDrop
         public void ApplyTheme(int chapter)
         {
             ChapterTheme theme = ChapterTheme.For(chapter);
-            if (_boardBack != null) _boardBack.color = new Color(theme.BoardBack.r, theme.BoardBack.g, theme.BoardBack.b, 0.85f);
+            if (_boardBack != null) _boardBack.color = new Color(theme.BoardBack.r, theme.BoardBack.g, theme.BoardBack.b, 0.92f);
             Sprite cane = SugarSprites.Cane(chapter);
             foreach (SpriteRenderer renderer in _canes) renderer.sprite = cane;
             foreach (SpriteRenderer renderer in _stripes) renderer.color = theme.Stripe;

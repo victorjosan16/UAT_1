@@ -1,4 +1,4 @@
-# Sugar Drop pe Google Play
+# Drop Quest pe Google Play
 
 Pașii completi sunt mai jos. Textele pentru fișa din magazin sunt la final, în cele 11 limbi ale jocului.
 În Play Console, engleza e limba implicită. Celelalte se adaugă din **Store presence → Main store listing →
@@ -23,7 +23,7 @@ Manage translations → Add your own translations**.
   Build-urile vechi nu mai pot fi încărcate după unul mai nou: Google cere ca numărul să crească.
 
 ## 4. Aplicația în Play Console
-- **Create app**: Sugar Drop, Game, Free, limba implicită **English (United States)**.
+- **Create app**: Drop Quest, Game, Free, limba implicită **English (United States)**.
 - **App content** (formularele obligatorii):
   - **Privacy policy**: link-ul public la `POLITICA_CONFIDENTIALITATE.md` (vezi secțiunea de mai jos);
   - **Ads**: Yes, my app contains ads;
@@ -60,7 +60,7 @@ Manage translations → Add your own translations**.
 
 ## Politica de confidențialitate: cum o publici gratuit
 1. Deschide **sites.google.com** → **Blank site**.
-2. Titlu: „Sugar Drop – Privacy Policy”. Lipești textul englezesc din `POLITICA_CONFIDENTIALITATE.md`,
+2. Titlu: „Drop Quest – Privacy Policy”. Lipești textul englezesc din `POLITICA_CONFIDENTIALITATE.md`,
    apoi, pe aceeași pagină, pe cel românesc.
 3. Completezi emailul de contact (unde scrie `[email]`).
 4. **Publish** → alegi o adresă, ex. `sites.google.com/view/sugardrop-privacy`. Lași vizibilitatea **Public**.
@@ -74,7 +74,7 @@ Limite Google Play: titlu ≤ 30 de caractere, descriere scurtă ≤ 80, descrie
 ## English (implicit) — `en-US`
 **Titlu** (25/30)
 ```
-Sugar Drop: Candy Match 3
+Drop Quest: Candy Match 3
 ```
 **Descriere scurtă** (77/80)
 ```
@@ -82,7 +82,7 @@ Swap candies, blast boosters and beat sweet bosses in a juicy match-3 puzzle!
 ```
 **Descriere lungă** (1192/4000)
 ```
-Welcome to Sugar Drop, the sweetest match-3 puzzle adventure!
+Welcome to Drop Quest, the sweetest match-3 puzzle adventure!
 
 Swap neighbouring candies to line up 3 or more of the same flavour and watch them pop in juicy, jelly-wobbling explosions. Help Bobo the cupcake fill his candy jar as you travel along a colourful map packed with levels.
 
@@ -99,15 +99,15 @@ SWEET FEATURES
 • Plays offline; lives refill over time
 • 11 languages
 
-Sugar Drop is free to play. Ads are optional and only give you rewards such as extra lives, moves or boosters.
+Drop Quest is free to play. Ads are optional and only give you rewards such as extra lives, moves or boosters.
 
-Ready for a sweet challenge? Download Sugar Drop and start matching!
+Ready for a sweet challenge? Download Drop Quest and start matching!
 ```
 
 ## Română — `ro`
 **Titlu** (29/30)
 ```
-Sugar Drop: Bomboane 3 la fel
+Drop Quest: Bomboane 3 la fel
 ```
 **Descriere scurtă** (80/80)
 ```
@@ -115,7 +115,7 @@ Schimbă bomboane, fă explozii dulci și învinge boși într-un puzzle potrive
 ```
 **Descriere lungă** (1255/4000)
 ```
-Bine ai venit în Sugar Drop, cea mai dulce aventură „potrivește 3”!
+Bine ai venit în Drop Quest, cea mai dulce aventură „potrivește 3”!
 
 Schimbă bomboanele vecine ca să aliniezi 3 sau mai multe de aceeași aromă și privește-le cum pocnesc în explozii de jeleu. Ajută-l pe Bobo, cupcake-ul, să-și umple borcanul cu bomboane, pe o hartă colorată plină de niveluri.
 
@@ -132,15 +132,15 @@ CE TE AȘTEAPTĂ
 • Se joacă și fără internet; viețile se refac în timp
 • 11 limbi
 
-Sugar Drop e gratuit. Reclamele sunt opționale și îți dau doar recompense: vieți, mutări sau ajutoare în plus.
+Drop Quest e gratuit. Reclamele sunt opționale și îți dau doar recompense: vieți, mutări sau ajutoare în plus.
 
-Gata de o provocare dulce? Descarcă Sugar Drop și începe să potrivești!
+Gata de o provocare dulce? Descarcă Drop Quest și începe să potrivești!
 ```
 
 ## Español — `es-ES`
 **Titlu** (28/30)
 ```
-Sugar Drop: Dulces 3 en raya
+Drop Quest: Dulces 3 en raya
 ```
 **Descriere scurtă** (80/80)
 ```
@@ -148,7 +148,7 @@ Sugar Drop: Dulces 3 en raya
 ```
 **Descriere lungă** (1322/4000)
 ```
-¡Bienvenido a Sugar Drop, la aventura de puzles de 3 en raya más dulce!
+¡Bienvenido a Drop Quest, la aventura de puzles de 3 en raya más dulce!
 
 Intercambia caramelos vecinos para alinear 3 o más del mismo sabor y míralos estallar en explosiones de gelatina. Ayuda a Bobo, el cupcake, a llenar su frasco de caramelos mientras recorres un mapa lleno de color y niveles.
 
@@ -165,15 +165,15 @@ CARACTERÍSTICAS
 • Juega sin conexión; las vidas se recargan con el tiempo
 • 11 idiomas
 
-Sugar Drop es gratis. Los anuncios son opcionales y solo te dan recompensas, como vidas, movimientos o potenciadores extra.
+Drop Quest es gratis. Los anuncios son opcionales y solo te dan recompensas, como vidas, movimientos o potenciadores extra.
 
-¿Listo para un reto dulce? ¡Descarga Sugar Drop y empieza a combinar!
+¿Listo para un reto dulce? ¡Descarga Drop Quest y empieza a combinar!
 ```
 
 ## Português (Brasil) — `pt-BR`
 **Titlu** (27/30)
 ```
-Sugar Drop: Doces Combina 3
+Drop Quest: Doces Combina 3
 ```
 **Descriere scurtă** (69/80)
 ```
@@ -181,7 +181,7 @@ Troque doces, solte reforços e vença chefes neste quebra-cabeça doce!
 ```
 **Descriere lungă** (1258/4000)
 ```
-Boas-vindas ao Sugar Drop, a aventura de combinar 3 mais doce de todas!
+Boas-vindas ao Drop Quest, a aventura de combinar 3 mais doce de todas!
 
 Troque doces vizinhos para alinhar 3 ou mais do mesmo sabor e veja-os estourar em explosões de geleia. Ajude o Bobo, o cupcake, a encher o pote de doces enquanto percorre um mapa colorido cheio de níveis.
 
@@ -198,15 +198,15 @@ DESTAQUES
 • Jogue sem internet; as vidas recarregam com o tempo
 • 11 idiomas
 
-Sugar Drop é gratuito. Os anúncios são opcionais e só dão recompensas, como vidas, jogadas ou reforços extras.
+Drop Quest é gratuito. Os anúncios são opcionais e só dão recompensas, como vidas, jogadas ou reforços extras.
 
-Pronto para um desafio doce? Baixe o Sugar Drop e comece a combinar!
+Pronto para um desafio doce? Baixe o Drop Quest e comece a combinar!
 ```
 
 ## Français — `fr-FR`
 **Titlu** (28/30)
 ```
-Sugar Drop : Bonbons Match 3
+Drop Quest : Bonbons Match 3
 ```
 **Descriere scurtă** (76/80)
 ```
@@ -214,7 +214,7 @@ Sugar Drop : Bonbons Match 3
 ```
 **Descriere lungă** (1351/4000)
 ```
-Bienvenue dans Sugar Drop, l'aventure match-3 la plus sucrée !
+Bienvenue dans Drop Quest, l'aventure match-3 la plus sucrée !
 
 Échange des bonbons voisins pour en aligner 3 ou plus de la même saveur et regarde-les éclater en explosions de gelée. Aide Bobo le cupcake à remplir son bocal de bonbons en parcourant une carte colorée remplie de niveaux.
 
@@ -231,15 +231,15 @@ AU MENU
 • Jouable hors ligne ; les vies se rechargent avec le temps
 • 11 langues
 
-Sugar Drop est gratuit. Les publicités sont facultatives et te donnent seulement des récompenses : vies, coups ou bonus en plus.
+Drop Quest est gratuit. Les publicités sont facultatives et te donnent seulement des récompenses : vies, coups ou bonus en plus.
 
-Prêt pour un défi sucré ? Télécharge Sugar Drop et commence à aligner !
+Prêt pour un défi sucré ? Télécharge Drop Quest et commence à aligner !
 ```
 
 ## Deutsch — `de-DE`
 **Titlu** (26/30)
 ```
-Sugar Drop: Bonbon Match 3
+Drop Quest: Bonbon Match 3
 ```
 **Descriere scurtă** (79/80)
 ```
@@ -247,7 +247,7 @@ Tausche Bonbons, zünde Booster und besiege Bosse in einem süßen Match-3-Puzzl
 ```
 **Descriere lungă** (1353/4000)
 ```
-Willkommen bei Sugar Drop, dem süßesten Match-3-Abenteuer!
+Willkommen bei Drop Quest, dem süßesten Match-3-Abenteuer!
 
 Tausche benachbarte Bonbons, um 3 oder mehr gleiche Sorten in eine Reihe zu bringen, und sieh zu, wie sie in wackeligen Gelee-Explosionen platzen. Hilf Bobo, dem Cupcake, sein Bonbonglas zu füllen, während du über eine bunte Karte voller Level reist.
 
@@ -264,15 +264,15 @@ DAS ERWARTET DICH
 • Auch offline spielbar; Leben laden sich mit der Zeit wieder auf
 • 11 Sprachen
 
-Sugar Drop ist kostenlos. Werbung ist freiwillig und bringt dir nur Belohnungen wie zusätzliche Leben, Züge oder Booster.
+Drop Quest ist kostenlos. Werbung ist freiwillig und bringt dir nur Belohnungen wie zusätzliche Leben, Züge oder Booster.
 
-Bereit für eine süße Herausforderung? Lade Sugar Drop herunter und leg los!
+Bereit für eine süße Herausforderung? Lade Drop Quest herunter und leg los!
 ```
 
 ## Italiano — `it-IT`
 **Titlu** (29/30)
 ```
-Sugar Drop: Caramelle Match 3
+Drop Quest: Caramelle Match 3
 ```
 **Descriere scurtă** (75/80)
 ```
@@ -280,7 +280,7 @@ Scambia caramelle, usa potenziamenti e sconfiggi i boss in un dolce puzzle!
 ```
 **Descriere lungă** (1299/4000)
 ```
-Benvenuto in Sugar Drop, l'avventura match-3 più dolce che ci sia!
+Benvenuto in Drop Quest, l'avventura match-3 più dolce che ci sia!
 
 Scambia caramelle vicine per allinearne 3 o più dello stesso gusto e guardale scoppiare in esplosioni di gelatina. Aiuta Bobo, il cupcake, a riempire il suo barattolo di caramelle mentre attraversi una mappa colorata piena di livelli.
 
@@ -297,15 +297,15 @@ COSA TROVERAI
 • Si gioca anche offline; le vite si ricaricano col tempo
 • 11 lingue
 
-Sugar Drop è gratuito. La pubblicità è facoltativa e ti dà solo ricompense, come vite, mosse o potenziamenti extra.
+Drop Quest è gratuito. La pubblicità è facoltativa e ti dà solo ricompense, come vite, mosse o potenziamenti extra.
 
-Pronto per una sfida dolcissima? Scarica Sugar Drop e inizia ad abbinare!
+Pronto per una sfida dolcissima? Scarica Drop Quest e inizia ad abbinare!
 ```
 
 ## Türkçe — `tr-TR`
 **Titlu** (28/30)
 ```
-Sugar Drop: Şeker Eşleştirme
+Drop Quest: Şeker Eşleştirme
 ```
 **Descriere scurtă** (75/80)
 ```
@@ -313,7 +313,7 @@ Sugar Drop: Şeker Eşleştirme
 ```
 **Descriere lungă** (1269/4000)
 ```
-En tatlı 3'lü eşleştirme macerası Sugar Drop'a hoş geldin!
+En tatlı 3'lü eşleştirme macerası Drop Quest'a hoş geldin!
 
 Komşu şekerlerin yerini değiştirerek aynı lezzetten 3 veya daha fazlasını sırala ve jöle gibi titreyen patlamalarla yok olmalarını izle. Rengârenk ve seviyelerle dolu bir haritada ilerlerken cupcake Bobo'nun şeker kavanozunu doldurmasına yardım et.
 
@@ -330,15 +330,15 @@ Komşu şekerlerin yerini değiştirerek aynı lezzetten 3 veya daha fazlasını
 • İnternetsiz oynanabilir; canlar zamanla dolar
 • 11 dil
 
-Sugar Drop ücretsizdir. Reklamlar isteğe bağlıdır ve sadece ekstra can, hamle veya güçlendirici gibi ödüller verir.
+Drop Quest ücretsizdir. Reklamlar isteğe bağlıdır ve sadece ekstra can, hamle veya güçlendirici gibi ödüller verir.
 
-Tatlı bir meydan okumaya hazır mısın? Sugar Drop'u indir ve eşleştirmeye başla!
+Tatlı bir meydan okumaya hazır mısın? Drop Quest'u indir ve eşleştirmeye başla!
 ```
 
 ## Bahasa Indonesia — `id`
 **Titlu** (27/30)
 ```
-Sugar Drop: Cocokkan Permen
+Drop Quest: Cocokkan Permen
 ```
 **Descriere scurtă** (73/80)
 ```
@@ -346,7 +346,7 @@ Tukar permen, ledakkan booster, dan kalahkan bos di puzzle match-3 manis!
 ```
 **Descriere lungă** (1277/4000)
 ```
-Selamat datang di Sugar Drop, petualangan puzzle match-3 paling manis!
+Selamat datang di Drop Quest, petualangan puzzle match-3 paling manis!
 
 Tukar permen yang bersebelahan untuk menjajarkan 3 atau lebih dengan rasa yang sama, lalu lihat mereka meletus dalam ledakan jeli yang kenyal. Bantu Bobo si cupcake mengisi stoples permennya sambil menjelajahi peta penuh warna dan level.
 
@@ -363,15 +363,15 @@ FITUR MANIS
 • Bisa dimainkan offline; nyawa terisi ulang seiring waktu
 • 11 bahasa
 
-Sugar Drop gratis dimainkan. Iklan bersifat opsional dan hanya memberimu hadiah seperti nyawa, langkah, atau booster tambahan.
+Drop Quest gratis dimainkan. Iklan bersifat opsional dan hanya memberimu hadiah seperti nyawa, langkah, atau booster tambahan.
 
-Siap untuk tantangan manis? Unduh Sugar Drop dan mulai mencocokkan!
+Siap untuk tantangan manis? Unduh Drop Quest dan mulai mencocokkan!
 ```
 
 ## Русский — `ru-RU`
 **Titlu** (21/30)
 ```
-Sugar Drop: три в ряд
+Drop Quest: три в ряд
 ```
 **Descriere scurtă** (71/80)
 ```
@@ -379,7 +379,7 @@ Sugar Drop: три в ряд
 ```
 **Descriere lungă** (1224/4000)
 ```
-Добро пожаловать в Sugar Drop — самую сладкую головоломку «три в ряд»!
+Добро пожаловать в Drop Quest — самую сладкую головоломку «три в ряд»!
 
 Меняй местами соседние конфеты, собирай 3 и больше одного вкуса и смотри, как они лопаются желейными взрывами. Помоги кексу Бобо наполнить банку конфетами на пути по яркой карте, полной уровней.
 
@@ -397,15 +397,15 @@ Sugar Drop: три в ряд
 • Играй без интернета; жизни восстанавливаются со временем
 • 11 языков
 
-Sugar Drop — бесплатная игра. Реклама необязательна и только даёт награды: жизни, ходы или бустеры.
+Drop Quest — бесплатная игра. Реклама необязательна и только даёт награды: жизни, ходы или бустеры.
 
-Готов к сладкому испытанию? Скачай Sugar Drop и начни собирать!
+Готов к сладкому испытанию? Скачай Drop Quest и начни собирать!
 ```
 
 ## Українська — `uk`
 **Titlu** (21/30)
 ```
-Sugar Drop: три в ряд
+Drop Quest: три в ряд
 ```
 **Descriere scurtă** (73/80)
 ```
@@ -413,7 +413,7 @@ Sugar Drop: три в ряд
 ```
 **Descriere lungă** (1219/4000)
 ```
-Ласкаво просимо до Sugar Drop — найсолодшої головоломки «три в ряд»!
+Ласкаво просимо до Drop Quest — найсолодшої головоломки «три в ряд»!
 
 Міняй місцями сусідні цукерки, збирай 3 й більше одного смаку та дивись, як вони лускають желейними вибухами. Допоможи кексу Бобо наповнити банку цукерками на шляху яскравою мапою, повною рівнів.
 
@@ -431,7 +431,7 @@ Sugar Drop: три в ряд
 • Грай без інтернету; життя відновлюються з часом
 • 11 мов
 
-Sugar Drop — безкоштовна гра. Реклама необов'язкова й лише дає нагороди: життя, ходи або бустери.
+Drop Quest — безкоштовна гра. Реклама необов'язкова й лише дає нагороди: життя, ходи або бустери.
 
-Готовий до солодкого випробування? Завантаж Sugar Drop і починай збирати!
+Готовий до солодкого випробування? Завантаж Drop Quest і починай збирати!
 ```

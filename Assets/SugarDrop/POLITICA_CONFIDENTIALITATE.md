@@ -1,11 +1,11 @@
-# Sugar Drop – Privacy Policy
+# Drop Quest – Privacy Policy
 
 > Before publishing: replace `[email]` with your contact address. Then publish this page at a public link
 > (see `GOOGLE_PLAY.md` → „Politica de confidențialitate: cum o publici gratuit”).
 
 Last updated: October 26, 2026
 
-Sugar Drop ("the game") is developed by Victor Josan ("we", "us"). This policy explains what data the game uses.
+Drop Quest ("the game") is developed by Victor Josan ("we", "us"). This policy explains what data the game uses.
 
 ## Data we use
 - **Game progress** (levels, stars, scores, coins, settings) is stored on your device (and in the cloud, see below).
@@ -41,11 +41,11 @@ Victor Josan – [email]
 
 ---
 
-# Sugar Drop – Politica de confidențialitate
+# Drop Quest – Politica de confidențialitate
 
 Ultima actualizare: 26 octombrie 2026
 
-Sugar Drop („jocul”) este dezvoltat de Victor Josan („noi”). Această politică explică ce date folosește jocul.
+Drop Quest („jocul”) este dezvoltat de Victor Josan („noi”). Această politică explică ce date folosește jocul.
 
 ## Ce date folosim
 - **Progresul din joc** (niveluri, stele, scoruri, monede, setări) este salvat pe telefonul tău (și în cloud, vezi mai jos).

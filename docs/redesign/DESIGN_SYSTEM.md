@@ -1,43 +1,41 @@
-# Sugar Drop — Soft Pop Edition: sistemul de design
+# Drop Quest: sistemul de design
 
-## Culori (`Scripts/Core/SoftPop.cs`, singura sursă)
+**Direcția:** aventură în natură, ca un joc puzzle premium. Panouri crem, lemn, butoane 3D groase, tablă ardezie închisă pe care piesele colorate ies în evidență, cer de natură pe fundal.
+
+## Culori (`Scripts/Core/QuestStyle.cs`, singura sursă)
 | Token | Valoare | Folosire |
 |---|---|---|
-| Background | #F8F7FF | fundalul aplicației, splash |
-| Surface | #FFFFFF | ferestre, tava tablei, cardul obiectivelor |
-| SurfaceTint | #F1EDFC | tăvi, plăcuțe inactive |
-| Lavender | #A58AE0 | primară: panglici, cadrul implicit al tablei |
-| LavenderDeep | #8B6FD3 | butoane și panouri cu text alb (`UiTheme.PanelColor`) |
-| Coral / CoralDeep | #FF8D9E / #F06A80 | secundară; negativ (închide, pierdere) |
-| Mint / MintDeep | #66D7B5 / #35BE94 | pozitiv (JOACĂ, CONTINUĂ, comutatoare pornite) |
-| Yellow / YellowDeep | #FFD36B / #F5B93A | accent: stele, mutări, titluri |
-| Sky | #5FB0F5 | reclame (recompense) |
-| Text / TextSoft | #403653 / #7C7291 | text principal / secundar |
-| Shadow | prună 16% | umbre moi (panouri, tablă, piese) |
-| Scrim | prună 45% | fundalul de sub ferestre |
+| Background | #EAF6FF | fundalul implicit |
+| Surface / SurfaceTint | #FFF6E3 / #F6E7C8 | ferestre, cardul obiectivelor, tăvi |
+| Wood / WoodDeep | #A0612F / #7A4520 | panglici, butoane secundare (`UiTheme.PanelColor`) |
+| Green / GreenDeep | #4CB82E / #3C9E24 | acțiunea principală (JOACĂ, CONTINUĂ) |
+| Blue | #2E8BEA | reclame, bara de progres |
+| Gold / GoldDeep | #FFC233 / #F0A51C | stele, mutări, accent (`AccentColor`) |
+| Red | #E8483C | închide, negativ |
+| Board / CellA / CellB | #3A4658 / #4C5A6E / #556479 | tabla și celulele |
+| Text / TextSoft | #4A2E17 / #8A6A4E | text principal / secundar (maro) |
+| Shadow / Scrim | maro 22% / ardezie 50% | umbre moi / fundalul de sub ferestre |
 
-Tema UI (`SugarTheme.asset`) e generată din acești tokeni de `Editor/SugarDropSetup.cs` la fiecare build.
+Tema UI (`SugarTheme.asset`) e generată din acești tokeni de `Editor/SugarDropSetup.cs`.
 
-## Piesele (`Visual/PieceSprites.cs`)
-Obiecte abstracte 2.5D, nu bomboane. Fiecare are siluetă proprie, fațete luminate din stânga sus, o margine fină (fără contur gros), un luciu oblic și o sclipire mică.
+## Piesele
+Tot 5 culori, cu aceleași reguli:
 
-| Index | Formă | Culoare | Notă |
-|---|---|---|---|
-| 0 | inimă-gemă (8 fațete) | coral #FF6B80 | |
-| 1 | picătură lichidă (netedă) | albastru #409EFF | rămâne „apa” de la nivelurile cu foc |
-| 2 | cristal hexagonal | mentă #38CC94 | |
-| 3 | gemă octogonală | auriu #FFC440 | |
-| 4 | prismă triunghiulară | violet #9975EB | |
+| Index | Piesă |
+|---|---|
+| 0 | ciupercă roșie |
+| 1 | picătură de apă (stinge focul) |
+| 2 | frunză |
+| 3 | gemă aurie cu fațete |
+| 4 | ametist |
 
-Numărul de culori și regulile nu se schimbă: forma e doar vizuală.
+Fiecare are lumină din stânga sus, o margine fină și un luciu discret. Toate se pot înlocui cu PNG-uri (`docs/redesign/ART_LIST.md`).
 
-## Ținuturi (`Core/ChapterTheme.cs`)
-Același nume și aceeași poveste, dar cer pastel (două tonuri), tablă albă, celule lavandă discrete și câte o culoare de accent pe cadru: coral, mentă, cer, galben, lavandă, cacao, gheață, caise, liliac. Galaxia rămâne mai închisă (noapte).
+## Ținuturile
+Același nume și aceeași poveste. Au cer de natură (în degrade sau pictat, `sky0`–`sky9`), tablă ardezie nuanțată pe ținut și cadru de lemn sau în culoarea ținutului.
 
-## Forme și adâncime
-- Colțuri rotunjite peste tot. Umbre moi (`SoftPop.Shadow`), fără negru pur.
-- Tabla e o tavă albă cu umbră, pe un cadru plin în culoarea ținutului. Bastoanele cu dungi au dispărut.
-- Textul conturat folosește un contur prună, subțire și semitransparent.
+## Grafica înlocuibilă
+`Scripts/Visual/ArtLibrary.cs` caută `Resources/Art/<nume>.png` pentru sprite-urile colorate: piese, speciale, obstacole, Bobo, boși, fundaluri, logo. Dacă imaginea lipsește, se folosește desenul din cod. Fundalurile pictate acoperă ecranul păstrându-și proporțiile. Setările de import le face `Editor/ArtImport.cs`.
 
 ## Tipografie
-Baloo 2 ExtraBold (SIL OFL, liberă pentru uz comercial), plus fontul chirilic existent pentru rusă și ucraineană.
+Baloo 2 ExtraBold (SIL OFL, se poate folosi comercial), plus fontul chirilic existent. Logo-ul scris are „DROP” albastru și „QUEST” auriu, pe două rânduri, sau `logo.png` dacă există.

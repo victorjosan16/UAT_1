@@ -73,6 +73,9 @@ namespace SugarDrop
 
         public bool IsOpen => _root.activeSelf;
 
+        /// <summary>Numele jocului, pe ecranul principal.</summary>
+        public const string GameName = "Drop Quest";
+
         private void Awake()
         {
             UiTheme theme = UiRoot.Theme;
@@ -90,8 +93,16 @@ namespace SugarDrop
             _bursts.SetAmbientSize(16f, 36f);
 
             BuildTopBar(theme);
-            _logo = SugarUi.Outlined("Logo", _root.transform, SugarUi.Logo("Sugar Drop"), 140, Color.white, 6f);
-            UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 700f), new Vector2(1060f, 200f));
+            _logo = SugarUi.Outlined("Logo", _root.transform, SugarUi.Logo(GameName), 128, Color.white, 6f);
+            UiFactory.Place(_logo.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 680f), new Vector2(1060f, 320f));
+            // Logo-ul pictat (Resources/Art/logo.png), dacă există, înlocuiește textul.
+            Sprite logoArt = ArtLibrary.Find("logo");
+            if (logoArt != null)
+            {
+                _logo.Text = "";
+                Image logoImage = UiFactory.CreateImage("LogoArt", _logo.RectTransform, logoArt, Color.white);
+                UiFactory.Place(logoImage.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(760f, 420f));
+            }
             BuildBobo();
             BuildBubble(theme);
             BuildChapterCard(theme);

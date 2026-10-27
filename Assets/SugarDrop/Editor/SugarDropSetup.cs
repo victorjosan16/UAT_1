@@ -66,7 +66,8 @@ namespace SugarDrop.EditorTools
         private static void SetupPlayerSettings(int buildNumber)
         {
             PlayerSettings.companyName = "VictorJosan";
-            PlayerSettings.productName = "Sugar Drop";
+            PlayerSettings.productName = "Drop Quest";
+            // ID-ul aplicației rămâne același (nu se mai poate schimba după publicare și păstrează salvările).
             // Google Play cere ca versionCode să crească la fiecare încărcare: folosim numărul build-ului din cloud.
             PlayerSettings.bundleVersion = $"{VersionPrefix}.{buildNumber}";
             PlayerSettings.Android.bundleVersionCode = Mathf.Max(1, buildNumber);
@@ -115,7 +116,7 @@ namespace SugarDrop.EditorTools
 
             PlayerSettings.SplashScreen.show = true;
             PlayerSettings.SplashScreen.showUnityLogo = false;
-            PlayerSettings.SplashScreen.backgroundColor = SoftPop.Lavender;
+            PlayerSettings.SplashScreen.backgroundColor = QuestStyle.Blue;
             PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
             if (logo != null) PlayerSettings.SplashScreen.logos = new[] { PlayerSettings.SplashScreenLogo.Create(1.5f, logo) };
         }
@@ -128,14 +129,14 @@ namespace SugarDrop.EditorTools
                 P(so, "Font").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
                 P(so, "TmpFont").objectReferenceValue = null;
                 // Soft Pop: butoane și panouri lavandă (text alb), suprafețe albe, accent galben, mentă, coral.
-                P(so, "PanelColor").colorValue = SoftPop.LavenderDeep;
-                P(so, "PanelLightColor").colorValue = SoftPop.Surface;
-                P(so, "AccentColor").colorValue = SoftPop.YellowDeep;
-                P(so, "PositiveColor").colorValue = SoftPop.MintDeep;
-                P(so, "NegativeColor").colorValue = SoftPop.CoralDeep;
+                P(so, "PanelColor").colorValue = QuestStyle.Wood;
+                P(so, "PanelLightColor").colorValue = QuestStyle.Surface;
+                P(so, "AccentColor").colorValue = QuestStyle.GoldDeep;
+                P(so, "PositiveColor").colorValue = QuestStyle.Green;
+                P(so, "NegativeColor").colorValue = QuestStyle.Red;
                 P(so, "TextColor").colorValue = Color.white;
-                P(so, "TextDarkColor").colorValue = SoftPop.Text;
-                P(so, "AdColor").colorValue = SoftPop.Sky;
+                P(so, "TextDarkColor").colorValue = QuestStyle.Text;
+                P(so, "AdColor").colorValue = QuestStyle.Blue;
             });
             return theme;
         }

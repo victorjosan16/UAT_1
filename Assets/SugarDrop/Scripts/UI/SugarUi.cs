@@ -11,7 +11,7 @@ namespace SugarDrop
         /// <summary>Strat semi-transparent pe tot ecranul care blochează atingerile.</summary>
         public static Image Dim(Transform parent, float alpha = 0.55f)
         {
-            Image dim = UiFactory.CreateImage("Dim", parent, UiFactory.WhiteSprite, new Color(SoftPop.Scrim.r, SoftPop.Scrim.g, SoftPop.Scrim.b, alpha * 0.8f));
+            Image dim = UiFactory.CreateImage("Dim", parent, UiFactory.WhiteSprite, new Color(QuestStyle.Scrim.r, QuestStyle.Scrim.g, QuestStyle.Scrim.b, alpha * 0.8f));
             dim.preserveAspect = false;
             dim.raycastTarget = true;
             UiFactory.Stretch(dim.rectTransform, -300f);
@@ -26,7 +26,7 @@ namespace SugarDrop
             UiFactory.Place(holder, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
             holder.gameObject.AddComponent<CanvasGroup>();
             holder.gameObject.AddComponent<PopIn>();
-            Image shadow = UiFactory.CreatePanel("BoxShadow", holder, SoftPop.Shadow);
+            Image shadow = UiFactory.CreatePanel("BoxShadow", holder, QuestStyle.Shadow);
             UiFactory.Place((RectTransform)shadow.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -14f), size);
             Image box = UiFactory.CreatePanel("Box", holder, UiRoot.Theme.PanelLightColor);
             var rect = UiFactory.Place((RectTransform)box.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
@@ -56,20 +56,16 @@ namespace SugarDrop
             return label;
         }
 
-        /// <summary>„Sugar Drop” cu fiecare literă în altă culoare de bomboană.</summary>
+        /// <summary>Logo-ul scris: primul cuvânt albastru ca apa, al doilea auriu („DROP QUEST”).</summary>
         public static string Logo(string text)
         {
             var builder = new System.Text.StringBuilder();
-            int index = 0;
-            foreach (char c in text)
+            string[] words = text.ToUpperInvariant().Split(' ');
+            for (int i = 0; i < words.Length; i++)
             {
-                if (c == ' ')
-                {
-                    builder.Append(' ');
-                    continue;
-                }
-                Color color = Palette.Tile(index++ % Palette.TileColorCount);
-                builder.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(color)).Append('>').Append(c).Append("</color>");
+                Color color = i == 0 ? Palette.Tile(1) : Palette.Tile(3);
+                if (i > 0) builder.Append(i == 1 ? "\n" : " ");
+                builder.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(color)).Append('>').Append(words[i]).Append("</color>");
             }
             return builder.ToString();
         }

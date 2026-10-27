@@ -195,7 +195,7 @@ namespace SugarDrop
         {
             _marker = UiFactory.CreateRect("Marker", _scrollContent);
             UiFactory.Place(_marker, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(110f, 120f));
-            Image shadow = UiFactory.CreateImage("Shadow", _marker, SugarSprites.SoftDot, SoftPop.Shadow);
+            Image shadow = UiFactory.CreateImage("Shadow", _marker, SugarSprites.SoftDot, QuestStyle.Shadow);
             UiFactory.Place(shadow.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 4f), new Vector2(90f, 26f));
             shadow.preserveAspect = false;
             Image cup = UiFactory.CreateImage("Cup", _marker, SugarSprites.CupWrapper, Color.white);
@@ -265,7 +265,7 @@ namespace SugarDrop
 
         private static RectTransform Pill(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size, UiTheme theme)
         {
-            Image shadow = UiFactory.CreatePanel(name + "Shadow", parent, SoftPop.Shadow);
+            Image shadow = UiFactory.CreatePanel(name + "Shadow", parent, QuestStyle.Shadow);
             UiFactory.Place((RectTransform)shadow.transform, anchor, pivot, position + new Vector2(0f, -8f), size);
             Image pill = UiFactory.CreatePanel(name, parent, theme.PanelColor);
             return UiFactory.Place((RectTransform)pill.transform, anchor, pivot, position, size);
@@ -371,7 +371,7 @@ namespace SugarDrop
 
             view.Glow = UiFactory.CreateImage("Glow", view.Visual, SugarSprites.SoftDot, new Color(1f, 0.86f, 0.35f, 0.6f));
             UiFactory.Place(view.Glow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 2.1f);
-            Image shadow = UiFactory.CreateImage("Shadow", view.Visual, SugarSprites.CapShadow, SoftPop.Shadow);
+            Image shadow = UiFactory.CreateImage("Shadow", view.Visual, SugarSprites.CapShadow, QuestStyle.Shadow);
             UiFactory.Place(shadow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -14f), Vector2.one * size);
             view.Ring = UiFactory.CreateImage("Ring", view.Visual, SugarSprites.Ring, Palette.Tile(4));
             UiFactory.Place(view.Ring.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 1.22f);
