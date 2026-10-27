@@ -623,6 +623,8 @@ namespace SugarDrop
                 "Occhiali da sole", "Güneş gözlüğü", "Kacamata hitam", "Солнечные очки", "Сонячні окуляри"),
             R("Pălărie de vrăjitor", "Wizard hat", "Sombrero de mago", "Chapéu de mago", "Chapeau de sorcier", "Zauberhut",
                 "Cappello da mago", "Büyücü şapkası", "Topi penyihir", "Шляпа волшебника", "Капелюх чарівника"),
+            R("Ținut nou!", "New land!", "¡Nueva tierra!", "Nova terra!", "Nouvelle contrée !", "Neues Land!",
+                "Nuova terra!", "Yeni diyar!", "Negeri baru!", "Новая земля!", "Нова земля!"),
             R("Versiunea {0}", "Version {0}", "Versión {0}", "Versão {0}", "Version {0}", "Version {0}", "Versione {0}", "Sürüm {0}", "Versi {0}",
                 "Версия {0}", "Версія {0}"),
             R("Reclame", "Ads", "Anuncios", "Anúncios", "Publicités", "Werbung", "Pubblicità", "Reklamlar", "Iklan",

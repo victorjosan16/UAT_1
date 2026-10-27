@@ -1,6 +1,6 @@
 # Sugar Drop pe Google Play
 
-Pașii completi sunt mai jos. Textele pentru fișa din magazin sunt la final, în cele 9 limbi ale jocului.
+Pașii completi sunt mai jos. Textele pentru fișa din magazin sunt la final, în cele 11 limbi ale jocului.
 În Play Console, engleza e limba implicită. Celelalte se adaugă din **Store presence → Main store listing →
 Manage translations → Add your own translations**.
 
@@ -97,7 +97,7 @@ SWEET FEATURES
 • Global leaderboard: your best score on every level adds up. How high can you climb?
 • Helpful boosters: bomb, +5 moves and shuffle
 • Plays offline; lives refill over time
-• 9 languages
+• 11 languages
 
 Sugar Drop is free to play. Ads are optional and only give you rewards such as extra lives, moves or boosters.
 
@@ -130,7 +130,7 @@ CE TE AȘTEAPTĂ
 • Clasament global: cele mai bune scoruri de pe fiecare nivel se adună. Cât de sus urci?
 • Ajutoare: bombă, +5 mutări și amestecare
 • Se joacă și fără internet; viețile se refac în timp
-• 9 limbi
+• 11 limbi
 
 Sugar Drop e gratuit. Reclamele sunt opționale și îți dau doar recompense: vieți, mutări sau ajutoare în plus.
 
@@ -163,7 +163,7 @@ CARACTERÍSTICAS
 • Clasificación mundial: tus mejores puntuaciones de cada nivel se suman. ¿Hasta dónde llegarás?
 • Potenciadores: bomba, +5 movimientos y mezclar
 • Juega sin conexión; las vidas se recargan con el tiempo
-• 9 idiomas
+• 11 idiomas
 
 Sugar Drop es gratis. Los anuncios son opcionales y solo te dan recompensas, como vidas, movimientos o potenciadores extra.
 
@@ -196,7 +196,7 @@ DESTAQUES
 • Ranking mundial: suas melhores pontuações em cada nível se somam. Até onde você vai chegar?
 • Reforços: bomba, +5 jogadas e embaralhar
 • Jogue sem internet; as vidas recarregam com o tempo
-• 9 idiomas
+• 11 idiomas
 
 Sugar Drop é gratuito. Os anúncios são opcionais e só dão recompensas, como vidas, jogadas ou reforços extras.
 
@@ -229,7 +229,7 @@ AU MENU
 • Classement mondial : tes meilleurs scores de chaque niveau s'additionnent. Jusqu'où iras-tu ?
 • Bonus : bombe, +5 coups et mélange
 • Jouable hors ligne ; les vies se rechargent avec le temps
-• 9 langues
+• 11 langues
 
 Sugar Drop est gratuit. Les publicités sont facultatives et te donnent seulement des récompenses : vies, coups ou bonus en plus.
 
@@ -262,7 +262,7 @@ DAS ERWARTET DICH
 • Weltweite Bestenliste: Deine Bestwerte aus jedem Level werden addiert. Wie weit kommst du?
 • Booster: Bombe, +5 Züge und Mischen
 • Auch offline spielbar; Leben laden sich mit der Zeit wieder auf
-• 9 Sprachen
+• 11 Sprachen
 
 Sugar Drop ist kostenlos. Werbung ist freiwillig und bringt dir nur Belohnungen wie zusätzliche Leben, Züge oder Booster.
 
@@ -295,7 +295,7 @@ COSA TROVERAI
 • Classifica mondiale: i tuoi record di ogni livello si sommano. Fin dove arriverai?
 • Potenziamenti: bomba, +5 mosse e mescola
 • Si gioca anche offline; le vite si ricaricano col tempo
-• 9 lingue
+• 11 lingue
 
 Sugar Drop è gratuito. La pubblicità è facoltativa e ti dà solo ricompense, come vite, mosse o potenziamenti extra.
 
@@ -328,7 +328,7 @@ Komşu şekerlerin yerini değiştirerek aynı lezzetten 3 veya daha fazlasını
 • Dünya sıralaması: her seviyedeki en iyi skorların toplanır. Ne kadar yükselebilirsin?
 • Güçlendiriciler: bomba, +5 hamle ve karıştırma
 • İnternetsiz oynanabilir; canlar zamanla dolar
-• 9 dil
+• 11 dil
 
 Sugar Drop ücretsizdir. Reklamlar isteğe bağlıdır ve sadece ekstra can, hamle veya güçlendirici gibi ödüller verir.
 
@@ -361,9 +361,77 @@ FITUR MANIS
 • Papan peringkat dunia: skor terbaikmu di setiap level dijumlahkan. Seberapa tinggi kamu bisa naik?
 • Booster: bom, +5 langkah, dan acak
 • Bisa dimainkan offline; nyawa terisi ulang seiring waktu
-• 9 bahasa
+• 11 bahasa
 
 Sugar Drop gratis dimainkan. Iklan bersifat opsional dan hanya memberimu hadiah seperti nyawa, langkah, atau booster tambahan.
 
 Siap untuk tantangan manis? Unduh Sugar Drop dan mulai mencocokkan!
+```
+
+## Русский — `ru-RU`
+**Titlu** (21/30)
+```
+Sugar Drop: три в ряд
+```
+**Descriere scurtă** (71/80)
+```
+Меняй конфеты, взрывай бустеры и побеждай боссов в сладкой головоломке!
+```
+**Descriere lungă** (1224/4000)
+```
+Добро пожаловать в Sugar Drop — самую сладкую головоломку «три в ряд»!
+
+Меняй местами соседние конфеты, собирай 3 и больше одного вкуса и смотри, как они лопаются желейными взрывами. Помоги кексу Бобо наполнить банку конфетами на пути по яркой карте, полной уровней.
+
+ЧТО ТЕБЯ ЖДЁТ
+• Классика «три в ряд»: сдвигай конфеты, собирай линии и запускай цепные реакции
+• Особые фишки: 4 в ряд дают ракету, буквы L и T — бомбу, 5 в ряд — радужную конфету
+• Шесть особых комбинаций: ракета + бомба, бомба + бомба, радуга + радуга и другие
+• Битвы с боссами каждые 10 уровней и трёхфазные мегабоссы каждые 50
+• Препятствия: лёд, цепи, деревянные ящики и растущий шоколад
+• Разные цели: доставь конфеты в банку, собери вкусы, растопи глазурь или набери очки
+• Новые земли каждые 10 уровней: от Клубничных полей до Радужной галактики
+• Колесо удачи, ежедневный подарок и задания дня
+• Костюмы для Бобо, которые открываются звёздами
+• Мировой рейтинг: лучшие результаты на каждом уровне складываются
+• Играй без интернета; жизни восстанавливаются со временем
+• 11 языков
+
+Sugar Drop — бесплатная игра. Реклама необязательна и только даёт награды: жизни, ходы или бустеры.
+
+Готов к сладкому испытанию? Скачай Sugar Drop и начни собирать!
+```
+
+## Українська — `uk`
+**Titlu** (21/30)
+```
+Sugar Drop: три в ряд
+```
+**Descriere scurtă** (73/80)
+```
+Міняй цукерки, підривай бустери й перемагай босів у солодкій головоломці!
+```
+**Descriere lungă** (1219/4000)
+```
+Ласкаво просимо до Sugar Drop — найсолодшої головоломки «три в ряд»!
+
+Міняй місцями сусідні цукерки, збирай 3 й більше одного смаку та дивись, як вони лускають желейними вибухами. Допоможи кексу Бобо наповнити банку цукерками на шляху яскравою мапою, повною рівнів.
+
+ЩО НА ТЕБЕ ЧЕКАЄ
+• Класика «три в ряд»: посувай цукерки, збирай лінії та запускай ланцюгові реакції
+• Особливі фішки: 4 в ряд дають ракету, літери L і T — бомбу, 5 в ряд — райдужну цукерку
+• Шість особливих комбінацій: ракета + бомба, бомба + бомба, веселка + веселка та інші
+• Битви з босами кожні 10 рівнів і трифазні мегабоси кожні 50
+• Перешкоди: лід, ланцюги, дерев'яні ящики та шоколад, що росте
+• Різні цілі: доправ цукерки в банку, збери смаки, розтопи глазур або набери очки
+• Нові землі кожні 10 рівнів: від Полуничних полів до Райдужної галактики
+• Колесо удачі, щоденний подарунок і завдання дня
+• Костюми для Бобо, що відкриваються зірками
+• Світовий рейтинг: найкращі результати на кожному рівні додаються
+• Грай без інтернету; життя відновлюються з часом
+• 11 мов
+
+Sugar Drop — безкоштовна гра. Реклама необов'язкова й лише дає нагороди: життя, ходи або бустери.
+
+Готовий до солодкого випробування? Завантаж Sugar Drop і починай збирати!
 ```

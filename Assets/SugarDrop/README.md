@@ -79,14 +79,29 @@ Același nivel arată la fel la fiecare încercare.
 - **Finalul dulce:** la victorie, fiecare mutare rămasă devine o rachetă care explodează (+200 puncte).
 
 ## Limbi
-Jocul are 9 limbi: engleză (implicită), română, spaniolă, portugheză, franceză, germană, italiană, turcă și indoneziană.
+Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, franceză, germană, italiană, turcă, indoneziană, rusă și ucraineană.
+- Rusa și ucraineana folosesc fontul Nunito Black (OFL, `Resources/Fonts`), pentru că Baloo 2 nu are litere chirilice (`UI/SugarFonts.cs`).
 - La prima pornire, limba se ia după telefon. Dacă telefonul e în altă limbă, jocul pornește în engleză.
 - Limba se schimbă din **Setări → LIMBA**.
 - Textele din cod sunt în română și servesc drept chei. Fiecare rând din tabelul `SugarLoc` are traducerea în toate
   limbile, iar testele verifică să nu lipsească nimic.
-- Pentru un text nou: adaugi un rând `R(ro, en, es, pt, fr, de, it, tr, id)`.
-- Limbi cu alt alfabet (rusă, japoneză, chineză, coreeană, arabă, hindi) ar avea nevoie de un font în plus:
-  Baloo 2 are doar litere latine.
+- Pentru un text nou: adaugi un rând `R(ro, en, es, pt, fr, de, it, tr, id, ru, uk)`.
+- Japoneza, chineza, coreeana, araba sau hindi ar avea nevoie de încă un font.
+
+## Dashboard, roată, garderobă, evenimente
+- **Dashboard** (`UI/MainMenu.cs`): vieți cu cronometru, monede, stele; Bobo cu costumul ales; progresul capitolului
+  (stele din 30); „Joacă” (spre hartă) și plăcile Roata, Cadou, Misiuni, Eveniment, Bobo (garderobă), Clasament,
+  Profil, Setări, fiecare cu informații vii (rotiri gratuite, ziua cadoului, misiuni gata, timp până la weekend etc.).
+- **Roata norocului** (`UI/WheelPanel.cs`, reguli în `Core/SugarExtras.cs`): 1 rotire gratuită pe zi (2 în weekend)
+  și 3 cu reclamă; vieți, vieți pline, „+5 mutări”, monede, bombă, rachetă de start, amestecare.
+- **Boostere de start** (de la nivelul 2): rachetă și/sau bombă puse pe tablă la început; 150 de monede bucata.
+  Se câștigă și din roată și din cufărul de capitol.
+- **Garderoba lui Bobo** (`UI/WardrobePanel.cs`): coif de petrecere, fundiță, coroană, bonetă, ochelari, pălărie de
+  vrăjitor — deblocate cu stele; Bobo le poartă în meniu și lângă borcan.
+- **Weekend dulce:** sâmbăta și duminica monedele din niveluri sunt duble și roata are o rotire gratuită în plus.
+- **Harta pe ținuturi:** fiecare capitol are banda lui de cer, nori la graniță, decor propriu animat (căpșuni, frunze
+  de mentă, afine, lămâi, struguri, ciocolată, gheață, caramel, vată de zahăr, stele), drum în culorile ținutului;
+  Bobo lasă o dâră de sclipiri când merge la nivelul următor, iar la intrarea într-un ținut nou apare „Ținut nou!”.
 
 ## Meniul principal și antrenamentul
 - **Meniul** (`UI/MainMenu.cs`): cerul capitolului curent, ploaie de bomboane, Bobo care respiră, clipește, sare
@@ -162,7 +177,7 @@ Jocul are 9 limbi: engleză (implicită), română, spaniolă, portugheză, fran
 - Repo-uri: `victorjosan16/Games01` și `victorjosan16/UAT_1`. Build Automation e legat de UAT_1; branch-ul `sugar-drop`
   e identic în amândouă.
 - Versiunea: `versionCode` = numărul build-ului din cloud; numele versiunii = `1.0.<număr>` (`SugarDropSetup.VersionPrefix`)
-- Publicarea pe Google Play și textele de magazin în 9 limbi: `GOOGLE_PLAY.md`
+- Publicarea pe Google Play și textele de magazin în 11 limbi: `GOOGLE_PLAY.md`
 - restul ca la Quarry Empire (Android, APK, debug keystore)
 
 ## Etape (promptul „Premium Candy Blast”)

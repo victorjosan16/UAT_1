@@ -46,14 +46,30 @@ namespace SugarDrop
         }
 
         private static readonly Color LockedColor = new(0.8f, 0.76f, 0.87f);
-        private static readonly Color DotOff = new(1f, 1f, 1f, 0.6f);
-        private static readonly Color DotOn = new(1f, 0.84f, 0.36f);
+        /// <summary>Punctele drumului: aurii-colorate în tonul ținutului când sunt aprinse, albe-pal când nu.</summary>
+        private static Color DotOnFor(int level) => Color.Lerp(new Color(1f, 0.84f, 0.36f), ChapterTheme.ForLevel(level).Stripe, 0.35f);
+        private static Color DotOffFor(int level) => Color.Lerp(new Color(1f, 1f, 1f, 0.6f), new Color(ChapterTheme.ForLevel(level).Stripe.r, ChapterTheme.ForLevel(level).Stripe.g, ChapterTheme.ForLevel(level).Stripe.b, 0.6f), 0.25f);
         private static readonly Color[] UnlockColors = { Color.white, new(1f, 0.84f, 0.36f), new(1f, 0.56f, 0.69f), new(0.71f, 0.48f, 1f) };
 
         private GameObject _root;
         private Image _background;
         private int _backgroundChapter = -1;
         private readonly List<(int Chapter, UiLabel Label)> _chapterLabels = new();
+        private RectTransform _zoneLayer;
+        private Image _flash;
+        private UiLabel _newLand;
+        private float _newLandT = -1f;
+
+        /// <summary>Decorul animat al ținuturilor: se leagănă, se rotește sau sclipește.</summary>
+        private struct Decor
+        {
+            public RectTransform Rect;
+            public Vector2 Base;
+            public float Phase;
+            public int Motion;
+        }
+
+        private readonly List<Decor> _decor = new();
         private RectTransform _content;
         private RectTransform _view;
         private RectTransform _scrollContent;
@@ -113,9 +129,22 @@ namespace SugarDrop
 
             BuildTopBar(theme);
             BuildPlayButton(theme);
+            BuildNewLandBanner(theme);
 
             _scroller.SetParallaxLayers(new[] { _farLayer, _midLayer }, new[] { 0.25f, 0.6f });
             _root.SetActive(false);
+        }
+
+        /// <summary>Sărbătoarea la intrarea într-un ținut nou: un fulger de lumină și numele ținutului care „sare”.</summary>
+        private void BuildNewLandBanner(UiTheme theme)
+        {
+            _flash = UiFactory.CreateImage("Flash", _content, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0f));
+            _flash.preserveAspect = false;
+            UiFactory.Stretch(_flash.rectTransform, -300f);
+            _flash.gameObject.SetActive(false);
+            _newLand = SugarUi.Outlined("NewLand", _content, "", 64, theme.AccentColor, 5f);
+            UiFactory.Place(_newLand.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 200f), new Vector2(1000f, 220f));
+            _newLand.gameObject.SetActive(false);
         }
 
         private static RectTransform Layer(string name, Transform parent)
@@ -152,6 +181,8 @@ namespace SugarDrop
             scroll.scrollSensitivity = 30f;
             _scroller = _view.gameObject.AddComponent<LevelMapScrollController>();
 
+            // Ținuturile (câte o bandă colorată pe capitol) stau în spatele drumului și se derulează odată cu el.
+            _zoneLayer = Layer("Zones", _scrollContent);
             _roadLayer = Layer("Road", _scrollContent);
             _dotLayer = Layer("Dots", _scrollContent);
             _nodeLayer = Layer("Nodes", _scrollContent);
@@ -263,7 +294,11 @@ namespace SugarDrop
             int first = _levels + 1;
             for (int level = first; level <= needed; level++)
             {
-                if ((level - 1) % LevelConfig.ChapterSize == 0) BuildChapterBanner(ChapterTheme.ChapterOf(level));
+                if ((level - 1) % LevelConfig.ChapterSize == 0)
+                {
+                    BuildChapterZone(ChapterTheme.ChapterOf(level));
+                    BuildChapterBanner(ChapterTheme.ChapterOf(level));
+                }
                 _nodes.Add(BuildNode(level));
             }
             BuildDecor(first, needed);
@@ -286,6 +321,36 @@ namespace SugarDrop
             UiFactory.Stretch(label.RectTransform, 8f);
             _chapterLabels.Add((chapter, label));
             SetChapterText(chapter, label);
+        }
+
+        /// <summary>
+        /// Ținutul unui capitol: cerul lui pe toată lățimea, de la primul la ultimul nivel, cu o margine de nori de
+        /// glazură la intrare (ca trecerea dintre ținuturi să fie moale).
+        /// </summary>
+        private void BuildChapterZone(int chapter)
+        {
+            int first = chapter * LevelConfig.ChapterSize + 1;
+            float bottom = chapter == 0 ? 0f : MapLayout.NodePosition(first).y - MapLayout.Spacing * 0.5f;
+            float top = MapLayout.NodePosition(first + LevelConfig.ChapterSize - 1).y + MapLayout.Spacing * 0.5f;
+            if (chapter == 0) bottom = -400f;
+            Image zone = UiFactory.CreateImage("Zone" + (chapter + 1), _zoneLayer, SugarSprites.Sky(chapter), new Color(1f, 1f, 1f, 0.92f));
+            zone.preserveAspect = false;
+            RectTransform rect = zone.rectTransform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(-300f, bottom);
+            rect.offsetMax = new Vector2(300f, top);
+            if (chapter == 0) return;
+            var random = new System.Random(chapter * 31 + 5);
+            for (int i = 0; i < 8; i++)
+            {
+                float size = 220f + (float)random.NextDouble() * 120f;
+                Image cloud = UiFactory.CreateImage("EdgeCloud", _zoneLayer, SugarSprites.Frosting, new Color(1f, 1f, 1f, 0.95f));
+                cloud.preserveAspect = false;
+                UiFactory.Place(cloud.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+                    new Vector2(-660f + i * 190f + (float)random.NextDouble() * 40f, bottom + (float)random.NextDouble() * 30f), new Vector2(size, size * 0.55f));
+            }
         }
 
         private static void SetChapterText(int chapter, UiLabel label) =>
@@ -382,7 +447,7 @@ namespace SugarDrop
                     Vector2 p = MapLayout.PathPoint(level, t);
                     Image road = UiFactory.CreateImage("Road", _roadLayer, SugarSprites.SoftDot, new Color(1f, 1f, 1f, 0.16f));
                     UiFactory.Place(road.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), p, new Vector2(110f, 110f));
-                    Image dot = UiFactory.CreateImage("Dot", _dotLayer, SugarSprites.Circle, DotOff);
+                    Image dot = UiFactory.CreateImage("Dot", _dotLayer, SugarSprites.Circle, DotOffFor(level));
                     UiFactory.Place(dot.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), p, new Vector2(22f, 22f));
                     _dots.Add(dot);
                     _dotSegment.Add(level);
@@ -391,48 +456,63 @@ namespace SugarDrop
             _litLevel = -1;
         }
 
-        /// <summary>Nori de glazură, acadele și bomboane pe marginile drumului (strat de mijloc) și lumini moi (strat îndepărtat).</summary>
+        /// <summary>
+        /// Decorul fiecărui ținut, pe marginile drumului (strat de mijloc): căpșuni, frunze de mentă, afine, lămâi,
+        /// struguri, ciocolată, cristale de gheață, caramel, vată de zahăr, stele. Se leagănă, se rotesc sau sclipesc.
+        /// Pe stratul îndepărtat: lumini mari în nuanța ținutului.
+        /// </summary>
         private void BuildDecor(int fromLevel, int toLevel)
         {
             var random = new System.Random(fromLevel * 7919 + toLevel);
             for (int level = fromLevel; level <= toLevel; level++)
             {
                 Vector2 node = MapLayout.NodePosition(level);
+                int chapter = ChapterTheme.ChapterOf(level);
+                ChapterTheme theme = ChapterTheme.For(chapter);
                 float side = node.x > 0f ? -1f : 1f;
                 float y = node.y * 0.6f + 260f;
 
-                if (level % 2 == 0)
+                // Câte un obiect al ținutului lângă fiecare nivel, alternând marginile; la nivelurile pare, încă unul mic.
+                for (int k = 0; k < (level % 2 == 0 ? 2 : 1); k++)
                 {
-                    float x = side * (330f + (float)random.NextDouble() * 130f);
-                    int kind = random.Next(3);
-                    if (kind == 0)
-                    {
-                        Image cloud = UiFactory.CreateImage("Cloud", _midLayer, SugarSprites.Frosting, new Color(1f, 1f, 1f, 0.7f));
-                        float size = 190f + (float)random.NextDouble() * 110f;
-                        UiFactory.Place(cloud.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(size, size * 0.8f));
-                        cloud.preserveAspect = false;
-                    }
-                    else if (kind == 1) Lollipop(new Vector2(x, y), Palette.Tile(random.Next(Palette.TileColorCount)), 80f + (float)random.NextDouble() * 40f);
-                    else
-                    {
-                        Color c = Palette.TileLight(random.Next(Palette.TileColorCount));
-                        Image candy = UiFactory.CreateImage("Candy", _midLayer, SugarSprites.CandyVariant(random.Next(3)), new Color(c.r, c.g, c.b, 0.85f));
-                        float size = 80f + (float)random.NextDouble() * 50f;
-                        UiFactory.Place(candy.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(size, size));
-                        candy.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (float)random.NextDouble() * 360f);
-                    }
+                    float x = (k == 0 ? side : -side) * (300f + (float)random.NextDouble() * 160f);
+                    float size = (k == 0 ? 110f : 70f) + (float)random.NextDouble() * 50f;
+                    ThemeDecor(ChapterTheme.IndexOf(chapter), random, out Sprite sprite, out Color color, out int motion);
+                    Image image = UiFactory.CreateImage("Decor", _midLayer, sprite, color);
+                    var position = new Vector2(x, y + k * 90f);
+                    UiFactory.Place(image.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), position, new Vector2(size, size));
+                    image.rectTransform.localRotation = Quaternion.Euler(0f, 0f, (float)random.NextDouble() * 40f - 20f);
+                    _decor.Add(new Decor { Rect = image.rectTransform, Base = position, Phase = (float)random.NextDouble() * 10f, Motion = motion });
                 }
 
-                // Lumini moi, foarte mari, pe stratul îndepărtat.
                 if (level % 3 == 0)
                 {
-                    Color glow = Color.HSVToRGB(Mathf.Repeat(0.85f + (float)random.NextDouble() * 0.2f, 1f), 0.25f, 1f);
+                    Color glow = Color.HSVToRGB(Mathf.Repeat(theme.GlowHue + ((float)random.NextDouble() - 0.5f) * 0.12f, 1f), 0.3f, 1f);
                     glow.a = 0.35f;
                     Image blob = UiFactory.CreateImage("Glow", _farLayer, SugarSprites.SoftDot, glow);
                     float size = 380f + (float)random.NextDouble() * 320f;
                     float bx = ((float)random.NextDouble() - 0.5f) * 1000f;
                     UiFactory.Place(blob.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(bx, node.y * 0.25f + 300f), new Vector2(size, size));
                 }
+            }
+        }
+
+        /// <summary>Ce decor are fiecare ținut (în ordinea temelor) și cum se mișcă: 0 = leagăn, 1 = rotire, 2 = sclipire.</summary>
+        private static void ThemeDecor(int theme, System.Random random, out Sprite sprite, out Color color, out int motion)
+        {
+            int pick = random.Next(2);
+            switch (theme)
+            {
+                case 0: sprite = pick == 0 ? SugarSprites.Heart : SugarSprites.CandySwirl; color = pick == 0 ? new Color(0.95f, 0.3f, 0.4f) : new Color(1f, 0.6f, 0.72f); motion = 0; break;
+                case 1: sprite = SugarSprites.Leaf; color = pick == 0 ? new Color(0.35f, 0.8f, 0.5f) : new Color(0.55f, 0.9f, 0.6f); motion = 0; break;
+                case 2: sprite = pick == 0 ? SugarSprites.Circle : SugarSprites.Drop; color = pick == 0 ? new Color(0.3f, 0.45f, 0.9f) : new Color(0.45f, 0.65f, 1f); motion = 0; break;
+                case 3: sprite = pick == 0 ? SugarSprites.Star : SugarSprites.Drop; color = new Color(1f, 0.85f, 0.25f); motion = pick == 0 ? 1 : 0; break;
+                case 4: sprite = SugarSprites.Gem; color = pick == 0 ? new Color(0.6f, 0.35f, 0.9f) : new Color(0.75f, 0.55f, 1f); motion = 2; break;
+                case 5: sprite = pick == 0 ? SugarSprites.Chocolate : SugarSprites.Crumb; color = pick == 0 ? Color.white : new Color(0.45f, 0.27f, 0.17f); motion = 0; break;
+                case 6: sprite = pick == 0 ? SugarSprites.Ice : SugarSprites.Shard; color = pick == 0 ? Color.white : new Color(0.7f, 0.95f, 1f); motion = 2; break;
+                case 7: sprite = pick == 0 ? SugarSprites.Drop : SugarSprites.CandySwirl; color = new Color(1f, 0.6f, 0.3f); motion = pick == 0 ? 0 : 1; break;
+                case 8: sprite = SugarSprites.Frosting; color = pick == 0 ? new Color(1f, 0.75f, 0.9f) : new Color(0.8f, 0.82f, 1f); motion = 0; break;
+                default: sprite = pick == 0 ? SugarSprites.Star : SugarSprites.Sparkle; color = pick == 0 ? new Color(1f, 0.95f, 0.6f) : Color.white; motion = 2; break;
             }
         }
 
@@ -475,6 +555,9 @@ namespace SugarDrop
         public void Hide()
         {
             StopUnlock();
+            _newLandT = -1f;
+            _flash.gameObject.SetActive(false);
+            _newLand.gameObject.SetActive(false);
             _root.SetActive(false);
         }
 
@@ -522,7 +605,7 @@ namespace SugarDrop
             {
                 LevelNodeState.Current => theme.AccentColor,
                 LevelNodeState.Completed => boss ? Palette.Tile(4) : Palette.Tile((level - 1) % Palette.TileColorCount),
-                _ => boss ? Color.Lerp(LockedColor, Palette.Tile(4), 0.3f) : LockedColor,
+                _ => Color.Lerp(boss ? Color.Lerp(LockedColor, Palette.Tile(4), 0.3f) : LockedColor, ChapterTheme.ForLevel(level).Stripe, 0.25f),
             };
             node.Face.color = face;
             node.Ring.color = state == LevelNodeState.Locked ? new Color(0.71f, 0.48f, 1f, 0.45f) : Palette.Tile(4);
@@ -552,7 +635,7 @@ namespace SugarDrop
             {
                 bool on = _dotSegment[i] < level;
                 Image dot = _dots[i];
-                Color target = on ? DotOn : DotOff;
+                Color target = on ? DotOnFor(_dotSegment[i]) : DotOffFor(_dotSegment[i]);
                 if (dot.color == target) continue;
                 dot.color = target;
                 dot.rectTransform.sizeDelta = on ? new Vector2(26f, 26f) : new Vector2(22f, 22f);
@@ -581,11 +664,20 @@ namespace SugarDrop
             Vector2 markerFrom = MarkerPosition(from);
             Vector2 markerTo = MarkerPosition(to);
             const float walk = 0.75f;
+            float trail = 0f;
             for (float t = 0f; t < walk; t += Time.unscaledDeltaTime)
             {
                 float k = t / walk;
                 LightPartial(from, to, k);
                 _marker.anchoredPosition = Vector2.Lerp(markerFrom, markerTo, UiEase.InOutCubic(k)) + new Vector2(0f, Mathf.Abs(Mathf.Sin(k * Mathf.PI * 3f)) * 40f);
+                // Bobo lasă o dâră de sclipiri în culorile ținutului în timp ce merge.
+                trail -= Time.unscaledDeltaTime;
+                if (trail <= 0f)
+                {
+                    trail = 0.08f;
+                    Color tint = ChapterTheme.ForLevel(to).Stripe;
+                    _bursts.BurstAt(_marker, 2, SugarSprites.Sparkle, new[] { Color.white, tint }, 240f, 30f);
+                }
                 yield return null;
             }
             _marker.anchoredPosition = markerTo;
@@ -602,6 +694,24 @@ namespace SugarDrop
             }
             if (SugarAudio.Instance != null) SugarAudio.Instance.Play(SugarSound.SpecialCreated);
             SugarAudio.Buzz(1);
+
+            // Ținut nou: fulger de lumină, cerul se schimbă, numele ținutului sare pe ecran, ploaie de sclipiri.
+            int chapter = ChapterTheme.ChapterOf(to);
+            if (chapter != ChapterTheme.ChapterOf(from))
+            {
+                _flash.gameObject.SetActive(true);
+                _newLand.gameObject.SetActive(true);
+                _newLand.Text = SugarLoc.T("Ținut nou!") + "\n" + SugarLoc.T(ChapterTheme.For(chapter).Name);
+                _newLandT = 0f;
+                Color[] colors = { Color.white, ChapterTheme.For(chapter).Stripe, Color.Lerp(ChapterTheme.For(chapter).Stripe, Color.white, 0.5f) };
+                for (int i = 0; i < 4; i++)
+                {
+                    _bursts.BurstAt(_newLand.RectTransform, 20, SugarSprites.Sparkle, colors, 900f, 50f);
+                    yield return new WaitForSecondsRealtime(0.25f);
+                }
+                if (SugarAudio.Instance != null) SugarAudio.Instance.Play(SugarSound.Win);
+                SugarAudio.Buzz(2);
+            }
             _unlock = null;
         }
 
@@ -621,8 +731,9 @@ namespace SugarDrop
             {
                 bool on = i < lit;
                 Image dot = _dots[i];
-                if (!on || dot.color == DotOn) continue;
-                dot.color = DotOn;
+                Color lit = DotOnFor(_dotSegment[i]);
+                if (!on || dot.color == lit) continue;
+                dot.color = lit;
                 dot.rectTransform.sizeDelta = new Vector2(26f, 26f);
                 dot.rectTransform.localScale = Vector3.one * 1.8f;
                 _dotsPopUntil = Time.unscaledTime + 0.5f;
@@ -655,6 +766,43 @@ namespace SugarDrop
             if (_unlock == null)
                 _marker.anchoredPosition = _markerTarget + new Vector2(0f, Mathf.Abs(Mathf.Sin(time * 2.6f)) * 16f);
             _playGlow.localScale = Vector3.one * (1f + Mathf.Sin(time * 3f) * 0.08f);
+
+            // Decorul ținuturilor: leagăn, rotire sau sclipire (fiecare cu faza lui).
+            for (int i = 0; i < _decor.Count; i++)
+            {
+                Decor d = _decor[i];
+                float wave = Mathf.Sin(time * 1.6f + d.Phase);
+                switch (d.Motion)
+                {
+                    case 0:
+                        d.Rect.anchoredPosition = d.Base + new Vector2(0f, wave * 10f);
+                        d.Rect.localRotation = Quaternion.Euler(0f, 0f, wave * 8f);
+                        break;
+                    case 1:
+                        d.Rect.localRotation = Quaternion.Euler(0f, 0f, (time * 30f + d.Phase * 40f) % 360f);
+                        break;
+                    default:
+                        d.Rect.localScale = Vector3.one * (0.85f + 0.2f * Mathf.Abs(Mathf.Sin(time * 2.2f + d.Phase)));
+                        break;
+                }
+            }
+
+            // Sărbătoarea ținutului nou: fulgerul se stinge, numele sare și apoi dispare.
+            if (_newLandT >= 0f)
+            {
+                _newLandT += dt;
+                _flash.color = new Color(1f, 1f, 1f, Mathf.Clamp01(0.7f - _newLandT * 1.4f));
+                float pop = UiEase.OutBack(Mathf.Clamp01(_newLandT / 0.5f), 2.4f);
+                float fade = Mathf.Clamp01((3.2f - _newLandT) / 0.5f);
+                _newLand.RectTransform.localScale = Vector3.one * pop * (1f + Mathf.Sin(_newLandT * 6f) * 0.03f);
+                _newLand.Color = new Color(_newLand.Color.r, _newLand.Color.g, _newLand.Color.b, fade);
+                if (_newLandT > 3.2f)
+                {
+                    _newLandT = -1f;
+                    _flash.gameObject.SetActive(false);
+                    _newLand.gameObject.SetActive(false);
+                }
+            }
 
             // Punctele aprinse recent revin la mărimea normală (doar cât timp există așa ceva).
             if (time < _dotsPopUntil)
