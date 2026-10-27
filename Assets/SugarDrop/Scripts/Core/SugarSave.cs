@@ -31,6 +31,8 @@ namespace SugarDrop
         public int winStreak;
         /// <summary>Mecanicile pe care jucătorul le-a întâlnit deja (biți; vezi SugarDropGame.MechanicBit).</summary>
         public int seenMechanics;
+        /// <summary>Ultima dată când jucătorul a fost în joc (secunde Unix): pentru „Bine ai revenit”.</summary>
+        public long lastVisit;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>
         public int adsConsent = -1;
         /// <summary>Numele afișat în clasament (gol = încă neales: la prima pornire apare fereastra de bun venit).</summary>

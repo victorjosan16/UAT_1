@@ -37,6 +37,7 @@ namespace SugarDrop
         [SerializeField] private WheelPanel wheel;
         [SerializeField] private WardrobePanel wardrobe;
         [SerializeField] private SettingsPanel settings;
+        [SerializeField] private StoryPanel story;
 
         [Header("Așezare (unități din lume)")]
         [SerializeField] private float boardBottomY = -2.6f;
@@ -209,16 +210,24 @@ namespace SugarDrop
             RefreshBoosters();
             SugarLeaderboard.Ensure();
 
-            // Prima pornire: Bobo ne salută și ne alegem nickname-ul; abia apoi întrebarea despre reclame.
+            // Prima pornire: povestea Tărâmului Dulce, apoi Bobo ne cere nickname-ul; abia apoi întrebarea despre reclame.
+            // La revenire: „Bine ai revenit!” (pagina se închide singură).
+            long away = Data.lastVisit > 0 ? SugarSave.Now - Data.lastVisit : 0;
+            MarkVisit();
             if (string.IsNullOrEmpty(Data.nickname))
             {
-                welcome.Show(true, nickname =>
+                story.ShowStory(() => welcome.Show(true, nickname =>
                 {
                     SetNickname(nickname);
                     SetupAds();
-                });
+                }));
             }
-            else SetupAds();
+            else story.ShowWelcomeBack(Data.nickname, Data.level, System.TimeSpan.FromSeconds(away), () =>
+            {
+                // Meniul își face intrarea (logo, Bobo, plăci) abia după ce se închide cartea.
+                if (menu.IsOpen) menu.Show();
+                SetupAds();
+            });
         }
 
         // ------------------------------------------------------------ Nickname și clasament
@@ -504,7 +513,23 @@ namespace SugarDrop
 
         private void OnApplicationPause(bool paused)
         {
-            if (paused) SugarSave.Save();
+            if (paused)
+            {
+                MarkVisit();
+                return;
+            }
+            // Revenit după o pauză lungă (cel puțin 15 minute), în meniu sau pe hartă: Bobo ne salută din nou.
+            long away = SugarSave.Now - Data.lastVisit;
+            bool calm = _state is State.Menu or State.Map && !dialog.IsOpen && !welcome.IsOpen && !story.IsOpen && !settings.IsOpen;
+            if (away >= 15 * 60 && calm && !string.IsNullOrEmpty(Data.nickname))
+                story.ShowWelcomeBack(Data.nickname, Data.level, System.TimeSpan.FromSeconds(away), null);
+            MarkVisit();
+        }
+
+        private static void MarkVisit()
+        {
+            Data.lastVisit = SugarSave.Now;
+            SugarSave.Save();
         }
 
         // ------------------------------------------------------------ Ecrane
@@ -537,7 +562,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || settings.IsOpen || story.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -1055,6 +1080,11 @@ namespace SugarDrop
             if (wardrobe.IsOpen)
             {
                 wardrobe.Hide();
+                return;
+            }
+            if (story.IsOpen)
+            {
+                story.Skip();
                 return;
             }
             if (settings.IsOpen)
