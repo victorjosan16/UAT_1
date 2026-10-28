@@ -51,7 +51,7 @@ namespace SugarDrop
         {
             UiLabel label = UiFactory.CreateText(name, parent, text, size, TextAnchor.MiddleCenter, color);
             var effect = label.gameObject.AddComponent<Outline>();
-            effect.effectColor = new Color(0.3f, 0.24f, 0.42f, 0.8f);
+            effect.effectColor = QuestStyle.Outline;
             effect.effectDistance = new Vector2(outline, -outline);
             return label;
         }

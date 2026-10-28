@@ -30,6 +30,9 @@ namespace SugarDrop
         private Action _onDone;
         private float _time = -1f;
         private float _closing = -1f;
+        private string _line = "";
+        private int _lineSize;
+        private int _shown = -1;
 
         public bool IsOpen => _root != null && _root.activeSelf;
 
@@ -45,7 +48,10 @@ namespace SugarDrop
             tap.transition = Selectable.Transition.None;
             tap.onClick.AddListener(() =>
             {
-                if (_time >= MinShow) Close();
+                if (_time < MinShow) return;
+                // Prima atingere cât timp textul încă apare: îl arată întreg; următoarea închide scena.
+                if (_shown < _line.Length) _time = Mathf.Max(_time, 0.6f + _line.Length / QuestStyle.LettersPerSecond);
+                else Close();
             });
 
             // Cardul: umbră, ramă albă și ilustrația (decupată la ramă, ca să se poată mări încet).
@@ -79,8 +85,14 @@ namespace SugarDrop
             _bubbleText = UiFactory.CreateText("Text", _bubble, "", 30, TextAnchor.MiddleCenter, new Color(0.16f, 0.12f, 0.2f));
             UiFactory.Stretch(_bubbleText.RectTransform, 12f);
 
-            Button skip = SugarUi.Button("Skip", _root.transform, "", new Color(1f, 1f, 1f, 0.25f), () => Close(), 34);
-            UiFactory.Place((RectTransform)skip.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-330f, -340f), new Vector2(200f, 86f));
+            // „Sari” în zona sigură (nu sub notch): dreptunghiul ecranului, apoi zona sigură din el.
+            RectTransform screen = UiFactory.CreateRect("Screen", _root.transform);
+            UiFactory.Stretch(screen, 300f);
+            RectTransform safe = UiFactory.CreateRect("Safe", screen);
+            UiFactory.Stretch(safe);
+            safe.gameObject.AddComponent<SafeAreaFitter>();
+            Button skip = SugarUi.Button("Skip", safe, "", new Color(1f, 1f, 1f, 0.25f), () => Close(), 34);
+            UiFactory.Place((RectTransform)skip.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -40f), new Vector2(200f, 86f));
             _skipLabel = UiFactory.GetButtonLabel(skip);
             _hint = UiFactory.CreateText("Hint", _root.transform, "", 64, TextAnchor.MiddleCenter, Color.white);
             UiFactory.Place(_hint.RectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(200f, 90f));
@@ -115,7 +127,11 @@ namespace SugarDrop
             string line = SugarLoc.T(entry.LineKey);
             Vector2 bubbleSize = new((entry.BubbleRight - entry.BubbleLeft + 0.036f) * window.x - 28f, (entry.BubbleBottom - entry.BubbleTop + 0.044f) * window.y - 28f);
             int lineSize = FitSize(line, bubbleSize.x, bubbleSize.y, 4, 36);
-            _bubbleText.Text = "<size=" + lineSize + ">" + line + "</size>";
+            // Replica apare literă cu literă, după ce balonul „pocnește”.
+            _line = line;
+            _lineSize = lineSize;
+            _shown = -1;
+            _bubbleText.Text = "";
             _skipLabel.Text = SugarLoc.T("SARI") + " ›";
 
             _time = 0f;
@@ -198,7 +214,13 @@ namespace SugarDrop
             _artRect.localScale = Vector3.one * (1f + Mathf.Min(_time, AutoClose) * 0.0025f);
             float bubble = Mathf.Clamp01((_time - 0.35f) / 0.3f);
             _bubble.localScale = Vector3.one * UiEase.OutBack(bubble, 2.2f);
-            _hint.Text = _time >= 1.2f ? "<size=64>›</size>" : "";
+            int letters = Mathf.Clamp(Mathf.FloorToInt((_time - 0.6f) * QuestStyle.LettersPerSecond), 0, _line.Length);
+            if (letters != _shown)
+            {
+                _shown = letters;
+                _bubbleText.Text = letters == 0 ? "" : "<size=" + _lineSize + ">" + _line.Substring(0, letters) + "</size>";
+            }
+            _hint.Text = _shown >= _line.Length ? "<size=64>›</size>" : "";
             _hint.Color = new Color(1f, 1f, 1f, 0.45f + 0.4f * Mathf.Abs(Mathf.Sin(_time * 2.5f)));
         }
     }

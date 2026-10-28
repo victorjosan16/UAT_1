@@ -45,6 +45,8 @@ namespace SugarDrop
         private RectTransform _bubble;
         private UiLabel _bubbleText;
         private QuestNav _nav;
+        /// <summary>Zona sigură a ecranului (fără notch și bara de gesturi): sus monedele, jos bara de lemn.</summary>
+        private RectTransform _safe;
         private UIParticleController _bursts;
 
         private RectTransform[] _floaters;
@@ -105,17 +107,24 @@ namespace SugarDrop
 
         private void BuildTopBar(UiTheme theme)
         {
-            RectTransform lives = Pill("LivesPill", SugarSprites.LifeHeart, Color.white, new Vector2(-330f, 850f), theme, out _lives);
+            // Fundalul depășește ecranul cu 300 px: întâi dreptunghiul ecranului, apoi zona sigură din el.
+            RectTransform screen = UiFactory.CreateRect("Screen", _root.transform);
+            UiFactory.Stretch(screen, 300f);
+            _safe = UiFactory.CreateRect("Safe", screen);
+            UiFactory.Stretch(_safe);
+            _safe.gameObject.AddComponent<SafeAreaFitter>();
+
+            RectTransform lives = Pill("LivesPill", SugarSprites.LifeHeart, Color.white, new Vector2(-330f, -110f), theme, out _lives);
             _lifeTimer = UiFactory.CreateText("Timer", lives, "", 28, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.85f));
             UiFactory.Place(_lifeTimer.RectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-14f, 0f), new Vector2(120f, 40f));
-            Pill("CoinsPill", ProceduralSprites.Coin, Color.white, new Vector2(0f, 850f), theme, out _coins);
-            Pill("StarsPill", ProceduralSprites.Star, theme.AccentColor, new Vector2(330f, 850f), theme, out _stars);
+            Pill("CoinsPill", ProceduralSprites.Coin, Color.white, new Vector2(0f, -110f), theme, out _coins);
+            Pill("StarsPill", ProceduralSprites.Star, theme.AccentColor, new Vector2(330f, -110f), theme, out _stars);
         }
 
         private RectTransform Pill(string name, Sprite icon, Color iconColor, Vector2 position, UiTheme theme, out UiLabel label)
         {
-            Image pill = UiFactory.CreatePanel(name, _root.transform, theme.PanelColor);
-            var rect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, new Vector2(290f, 88f));
+            Image pill = UiFactory.CreatePanel(name, _safe, theme.PanelColor);
+            var rect = UiFactory.Place((RectTransform)pill.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), position, new Vector2(290f, 88f));
             Image image = UiFactory.CreateImage("Icon", rect, icon, iconColor);
             UiFactory.Place(image.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(10f, 0f), new Vector2(92f, 92f));
             label = UiFactory.CreateText("Count", rect, "0", 42);
@@ -123,7 +132,7 @@ namespace SugarDrop
             return rect;
         }
 
-        /// <summary>Bomboane și capace care cad încet și se rotesc (cele mici cad mai încet: adâncime).</summary>
+        /// <summary>Piese și frunze care cad încet și se rotesc (cele mici cad mai încet: adâncime).</summary>
         private void BuildCandyRain()
         {
             _floaters = new RectTransform[FloaterCount];
@@ -132,19 +141,14 @@ namespace SugarDrop
             _floaterPhase = new float[FloaterCount];
             for (int i = 0; i < FloaterCount; i++)
             {
-                bool cap = i % 3 == 2;
-                Sprite sprite = cap ? SugarSprites.Cap : SugarSprites.CandyVariant(i);
-                Color color = cap ? Palette.Tile(i % Palette.TileColorCount) : Palette.RandomCandy();
+                // Lumea Drop Quest: piesele jocului (picătură, frunză, gemă...) și frunze verzi, nu bomboane.
+                bool leaf = i % 3 == 2;
+                Sprite sprite = leaf ? SugarSprites.Leaf : PieceSprites.Piece(i % Palette.TileColorCount);
+                Color color = leaf ? Color.Lerp(QuestStyle.Green, Color.white, 0.25f) : Color.white;
                 float size = UnityEngine.Random.Range(60f, 140f);
-                Image image = UiFactory.CreateImage("Candy", _root.transform, sprite, new Color(color.r, color.g, color.b, Mathf.Lerp(0.4f, 0.8f, size / 140f)));
+                Image image = UiFactory.CreateImage("Floater", _root.transform, sprite, new Color(color.r, color.g, color.b, Mathf.Lerp(0.4f, 0.8f, size / 140f)));
                 UiFactory.Place(image.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(UnityEngine.Random.Range(-500f, 500f), UnityEngine.Random.Range(RainBottom, RainTop)), new Vector2(size, size));
-                if (cap)
-                {
-                    int flavour = i % Palette.TileColorCount;
-                    Image icon = UiFactory.CreateImage("Icon", image.transform, SugarSprites.Icon(flavour), Palette.TileLight(flavour));
-                    UiFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size * 0.5f, size * 0.5f));
-                }
                 _floaters[i] = image.rectTransform;
                 _floaterSpeed[i] = size * 0.9f + UnityEngine.Random.Range(0f, 40f);
                 _floaterSpin[i] = UnityEngine.Random.Range(-40f, 40f);
@@ -218,8 +222,8 @@ namespace SugarDrop
         /// <summary>Bara de lemn de jos (fiecare buton deschide o fereastră care există deja).</summary>
         private void BuildNav(UiTheme theme)
         {
-            // Fundalul depășește ecranul cu 300 px; bara stă pe marginea de jos a ecranului.
-            _nav = new QuestNav(_root.transform, 300f, -1,
+            // Bara stă pe marginea de jos a zonei sigure (deasupra barei de gesturi).
+            _nav = new QuestNav(_safe, 0f, -1,
                 ("Profil", SugarSprites.Person, Color.Lerp(Palette.Tile(1), Palette.Tile(4), 0.5f), () => ProfileClicked?.Invoke()),
                 ("Bobo", SugarSprites.CostumeSprite(Costume.PartyHat), Palette.Tile(2), () => WardrobeClicked?.Invoke()),
                 ("Evenimente", SugarSprites.Gift, Palette.Tile(0), () => EventsClicked?.Invoke()),

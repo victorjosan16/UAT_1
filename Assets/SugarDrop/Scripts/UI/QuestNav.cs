@@ -41,7 +41,8 @@ namespace SugarDrop
             // Scândura: muchia închisă sus, lemnul dedesubt (se întinde și sub marginea ecranului).
             Image plank = UiFactory.CreatePanel("Plank", Root, QuestStyle.Wood);
             UiFactory.Stretch((RectTransform)plank.transform);
-            ((RectTransform)plank.transform).offsetMin = new Vector2(0f, -bottom - 40f);
+            // Lemnul continuă sub marginea zonei sigure (acoperă bara de gesturi / colțurile ecranului).
+            ((RectTransform)plank.transform).offsetMin = new Vector2(0f, -bottom - 340f);
             ((RectTransform)plank.transform).offsetMax = new Vector2(0f, -20f);
             plank.raycastTarget = true;
             Image edge = UiFactory.CreatePanel("Edge", Root, QuestStyle.WoodDeep);

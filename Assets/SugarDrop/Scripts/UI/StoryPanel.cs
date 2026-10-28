@@ -24,8 +24,8 @@ namespace SugarDrop
         private const float FlipSeconds = 0.32f;
         private const float WelcomeBackSeconds = 4.5f;
 
-        private static readonly Color Paper = new(1f, 0.96f, 0.88f);
-        private static readonly Color Ink = new(0.36f, 0.18f, 0.24f);
+        private static readonly Color Paper = QuestStyle.Surface;
+        private static readonly Color Ink = QuestStyle.Text;
 
         private struct Page
         {
@@ -79,7 +79,7 @@ namespace SugarDrop
             _group = _root.AddComponent<CanvasGroup>();
 
             // Noaptea din jurul cărții, cu stele care sclipesc.
-            Image night = UiFactory.CreateImage("Night", _root.transform, UiFactory.WhiteSprite, new Color(0.16f, 0.07f, 0.2f, 0.92f));
+            Image night = UiFactory.CreateImage("Night", _root.transform, UiFactory.WhiteSprite, QuestStyle.Night);
             night.preserveAspect = false;
             night.raycastTarget = true;
             UiFactory.Stretch(night.rectTransform, -300f);
@@ -101,7 +101,7 @@ namespace SugarDrop
             UiFactory.Place((RectTransform)paper.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(BookWidth, BookHeight));
             for (int i = 0; i < 4; i++)
             {
-                Image corner = UiFactory.CreateImage("Corner", _book, SugarSprites.Heart, new Color(1f, 0.5f, 0.65f));
+                Image corner = UiFactory.CreateImage("Corner", _book, SugarSprites.Leaf, Color.Lerp(QuestStyle.Green, Color.white, 0.15f));
                 Vector2 anchor = new(i % 2, i / 2);
                 UiFactory.Place(corner.rectTransform, anchor, new Vector2(0.5f, 0.5f), new Vector2(anchor.x < 0.5f ? 30f : -30f, anchor.y < 0.5f ? 30f : -30f), new Vector2(54f, 54f));
             }
@@ -147,7 +147,10 @@ namespace SugarDrop
                 _dots.Add(dot);
             }
 
-            Button skip = SugarUi.Button("Skip", _root.transform, "", new Color(1f, 1f, 1f, 0.25f), Skip, 34);
+            RectTransform safe = UiFactory.CreateRect("Safe", _root.transform);
+            UiFactory.Stretch(safe);
+            safe.gameObject.AddComponent<SafeAreaFitter>();
+            Button skip = SugarUi.Button("Skip", safe, "", new Color(1f, 1f, 1f, 0.25f), Skip, 34);
             UiFactory.Place((RectTransform)skip.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -40f), new Vector2(200f, 86f));
             _skip = skip.gameObject;
             _skipLabel = UiFactory.GetButtonLabel(skip);

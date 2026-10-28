@@ -36,7 +36,7 @@ namespace SugarDrop
             cover.raycastTarget = true;
             UiFactory.Stretch(cover.rectTransform, -300f);
             _cover = cover.rectTransform;
-            Image swirl = UiFactory.CreateImage("Swirl", rect, SugarSprites.CandySwirl, Palette.WallStripe);
+            Image swirl = UiFactory.CreateImage("Swirl", rect, SugarSprites.Sparkle, QuestStyle.Gold);
             UiFactory.Place(swirl.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(220f, 220f));
             _swirl = swirl.rectTransform;
             SetVisible(false);

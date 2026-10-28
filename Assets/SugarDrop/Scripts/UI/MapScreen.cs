@@ -48,7 +48,7 @@ namespace SugarDrop
             public LevelNodeAnimator Animator;
         }
 
-        private static readonly Color LockedColor = new(0.8f, 0.76f, 0.87f);
+        private static readonly Color LockedColor = new(0.78f, 0.82f, 0.86f);
         /// <summary>Punctele drumului: aurii-colorate în tonul ținutului când sunt aprinse, albe-pal când nu.</summary>
         private static Color DotOnFor(int level) => Color.Lerp(new Color(1f, 0.84f, 0.36f), ChapterTheme.ForLevel(level).Stripe, 0.35f);
         private static Color DotOffFor(int level) => Color.Lerp(new Color(1f, 1f, 1f, 0.6f), new Color(ChapterTheme.ForLevel(level).Stripe.r, ChapterTheme.ForLevel(level).Stripe.g, ChapterTheme.ForLevel(level).Stripe.b, 0.6f), 0.25f);
@@ -526,26 +526,17 @@ namespace SugarDrop
             int pick = random.Next(2);
             switch (theme)
             {
-                case 0: sprite = pick == 0 ? SugarSprites.Heart : SugarSprites.CandySwirl; color = pick == 0 ? new Color(0.95f, 0.3f, 0.4f) : new Color(1f, 0.6f, 0.72f); motion = 0; break;
+                case 0: sprite = pick == 0 ? SugarSprites.Flower : SugarSprites.Leaf; color = pick == 0 ? Color.white : new Color(0.45f, 0.82f, 0.4f); motion = 0; break;
                 case 1: sprite = SugarSprites.Leaf; color = pick == 0 ? new Color(0.35f, 0.8f, 0.5f) : new Color(0.55f, 0.9f, 0.6f); motion = 0; break;
                 case 2: sprite = pick == 0 ? SugarSprites.Circle : SugarSprites.Drop; color = pick == 0 ? new Color(0.3f, 0.45f, 0.9f) : new Color(0.45f, 0.65f, 1f); motion = 0; break;
                 case 3: sprite = pick == 0 ? SugarSprites.Star : SugarSprites.Drop; color = new Color(1f, 0.85f, 0.25f); motion = pick == 0 ? 1 : 0; break;
                 case 4: sprite = SugarSprites.Gem; color = pick == 0 ? new Color(0.6f, 0.35f, 0.9f) : new Color(0.75f, 0.55f, 1f); motion = 2; break;
                 case 5: sprite = pick == 0 ? SugarSprites.Chocolate : SugarSprites.Crumb; color = pick == 0 ? Color.white : new Color(0.45f, 0.27f, 0.17f); motion = 0; break;
                 case 6: sprite = pick == 0 ? SugarSprites.Ice : SugarSprites.Shard; color = pick == 0 ? Color.white : new Color(0.7f, 0.95f, 1f); motion = 2; break;
-                case 7: sprite = pick == 0 ? SugarSprites.Drop : SugarSprites.CandySwirl; color = new Color(1f, 0.6f, 0.3f); motion = pick == 0 ? 0 : 1; break;
-                case 8: sprite = SugarSprites.Frosting; color = pick == 0 ? new Color(1f, 0.75f, 0.9f) : new Color(0.8f, 0.82f, 1f); motion = 0; break;
+                case 7: sprite = pick == 0 ? SugarSprites.Drop : SugarSprites.Sparkle; color = new Color(1f, 0.66f, 0.28f); motion = pick == 0 ? 0 : 2; break;
+                case 8: sprite = SugarSprites.Frosting; color = pick == 0 ? Color.white : new Color(0.88f, 0.94f, 1f); motion = 0; break;
                 default: sprite = pick == 0 ? SugarSprites.Star : SugarSprites.Sparkle; color = pick == 0 ? new Color(1f, 0.95f, 0.6f) : Color.white; motion = 2; break;
             }
-        }
-
-        private void Lollipop(Vector2 position, Color color, float size)
-        {
-            Image stick = UiFactory.CreateImage("Stick", _midLayer, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0.9f));
-            stick.preserveAspect = false;
-            UiFactory.Place(stick.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), position, new Vector2(12f, size * 1.2f));
-            Image head = UiFactory.CreateImage("Lollipop", _midLayer, SugarSprites.CandySwirl, color);
-            UiFactory.Place(head.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), position, new Vector2(size, size));
         }
 
         // ------------------------------------------------------------ Afișare

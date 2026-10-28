@@ -33,6 +33,15 @@ namespace SugarDrop
         public static readonly Color Shadow = new(0.29f, 0.18f, 0.09f, 0.22f);
         /// <summary>Fundalul de sub ferestre.</summary>
         public static readonly Color Scrim = new(0.12f, 0.16f, 0.22f, 0.5f);
+        /// <summary>Conturul textelor albe (titluri, cifre): maro-închis, ca lemnul, nu mov.</summary>
+        public static readonly Color Outline = new(0.24f, 0.15f, 0.08f, 0.85f);
+        /// <summary>Fundalul din jurul ferestrelor de poveste (noapte albastră).</summary>
+        public static readonly Color Night = new(0.06f, 0.1f, 0.2f, 0.92f);
+
+        // Durate de animație comune (secunde): apariția ferestrelor, schimbarea paginii, tranziții.
+        public const float PopIn = 0.35f;
+        public const float Fade = 0.25f;
+        public const float LettersPerSecond = 38f;
 
         private static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out Color c) ? c : Color.magenta;
     }

@@ -60,7 +60,7 @@ namespace SugarDrop
             for (int i = 0; i < WheelRules.Slices.Length; i++) PrizeIcon(WheelRules.Slices[i], i * slice + slice * 0.5f);
             Image hub = UiFactory.CreateImage("Hub", holder, SugarSprites.Circle, Color.white);
             UiFactory.Place(hub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(150f, 150f));
-            Image hubCandy = UiFactory.CreateImage("HubCandy", hub.transform, SugarSprites.CandySwirl, Palette.Tile(0));
+            Image hubCandy = UiFactory.CreateImage("HubGem", hub.transform, PieceSprites.Piece(3), Color.white);
             UiFactory.Place(hubCandy.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110f, 110f));
             Image pointer = UiFactory.CreateImage("Pointer", holder, SugarSprites.Chevron, theme.NegativeColor);
             _pointer = UiFactory.Place(pointer.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(130f, 130f));
