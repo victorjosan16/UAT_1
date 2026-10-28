@@ -22,7 +22,18 @@ namespace SugarDrop
         /// <summary>Nu există nicio reclamă gata acum (fără internet, fără umplere): jocul arată un mesaj.</summary>
         public static event Action Unavailable;
 
+        /// <summary>Bannerul de jos a apărut sau a dispărut (interfața urcă / coboară cu înălțimea lui).</summary>
+        public static event Action BannerChanged;
+
         private Action<bool> _onDone;
+        private bool _bannerWanted;
+        private GameObject _testBanner;
+
+        /// <summary>Bannerul e pe ecran acum.</summary>
+        public bool BannerShowing { get; private set; }
+
+        /// <summary>Înălțimea bannerului în pixeli de ecran (320×50 dp), 0 dacă nu e afișat.</summary>
+        public float BannerHeightPixels => BannerShowing ? 50f * (Screen.dpi > 0f ? Screen.dpi : 320f) / 160f : 0f;
         private bool _rewarded;
         private bool _displayed;
         private bool _initStarted;
@@ -42,6 +53,7 @@ namespace SugarDrop
 
         private static string AppKey => Application.platform == RuntimePlatform.IPhonePlayer ? SugarAdsConfig.IosAppKey : SugarAdsConfig.AndroidAppKey;
         private static string AdUnitId => Application.platform == RuntimePlatform.IPhonePlayer ? SugarAdsConfig.IosRewardedAdUnitId : SugarAdsConfig.AndroidRewardedAdUnitId;
+        private static string BannerUnitId => Application.platform == RuntimePlatform.IPhonePlayer ? SugarAdsConfig.IosBannerAdUnitId : SugarAdsConfig.AndroidBannerAdUnitId;
 
         /// <summary>Reclamele reale sunt posibile în acest build (pachet instalat, chei completate, pe telefon).</summary>
         public static bool RealAds
@@ -63,7 +75,11 @@ namespace SugarDrop
             _initStarted = true;
             ApplyConsent(personalizedConsent);
 #if SUGARDROP_LEVELPLAY
-            LevelPlay.OnInitSuccess += _ => CreateAd();
+            LevelPlay.OnInitSuccess += _ =>
+            {
+                CreateAd();
+                CreateBanner();
+            };
             LevelPlay.OnInitFailed += _ =>
             {
                 Debug.LogWarning("[Ads] LevelPlay nu s-a inițializat; reîncerc în 60 s.");
@@ -110,6 +126,76 @@ namespace SugarDrop
             _ad.ShowAd();
             StartCoroutine(ShowTimeout());
 #endif
+        }
+
+        /// <summary>
+        /// Cere bannerul de jos (hartă și nivel) sau îl ascunde (meniu, povești). Se apelează des: nu face nimic
+        /// dacă starea nu s-a schimbat. Fără reclame reale: în Editor și în build-urile de dezvoltare apare o bară de
+        /// TEST de aceeași mărime (ca să se vadă așezarea), iar în build-urile finale nu apare nimic.
+        /// </summary>
+        public void SetBannerVisible(bool visible)
+        {
+            if (_bannerWanted == visible) return;
+            _bannerWanted = visible;
+            ApplyBanner();
+        }
+
+        private void ApplyBanner()
+        {
+            bool show = _bannerWanted;
+            if (!RealAds)
+            {
+                show &= Application.isEditor || Debug.isDebugBuild;
+                if (show && _testBanner == null) _testBanner = BuildTestBanner();
+                if (_testBanner != null) _testBanner.SetActive(show);
+            }
+#if SUGARDROP_LEVELPLAY
+            else
+            {
+                show &= _banner != null && _bannerLoaded;
+                if (_banner != null)
+                {
+                    if (show) _banner.ShowAd();
+                    else _banner.HideAd();
+                }
+            }
+#endif
+            if (show == BannerShowing) return;
+            BannerShowing = show;
+            if (_testBanner != null) ((RectTransform)_testBanner.transform.GetChild(0)).sizeDelta = new Vector2(0f, BannerHeightPixels);
+            BannerChanged?.Invoke();
+        }
+
+        /// <summary>Bara gri „BANNER DE TEST” (doar Editor / build de dezvoltare), cât un banner real.</summary>
+        private GameObject BuildTestBanner()
+        {
+            var root = new GameObject("TestBanner", typeof(RectTransform), typeof(Canvas));
+            root.transform.SetParent(transform, false);
+            var canvas = root.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 5000;
+            var bar = new GameObject("Bar", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            var rect = (RectTransform)bar.transform;
+            rect.SetParent(root.transform, false);
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(0f, 50f * (Screen.dpi > 0f ? Screen.dpi : 320f) / 160f);
+            bar.GetComponent<UnityEngine.UI.Image>().color = new Color(0.15f, 0.15f, 0.18f, 0.92f);
+            var label = new GameObject("Label", typeof(RectTransform), typeof(UnityEngine.UI.Text));
+            var labelRect = (RectTransform)label.transform;
+            labelRect.SetParent(rect, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = labelRect.offsetMax = Vector2.zero;
+            var text = label.GetComponent<UnityEngine.UI.Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.text = "BANNER DE TEST (320×50)";
+            text.alignment = TextAnchor.MiddleCenter;
+            text.resizeTextForBestFit = true;
+            text.color = Color.white;
+            return root;
         }
 
         private IEnumerator ShowTimeout()
@@ -185,6 +271,35 @@ namespace SugarDrop
             _ad.OnAdRewarded += (_, _) => _rewarded = true;
             _ad.OnAdClosed += _ => StartCoroutine(AfterClose());
             _ad.LoadAd();
+        }
+
+        private LevelPlayBannerAd _banner;
+        private bool _bannerLoaded;
+
+        /// <summary>Bannerul standard 320×50, jos pe mijloc; se încarcă după inițializare, se arată doar la cerere.</summary>
+        private void CreateBanner()
+        {
+            if (_banner != null || string.IsNullOrEmpty(BannerUnitId)) return;
+            _banner = new LevelPlayBannerAd(BannerUnitId, LevelPlayAdSize.BANNER, LevelPlayBannerPosition.BottomCenter);
+            _banner.OnAdLoaded += _ =>
+            {
+                _bannerLoaded = true;
+                ApplyBanner();
+            };
+            _banner.OnAdLoadFailed += _ =>
+            {
+                _bannerLoaded = false;
+                ApplyBanner();
+                StartCoroutine(RetryBanner());
+            };
+            _banner.LoadAd();
+            if (!_bannerWanted) _banner.HideAd();
+        }
+
+        private IEnumerator RetryBanner()
+        {
+            yield return new WaitForSecondsRealtime(30f);
+            _banner?.LoadAd();
         }
 
         private IEnumerator AfterClose()

@@ -11,10 +11,13 @@ namespace SugarDrop
         public const string AndroidAppKey = "";
         /// <summary>ID-ul unității de reclamă Rewarded pentru Android (Ad Unit ID).</summary>
         public const string AndroidRewardedAdUnitId = "";
+        /// <summary>ID-ul unității Banner pentru Android (bara de jos, pe hartă și în nivel). Gol = fără banner.</summary>
+        public const string AndroidBannerAdUnitId = "";
 
         /// <summary>La fel pentru iOS (dacă jocul va apărea și pe iPhone).</summary>
         public const string IosAppKey = "";
         public const string IosRewardedAdUnitId = "";
+        public const string IosBannerAdUnitId = "";
 
         /// <summary>
         /// Câte secunde așteptăm să înceapă o reclamă după ce am cerut-o; dacă nu pornește, jucătorul nu rămâne blocat.

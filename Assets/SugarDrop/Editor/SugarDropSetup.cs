@@ -257,7 +257,8 @@ namespace SugarDrop.EditorTools
             Set(uiRoot, "inputModule", inputModule);
 
             // Ordinea contează: ce e mai jos în listă se desenează deasupra.
-            Transform safe = UiChild(canvasGo.transform, "SafeArea", typeof(SafeAreaFitter));
+            // Zona sigură + locul bannerului de jos (HUD, ajutoare, hartă).
+            Transform safe = UiChild(canvasGo.transform, "SafeArea", typeof(SugarSafeArea));
             var ui = new Ui
             {
                 Hud = UiComponent<SugarHud>(safe, "Hud"),

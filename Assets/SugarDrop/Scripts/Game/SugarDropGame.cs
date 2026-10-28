@@ -1192,6 +1192,13 @@ namespace SugarDrop
 
         private void Update()
         {
+            // Bannerul de jos: pe hartă și în nivel, nu în meniu și nu peste povești (cere doar când se schimbă).
+            if (SugarAds.Instance != null)
+            {
+                bool story = this.story.IsOpen || (intro != null && intro.IsOpen) || (levelStory != null && levelStory.IsOpen);
+                SugarAds.Instance.SetBannerVisible(_state != State.Menu && !story);
+            }
+
             // Butonul „Înapoi” de pe Android (în Input System apare ca tasta Escape).
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) OnBack();
