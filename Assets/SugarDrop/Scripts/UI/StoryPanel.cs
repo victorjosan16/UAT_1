@@ -31,6 +31,10 @@ namespace SugarDrop
         {
             public string Title;
             public string Text;
+            /// <summary>Cine vorbește (portretul din balon); null = Bobo.</summary>
+            public Sprite Portrait;
+            /// <summary>Numele celui care vorbește, scris mic în balon (doar pentru alte personaje decât Bobo).</summary>
+            public string Speaker;
             public Func<RectTransform, Action<float>> Build;
         }
 
@@ -41,6 +45,9 @@ namespace SugarDrop
         private Image _sky;
         private UiLabel _title;
         private RectTransform _titleBack;
+        private RectTransform _bubble;
+        private Image _portrait;
+        private UiLabel _speaker;
         private UiLabel _text;
         private UiLabel _hint;
         private UiLabel _skipLabel;
@@ -111,13 +118,26 @@ namespace SugarDrop
             Image frame = UiFactory.CreatePanel("Frame", _book, new Color(0.85f, 0.55f, 0.65f, 0.35f));
             UiFactory.Place((RectTransform)frame.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f + 6f), new Vector2(BookWidth - 68f, 12f));
 
-            // Titlul: o etichetă mică peste ilustrație, sus. Textul: o propoziție scurtă sub ilustrație.
-            Image titleBack = UiFactory.CreatePanel("TitleBack", window, new Color(0.16f, 0.07f, 0.2f, 0.55f));
-            _titleBack = UiFactory.Place((RectTransform)titleBack.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(600f, 72f));
-            _title = SugarUi.Outlined("Title", _titleBack, "", 40, Color.white, 3f);
+            // Replica: un balon de dialog sus, peste ilustrație, cu portretul celui care vorbește.
+            Image bubble = UiFactory.CreatePanel("Bubble", window, new Color(1f, 1f, 1f, 0.94f));
+            _bubble = UiFactory.Place((RectTransform)bubble.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(BookWidth - 130f, 150f));
+            Image tail = UiFactory.CreateImage("Tail", _bubble, UiFactory.WhiteSprite, new Color(1f, 1f, 1f, 0.94f));
+            UiFactory.Place(tail.rectTransform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(170f, 0f), new Vector2(40f, 40f));
+            tail.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            Image disc = UiFactory.CreateImage("PortraitDisc", _bubble, SugarSprites.Circle, new Color(0.86f, 0.93f, 1f));
+            UiFactory.Place(disc.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(118f, 118f));
+            _portrait = UiFactory.CreateImage("Portrait", disc.transform, SugarSprites.BoboToken, Color.white);
+            UiFactory.Place(_portrait.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110f, 110f));
+            _speaker = UiFactory.CreateText("Speaker", _bubble, "", 26, TextAnchor.UpperLeft, Color.Lerp(Ink, Paper, 0.4f));
+            UiFactory.Place(_speaker.RectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -10f), new Vector2(BookWidth - 300f, 34f));
+            _text = UiFactory.CreateText("Text", _bubble, "", 44, TextAnchor.MiddleLeft, Ink);
+            UiFactory.Place(_text.RectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f, -4f), new Vector2(BookWidth - 300f, 120f));
+
+            // Numele episodului: mic, sub ilustrație (paginile de la pornire nu au titlu).
+            _titleBack = UiFactory.CreateRect("TitleArea", _book);
+            UiFactory.Place(_titleBack, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f - WindowHeight - 20f), new Vector2(BookWidth - 100f, 80f));
+            _title = UiFactory.CreateText("Title", _titleBack, "", 34, TextAnchor.MiddleCenter, Color.Lerp(Ink, Paper, 0.25f));
             UiFactory.Stretch(_title.RectTransform);
-            _text = UiFactory.CreateText("Text", _book, "", 42, TextAnchor.MiddleCenter, Ink);
-            UiFactory.Place(_text.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f - WindowHeight - 14f), new Vector2(BookWidth - 100f, 120f));
             _hint = UiFactory.CreateText("Hint", _book, "", 30, TextAnchor.MiddleCenter, Color.Lerp(Ink, Paper, 0.45f));
             UiFactory.Place(_hint.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 76f), new Vector2(BookWidth - 80f, 44f));
             for (int i = 0; i < 4; i++)
@@ -143,10 +163,10 @@ namespace SugarDrop
             _welcomeBack = false;
             _pretranslated = false;
             _pages.Clear();
-            _pages.Add(new Page { Title = "A fost odată...", Text = "Tărâmul verde trăia din Izvorul Fermecat.", Build = BuildLand });
-            _pages.Add(new Page { Title = "Vrăjitorul Secetei", Text = "Vrăjitorul Secetei a spart Cristalul Izvorului!", Build = BuildWizard });
-            _pages.Add(new Page { Title = "Bobo, micul erou", Text = "Bobo pornește să adune cele 10 bucăți.", Build = BuildJourney });
-            _pages.Add(new Page { Title = "Povestea ta începe", Text = "Îl ajuți pe Bobo?", Build = BuildInvitation });
+            _pages.Add(new Page { Title = "", Text = "Ce frumos curge Izvorul!", Build = BuildLand });
+            _pages.Add(new Page { Title = "", Text = "Ha-ha! Gata cu apa!", Build = BuildWizard, Portrait = SugarSprites.BossFace(0), Speaker = "Vrăjitorul Secetei" });
+            _pages.Add(new Page { Title = "", Text = "Găsesc toate cele 10 bucăți!", Build = BuildJourney });
+            _pages.Add(new Page { Title = "", Text = "Mă ajuți?", Build = BuildInvitation });
             Open(onDone);
         }
 
@@ -158,10 +178,10 @@ namespace SugarDrop
             _pretranslated = true;
             _pages.Clear();
             int chapter = ChapterTheme.ChapterOf(Mathf.Max(1, level));
-            string line = away.TotalHours >= 24 ? SugarLoc.T("Ne-a fost dor de tine!") : SugarLoc.F("Nivelul {0} te așteaptă!", Mathf.Max(1, level));
+            string line = away.TotalHours >= 24 ? SugarLoc.T("Ne-a fost dor de tine!") : SugarLoc.F("Bine ai revenit, {0}!", nickname);
             _pages.Add(new Page
             {
-                Title = SugarLoc.F("Bine ai revenit, {0}!", nickname),
+                Title = "",
                 Text = line,
                 Build = scene =>
                 {
@@ -184,16 +204,16 @@ namespace SugarDrop
 
         private static readonly string[] EpisodeIntros =
         {
-            "Râul din Câmpia cu Flori seacă!",
-            "Focul arde Pădurea de Smarald!",
-            "Bobo e prins în gheața lacului!",
-            "Bombe ascunse în Deșertul Auriu!",
-            "Uși fermecate în Castelul de Ametist!",
-            "Lava curge pe Muntele de Foc!",
-            "Totul a înghețat în Regatul de Gheață!",
-            "Atenție la rășina lipicioasă!",
-            "Bobo urcă pe Insulele din Nori!",
-            "Ultima bucată e la Vrăjitor!",
+            "Oh, nu! Râul seacă!",
+            "Foc! Am nevoie de apă!",
+            "Brr! Sunt prins în gheață!",
+            "Atenție, bombe în nisip!",
+            "Câte uși fermecate...",
+            "Ce cald! Lavă peste tot!",
+            "Brr... totul e înghețat!",
+            "Ups! Rășină lipicioasă!",
+            "Uau, ce sus suntem!",
+            "Vrăjitorule, vin după tine!",
         };
 
         /// <summary>
@@ -208,22 +228,25 @@ namespace SugarDrop
             _pretranslated = true;
             _pages.Clear();
             string title = SugarLoc.F("Episodul {0}", chapter + 1) + ": " + SugarLoc.T(EpisodeTitles[chapter]);
-            string villain = SugarLoc.T(BossDefinition.For((chapter + 1) * LevelConfig.ChapterSize, 22).Name);
+            BossDefinition boss = BossDefinition.For((chapter + 1) * LevelConfig.ChapterSize, 22);
+            string villain = SugarLoc.T(boss.Name);
             if (!ending)
             {
                 _pages.Add(new Page { Title = title, Text = SugarLoc.T(EpisodeIntros[chapter]), Build = scene => BuildEpisodeLand(scene, chapter) });
                 _pages.Add(new Page
                 {
                     Title = title,
-                    Text = SugarLoc.F("{0} păzește o bucată din cristal!", villain),
+                    Text = SugarLoc.T("Nu-ți dau cristalul!"),
+                    Portrait = SugarSprites.BossFace(boss.Look),
+                    Speaker = villain,
                     Build = scene => BuildEpisodeVillain(scene, chapter),
                 });
             }
             else
             {
                 string text = chapter == EpisodeTitles.Length - 1
-                    ? SugarLoc.T("Cristalul e întreg! Tărâmul e salvat!")
-                    : SugarLoc.F("{0} e învins! Cristal: {1}/10", villain, chapter + 1);
+                    ? SugarLoc.T("Am reușit! Tărâmul e salvat!")
+                    : SugarLoc.F("Încă o bucată! {1}/10", villain, chapter + 1);
                 _pages.Add(new Page { Title = title, Text = text, Build = scene => BuildEpisodeEnd(scene, chapter) });
             }
             Open(onDone);
@@ -286,7 +309,11 @@ namespace SugarDrop
             _sky.color = Color.white;
             _sky.sprite = SugarSprites.Sky(0);
             _animate = page.Build(_scene);
-            SetTitle(_pretranslated ? page.Title : SugarLoc.T(page.Title));
+            SetTitle(_pretranslated || string.IsNullOrEmpty(page.Title) ? page.Title : SugarLoc.T(page.Title));
+            _portrait.sprite = page.Portrait != null ? page.Portrait : SugarSprites.BoboToken;
+            _speaker.Text = string.IsNullOrEmpty(page.Speaker) ? "" : _pretranslated ? page.Speaker : SugarLoc.T(page.Speaker);
+            // Fără nume: replica stă pe mijlocul balonului; cu nume, puțin mai jos, sub el.
+            _text.RectTransform.anchoredPosition = new Vector2(150f, string.IsNullOrEmpty(_speaker.Text) ? -4f : -18f);
             _fullText = _pretranslated ? page.Text : SugarLoc.T(page.Text);
             _typed = _welcomeBack ? _fullText.Length : 0f;
             _text.Text = _welcomeBack ? _fullText : "";
@@ -295,19 +322,13 @@ namespace SugarDrop
                 _dots[i].color = i == _page ? UiRoot.Theme.AccentColor : new Color(0.85f, 0.78f, 0.8f);
         }
 
-        /// <summary>
-        /// Titlul paginii într-o etichetă mică peste ilustrație, mereu pe un singur rând: literele se micșorează
-        /// pentru titlurile lungi („Episodul 1: Bobo și Izvorul Fermecat”), iar eticheta e cât textul.
-        /// </summary>
+        /// <summary>Numele episodului sub ilustrație, pe un rând (literele se micșorează la titlurile lungi).</summary>
         private void SetTitle(string title)
         {
-            const float maxWidth = BookWidth - 140f;
+            const float width = BookWidth - 100f;
             const float charWidth = 0.52f; // lățimea medie a unei litere, din mărimea fontului
-            int length = Mathf.Max(1, title.Length);
-            int size = Mathf.Clamp(Mathf.FloorToInt((maxWidth - 50f) / (length * charWidth)), 26, 44);
-            _title.Text = "<size=" + size + ">" + title + "</size>";
-            _titleBack.sizeDelta = new Vector2(Mathf.Min(maxWidth, length * size * charWidth + 60f), size + 34f);
-            _titleBack.gameObject.SetActive(!string.IsNullOrEmpty(title));
+            int size = Mathf.Clamp(Mathf.FloorToInt(width / (Mathf.Max(1, title?.Length ?? 0) * charWidth)), 24, 36);
+            _title.Text = string.IsNullOrEmpty(title) ? "" : "<size=" + size + ">" + title + "</size>";
         }
 
         private void ClearScene()
@@ -365,7 +386,8 @@ namespace SugarDrop
             _animate?.Invoke(_pageTime);
 
             bool done = _typed >= _fullText.Length;
-            _hint.Text = done ? SugarLoc.T("Atinge pentru a continua") : "";
+            // Fără text: o săgeată care pulsează arată că atingerea trece mai departe.
+            _hint.Text = done ? "<size=64>›</size>" : "";
             _hint.Color = new Color(_hint.Color.r, _hint.Color.g, _hint.Color.b, 0.45f + 0.4f * Mathf.Abs(Mathf.Sin(time * 2.5f)));
 
             if (_welcomeBack && _pageTime >= WelcomeBackSeconds && _flip < 0f) Close();
