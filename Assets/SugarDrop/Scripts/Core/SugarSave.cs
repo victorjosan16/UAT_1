@@ -103,7 +103,9 @@ namespace SugarDrop
             }
             catch (Exception e)
             {
+                // Salvarea stricată nu se pierde: o păstrăm separat (poate fi recuperată), apoi pornim de la zero.
                 Debug.LogWarning("[SugarDrop] Salvarea nu a putut fi citită: " + e.Message);
+                PlayerPrefs.SetString(Key + "_corrupt", PlayerPrefs.GetString(Key, ""));
                 _data = new SugarSaveData();
             }
             _data ??= new SugarSaveData();

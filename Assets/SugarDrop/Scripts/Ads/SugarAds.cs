@@ -189,8 +189,9 @@ namespace SugarDrop
 
         private IEnumerator AfterClose()
         {
-            // Recompensa poate sosi puțin după închidere (evenimentele sunt asincrone).
-            for (float t = 0f; t < 1f && !_rewarded; t += Time.unscaledDeltaTime) yield return null;
+            // Recompensa poate sosi după închidere (evenimentele SDK-ului sunt asincrone, iar ordinea lor nu e
+            // garantată): așteptăm până la 3 s, ca o reclamă văzută până la capăt să nu-și piardă recompensa.
+            for (float t = 0f; t < 3f && !_rewarded; t += Time.unscaledDeltaTime) yield return null;
             Finish(_rewarded);
             _ad.LoadAd();
         }
