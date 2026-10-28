@@ -7,15 +7,19 @@ using UnityEngine.UI;
 namespace SugarDrop
 {
     /// <summary>
-    /// Cartea de povești de la pornire. Prima dată: povestea Izvorului Fermecat în patru pagini ilustrate și animate
-    /// (textul apare literă cu literă, paginile se întorc ca într-o carte). La revenire: o singură pagină,
+    /// Cartea de povești de la pornire. Prima dată: povestea Izvorului Fermecat în patru pagini, fiecare cu o
+    /// ilustrație animată mare și o singură propoziție scurtă (apare literă cu literă, paginile se întorc ca într-o carte). La revenire: o singură pagină,
     /// „Bine ai revenit!”, cu Bobo bucuros și nivelul care te așteaptă.
     /// </summary>
     public class StoryPanel : MonoBehaviour
     {
         private const float BookWidth = 960f;
         private const float BookHeight = 1480f;
+        /// <summary>Scenele sunt desenate pe 880×800 și mărite ca să umple fereastra mare a ilustrației.</summary>
         private const float SceneHeight = 800f;
+        private const float SceneScale = 1.32f;
+        /// <summary>Fereastra ilustrației: aproape toată pagina; dedesubt rămâne doar o propoziție scurtă.</summary>
+        private const float WindowHeight = 1150f;
         private const float LettersPerSecond = 38f;
         private const float FlipSeconds = 0.32f;
         private const float WelcomeBackSeconds = 4.5f;
@@ -36,6 +40,7 @@ namespace SugarDrop
         private RectTransform _scene;
         private Image _sky;
         private UiLabel _title;
+        private RectTransform _titleBack;
         private UiLabel _text;
         private UiLabel _hint;
         private UiLabel _skipLabel;
@@ -95,20 +100,24 @@ namespace SugarDrop
             }
 
             RectTransform window = UiFactory.CreateRect("Window", _book);
-            UiFactory.Place(window, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f), new Vector2(BookWidth - 80f, SceneHeight));
+            UiFactory.Place(window, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f), new Vector2(BookWidth - 80f, WindowHeight));
             window.gameObject.AddComponent<RectMask2D>();
             _sky = UiFactory.CreateImage("Sky", window, SugarSprites.Sky(0), Color.white);
             _sky.preserveAspect = false;
             UiFactory.Stretch(_sky.rectTransform);
             _scene = UiFactory.CreateRect("Scene", window);
-            UiFactory.Stretch(_scene);
+            UiFactory.Place(_scene, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -30f), new Vector2(BookWidth - 80f, SceneHeight));
+            _scene.localScale = Vector3.one * SceneScale;
             Image frame = UiFactory.CreatePanel("Frame", _book, new Color(0.85f, 0.55f, 0.65f, 0.35f));
             UiFactory.Place((RectTransform)frame.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f + 6f), new Vector2(BookWidth - 68f, 12f));
 
-            _title = SugarUi.Outlined("Title", _book, "", 60, theme.AccentColor, 4f);
-            UiFactory.Place(_title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -SceneHeight - 90f), new Vector2(BookWidth - 80f, 90f));
-            _text = UiFactory.CreateText("Text", _book, "", 44, TextAnchor.UpperCenter, Ink);
-            UiFactory.Place(_text.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -SceneHeight - 150f), new Vector2(BookWidth - 110f, 330f));
+            // Titlul: o etichetă mică peste ilustrație, sus. Textul: o propoziție scurtă sub ilustrație.
+            Image titleBack = UiFactory.CreatePanel("TitleBack", window, new Color(0.16f, 0.07f, 0.2f, 0.55f));
+            _titleBack = UiFactory.Place((RectTransform)titleBack.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(600f, 72f));
+            _title = SugarUi.Outlined("Title", _titleBack, "", 40, Color.white, 3f);
+            UiFactory.Stretch(_title.RectTransform);
+            _text = UiFactory.CreateText("Text", _book, "", 42, TextAnchor.MiddleCenter, Ink);
+            UiFactory.Place(_text.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -58f - WindowHeight - 14f), new Vector2(BookWidth - 100f, 120f));
             _hint = UiFactory.CreateText("Hint", _book, "", 30, TextAnchor.MiddleCenter, Color.Lerp(Ink, Paper, 0.45f));
             UiFactory.Place(_hint.RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 76f), new Vector2(BookWidth - 80f, 44f));
             for (int i = 0; i < 4; i++)
@@ -134,10 +143,10 @@ namespace SugarDrop
             _welcomeBack = false;
             _pretranslated = false;
             _pages.Clear();
-            _pages.Add(new Page { Title = "A fost odată...", Text = "A fost odată un tărâm verde, unde florile cântau, iar râurile curgeau limpezi din Izvorul Fermecat.", Build = BuildLand });
-            _pages.Add(new Page { Title = "Vrăjitorul Secetei", Text = "Dar într-o noapte, Vrăjitorul Secetei a spart Cristalul Izvorului și i-a împrăștiat bucățile prin toate cele zece ținuturi.", Build = BuildWizard });
-            _pages.Add(new Page { Title = "Bobo, micul erou", Text = "Atunci, un aventurier mic și curajos, pe nume Bobo, a pornit la drum să le adune înapoi...", Build = BuildJourney });
-            _pages.Add(new Page { Title = "Povestea ta începe", Text = "...dar nu poate reuși singur. Vrei să fii eroul care îl ajută?", Build = BuildInvitation });
+            _pages.Add(new Page { Title = "A fost odată...", Text = "Tărâmul verde trăia din Izvorul Fermecat.", Build = BuildLand });
+            _pages.Add(new Page { Title = "Vrăjitorul Secetei", Text = "Vrăjitorul Secetei a spart Cristalul Izvorului!", Build = BuildWizard });
+            _pages.Add(new Page { Title = "Bobo, micul erou", Text = "Bobo pornește să adune cele 10 bucăți.", Build = BuildJourney });
+            _pages.Add(new Page { Title = "Povestea ta începe", Text = "Îl ajuți pe Bobo?", Build = BuildInvitation });
             Open(onDone);
         }
 
@@ -149,8 +158,7 @@ namespace SugarDrop
             _pretranslated = true;
             _pages.Clear();
             int chapter = ChapterTheme.ChapterOf(Mathf.Max(1, level));
-            string line = (away.TotalHours >= 24 ? SugarLoc.T("Ne-a fost dor de tine!") + "\n" : "")
-                + SugarLoc.T(ChapterTheme.For(chapter).Name) + "\n" + SugarLoc.F("Nivelul {0} te așteaptă!", Mathf.Max(1, level));
+            string line = away.TotalHours >= 24 ? SugarLoc.T("Ne-a fost dor de tine!") : SugarLoc.F("Nivelul {0} te așteaptă!", Mathf.Max(1, level));
             _pages.Add(new Page
             {
                 Title = SugarLoc.F("Bine ai revenit, {0}!", nickname),
@@ -176,16 +184,16 @@ namespace SugarDrop
 
         private static readonly string[] EpisodeIntros =
         {
-            "Bobo pornește la drum prin Câmpia cu Flori, unde râul a început să sece, iar picăturile cad din cer.",
-            "În Pădurea de Smarald arde un foc ciudat. Doar picăturile de apă îl pot stinge!",
-            "Lacul Albastru a înghețat peste noapte, iar Bobo a rămas prins în gheață!",
-            "În Deșertul Auriu, nisipul fierbinte ascunde capcane și bombe care ticăie.",
-            "Castelul de Ametist e plin de coridoare și uși care se închid singure.",
-            "Muntele de Foc fierbe, iar lava curge peste tot.",
-            "În Regatul de Gheață, chiar și vântul a înghețat.",
-            "Canionul de Chihlimbar e lipicios: un pas greșit și rămâi prins.",
-            "Bobo urcă pe Insulele din Nori, deasupra întregii lumi.",
-            "Ultima bucată din Cristalul Izvorului e chiar în Galaxia Curcubeu, în castelul Vrăjitorului.",
+            "Râul din Câmpia cu Flori seacă!",
+            "Focul arde Pădurea de Smarald!",
+            "Bobo e prins în gheața lacului!",
+            "Bombe ascunse în Deșertul Auriu!",
+            "Uși fermecate în Castelul de Ametist!",
+            "Lava curge pe Muntele de Foc!",
+            "Totul a înghețat în Regatul de Gheață!",
+            "Atenție la rășina lipicioasă!",
+            "Bobo urcă pe Insulele din Nori!",
+            "Ultima bucată e la Vrăjitor!",
         };
 
         /// <summary>
@@ -207,15 +215,15 @@ namespace SugarDrop
                 _pages.Add(new Page
                 {
                     Title = title,
-                    Text = SugarLoc.F("Dar {0}, slujitorul Vrăjitorului, păzește aici o bucată din Cristalul Izvorului!", villain),
+                    Text = SugarLoc.F("{0} păzește o bucată din cristal!", villain),
                     Build = scene => BuildEpisodeVillain(scene, chapter),
                 });
             }
             else
             {
                 string text = chapter == EpisodeTitles.Length - 1
-                    ? SugarLoc.T("Cristalul Izvorului e întreg din nou! Râurile curg iar, tărâmul e salvat, iar Bobo e un erou!")
-                    : SugarLoc.F("{0} a fost învins! Bobo are {1} din 10 bucăți ale Cristalului Izvorului.", villain, chapter + 1);
+                    ? SugarLoc.T("Cristalul e întreg! Tărâmul e salvat!")
+                    : SugarLoc.F("{0} e învins! Cristal: {1}/10", villain, chapter + 1);
                 _pages.Add(new Page { Title = title, Text = text, Build = scene => BuildEpisodeEnd(scene, chapter) });
             }
             Open(onDone);
@@ -288,32 +296,18 @@ namespace SugarDrop
         }
 
         /// <summary>
-        /// Titlul paginii pe un rând; dacă e prea lung („Episodul 1: Bobo și Izvorul Fermecat”), pe două rânduri
-        /// (după „:” sau la mijloc), cu litere mai mici, iar textul poveștii coboară sub el ca să nu se suprapună.
+        /// Titlul paginii într-o etichetă mică peste ilustrație, mereu pe un singur rând: literele se micșorează
+        /// pentru titlurile lungi („Episodul 1: Bobo și Izvorul Fermecat”), iar eticheta e cât textul.
         /// </summary>
         private void SetTitle(string title)
         {
-            const float width = BookWidth - 80f;
+            const float maxWidth = BookWidth - 140f;
             const float charWidth = 0.52f; // lățimea medie a unei litere, din mărimea fontului
-            bool twoLines = title.Length * charWidth * 60f > width;
-            if (twoLines)
-            {
-                int cut = title.IndexOf(": ", StringComparison.Ordinal);
-                if (cut > 0) title = title.Substring(0, cut + 1) + "\n" + title.Substring(cut + 2);
-                else
-                {
-                    int middle = title.LastIndexOf(' ', title.Length / 2);
-                    if (middle < 0) middle = title.IndexOf(' ');
-                    if (middle > 0) title = title.Substring(0, middle) + "\n" + title.Substring(middle + 1);
-                }
-            }
-            int longest = 1;
-            foreach (string line in title.Split('\n')) longest = Mathf.Max(longest, line.Length);
-            int size = Mathf.Clamp(Mathf.FloorToInt(width / (longest * charWidth)), 32, 60);
+            int length = Mathf.Max(1, title.Length);
+            int size = Mathf.Clamp(Mathf.FloorToInt((maxWidth - 50f) / (length * charWidth)), 26, 44);
             _title.Text = "<size=" + size + ">" + title + "</size>";
-            float titleHeight = twoLines ? size * 2.5f : 90f;
-            _title.RectTransform.sizeDelta = new Vector2(width, titleHeight);
-            _text.RectTransform.anchoredPosition = new Vector2(0f, -SceneHeight - 100f - titleHeight);
+            _titleBack.sizeDelta = new Vector2(Mathf.Min(maxWidth, length * size * charWidth + 60f), size + 34f);
+            _titleBack.gameObject.SetActive(!string.IsNullOrEmpty(title));
         }
 
         private void ClearScene()
