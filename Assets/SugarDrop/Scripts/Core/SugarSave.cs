@@ -34,6 +34,8 @@ namespace SugarDrop
         /// <summary>Câte episoade (ținuturi 1–10) au avut deja povestea de început și pe cea de final.</summary>
         public int episodesStarted;
         public int episodesFinished;
+        /// <summary>Cel mai mare nivel a cărui scenă de poveste (LevelStory) a fost văzută (0 = niciuna).</summary>
+        public int levelStorySeen;
         /// <summary>Ultima dată când jucătorul a fost în joc (secunde Unix): pentru „Bine ai revenit”.</summary>
         public long lastVisit;
         /// <summary>Consimțământ pentru reclame personalizate: -1 = încă neîntrebat, 0 = nu, 1 = da.</summary>

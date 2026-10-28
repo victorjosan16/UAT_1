@@ -38,6 +38,7 @@ namespace SugarDrop
         [SerializeField] private WardrobePanel wardrobe;
         [SerializeField] private EventsPanel eventsPanel;
         [SerializeField] private IntroPanel intro;
+        [SerializeField] private LevelStoryPanel levelStory;
         [SerializeField] private SettingsPanel settings;
         [SerializeField] private StoryPanel story;
         [SerializeField] private LevelStartPanel levelStart;
@@ -657,7 +658,7 @@ namespace SugarDrop
         /// <summary>Pornește un nivel deblocat (cel curent sau unul trecut, pentru mai multe stele).</summary>
         private void TryPlayLevel(int level)
         {
-            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || eventsPanel.IsOpen || settings.IsOpen || story.IsOpen || levelStart.IsOpen) return;
+            if (_state != State.Map || dialog.IsOpen || welcome.IsOpen || leaderboard.IsOpen || wheel.IsOpen || wardrobe.IsOpen || eventsPanel.IsOpen || levelStory.IsOpen || settings.IsOpen || story.IsOpen || levelStart.IsOpen) return;
             level = Mathf.Clamp(level, 1, Mathf.Max(1, Data.level));
             SugarSave.UpdateLives();
             if (Data.lives <= 0)
@@ -665,12 +666,34 @@ namespace SugarDrop
                 ShowNoLives();
                 return;
             }
-            if (StartBoosters.Offered(level) && Data.tutorialDone)
+            WithLevelStory(level, () =>
             {
-                _useRocket = _useBomb = false;
-                ShowLevelStart(level);
+                if (StartBoosters.Offered(level) && Data.tutorialDone)
+                {
+                    _useRocket = _useBomb = false;
+                    ShowLevelStart(level);
+                }
+                else Go(() => StartLevel(level));
+            });
+        }
+
+        /// <summary>
+        /// Scena de poveste a nivelului nou (bandă desenată cu Bobo), o singură dată; apoi next. Fără scenă pentru
+        /// nivel, next pornește imediat.
+        /// </summary>
+        private void WithLevelStory(int level, System.Action next)
+        {
+            if (levelStory == null || !LevelStory.ShouldShow(level, Mathf.Max(1, Data.level), Data.levelStorySeen))
+            {
+                next();
+                return;
             }
-            else Go(() => StartLevel(level));
+            levelStory.Show(level, () =>
+            {
+                Data.levelStorySeen = Mathf.Max(Data.levelStorySeen, level);
+                SugarSave.Save();
+                next();
+            });
         }
 
         // ------------------------------------------------------------ Fereastra de start a nivelului (boostere de start)
@@ -1252,6 +1275,11 @@ namespace SugarDrop
                 intro.Close();
                 return;
             }
+            if (levelStory != null && levelStory.IsOpen)
+            {
+                levelStory.Close();
+                return;
+            }
             if (dialog.IsOpen)
             {
                 dialog.Dismiss();
@@ -1455,12 +1483,18 @@ namespace SugarDrop
                 ShowNoLives();
                 return;
             }
-            if (StartBoosters.Offered(level) && Data.tutorialDone)
+            // Fără scenă suntem încă în tranziția ferestrei de final; după scenă, nivelul pornește cu tranziția lui.
+            bool story = levelStory != null && LevelStory.ShouldShow(level, Mathf.Max(1, Data.level), Data.levelStorySeen);
+            WithLevelStory(level, () =>
             {
-                _useRocket = _useBomb = false;
-                ShowLevelStart(level);
-            }
-            else StartLevel(level);
+                if (StartBoosters.Offered(level) && Data.tutorialDone)
+                {
+                    _useRocket = _useBomb = false;
+                    ShowLevelStart(level);
+                }
+                else if (story) Go(() => StartLevel(level));
+                else StartLevel(level);
+            });
         }
 
         /// <param name="inPopup">Punctele intră în cifra care sare la finalul mutării (bomboanele din borcan, nu).</param>

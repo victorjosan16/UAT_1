@@ -187,6 +187,7 @@ namespace SugarDrop.EditorTools
             public WardrobePanel Wardrobe;
             public EventsPanel Events;
             public IntroPanel Intro;
+            public LevelStoryPanel LevelStory;
             public SettingsPanel Settings;
             public StoryPanel Story;
             public LevelStartPanel LevelStart;
@@ -232,6 +233,7 @@ namespace SugarDrop.EditorTools
             Set(game, "wardrobe", ui.Wardrobe);
             Set(game, "eventsPanel", ui.Events);
             Set(game, "intro", ui.Intro);
+            Set(game, "levelStory", ui.LevelStory);
             Set(game, "settings", ui.Settings);
             Set(game, "story", ui.Story);
             Set(game, "levelStart", ui.LevelStart);
@@ -273,6 +275,7 @@ namespace SugarDrop.EditorTools
                 Story = UiComponent<StoryPanel>(canvasGo.transform, "Story"),
                 Welcome = UiComponent<WelcomePanel>(canvasGo.transform, "Welcome"),
                 Dialog = UiComponent<DialogPanel>(canvasGo.transform, "Dialog"),
+                LevelStory = UiComponent<LevelStoryPanel>(canvasGo.transform, "LevelStory"),
                 // Intro-ul de la pornire: deasupra tuturor ferestrelor.
                 Intro = UiComponent<IntroPanel>(canvasGo.transform, "Intro"),
             };

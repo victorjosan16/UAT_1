@@ -26,10 +26,19 @@ namespace SugarDrop
 
         private static readonly Dictionary<string, Sprite> Loaded = new();
 
+        /// <summary>Ilustrațiile scenelor de poveste ale nivelurilor: story1, story2, ... (vezi LevelStory).</summary>
+        private static bool IsStoryKey(string key)
+        {
+            if (!key.StartsWith("story") || key.Length == 5) return false;
+            for (int i = 5; i < key.Length; i++)
+                if (!char.IsDigit(key[i])) return false;
+            return true;
+        }
+
         /// <summary>Imaginea din Resources/Art pentru cheia dată, sau null (atunci se folosește desenul din cod).</summary>
         public static Sprite Find(string key)
         {
-            if (!Replaceable.Contains(key)) return null;
+            if (!Replaceable.Contains(key) && !IsStoryKey(key)) return null;
             if (Loaded.TryGetValue(key, out Sprite cached)) return cached;
             var texture = Resources.Load<Texture2D>(Folder + key);
             Sprite sprite = null;
