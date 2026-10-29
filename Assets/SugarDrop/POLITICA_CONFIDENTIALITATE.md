@@ -3,7 +3,7 @@
 > Before publishing: replace `[email]` with your contact address. Then publish this page at a public link
 > (see `GOOGLE_PLAY.md` → „Politica de confidențialitate: cum o publici gratuit”).
 
-Last updated: October 26, 2026
+Last updated: October 29, 2026
 
 Drop Quest ("the game") is developed by Victor Josan ("we", "us"). This policy explains what data the game uses.
 
@@ -16,7 +16,7 @@ Drop Quest ("the game") is developed by Victor Josan ("we", "us"). This policy e
   Save, linked to the same anonymous player ID, so it can be restored after reinstalling the game.
 - **Notifications** (lives refilled, daily gift) are scheduled on your device only. You can turn them off in
   **Settings → Notifications** or in your phone's settings.
-- **Ads** are optional and rewarded. They are shown through Unity LevelPlay and its partner ad networks. These may use
+- **Ads:** the game shows a small banner during levels and optional rewarded videos (for extra lives, moves or boosters). They are shown through Unity LevelPlay and its partner ad networks. These may use
   your device's **advertising ID**, device information and IP address to show ads and measure results. At first launch
   we ask whether you agree to personalized ads. You can change your choice at any time in **Settings → Personalized ads**.
 
@@ -43,7 +43,7 @@ Victor Josan – [email]
 
 # Drop Quest – Politica de confidențialitate
 
-Ultima actualizare: 26 octombrie 2026
+Ultima actualizare: 29 octombrie 2026
 
 Drop Quest („jocul”) este dezvoltat de Victor Josan („noi”). Această politică explică ce date folosește jocul.
 
@@ -56,7 +56,7 @@ Drop Quest („jocul”) este dezvoltat de Victor Josan („noi”). Această po
   Cloud Save, legat de același ID anonim, ca să poată fi recuperat după reinstalarea jocului.
 - **Notificările** (vieți pline, cadoul zilnic) sunt programate doar pe telefonul tău. Le poți opri din
   **Setări → Notificări** sau din setările telefonului.
-- **Reclamele** sunt opționale și îți dau recompense. Sunt afișate prin Unity LevelPlay și rețelele partenere de reclame.
+- **Reclamele:** jocul afișează un banner mic în timpul nivelurilor și videoclipuri opționale cu recompensă (vieți, mutări sau ajutoare). Sunt afișate prin Unity LevelPlay și rețelele partenere de reclame.
   Acestea pot folosi **ID-ul de publicitate** al telefonului, informații despre dispozitiv și adresa IP, ca să afișeze
   reclame și să măsoare rezultatele. La prima pornire te întrebăm dacă accepți reclame personalizate. Poți schimba
   oricând alegerea din **Setări → Reclame personalizate**.
