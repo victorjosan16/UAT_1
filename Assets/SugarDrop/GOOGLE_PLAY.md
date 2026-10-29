@@ -76,362 +76,371 @@ Limite Google Play: titlu ≤ 30 de caractere, descriere scurtă ≤ 80, descrie
 ```
 Drop Quest: Bobo's Adventure
 ```
-**Descriere scurtă** (77/80)
+**Descriere scurtă** (73/80)
 ```
-Swap candies, blast boosters and beat sweet bosses in a juicy match-3 puzzle!
+Help fluffy Bobo cross magical lands in a story-filled match-3 adventure!
 ```
-**Descriere lungă** (1192/4000)
+**Descriere lungă** (1173/4000)
 ```
-Welcome to Drop Quest, the sweetest match-3 puzzle adventure!
+Welcome to Drop Quest, a cosy match-3 adventure starring Bobo!
 
-Swap neighbouring candies to line up 3 or more of the same flavour and watch them pop in juicy, jelly-wobbling explosions. Help Bobo the cupcake fill his candy jar as you travel along a colourful map packed with levels.
+Swap neighbouring pieces to line up 3 or more and watch them pop in lively chain reactions. Help Bobo, a fluffy white friend with leafy blue ears, cross a map of magical lands, one level at a time.
 
-SWEET FEATURES
-• Classic match-3: swipe candies, make lines and trigger chain reactions
-• Powerful specials: match 4 for a rocket, an L or T for a bomb, 5 for a rainbow candy
-• Six special combos: rocket + bomb, bomb + bomb, rainbow + rainbow and more
-• Boss battles every 10 levels and three-phase Mega-Bosses every 50
-• Tricky obstacles: ice, chains, wooden crates and growing chocolate
-• Level goals: drop candies into the jar, collect flavours, melt frosting or reach the score
-• Earn up to 3 stars and replay levels for a better score
-• Global leaderboard: your best score on every level adds up. How high can you climb?
-• Helpful boosters: bomb, +5 moves and shuffle
-• Plays offline; lives refill over time
-• 11 languages
+WHAT AWAITS YOU
+• Classic match-3: swap pieces, make lines and trigger chain reactions
+• Special pieces: match 4 or more to create rockets, bombs and rainbow pieces
+• Powerful combos when you combine special pieces
+• Over 100 levels with comic-style story scenes and dialogue
+• New lands with new looks and new tricks as you travel the map
+• Boss battles every 10 levels and Mega-Bosses every 50
+• Varied goals and obstacles: ice, chains, crates and more
+• Special “Save Bobo” rescue levels
+• Up to 3 stars per level, daily reward, daily missions and weekend events
+• Global leaderboard: how high can you climb?
+• Helpful boosters when a level gets tough
+• Plays offline; 11 languages
 
-Drop Quest is free to play. Ads are optional and only give you rewards such as extra lives, moves or boosters.
+Drop Quest is free to play, with no in-app purchases. It contains ads: a small banner during levels and optional rewarded videos for extra lives, moves or boosters.
 
-Ready for a sweet challenge? Download Drop Quest and start matching!
+Ready for an adventure? Download Drop Quest and help Bobo!
 ```
 
 ## Română — `ro`
 **Titlu** (29/30)
 ```
-Drop Quest: Bomboane 3 la fel
+Drop Quest: Aventura lui Bobo
 ```
-**Descriere scurtă** (80/80)
+**Descriere scurtă** (75/80)
 ```
-Schimbă bomboane, fă explozii dulci și învinge boși într-un puzzle potrivește-3!
+Ajută-l pe Bobo să străbată ținuturi magice într-o aventură „potrivește 3”!
 ```
-**Descriere lungă** (1255/4000)
+**Descriere lungă** (1305/4000)
 ```
-Bine ai venit în Drop Quest, cea mai dulce aventură „potrivește 3”!
+Bine ai venit în Drop Quest, o aventură „potrivește 3” cu Bobo în rol principal!
 
-Schimbă bomboanele vecine ca să aliniezi 3 sau mai multe de aceeași aromă și privește-le cum pocnesc în explozii de jeleu. Ajută-l pe Bobo, cupcake-ul, să-și umple borcanul cu bomboane, pe o hartă colorată plină de niveluri.
+Schimbă piesele vecine ca să aliniezi 3 sau mai multe și privește-le cum pocnesc în reacții în lanț. Ajută-l pe Bobo, un prieten alb și pufos cu urechi-frunze albastre, să străbată o hartă cu ținuturi magice, nivel după nivel.
 
 CE TE AȘTEAPTĂ
-• „Potrivește 3” clasic: tragi bomboanele, faci linii și declanșezi reacții în lanț
-• Piese speciale: 4 la rând dau o rachetă, L sau T o bombă, 5 la rând o bomboană curcubeu
-• Șase combinații speciale: rachetă + bombă, bombă + bombă, curcubeu + curcubeu și altele
-• Lupte cu Boss la fiecare 10 niveluri și Mega-Boss cu trei faze la fiecare 50
-• Obstacole: gheață, lanțuri, lăzi de lemn și ciocolată care crește
-• Obiective variate: bomboane în borcan, culori de strâns, glazură de topit sau scor de atins
-• Până la 3 stele pe nivel; rejoacă pentru un scor mai mare
-• Clasament global: cele mai bune scoruri de pe fiecare nivel se adună. Cât de sus urci?
-• Ajutoare: bombă, +5 mutări și amestecare
-• Se joacă și fără internet; viețile se refac în timp
-• 11 limbi
+• „Potrivește 3” clasic: schimbi piese, faci linii și declanșezi reacții în lanț
+• Piese speciale: 4 sau mai multe la rând dau rachete, bombe și piese curcubeu
+• Combinații puternice când unești piese speciale
+• Peste 100 de niveluri cu scene și dialoguri în stil benzi desenate
+• Ținuturi noi, cu alt aspect și alte capcane, pe măsură ce avansezi pe hartă
+• Lupte cu Boss la fiecare 10 niveluri și Mega-Boss la fiecare 50
+• Obiective și obstacole variate: gheață, lanțuri, lăzi și altele
+• Niveluri speciale de salvare: „Salvează-l pe Bobo”
+• Până la 3 stele pe nivel, recompensă zilnică, misiuni zilnice și evenimente de weekend
+• Clasament global: cât de sus urci?
+• Ajutoare utile când nivelul devine greu
+• Se joacă și fără internet; 11 limbi
 
-Drop Quest e gratuit. Reclamele sunt opționale și îți dau doar recompense: vieți, mutări sau ajutoare în plus.
+Drop Quest e gratuit, fără achiziții în aplicație. Conține reclame: un banner mic în timpul nivelurilor și videoclipuri opționale pentru vieți, mutări sau ajutoare în plus.
 
-Gata de o provocare dulce? Descarcă Drop Quest și începe să potrivești!
+Gata de aventură? Descarcă Drop Quest și ajută-l pe Bobo!
 ```
 
 ## Español — `es-ES`
 **Titlu** (28/30)
 ```
-Drop Quest: Dulces 3 en raya
-```
-**Descriere scurtă** (80/80)
-```
-¡Intercambia caramelos, lanza potenciadores y vence a jefes en este puzle dulce!
-```
-**Descriere lungă** (1322/4000)
-```
-¡Bienvenido a Drop Quest, la aventura de puzles de 3 en raya más dulce!
-
-Intercambia caramelos vecinos para alinear 3 o más del mismo sabor y míralos estallar en explosiones de gelatina. Ayuda a Bobo, el cupcake, a llenar su frasco de caramelos mientras recorres un mapa lleno de color y niveles.
-
-CARACTERÍSTICAS
-• 3 en raya clásico: desliza caramelos, haz líneas y provoca reacciones en cadena
-• Piezas especiales: 4 en línea crean un cohete, una L o T una bomba, 5 en línea un caramelo arcoíris
-• Seis combinaciones especiales: cohete + bomba, bomba + bomba, arcoíris + arcoíris y más
-• Batallas contra jefes cada 10 niveles y megajefes de tres fases cada 50
-• Obstáculos: hielo, cadenas, cajas de madera y chocolate que crece
-• Objetivos variados: lleva caramelos al frasco, reúne sabores, derrite el glaseado o alcanza la puntuación
-• Hasta 3 estrellas por nivel; repite niveles para mejorar tu puntuación
-• Clasificación mundial: tus mejores puntuaciones de cada nivel se suman. ¿Hasta dónde llegarás?
-• Potenciadores: bomba, +5 movimientos y mezclar
-• Juega sin conexión; las vidas se recargan con el tiempo
-• 11 idiomas
-
-Drop Quest es gratis. Los anuncios son opcionales y solo te dan recompensas, como vidas, movimientos o potenciadores extra.
-
-¿Listo para un reto dulce? ¡Descarga Drop Quest y empieza a combinar!
-```
-
-## Português (Brasil) — `pt-BR`
-**Titlu** (27/30)
-```
-Drop Quest: Doces Combina 3
+Drop Quest: Aventura de Bobo
 ```
 **Descriere scurtă** (69/80)
 ```
-Troque doces, solte reforços e vença chefes neste quebra-cabeça doce!
+¡Ayuda a Bobo a cruzar tierras mágicas en una aventura de combinar 3!
 ```
-**Descriere lungă** (1258/4000)
+**Descriere lungă** (1305/4000)
 ```
-Boas-vindas ao Drop Quest, a aventura de combinar 3 mais doce de todas!
+¡Bienvenido a Drop Quest, una aventura de combinar 3 protagonizada por Bobo!
 
-Troque doces vizinhos para alinhar 3 ou mais do mesmo sabor e veja-os estourar em explosões de geleia. Ajude o Bobo, o cupcake, a encher o pote de doces enquanto percorre um mapa colorido cheio de níveis.
+Intercambia piezas vecinas para alinear 3 o más y míralas explotar en reacciones en cadena. Ayuda a Bobo, un amigo blanco y peludo con orejas de hoja azules, a cruzar un mapa de tierras mágicas, nivel a nivel.
 
-DESTAQUES
-• Combinar 3 clássico: deslize doces, forme linhas e crie reações em cadeia
-• Peças especiais: 4 em linha criam um foguete, um L ou T uma bomba, 5 em linha um doce arco-íris
-• Seis combinações especiais: foguete + bomba, bomba + bomba, arco-íris + arco-íris e mais
-• Batalhas contra chefes a cada 10 níveis e megachefes com três fases a cada 50
-• Obstáculos: gelo, correntes, caixas de madeira e chocolate que cresce
-• Objetivos variados: leve doces ao pote, junte sabores, derreta a cobertura ou alcance a pontuação
-• Até 3 estrelas por nível; jogue de novo para melhorar a pontuação
-• Ranking mundial: suas melhores pontuações em cada nível se somam. Até onde você vai chegar?
-• Reforços: bomba, +5 jogadas e embaralhar
-• Jogue sem internet; as vidas recarregam com o tempo
-• 11 idiomas
+QUÉ TE ESPERA
+• Clásico de combinar 3: intercambia piezas, haz líneas y provoca reacciones en cadena
+• Piezas especiales: combina 4 o más para crear cohetes, bombas y piezas arcoíris
+• Combos potentes al unir piezas especiales
+• Más de 100 niveles con escenas y diálogos al estilo cómic
+• Tierras nuevas con otro aspecto y nuevas trampas a medida que avanzas
+• Combates contra jefes cada 10 niveles y Mega-Jefes cada 50
+• Objetivos y obstáculos variados: hielo, cadenas, cajas y más
+• Niveles especiales de rescate: «Salva a Bobo»
+• Hasta 3 estrellas por nivel, recompensa diaria, misiones diarias y eventos de fin de semana
+• Clasificación mundial: ¿hasta dónde llegarás?
+• Potenciadores útiles cuando el nivel se complica
+• Se juega sin conexión; 11 idiomas
 
-Drop Quest é gratuito. Os anúncios são opcionais e só dão recompensas, como vidas, jogadas ou reforços extras.
+Drop Quest es gratis y no tiene compras dentro de la aplicación. Contiene anuncios: un pequeño banner durante los niveles y vídeos opcionales para conseguir vidas, movimientos o potenciadores.
 
-Pronto para um desafio doce? Baixe o Drop Quest e comece a combinar!
+¿Listo para la aventura? ¡Descarga Drop Quest y ayuda a Bobo!
+```
+
+## Português (Brasil) — `pt-BR`
+**Titlu** (28/30)
+```
+Drop Quest: Aventura do Bobo
+```
+**Descriere scurtă** (69/80)
+```
+Ajude o Bobo a atravessar terras mágicas numa aventura de combinar 3!
+```
+**Descriere lungă** (1262/4000)
+```
+Bem-vindo ao Drop Quest, uma aventura de combinar 3 estrelada pelo Bobo!
+
+Troque peças vizinhas para alinhar 3 ou mais e veja-as estourar em reações em cadeia. Ajude o Bobo, um amigo branco e fofinho com orelhas de folha azuis, a atravessar um mapa de terras mágicas, fase por fase.
+
+O QUE TE ESPERA
+• Clássico de combinar 3: troque peças, faça linhas e provoque reações em cadeia
+• Peças especiais: combine 4 ou mais para criar foguetes, bombas e peças arco-íris
+• Combos poderosos ao juntar peças especiais
+• Mais de 100 fases com cenas e diálogos em estilo de quadrinhos
+• Terras novas com visual diferente e novas armadilhas conforme você avança
+• Batalhas contra chefes a cada 10 fases e Mega-Chefes a cada 50
+• Objetivos e obstáculos variados: gelo, correntes, caixas e mais
+• Fases especiais de resgate: “Salve o Bobo”
+• Até 3 estrelas por fase, recompensa diária, missões diárias e eventos de fim de semana
+• Ranking global: até onde você chega?
+• Reforços úteis quando a fase fica difícil
+• Funciona sem internet; 11 idiomas
+
+O Drop Quest é gratuito e não tem compras no aplicativo. Contém anúncios: um pequeno banner durante as fases e vídeos opcionais para ganhar vidas, jogadas ou reforços.
+
+Pronto para a aventura? Baixe o Drop Quest e ajude o Bobo!
 ```
 
 ## Français — `fr-FR`
-**Titlu** (28/30)
+**Titlu** (29/30)
 ```
-Drop Quest : Bonbons Match 3
+Drop Quest : Aventure de Bobo
 ```
-**Descriere scurtă** (76/80)
+**Descriere scurtă** (69/80)
 ```
-Échange des bonbons, lance des bonus et bats des boss dans un puzzle sucré !
+Aide Bobo à traverser des terres magiques dans une aventure match-3 !
 ```
-**Descriere lungă** (1351/4000)
+**Descriere lungă** (1360/4000)
 ```
-Bienvenue dans Drop Quest, l'aventure match-3 la plus sucrée !
+Bienvenue dans Drop Quest, une aventure match-3 avec Bobo en vedette !
 
-Échange des bonbons voisins pour en aligner 3 ou plus de la même saveur et regarde-les éclater en explosions de gelée. Aide Bobo le cupcake à remplir son bocal de bonbons en parcourant une carte colorée remplie de niveaux.
+Échange des pièces voisines pour en aligner 3 ou plus et regarde-les éclater en réactions en chaîne. Aide Bobo, un ami blanc et douillet aux oreilles-feuilles bleues, à traverser une carte de terres magiques, niveau après niveau.
 
-AU MENU
-• Match-3 classique : fais glisser les bonbons, forme des lignes et déclenche des réactions en chaîne
-• Pièces spéciales : 4 alignés donnent une fusée, un L ou un T une bombe, 5 alignés un bonbon arc-en-ciel
-• Six combinaisons spéciales : fusée + bombe, bombe + bombe, arc-en-ciel + arc-en-ciel et plus encore
-• Combats de boss tous les 10 niveaux et méga boss en trois phases tous les 50
-• Obstacles : glace, chaînes, caisses en bois et chocolat qui pousse
-• Objectifs variés : fais tomber les bonbons dans le bocal, récupère des saveurs, fais fondre le glaçage ou atteins le score
-• Jusqu'à 3 étoiles par niveau ; rejoue pour améliorer ton score
-• Classement mondial : tes meilleurs scores de chaque niveau s'additionnent. Jusqu'où iras-tu ?
-• Bonus : bombe, +5 coups et mélange
-• Jouable hors ligne ; les vies se rechargent avec le temps
-• 11 langues
+CE QUI T'ATTEND
+• Match-3 classique : échange des pièces, fais des lignes et déclenche des réactions en chaîne
+• Pièces spéciales : aligne 4 pièces ou plus pour créer fusées, bombes et pièces arc-en-ciel
+• Combos puissants en combinant des pièces spéciales
+• Plus de 100 niveaux avec scènes et dialogues façon bande dessinée
+• De nouvelles terres, avec un autre décor et de nouveaux pièges, au fil de la carte
+• Combats de boss tous les 10 niveaux et Méga-Boss tous les 50
+• Objectifs et obstacles variés : glace, chaînes, caisses et plus
+• Niveaux de sauvetage spéciaux : « Sauve Bobo »
+• Jusqu'à 3 étoiles par niveau, récompense quotidienne, missions quotidiennes et événements du week-end
+• Classement mondial : jusqu'où iras-tu ?
+• Bonus utiles quand un niveau se corse
+• Jouable hors ligne ; 11 langues
 
-Drop Quest est gratuit. Les publicités sont facultatives et te donnent seulement des récompenses : vies, coups ou bonus en plus.
+Drop Quest est gratuit, sans achats intégrés. Il contient des publicités : une petite bannière pendant les niveaux et des vidéos facultatives pour gagner des vies, des coups ou des bonus.
 
-Prêt pour un défi sucré ? Télécharge Drop Quest et commence à aligner !
+Prêt pour l'aventure ? Télécharge Drop Quest et aide Bobo !
 ```
 
 ## Deutsch — `de-DE`
-**Titlu** (26/30)
+**Titlu** (27/30)
 ```
-Drop Quest: Bonbon Match 3
+Drop Quest: Bobos Abenteuer
 ```
-**Descriere scurtă** (79/80)
+**Descriere scurtă** (71/80)
 ```
-Tausche Bonbons, zünde Booster und besiege Bosse in einem süßen Match-3-Puzzle!
+Hilf Bobo durch magische Länder – ein Match-3-Abenteuer mit Geschichte!
 ```
-**Descriere lungă** (1353/4000)
+**Descriere lungă** (1298/4000)
 ```
-Willkommen bei Drop Quest, dem süßesten Match-3-Abenteuer!
+Willkommen bei Drop Quest, einem gemütlichen Match-3-Abenteuer mit Bobo in der Hauptrolle!
 
-Tausche benachbarte Bonbons, um 3 oder mehr gleiche Sorten in eine Reihe zu bringen, und sieh zu, wie sie in wackeligen Gelee-Explosionen platzen. Hilf Bobo, dem Cupcake, sein Bonbonglas zu füllen, während du über eine bunte Karte voller Level reist.
+Tausche benachbarte Steine, um 3 oder mehr in eine Reihe zu bringen, und sieh zu, wie sie in Kettenreaktionen zerplatzen. Hilf Bobo, einem weißen Plüschfreund mit blauen Blätterohren, über eine Karte voller magischer Länder – Level für Level.
 
 DAS ERWARTET DICH
-• Klassisches Match-3: Bonbons wischen, Reihen bilden und Kettenreaktionen auslösen
-• Spezialteile: 4 in einer Reihe ergeben eine Rakete, ein L oder T eine Bombe, 5 in einer Reihe ein Regenbogen-Bonbon
-• Sechs Spezial-Kombos: Rakete + Bombe, Bombe + Bombe, Regenbogen + Regenbogen und mehr
-• Bosskämpfe alle 10 Level und Mega-Bosse mit drei Phasen alle 50 Level
-• Hindernisse: Eis, Ketten, Holzkisten und wachsende Schokolade
-• Abwechslungsreiche Ziele: Bonbons ins Glas bringen, Sorten sammeln, Glasur schmelzen oder Punktzahl erreichen
-• Bis zu 3 Sterne pro Level; spiele Level erneut für eine bessere Punktzahl
-• Weltweite Bestenliste: Deine Bestwerte aus jedem Level werden addiert. Wie weit kommst du?
-• Booster: Bombe, +5 Züge und Mischen
-• Auch offline spielbar; Leben laden sich mit der Zeit wieder auf
-• 11 Sprachen
+• Klassisches Match-3: Steine tauschen, Reihen bilden, Kettenreaktionen auslösen
+• Spezialsteine: Aus 4 oder mehr entstehen Raketen, Bomben und Regenbogensteine
+• Starke Kombos, wenn du Spezialsteine verbindest
+• Über 100 Level mit Szenen und Dialogen im Comic-Stil
+• Neue Länder mit neuem Look und neuen Tücken auf deiner Reise
+• Bosskämpfe alle 10 Level und Mega-Bosse alle 50
+• Abwechslungsreiche Ziele und Hindernisse: Eis, Ketten, Kisten und mehr
+• Besondere Rettungslevel: „Rette Bobo“
+• Bis zu 3 Sterne pro Level, tägliche Belohnung, Tagesmissionen und Wochenend-Events
+• Weltweite Bestenliste: Wie weit kommst du?
+• Hilfreiche Booster, wenn ein Level knifflig wird
+• Auch offline spielbar; 11 Sprachen
 
-Drop Quest ist kostenlos. Werbung ist freiwillig und bringt dir nur Belohnungen wie zusätzliche Leben, Züge oder Booster.
+Drop Quest ist kostenlos und hat keine In-App-Käufe. Es enthält Werbung: ein kleines Banner während der Level und optionale Videos für Extra-Leben, Züge oder Booster.
 
-Bereit für eine süße Herausforderung? Lade Drop Quest herunter und leg los!
+Bereit für das Abenteuer? Lade Drop Quest herunter und hilf Bobo!
 ```
 
 ## Italiano — `it-IT`
 **Titlu** (29/30)
 ```
-Drop Quest: Caramelle Match 3
+Drop Quest: Avventura di Bobo
 ```
-**Descriere scurtă** (75/80)
+**Descriere scurtă** (65/80)
 ```
-Scambia caramelle, usa potenziamenti e sconfiggi i boss in un dolce puzzle!
+Aiuta Bobo ad attraversare terre magiche in un'avventura match-3!
 ```
-**Descriere lungă** (1299/4000)
+**Descriere lungă** (1250/4000)
 ```
-Benvenuto in Drop Quest, l'avventura match-3 più dolce che ci sia!
+Benvenuto in Drop Quest, un'avventura match-3 con Bobo protagonista!
 
-Scambia caramelle vicine per allinearne 3 o più dello stesso gusto e guardale scoppiare in esplosioni di gelatina. Aiuta Bobo, il cupcake, a riempire il suo barattolo di caramelle mentre attraversi una mappa colorata piena di livelli.
+Scambia i pezzi vicini per allinearne 3 o più e guardali esplodere in reazioni a catena. Aiuta Bobo, un amico bianco e soffice con orecchie-foglia blu, ad attraversare una mappa di terre magiche, livello dopo livello.
 
-COSA TROVERAI
-• Match-3 classico: trascina le caramelle, crea file e scatena reazioni a catena
-• Pezzi speciali: 4 in fila creano un razzo, una L o una T una bomba, 5 in fila una caramella arcobaleno
-• Sei combo speciali: razzo + bomba, bomba + bomba, arcobaleno + arcobaleno e altre
-• Battaglie contro i boss ogni 10 livelli e mega boss in tre fasi ogni 50
-• Ostacoli: ghiaccio, catene, casse di legno e cioccolato che cresce
-• Obiettivi vari: porta le caramelle nel barattolo, raccogli i gusti, sciogli la glassa o raggiungi il punteggio
-• Fino a 3 stelle per livello; rigioca per migliorare il punteggio
-• Classifica mondiale: i tuoi record di ogni livello si sommano. Fin dove arriverai?
-• Potenziamenti: bomba, +5 mosse e mescola
-• Si gioca anche offline; le vite si ricaricano col tempo
-• 11 lingue
+COSA TI ASPETTA
+• Match-3 classico: scambia i pezzi, crea linee e innesca reazioni a catena
+• Pezzi speciali: allinea 4 o più pezzi per creare razzi, bombe e pezzi arcobaleno
+• Combo potenti unendo i pezzi speciali
+• Oltre 100 livelli con scene e dialoghi in stile fumetto
+• Terre nuove con un aspetto diverso e nuove insidie man mano che avanzi
+• Battaglie contro i boss ogni 10 livelli e Mega-Boss ogni 50
+• Obiettivi e ostacoli vari: ghiaccio, catene, casse e altro
+• Livelli speciali di salvataggio: «Salva Bobo»
+• Fino a 3 stelle per livello, premio giornaliero, missioni giornaliere ed eventi del weekend
+• Classifica globale: fin dove arriverai?
+• Potenziamenti utili quando il livello si fa duro
+• Si gioca anche offline; 11 lingue
 
-Drop Quest è gratuito. La pubblicità è facoltativa e ti dà solo ricompense, come vite, mosse o potenziamenti extra.
+Drop Quest è gratuito e senza acquisti in-app. Contiene annunci: un piccolo banner durante i livelli e video facoltativi per ottenere vite, mosse o potenziamenti.
 
-Pronto per una sfida dolcissima? Scarica Drop Quest e inizia ad abbinare!
+Pronto per l'avventura? Scarica Drop Quest e aiuta Bobo!
 ```
 
 ## Türkçe — `tr-TR`
-**Titlu** (28/30)
+**Titlu** (29/30)
 ```
-Drop Quest: Şeker Eşleştirme
+Drop Quest: Bobo'nun Macerası
 ```
-**Descriere scurtă** (75/80)
+**Descriere scurtă** (70/80)
 ```
-Şekerleri değiştir, güçlendiricileri patlat, tatlı bulmacada boss'ları yen!
+Bobo'ya büyülü diyarlarda yardım et: hikâyeli bir eşleştirme macerası!
 ```
-**Descriere lungă** (1269/4000)
+**Descriere lungă** (1306/4000)
 ```
-En tatlı 3'lü eşleştirme macerası Drop Quest'a hoş geldin!
+Drop Quest'e hoş geldin: Bobo'nun başrolde olduğu sevimli bir 3'lü eşleştirme macerası!
 
-Komşu şekerlerin yerini değiştirerek aynı lezzetten 3 veya daha fazlasını sırala ve jöle gibi titreyen patlamalarla yok olmalarını izle. Rengârenk ve seviyelerle dolu bir haritada ilerlerken cupcake Bobo'nun şeker kavanozunu doldurmasına yardım et.
+Yan yana parçaları değiştirerek 3 veya daha fazlasını sıraya diz ve zincirleme patlamaları izle. Mavi yaprak kulaklı, beyaz ve tüylü dostumuz Bobo'ya büyülü diyarlarla dolu bir haritada, seviye seviye yardım et.
 
-ÖZELLİKLER
-• Klasik 3'lü eşleştirme: şekerleri kaydır, sıra oluştur ve zincirleme reaksiyonlar başlat
-• Özel parçalar: 4'lü sıra roket, L veya T şekli bomba, 5'li sıra gökkuşağı şekeri yapar
-• Altı özel kombo: roket + bomba, bomba + bomba, gökkuşağı + gökkuşağı ve dahası
-• Her 10 seviyede bir boss savaşı, her 50 seviyede üç aşamalı Mega Boss
-• Engeller: buz, zincirler, tahta sandıklar ve büyüyen çikolata
-• Farklı hedefler: şekerleri kavanoza indir, lezzetleri topla, kremayı erit veya puana ulaş
-• Her seviyede 3 yıldıza kadar kazan; daha iyi puan için tekrar oyna
-• Dünya sıralaması: her seviyedeki en iyi skorların toplanır. Ne kadar yükselebilirsin?
-• Güçlendiriciler: bomba, +5 hamle ve karıştırma
-• İnternetsiz oynanabilir; canlar zamanla dolar
-• 11 dil
+SENİ NELER BEKLİYOR
+• Klasik 3'lü eşleştirme: parçaları değiştir, sıra yap, zincirleme tepkimeleri başlat
+• Özel parçalar: 4 veya daha fazlasını eşleştirerek roket, bomba ve gökkuşağı parçası yap
+• Özel parçaları birleştirince güçlü kombinasyonlar
+• Çizgi roman tarzı sahneler ve diyaloglarla 100'den fazla seviye
+• Haritada ilerledikçe yeni görünümlü ve yeni tuzaklı diyarlar
+• Her 10 seviyede patron, her 50 seviyede Mega Patron savaşı
+• Çeşitli hedefler ve engeller: buz, zincir, sandık ve daha fazlası
+• Özel kurtarma seviyeleri: “Bobo'yu Kurtar”
+• Seviye başına 3 yıldız, günlük ödül, günlük görevler ve hafta sonu etkinlikleri
+• Dünya sıralaması: ne kadar yükselebilirsin?
+• Seviye zorlaşınca işe yarayan güçlendiriciler
+• İnternet olmadan oynanır; 11 dil
 
-Drop Quest ücretsizdir. Reklamlar isteğe bağlıdır ve sadece ekstra can, hamle veya güçlendirici gibi ödüller verir.
+Drop Quest ücretsizdir ve uygulama içi satın alma içermez. Reklam içerir: seviyeler sırasında küçük bir banner ve ekstra can, hamle veya güçlendirici için isteğe bağlı videolar.
 
-Tatlı bir meydan okumaya hazır mısın? Drop Quest'u indir ve eşleştirmeye başla!
+Maceraya hazır mısın? Drop Quest'i indir ve Bobo'ya yardım et!
 ```
 
 ## Bahasa Indonesia — `id`
-**Titlu** (27/30)
+**Titlu** (28/30)
 ```
-Drop Quest: Cocokkan Permen
+Drop Quest: Petualangan Bobo
 ```
-**Descriere scurtă** (73/80)
+**Descriere scurtă** (75/80)
 ```
-Tukar permen, ledakkan booster, dan kalahkan bos di puzzle match-3 manis!
+Bantu Bobo menjelajahi negeri ajaib dalam petualangan match-3 penuh cerita!
 ```
-**Descriere lungă** (1277/4000)
+**Descriere lungă** (1302/4000)
 ```
-Selamat datang di Drop Quest, petualangan puzzle match-3 paling manis!
+Selamat datang di Drop Quest, petualangan match-3 yang seru dengan Bobo sebagai bintangnya!
 
-Tukar permen yang bersebelahan untuk menjajarkan 3 atau lebih dengan rasa yang sama, lalu lihat mereka meletus dalam ledakan jeli yang kenyal. Bantu Bobo si cupcake mengisi stoples permennya sambil menjelajahi peta penuh warna dan level.
+Tukar potongan yang bersebelahan untuk menyusun 3 atau lebih, lalu saksikan mereka meledak dalam reaksi berantai. Bantu Bobo, sahabat putih berbulu dengan telinga daun biru, menjelajahi peta negeri ajaib, level demi level.
 
-FITUR MANIS
-• Match-3 klasik: geser permen, buat barisan, dan picu reaksi berantai
-• Kepingan spesial: 4 berjajar jadi roket, bentuk L atau T jadi bom, 5 berjajar jadi permen pelangi
-• Enam kombo spesial: roket + bom, bom + bom, pelangi + pelangi, dan lainnya
-• Pertarungan bos setiap 10 level dan Mega Bos tiga fase setiap 50 level
-• Rintangan: es, rantai, peti kayu, dan cokelat yang terus tumbuh
-• Target beragam: turunkan permen ke stoples, kumpulkan rasa, lelehkan krim, atau capai skor
-• Raih hingga 3 bintang per level; mainkan lagi untuk skor lebih baik
-• Papan peringkat dunia: skor terbaikmu di setiap level dijumlahkan. Seberapa tinggi kamu bisa naik?
-• Booster: bom, +5 langkah, dan acak
-• Bisa dimainkan offline; nyawa terisi ulang seiring waktu
-• 11 bahasa
+YANG MENUNGGUMU
+• Match-3 klasik: tukar potongan, buat barisan, dan picu reaksi berantai
+• Potongan spesial: cocokkan 4 atau lebih untuk membuat roket, bom, dan potongan pelangi
+• Kombo dahsyat saat menggabungkan potongan spesial
+• Lebih dari 100 level dengan adegan dan dialog bergaya komik
+• Negeri baru dengan tampilan dan jebakan baru seiring kamu maju di peta
+• Pertarungan bos setiap 10 level dan Mega-Bos setiap 50 level
+• Tujuan dan rintangan beragam: es, rantai, peti, dan lainnya
+• Level penyelamatan khusus: “Selamatkan Bobo”
+• Hingga 3 bintang per level, hadiah harian, misi harian, dan acara akhir pekan
+• Papan peringkat dunia: seberapa tinggi kamu bisa naik?
+• Penguat yang membantu saat level terasa sulit
+• Bisa dimainkan tanpa internet; 11 bahasa
 
-Drop Quest gratis dimainkan. Iklan bersifat opsional dan hanya memberimu hadiah seperti nyawa, langkah, atau booster tambahan.
+Drop Quest gratis dan tanpa pembelian dalam aplikasi. Game ini berisi iklan: banner kecil selama level dan video opsional untuk nyawa, langkah, atau penguat tambahan.
 
-Siap untuk tantangan manis? Unduh Drop Quest dan mulai mencocokkan!
+Siap berpetualang? Unduh Drop Quest dan bantu Bobo!
 ```
 
 ## Русский — `ru-RU`
-**Titlu** (21/30)
+**Titlu** (28/30)
 ```
-Drop Quest: три в ряд
+Drop Quest: Приключение Бобо
 ```
-**Descriere scurtă** (71/80)
+**Descriere scurtă** (70/80)
 ```
-Меняй конфеты, взрывай бустеры и побеждай боссов в сладкой головоломке!
+Помоги Бобо пройти волшебные земли в сюжетной головоломке «три в ряд»!
 ```
-**Descriere lungă** (1224/4000)
+**Descriere lungă** (1266/4000)
 ```
-Добро пожаловать в Drop Quest — самую сладкую головоломку «три в ряд»!
+Добро пожаловать в Drop Quest — уютное приключение «три в ряд» с Бобо в главной роли!
 
-Меняй местами соседние конфеты, собирай 3 и больше одного вкуса и смотри, как они лопаются желейными взрывами. Помоги кексу Бобо наполнить банку конфетами на пути по яркой карте, полной уровней.
+Меняй соседние фишки местами, собирай 3 и более в ряд и смотри, как они лопаются цепными реакциями. Помоги Бобо — белому пушистому другу с синими ушами-листьями — пройти карту волшебных земель уровень за уровнем.
 
 ЧТО ТЕБЯ ЖДЁТ
-• Классика «три в ряд»: сдвигай конфеты, собирай линии и запускай цепные реакции
-• Особые фишки: 4 в ряд дают ракету, буквы L и T — бомбу, 5 в ряд — радужную конфету
-• Шесть особых комбинаций: ракета + бомба, бомба + бомба, радуга + радуга и другие
-• Битвы с боссами каждые 10 уровней и трёхфазные мегабоссы каждые 50
-• Препятствия: лёд, цепи, деревянные ящики и растущий шоколад
-• Разные цели: доставь конфеты в банку, собери вкусы, растопи глазурь или набери очки
-• Новые земли каждые 10 уровней: от Клубничных полей до Радужной галактики
-• Колесо удачи, ежедневный подарок и задания дня
-• Костюмы для Бобо, которые открываются звёздами
-• Мировой рейтинг: лучшие результаты на каждом уровне складываются
-• Играй без интернета; жизни восстанавливаются со временем
-• 11 языков
+• Классическое «три в ряд»: меняй фишки, собирай ряды и запускай цепные реакции
+• Особые фишки: 4 и более в ряд создают ракеты, бомбы и радужные фишки
+• Мощные комбинации при объединении особых фишек
+• Более 100 уровней со сценами и диалогами в стиле комиксов
+• Новые земли с новым видом и новыми ловушками по мере продвижения по карте
+• Битвы с боссами каждые 10 уровней и Мега-боссы каждые 50
+• Разные цели и препятствия: лёд, цепи, ящики и не только
+• Особые уровни-спасения: «Спаси Бобо»
+• До 3 звёзд за уровень, ежедневная награда, ежедневные задания и события выходных
+• Мировой рейтинг: как высоко ты поднимешься?
+• Полезные усилители, когда уровень становится трудным
+• Можно играть без интернета; 11 языков
 
-Drop Quest — бесплатная игра. Реклама необязательна и только даёт награды: жизни, ходы или бустеры.
+Drop Quest бесплатна и не содержит покупок в приложении. В игре есть реклама: небольшой баннер во время уровней и необязательные видео за дополнительные жизни, ходы или усилители.
 
-Готов к сладкому испытанию? Скачай Drop Quest и начни собирать!
+Готов к приключению? Скачай Drop Quest и помоги Бобо!
 ```
 
 ## Українська — `uk`
-**Titlu** (21/30)
+**Titlu** (24/30)
 ```
-Drop Quest: три в ряд
+Drop Quest: Пригода Бобо
 ```
-**Descriere scurtă** (73/80)
+**Descriere scurtă** (70/80)
 ```
-Міняй цукерки, підривай бустери й перемагай босів у солодкій головоломці!
+Допоможи Бобо пройти чарівні землі в сюжетній головоломці «три в ряд»!
 ```
-**Descriere lungă** (1219/4000)
+**Descriere lungă** (1249/4000)
 ```
-Ласкаво просимо до Drop Quest — найсолодшої головоломки «три в ряд»!
+Ласкаво просимо до Drop Quest — затишної пригоди «три в ряд» з Бобо в головній ролі!
 
-Міняй місцями сусідні цукерки, збирай 3 й більше одного смаку та дивись, як вони лускають желейними вибухами. Допоможи кексу Бобо наповнити банку цукерками на шляху яскравою мапою, повною рівнів.
+Міняй сусідні фішки місцями, збирай 3 і більше в ряд та дивись, як вони лопаються ланцюговими реакціями. Допоможи Бобо — білому пухнастому другові з синіми вухами-листочками — пройти мапу чарівних земель рівень за рівнем.
 
-ЩО НА ТЕБЕ ЧЕКАЄ
-• Класика «три в ряд»: посувай цукерки, збирай лінії та запускай ланцюгові реакції
-• Особливі фішки: 4 в ряд дають ракету, літери L і T — бомбу, 5 в ряд — райдужну цукерку
-• Шість особливих комбінацій: ракета + бомба, бомба + бомба, веселка + веселка та інші
-• Битви з босами кожні 10 рівнів і трифазні мегабоси кожні 50
-• Перешкоди: лід, ланцюги, дерев'яні ящики та шоколад, що росте
-• Різні цілі: доправ цукерки в банку, збери смаки, розтопи глазур або набери очки
-• Нові землі кожні 10 рівнів: від Полуничних полів до Райдужної галактики
-• Колесо удачі, щоденний подарунок і завдання дня
-• Костюми для Бобо, що відкриваються зірками
-• Світовий рейтинг: найкращі результати на кожному рівні додаються
-• Грай без інтернету; життя відновлюються з часом
-• 11 мов
+ЩО ТЕБЕ ЧЕКАЄ
+• Класичне «три в ряд»: міняй фішки, збирай ряди й запускай ланцюгові реакції
+• Особливі фішки: 4 і більше в ряд створюють ракети, бомби та райдужні фішки
+• Потужні комбінації, коли поєднуєш особливі фішки
+• Понад 100 рівнів зі сценами й діалогами в стилі коміксів
+• Нові землі з новим виглядом і новими пастками, поки просуваєшся мапою
+• Битви з босами кожні 10 рівнів і Мега-боси кожні 50
+• Різні цілі та перешкоди: лід, ланцюги, ящики й не тільки
+• Особливі рівні-порятунки: «Врятуй Бобо»
+• До 3 зірок за рівень, щоденна нагорода, щоденні завдання й події вихідних
+• Світовий рейтинг: як високо ти піднімешся?
+• Корисні підсилювачі, коли рівень стає складним
+• Можна грати без інтернету; 11 мов
 
-Drop Quest — безкоштовна гра. Реклама необов'язкова й лише дає нагороди: життя, ходи або бустери.
+Drop Quest безкоштовна і не містить покупок у застосунку. У грі є реклама: невеликий банер під час рівнів та необов'язкові відео за додаткові життя, ходи чи підсилювачі.
 
-Готовий до солодкого випробування? Завантаж Drop Quest і починай збирати!
+Готовий до пригоди? Завантаж Drop Quest і допоможи Бобо!
 ```
