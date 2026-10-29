@@ -8,7 +8,7 @@ namespace QuarryEmpire
     /// Punctul unic prin care jocul cere reclame „rewarded” (cu recompensă).
     /// Acum folosește o reclamă de TEST (un ecran cu numărătoare inversă), ca jocul să poată fi
     /// testat fără cont de reclame. Pentru reclame reale (Unity LevelPlay), se înlocuiește doar
-    /// corpul metodei ShowRewarded — restul jocului nu se schimbă. Vezi docs/MONETIZARE.md.
+    /// corpul metodei ShowRewarded — restul jocului nu se schimbă. Vezi Assets/SugarDrop/RECLAME.md.
     /// </summary>
     public class AdService : MonoBehaviour
     {

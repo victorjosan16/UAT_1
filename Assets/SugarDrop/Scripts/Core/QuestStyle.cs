@@ -38,9 +38,7 @@ namespace SugarDrop
         /// <summary>Fundalul din jurul ferestrelor de poveste (noapte albastră).</summary>
         public static readonly Color Night = new(0.06f, 0.1f, 0.2f, 0.92f);
 
-        // Durate de animație comune (secunde): apariția ferestrelor, schimbarea paginii, tranziții.
-        public const float PopIn = 0.35f;
-        public const float Fade = 0.25f;
+        /// <summary>Viteza cu care apare textul din baloane (litere pe secundă).</summary>
         public const float LettersPerSecond = 38f;
 
         private static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out Color c) ? c : Color.magenta;

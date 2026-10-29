@@ -46,7 +46,6 @@ namespace SugarDrop.EditorTools
 
             Camera camera = BuildCamera();
             var systems = new GameObject("_Systems");
-            systems.AddComponent<AudioManager>();
             systems.AddComponent<SugarAudio>();
             var vfx = Child<SugarVfx>(systems, "Vfx");
             Set(vfx, "shakeCamera", camera);

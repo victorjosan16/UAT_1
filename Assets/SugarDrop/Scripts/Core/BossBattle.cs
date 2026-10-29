@@ -130,14 +130,6 @@ namespace SugarDrop
             9 => BossAttack.TimeBomb,
             _ => null,
         };
-
-        public BossPhase PhaseFor(float healthFraction)
-        {
-            BossPhase current = Phases[0];
-            foreach (BossPhase phase in Phases)
-                if (healthFraction <= phase.FromHealth) current = phase;
-            return current;
-        }
     }
 
     /// <summary>Daunele pe care le face jucătorul Boss-ului (aceleași reguli în joc și în simulator).</summary>

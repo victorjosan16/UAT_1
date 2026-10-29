@@ -1,6 +1,9 @@
-# Sugar Drop (branch `sugar-drop`)
+# Drop Quest – Aventurile lui Bobo (ramura `sugar-drop`)
 
-Un puzzle original de tip „potrivește 3” (schimbi bomboane vecine), cu temă de cofetărie și mascota **Bobo**, un cupcake.
+Un puzzle original „potrivește 3” (schimbi piese vecine), cu mascota **Bobo**, un mic aventurier blănos cu urechi-frunze
+albastre, și o poveste în zece ținuturi: Bobo adună bucățile Cristalului Izvorului, sparte de Vrăjitorul Secetei.
+Termenii „bomboane”/„capace” din cod și din textele de mai jos înseamnă **piesele** jocului (frunză, picătură, gemă,
+ciupercă, ametist).
 
 ## Cum se joacă
 - Tabla are 9×9 celule (unele niveluri au forme: colțuri tăiate, arc, pâlnie, romb, trepte).
@@ -63,14 +66,14 @@ Același nivel arată la fel la fiecare încercare.
 - Golurile de sub obstacole se umplu pe diagonală. Fiecare obstacol primește cel mult o lovitură pe acțiune.
 - Pe nivelurile cu bomboane-ingredient apar doar lăzi, și nu pe coloanele bomboanelor (altfel le-ar bloca).
 
-## Arome (fiecare are forma de jeleu, nota muzicală și explozia ei)
-| Aromă | Formă | Efect la dispariție |
+## Piese (indicele culorii decide regulile; forma e doar vizuală)
+| Indice | Piesă | Efect la dispariție |
 |---|---|---|
-| Căpșună | inimă | inimioare care țâșnesc și plutesc |
-| Afină | picătură | bule care urcă legănându-se |
-| Mentă | hexagon | frunzulițe care se învârt și cad |
-| Lămâie | stea | explozie de steluțe + inel |
-| Strugure | drajeu oval | gemuri pe orbită care se strâng într-o sclipire |
+| 0 | ciupercă roșie | puncte roșii care țâșnesc |
+| 1 | **picătură de apă** (albastră) | bule care urcă; **stinge focul** la nivelurile cu foc |
+| 2 | frunză verde | frunzulițe care se învârt și cad |
+| 3 | gemă aurie | steluțe și un inel |
+| 4 | ametist | sclipiri mov care se strâng |
 
 ## Scor și stele
 - Punctele (`Scripts/Core/ScoreRules.cs`): bomboană 20, bonus de grup mare (5 → 40, 7 → 160, 10 → 490), piesă specială
@@ -88,33 +91,36 @@ Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, fra
 - Pentru un text nou: adaugi un rând `R(ro, en, es, pt, fr, de, it, tr, id, ru, uk)`.
 - Japoneza, chineza, coreeana, araba sau hindi ar avea nevoie de încă un font.
 
-## Dashboard, roată, garderobă, evenimente
-- **Dashboard** (`UI/MainMenu.cs`): vieți cu cronometru, monede, stele; Bobo cu costumul ales; progresul capitolului
-  (stele din 30); „Joacă” (spre hartă) și plăcile Roata, Cadou, Misiuni, Eveniment, Bobo (garderobă), Clasament,
-  Profil, Setări, fiecare cu informații vii (rotiri gratuite, ziua cadoului, misiuni gata, timp până la weekend etc.).
+## Meniu, roată, garderobă, evenimente
+- **Meniul** (`UI/MainMenu.cs`): vieți cu cronometru, monede, stele; logo-ul; Bobo cu costumul ales (salută, iar când
+  îl atingi arată degetul mare); progresul capitolului; butonul mare „Joacă” și **bara de lemn** de jos (`UI/QuestNav.cs`):
+  Profil, Bobo (garderobă), Evenimente, Clasament, Setări (punct roșu când e ceva nou).
+- **Evenimente** (`UI/EventsPanel.cs`): roata norocului, cadoul zilnic, misiunile și weekendul norocos într-un singur loc.
 - **Roata norocului** (`UI/WheelPanel.cs`, reguli în `Core/SugarExtras.cs`): 1 rotire gratuită pe zi (2 în weekend)
   și 3 cu reclamă; vieți, vieți pline, „+5 mutări”, monede, bombă, rachetă de start, amestecare.
 - **Boostere de start** (de la nivelul 2): rachetă și/sau bombă puse pe tablă la început; 150 de monede bucata.
   Se câștigă și din roată și din cufărul de capitol.
 - **Garderoba lui Bobo** (`UI/WardrobePanel.cs`): coif de petrecere, fundiță, coroană, bonetă, ochelari, pălărie de
-  vrăjitor — deblocate cu stele; Bobo le poartă în meniu și lângă borcan.
-- **Weekend dulce:** sâmbăta și duminica monedele din niveluri sunt duble și roata are o rotire gratuită în plus.
-- **Harta pe ținuturi:** fiecare capitol are banda lui de cer, nori la graniță, decor propriu animat (căpșuni, frunze
-  de mentă, afine, lămâi, struguri, ciocolată, gheață, caramel, vată de zahăr, stele), drum în culorile ținutului;
-  Bobo lasă o dâră de sclipiri când merge la nivelul următor, iar la intrarea într-un ținut nou apare „Ținut nou!”.
+  vrăjitor — deblocate cu stele; Bobo le poartă în meniu și lângă tablă.
+- **Weekend norocos:** sâmbăta și duminica monedele din niveluri sunt duble și roata are o rotire gratuită în plus.
+- **Harta pe ținuturi:** fiecare capitol are cerul lui, nori la graniță, decor propriu animat (flori, frunze, picături,
+  stele, cristale, gheață, nori) și drum în culorile ținutului; jos, bara de lemn (Acasă, Harta, Evenimente, Bobo)
+  și, când e activ, bannerul de reclame (interfața urcă deasupra lui, tabla nu se mută).
 
-## Meniul principal și antrenamentul
-- **Meniul** (`UI/MainMenu.cs`): cerul capitolului curent, ploaie de bomboane, Bobo care respiră, clipește, sare
-  când îl atingi și vorbește (salut, cadoul zilei, misiunile, nivelul următor), butonul „Joacă” care pulsează și
-  strălucește, stelele și monedele, plus scurtături: Cadou, Misiuni, Clasament, Setări (cu punct roșu când e ceva nou).
+## Poveste și antrenament
+- **Intro** (`UI/IntroPanel.cs`): imaginea Drop Quest la pornire, apoi povestea (prima dată) sau „Bine ai revenit”.
+- **Cartea poveștii** (`UI/StoryPanel.cs`): ilustrație mare animată și replici scurte în balon (Bobo, Vrăjitorul, boșii);
+  zece episoade, câte unul pe ținut, cu final după Boss.
+- **Scena nivelului** (`Core/LevelStory.cs`, `UI/LevelStoryPanel.cs`): panou de bandă desenată înaintea unui nivel nou
+  (imaginile `Resources/Art/story{nivel}.jpg`, deocamdată pentru nivelurile 1–11, 15, 20, 25, 29, 30). Tăblița și balonul
+  sunt desenate de joc, deci textul e tradus; scena apare o singură dată (`levelStorySeen`).
 - **Antrenamentul de la nivelul 1** (`UI/TutorialCoach.cs`, tabla din `Core/TutorialBoard.cs`): 3 la fel în linie →
   4 la rând fac o rachetă → mută racheta → obiectivul (săgeată spre el) → mutările → ajutoarele → „Acum e rândul
-  tău!”. Pașii de joc arată gestul pe tablă; explicațiile opresc tabla până la „Am înțeles”. Se poate revedea din
-  **Setări → Revezi tutorialul**.
+  tău!”. Se poate revedea din **Setări → Revezi tutorialul**.
 
 ## Capitole, obiective, zilnic
 - **Capitole:** la fiecare 10 niveluri se schimbă tema (cer, tablă, bastoane, harta): Câmpia cu Flori, Pădurea de
-  Mentă, Lacul Albastru ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol
+  Smarald, Lacul Albastru ... în total 10, apoi se reiau (`Core/ChapterTheme.cs`). Primul Boss învins dintr-un capitol
   dă **cufărul capitolului** (monede după stele, ajutoare la 24+ stele).
 - **Obiective:** pe lângă bomboanele în borcan, culori, glazură și scor, nivelurile cer și: **sparge lăzile** (de la 4),
   **folosește piese speciale** (de la 5), **sparge gheața** (de la 7), **rupe lanțurile** (de la 12), **oprește
@@ -140,14 +146,14 @@ Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, fra
 - **Vieți:** 5, una se pierde la înfrângere (sau la ieșirea dintr-un nivel început); se regenerează câte una la 20 de minute.
 - **Monede:** 20 + 5 pe fiecare mutare rămasă (+20 la 3 stele, ×2 la Boss).
 - **Ajutoare:** bombă (explozie 3×3 unde atingi), +5 mutări, amestecare. Se cumpără cu 100 de monede sau cu o reclamă.
-- La înfrângere poți continua o dată cu **+5 mutări** (reclamă). Reclamele sunt deocamdată de test.
+- La înfrângere poți continua o dată cu **+5 mutări** (reclamă). Fără pachetul LevelPlay, reclamele sunt de test (vezi `RECLAME.md`).
 - Salvarea (nivel, stele, recorduri, vieți, monede, ajutoare, setări, nickname) e în `SugarSave` (PlayerPrefs, JSON).
 
 ## Unde se reglează
 - Nivelurile (tip, val de dificultate, formă, obiective, mutări, obstacole): `Scripts/Core/LevelConfig.cs`
 - Regulile tablei: `Scripts/Core/BlastEngine.cs` — cod pur, fără Unity; `Board` din scenă doar animă pașii motorului
   și ține o singură stare la un moment dat (liberă / piesă selectată / animează), ca acțiunile să nu se suprapună.
-- Culorile: `Scripts/Core/Palette.cs`; traducerile: `Scripts/Core/SugarLoc.cs`
+- Culorile și duratele comune: `Scripts/Core/QuestStyle.cs` (jocul) și `Scripts/Core/Palette.cs` (piese); traducerile: `Scripts/Core/SugarLoc.cs`
 - Aspectul pieselor și animațiile de jeleu: `Scripts/Board/Tile.cs`; bomboanele din borcan: `CandySpawner`; pâlnia și borcanul: `Playfield`
 - Efectele vizuale: `Scripts/Effects/SugarVfx.cs`; sunetele: `Scripts/Effects/SugarAudio.cs`
 - Grafica (desenată din cod): `Scripts/Visual/SugarSprites.cs`, `PieceSprites.cs`; mascota: `Scripts/Visual/Mascot.cs`
@@ -173,24 +179,8 @@ Jocul are 11 limbi: engleză (implicită), română, spaniolă, portugheză, fra
 - În Unity: `Sugar Drop → Construiește jocul`, apoi `Window → General → Test Runner`.
 
 ## Build în cloud (Unity Build Automation)
-- **Branch:** `sugar-drop` · **Pre-Export Method:** `SugarDropCloudBuild.PreExport` · **Bundle ID:** `com.victorjosan.sugardrop`
-- Repo-uri: `victorjosan16/Games01` și `victorjosan16/UAT_1`. Build Automation e legat de UAT_1; branch-ul `sugar-drop`
-  e identic în amândouă.
-- Versiunea: `versionCode` = numărul build-ului din cloud; numele versiunii = `1.0.<număr>` (`SugarDropSetup.VersionPrefix`)
-- Publicarea pe Google Play și textele de magazin în 11 limbi: `GOOGLE_PLAY.md`
-- restul ca la Quarry Empire (Android, APK, debug keystore)
-
-## Etape (promptul „Premium Candy Blast”)
-1. ✅ Audit; nucleul tablei (o singură stare a tablei, cădere, umplere). Mecanica: întâi Tap-to-Blast, apoi, la cerere,
-   schimburi ca în jocurile clasice (linii de 3+, cascade)
-2. ✅ Animații de jeleu, strălucirea grupului, efecte pe mărimea grupului
-3. ✅ Rachete, bombe, curcubeu și cele șase combinații
-4. ✅ Borcanul de colectare (bomboane cu fizică, număr limitat)
-5. ✅ Valuri de dificultate; obstacole: gheață 1–3, lanțuri, lăzi, ciocolată
-6. ✅ Bătăliile cu Boss: la fiecare 10 niveluri (Regele Noroiului, Regina Gheții, Dragonul de Foc,
-   Monstrul Mlaștinii), Mega-Boss cu 3 faze la fiecare 50 (Împăratul Furtunii la 50). Viață din daunele mutărilor,
-   atacuri (ciocolată, gheață, lanțuri, amestecare) anunțate cu o mutare înainte și aplicate doar după ce mutarea
-   s-a rezolvat complet; limitate, tabla rămâne mereu jucabilă. Intrarea Boss-ului, panou cu portret și viață,
-   portrete pe hartă, cufăr la victorie (Mega: triplu). Reguli în `Core/BossBattle.cs`, teste în `BossBattleTests`.
-7. Primele 25 de niveluri finisate de mână, recompense (cufere, capitole, recompensa zilnică)
-8. Ecrane de Boss, sunete noi, setări de calitate, extindere la 200+ niveluri
+- **Ramura:** `sugar-drop` · **Pre-Export Method:** `SugarDropCloudBuild.PreExport` · **Bundle ID:** `com.victorjosan.sugardrop`
+- Depozite: `victorjosan16/Games01` și `victorjosan16/UAT_1`; Build Automation e legat de UAT_1, iar ramura e identică în amândouă.
+- Versiunea: `versionCode` = numărul build-ului din cloud; numele versiunii = `1.0.<număr>` (`SugarDropSetup.VersionPrefix`).
+- Reclame reale: ramura `ads/levelplay` (pachetul LevelPlay în manifest); vezi `RECLAME.md`.
+- Publicarea pe Google Play și textele de magazin în 11 limbi: `GOOGLE_PLAY.md`.

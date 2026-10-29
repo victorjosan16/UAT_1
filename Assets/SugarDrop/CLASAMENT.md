@@ -1,4 +1,4 @@
-# Clasamentul online în Sugar Drop (Unity Gaming Services)
+# Clasamentul online în Drop Quest (Unity Gaming Services)
 
 **Cum se calculează punctele:** fiecare nivel păstrează cel mai bun scor al tău. Punctele din clasament sunt **suma
 acestor recorduri** de pe toate nivelurile. Dacă rejoci un nivel și faci un scor mai mare, punctele cresc.
@@ -13,7 +13,7 @@ clasamentul arată doar rândul tău și mesajul „Clasamentul online nu e disp
 
 ## 1. Proiectul în Unity Cloud (o singură dată)
 1. Intră pe **https://cloud.unity.com** cu contul tău Unity.
-2. Alege proiectul folosit de Build Automation pentru Sugar Drop. Proiectul din cloud e deja legat de build,
+2. Alege proiectul folosit de Build Automation pentru Drop Quest. Proiectul din cloud e deja legat de build,
    deci nu trebuie legat încă o dată.
 3. Notează **Project ID**-ul din **Project settings**. Îți trebuie doar dacă la pasul 4 clasamentul nu se conectează.
 
@@ -27,7 +27,7 @@ Jucătorul nu trebuie să-și facă un cont: telefonul primește un ID anonim.
 | Câmp | Valoare |
 |---|---|
 | Leaderboard ID | `total_score` (exact așa) |
-| Name | Sugar Drop – puncte totale |
+| Name | Drop Quest – puncte totale |
 | Sort order | **Descending** (cele mai multe puncte primele) |
 | Update type | **Keep best score** |
 | Reset | fără resetare |
@@ -42,7 +42,7 @@ Dacă apare tot „nu e disponibil”, deși telefonul are internet:
   leagă proiectul de el.
 
 ## 5. Nickname
-- La prima pornire, Bobo te salută și te întreabă cum să-ți spună. Primești un nume propus, de exemplu „Jeleu4821”.
+- La prima pornire, Bobo te salută și te întreabă cum să-ți spună. Primești un nume propus, de exemplu „Izvor4821”.
 - Nickname-ul are între 3 și 16 caractere: litere, cifre, spații și `_ - .`.
 - Se poate schimba din **Setări → NICKNAME** (pe hartă).
 - În meniu apare „Salut, <nickname>!”.
