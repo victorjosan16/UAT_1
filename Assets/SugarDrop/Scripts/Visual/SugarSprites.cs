@@ -123,14 +123,6 @@ namespace SugarDrop
             return new Color(1f, 1f, 1f, inside * band * 0.85f);
         }));
 
-        /// <summary>Ramă pentru capacul „ambalat” (explodează în jur).</summary>
-        public static Sprite WrapFrame => Get("wrapframe", () => Mask(128, (x, y) =>
-        {
-            float outer = RoundRect(x, y, 4, 4, 120, 120, 32);
-            float inner = RoundRect(x, y, 18, 18, 92, 92, 22);
-            return Mathf.Max(outer, -inner);
-        }));
-
         /// <summary>Capacul curcubeu (colorat, cu spirală).</summary>
         public static Sprite Rainbow => Get("rainbow", () => Paint(128, (x, y) =>
         {

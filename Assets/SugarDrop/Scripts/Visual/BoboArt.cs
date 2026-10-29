@@ -7,7 +7,7 @@ namespace SugarDrop
     /// <summary>Ipostazele lui Bobo pictat (câte o imagine pentru fiecare moment din joc).</summary>
     public enum BoboPose
     {
-        Idle, Happy, Scared, Sad, Wave, Thumbs, Think, Worried, Sleep, Love, Crystal, Gem, Star, Run,
+        Idle, Happy, Scared, Sad, Wave, Thumbs, Think, Worried, Sleep, Love, Crystal, Star, Run,
     }
 
     /// <summary>
@@ -35,7 +35,6 @@ namespace SugarDrop
             BoboPose.Sleep => "bobosleep",
             BoboPose.Love => "bobolove",
             BoboPose.Crystal => "bobocrystal",
-            BoboPose.Gem => "bobogem",
             BoboPose.Star => "bobostar",
             BoboPose.Run => "boborun",
             _ => "bobo",

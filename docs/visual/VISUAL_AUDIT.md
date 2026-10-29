@@ -38,7 +38,7 @@ Scorurile sunt estimări din cod (compoziție, consecvență, lizibilitate), **n
 | Text | `Text #4A2E17`, `TextSoft #8A6A4E`, **nou:** `Outline` (contur maro pentru textele albe) |
 | Straturi | `Shadow` (umbra maro a cardurilor), `Scrim` (fundalul ferestrelor), **nou:** `Night` (fundalul poveștilor) |
 | Tablă (aprobată) | `Board`, `CellA`, `CellB` – neschimbate |
-| Animație (**nou**) | `PopIn 0.35 s` (apariția ferestrelor), `Fade 0.25 s`, `LettersPerSecond 38` (textul din baloane) |
+| Animație (**nou**) | `LettersPerSecond 38` (textul din baloane) |
 | Componente | `SugarUi.Card` (card crem cu muchie), `SugarUi.Button` (buton 3D), `QuestNav` (bara de lemn), `BoboArt` (ipostaze) |
 | Tipografie | Baloo 2 ExtraBold (SIL OFL) + font chirilic pentru rusă/ucraineană |
 | Mărimi de atins | butoane principale ≥ 110 px înălțime, iconițe rotunde ≥ 100 px (la 1080 px lățime) |

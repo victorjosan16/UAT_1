@@ -23,7 +23,6 @@ namespace SugarDrop
         public static Color Tile(int index) => TileColors[Mathf.Clamp(index, 0, TileColors.Length - 1)];
         public static Color TileLight(int index) => Color.Lerp(Tile(index), Color.white, 0.55f);
         public static Color Candy(int index) => CandyColors[((index % CandyColors.Length) + CandyColors.Length) % CandyColors.Length];
-        public static Color RandomCandy() => CandyColors[Random.Range(0, CandyColors.Length)];
 
         public static readonly Color Background = QuestStyle.Background;
         public static readonly Color BoardBack = QuestStyle.Board;

@@ -1,4 +1,4 @@
-# Testele logicii Sugar Drop fără Unity
+# Testele logicii Drop Quest fără Unity
 
 Compilează `Assets/SugarDrop/Scripts/Core` și testele EditMode cu .NET 8. Clasele Unity folosite de logică
 (Vector2Int, Mathf, Color etc.) sunt înlocuite de `UnityStubs.cs`.

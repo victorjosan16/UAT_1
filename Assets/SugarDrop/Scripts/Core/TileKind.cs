@@ -46,13 +46,6 @@ namespace SugarDrop
         /// <summary>Bomboanele care sunt apă: liniile lor sting focul vecin (afinele albastre).</summary>
         public const int WaterColor = 1;
 
-        /// <summary>Ce piesă specială iese dintr-un grup de mărimea dată (Normal = niciuna).</summary>
-        public static TileKind SpecialForGroup(int size, bool horizontal) =>
-            size >= RainbowMin ? TileKind.Rainbow
-            : size >= BombMin ? TileKind.Bomb
-            : size >= RocketMin ? (horizontal ? TileKind.RocketH : TileKind.RocketV)
-            : TileKind.Normal;
-
         public static bool IsSpecial(TileKind kind) =>
             kind == TileKind.RocketH || kind == TileKind.RocketV || kind == TileKind.Bomb || kind == TileKind.Rainbow;
 

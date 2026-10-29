@@ -42,26 +42,6 @@ namespace SugarDrop
             _ => 1f,
         };
 
-        /// <summary>Textul butonului din Setări (cheie SugarLoc).</summary>
-        public static string LabelKey => Current switch
-        {
-            GraphicsQuality.Low => "GRAFICĂ: SCĂZUTĂ",
-            GraphicsQuality.Medium => "GRAFICĂ: MEDIE",
-            _ => "GRAFICĂ: ÎNALTĂ",
-        };
-
-        /// <summary>Trece la următoarea calitate (Înaltă → Scăzută → Medie → Înaltă) și o aplică.</summary>
-        public static void Cycle()
-        {
-            SugarSave.Data.graphics = Current switch
-            {
-                GraphicsQuality.High => (int)GraphicsQuality.Low,
-                GraphicsQuality.Low => (int)GraphicsQuality.Medium,
-                _ => (int)GraphicsQuality.High,
-            };
-            Apply();
-        }
-
         public static event System.Action Changed;
 
         public static void Apply()

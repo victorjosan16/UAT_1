@@ -57,7 +57,6 @@ Indexul trebuie păstrat, pentru că regulile depind de el. Piesa 1 e **apa** de
 | `bobosleep.png` | Doarme (fără vieți) |
 | `bobolove.png` | Ține o inimă (cadoul zilnic) |
 | `bobocrystal.png` | Ține cristalul albastru (finalul episodului) |
-| `bobogem.png` | Ține gema verde (rezervă) |
 | `bobostar.png` | Ține steaua (3 stele, misiuni, capitol terminat) |
 | `boborun.png` | Fuge (pagina „Bobo pornește la drum”) |
 | `bobotoken.png` | Capul lui Bobo, zâmbind (piesa de pe tablă, butonul Puterea lui Bobo) |

@@ -30,17 +30,6 @@ namespace SugarDrop
         /// <summary>Perlă albă lucioasă (baza capacului curcubeu).</summary>
         public static Sprite Pearl => Get("pearl", () => Render(Size, -1, PieceKind.Body));
 
-        /// <summary>Doar pixelii (pentru unelte, ex. generarea iconiței), la orice mărime.</summary>
-        public static Color[] Pixels(int size, int color, out int width)
-        {
-            width = size;
-            var pixels = new Color[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                    pixels[y * size + x] = Shade(x, y, size, color, PieceKind.Body);
-            return pixels;
-        }
-
         private enum PieceKind { Body, Shadow, StripesH, StripesV }
 
         /// <summary>Bulinele de pe pălăria ciupercii (x, y, rază) și nervurile laterale ale frunzei.</summary>
