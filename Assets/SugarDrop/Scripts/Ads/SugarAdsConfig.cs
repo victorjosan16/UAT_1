@@ -8,11 +8,11 @@ namespace SugarDrop
     public static class SugarAdsConfig
     {
         /// <summary>App Key-ul aplicației Android.</summary>
-        public const string AndroidAppKey = "";
+        public const string AndroidAppKey = "2915b66a5";
         /// <summary>ID-ul unității de reclamă Rewarded pentru Android (Ad Unit ID).</summary>
-        public const string AndroidRewardedAdUnitId = "";
+        public const string AndroidRewardedAdUnitId = "1rigxsjm785djg8r";
         /// <summary>ID-ul unității Banner pentru Android (bara de jos, pe hartă și în nivel). Gol = fără banner.</summary>
-        public const string AndroidBannerAdUnitId = "";
+        public const string AndroidBannerAdUnitId = "j0gsrtk91myr6yk6";
 
         /// <summary>La fel pentru iOS (dacă jocul va apărea și pe iPhone).</summary>
         public const string IosAppKey = "";
