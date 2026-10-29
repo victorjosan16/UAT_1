@@ -77,15 +77,30 @@ namespace SugarDrop
 #if SUGARDROP_LEVELPLAY
             LevelPlay.OnInitSuccess += _ =>
             {
-                CreateAd();
-                CreateBanner();
+                // Dacă bibliotecile native lipsesc sau SDK-ul se schimbă, o eroare aici nu trebuie să strice jocul.
+                try
+                {
+                    CreateAd();
+                    CreateBanner();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[Ads] Nu am putut crea reclamele: " + e.Message);
+                }
             };
             LevelPlay.OnInitFailed += _ =>
             {
                 Debug.LogWarning("[Ads] LevelPlay nu s-a inițializat; reîncerc în 60 s.");
                 StartCoroutine(RetryInit());
             };
-            LevelPlay.Init(AppKey);
+            try
+            {
+                LevelPlay.Init(AppKey);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Ads] LevelPlay nu a pornit: " + e.Message);
+            }
 #endif
         }
 
@@ -280,7 +295,15 @@ namespace SugarDrop
         private void CreateBanner()
         {
             if (_banner != null || string.IsNullOrEmpty(BannerUnitId)) return;
-            _banner = new LevelPlayBannerAd(BannerUnitId, LevelPlayAdSize.BANNER, LevelPlayBannerPosition.BottomCenter);
+            // SDK 9.x: setările bannerului se dau printr-un obiect Config (constructorul cu 3 argumente nu mai există).
+            // Se arată doar la cerere (SetDisplayOnLoad(false)), în zona sigură a ecranului.
+            LevelPlayBannerAd.Config config = new LevelPlayBannerAd.Config.Builder()
+                .SetSize(LevelPlayAdSize.BANNER)
+                .SetPosition(LevelPlayBannerPosition.BottomCenter)
+                .SetDisplayOnLoad(false)
+                .SetRespectSafeArea(true)
+                .Build();
+            _banner = new LevelPlayBannerAd(BannerUnitId, config);
             _banner.OnAdLoaded += _ =>
             {
                 _bannerLoaded = true;
