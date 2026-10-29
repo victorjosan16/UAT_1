@@ -21,17 +21,28 @@ namespace SugarDrop.EditorTools
         public void OnPostGenerateGradleAndroidProject(string path)
         {
             if (!LevelPlaySetup.PackageInstalled) return;
-            string gradle = Path.Combine(path, "build.gradle");
+            Patch(Path.Combine(path, "build.gradle"), true);
+            // kotlin-stdlib 1.8+ conține deja jdk7/jdk8; versiunile vechi aduse separat dau „Duplicate class”
+            // la checkReleaseDuplicateClasses, iar excluderea trebuie pusă și în launcher (consumatorul final).
+            string launcher = Path.Combine(Path.GetDirectoryName(path) ?? path, "launcher", "build.gradle");
+            Patch(launcher, false);
+        }
+
+        private static void Patch(string gradle, bool addLibrary)
+        {
             if (!File.Exists(gradle))
             {
-                Debug.LogWarning("[SugarDrop] build.gradle lipsește în " + path + "; biblioteca LevelPlay nu a fost adăugată.");
+                Debug.LogWarning("[SugarDrop] Lipsește " + gradle + "; modificarea LevelPlay nu a fost aplicată.");
                 return;
             }
             string text = File.ReadAllText(gradle);
-            if (text.Contains("com.unity3d.ads-mediation:mediation-sdk") || text.Contains(Marker)) return;
-            text += "\n" + Marker + "\ndependencies {\n    implementation '" + Dependency + "'\n}\n";
+            if (text.Contains(Marker)) return;
+            text += "\n" + Marker + "\n";
+            if (addLibrary) text += "dependencies {\n    implementation '" + Dependency + "'\n}\n";
+            text += "configurations.all {\n    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'\n"
+                  + "    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'\n}\n";
             File.WriteAllText(gradle, text);
-            Debug.Log("[SugarDrop] Adăugat în Gradle: " + Dependency);
+            Debug.Log("[SugarDrop] Gradle modificat: " + gradle);
         }
     }
 }
