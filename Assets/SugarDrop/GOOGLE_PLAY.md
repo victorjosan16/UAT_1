@@ -72,9 +72,9 @@ Manage translations → Add your own translations**.
 Limite Google Play: titlu ≤ 30 de caractere, descriere scurtă ≤ 80, descriere lungă ≤ 4000. Toate textele de mai jos se încadrează.
 
 ## English (implicit) — `en-US`
-**Titlu** (25/30)
+**Titlu** (28/30)
 ```
-Drop Quest: Candy Match 3
+Drop Quest: Bobo's Adventure
 ```
 **Descriere scurtă** (77/80)
 ```
