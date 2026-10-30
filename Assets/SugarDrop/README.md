@@ -22,11 +22,10 @@ ciupercă, ametist).
 | 3 în linie | — | eliminare normală |
 | 4 în linie | **Piesă dungată** (aceeași formă și culoare, cu dungi albe; perpendiculară pe linie) | curăță tot rândul / toată coloana; se potrivește și ca piesă obișnuită: într-o linie de 3+ din culoarea ei pornește și curăță rândul / coloana |
 | L sau T | **Bombă** | explozie 3×3 (tăiată la marginea tablei) |
-| 5 în linie | **Bilă colorată** (alb + culoarea liniei) | schimbată cu o piesă **de aceeași culoare**, elimină toate piesele acelei culori |
+| 5 în linie | **Bilă multicoloră** | atinsă (schimbată) cu o piesă colorată din preajmă, elimină de pe toată tabla piesele acelei culori |
 
 Piesa specială apare în celula unde ai mutat bomboana (sau la mijlocul liniei, în cascade). **O piesă specială se
-activează când o muți** (schimbi cu orice vecină). Excepție: bila colorată merge doar cu o piesă din culoarea ei
-(sau cu altă piesă specială); cu altă culoare schimbul nu se face.
+activează când o muți** (schimbi cu orice vecină). Bila multicoloră se activează la fel, cu orice piesă colorată vecină).
 Exploziile activează în lanț piesele speciale lovite, fiecare o singură dată. Bomboanele cu gheață sau lanț pot face
 parte dintr-o linie: linia le sparge un strat.
 

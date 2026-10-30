@@ -348,11 +348,11 @@ namespace SugarDrop
         }
 
         /// <summary>
-        /// Capacul curcubeu (5 în linie) e legat de culoarea lui: se activează doar dacă îl schimbi cu o piesă din
-        /// aceeași culoare (sau cu o altă piesă specială). Cu orice altă piesă se mută ca o piesă obișnuită.
+        /// Bila multicoloră (5 în linie) se activează când o atingi (o schimbi) cu o piesă colorată din preajmă:
+        /// atunci elimină de pe toată tabla piesele acelei culori. Se combină și cu alte piese speciale.
         /// </summary>
         private static bool RainbowTriggers(Piece rainbow, Piece other) =>
-            other.IsSpecial || (CanMatch(other) && other.Color == rainbow.Color);
+            other.IsSpecial || CanMatch(other);
 
         /// <summary>Schimbul activează o piesă specială (rachetă, bombă sau curcubeu cu piesa potrivită).</summary>
         private static bool Activates(Piece a, Piece b)
@@ -475,6 +475,9 @@ namespace SugarDrop
             else
             {
                 Vector2Int cell = pa.IsSpecial ? b : a;
+                Piece special = At(cell), other = pa.IsSpecial ? pb : pa;
+                // Bila multicoloră ia culoarea piesei atinse și le elimină pe toate de acea culoare.
+                if (special.Kind == TileKind.Rainbow && CanMatch(other)) special.Color = other.Color;
                 var step = new BoardStep(StepKind.Clear) { Origin = cell };
                 Detonate(step, new[] { cell }, new HashSet<Vector2Int>(), new HashSet<Vector2Int>());
                 steps.Add(step);
