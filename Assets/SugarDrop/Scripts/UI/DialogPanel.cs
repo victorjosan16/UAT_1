@@ -58,7 +58,8 @@ namespace SugarDrop
             _title = UiFactory.CreateText("Title", _box, "", 70, TextAnchor.MiddleCenter, theme.TextDarkColor);
             UiFactory.Place(_title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(Width - 60f, 100f));
             _message = UiFactory.CreateText("Message", _box, "", 40, TextAnchor.MiddleCenter, Color.Lerp(theme.TextDarkColor, Color.white, 0.3f));
-            UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(Width - 80f, 110f));
+            UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(Width - 80f, 150f));
+            _message.Fit(24f, 40f); // mesajul încape în casetă, nu acoperă titlul sau butoanele
             if (BoboArt.Available)
             {
                 // Bobo „se sprijină” de colțul din stânga-sus al ferestrei.
@@ -95,7 +96,7 @@ namespace SugarDrop
             bool compact = buttons.Length > 8;
             float buttonHeight = compact ? 100f : ButtonHeight;
             float gap = compact ? 14f : ButtonGap;
-            float top = hasMessage ? 280f : 170f;
+            float top = hasMessage ? 320f : 170f;
             float height = top + buttons.Length * (buttonHeight + gap) + 30f;
             SugarUi.ResizeBox(_box, new Vector2(Width, height));
 
