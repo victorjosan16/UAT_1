@@ -122,14 +122,40 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void Rainbow_SwappedWithACandy_ClearsThatColor()
+        public void Rainbow_SwappedWithItsOwnColor_ClearsThatColor()
         {
             BlastEngine engine = Board();
-            engine.DebugSet(new Vector2Int(4, 4), TileKind.Rainbow, 3);
+            engine.DebugSet(new Vector2Int(4, 4), TileKind.Rainbow, 0);
             Paint(engine, 0, (4, 5), (0, 0), (8, 8), (0, 8));
             BoardStep step = engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5))[1];
             Assert.IsTrue(step.Cleared.TrueForAll(p => p.Color == 0 || p.Kind == TileKind.Rainbow));
             Assert.AreEqual(5, step.Cleared.Count, "curcubeul + cele 4 bomboane 0");
+        }
+
+        [Test]
+        public void Rainbow_SwappedWithAnotherColor_DoesNothing()
+        {
+            BlastEngine engine = Board();
+            engine.DebugSet(new Vector2Int(4, 4), TileKind.Rainbow, 0);
+            Paint(engine, 1, (4, 5));
+            Assert.IsFalse(engine.IsValidSwap(new Vector2Int(4, 4), new Vector2Int(4, 5)), "curcubeul nu merge cu altă culoare");
+            Assert.IsNull(engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5)));
+        }
+
+        [Test]
+        public void SpecialPieces_KeepTheColorOfTheirMatch()
+        {
+            BlastEngine engine = WithMove();
+            Paint(engine, 0, (0, 4), (1, 4), (3, 4), (4, 4));
+            BoardStep five = engine.Swap(A, B)[1];
+            Assert.AreEqual(TileKind.Rainbow, five.Changed[0].Kind);
+            Assert.AreEqual(0, five.Changed[0].Color, "curcubeul păstrează culoarea");
+
+            engine = WithMove();
+            Paint(engine, 0, (0, 4), (1, 4), (3, 4));
+            BoardStep four = engine.Swap(A, B)[1];
+            Assert.IsTrue(BlastRules.IsRocket(four.Changed[0].Kind));
+            Assert.AreEqual(0, four.Changed[0].Color, "racheta păstrează culoarea (și forma, la desen)");
         }
 
         [Test]
