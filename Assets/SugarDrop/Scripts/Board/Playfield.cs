@@ -18,6 +18,8 @@ namespace SugarDrop
 
         private Sprite _panel;
         private SpriteRenderer _boardBack;
+        /// <summary>Cadrul tablei: o margine mai deschisă în jurul panoului închis (aspect de panou premium).</summary>
+        private SpriteRenderer _boardFrame;
         private readonly System.Collections.Generic.List<SpriteRenderer> _canes = new();
         private readonly System.Collections.Generic.List<SpriteRenderer> _stripes = new();
         /// <summary>Ornamentele ținutului de pe marginea de sus a tablei (se leagănă ușor).</summary>
@@ -38,7 +40,9 @@ namespace SugarDrop
 
             // Umbra moale a tablei (Soft Pop: tabla e o tavă albă care plutește puțin deasupra fundalului).
             Visual("BoardShadow", new Vector2(0f, (boardBottom + topY) * 0.5f - 0.12f), new Vector2(halfWidth * 2f + 0.5f, topY - boardBottom + 0.5f),
-                QuestStyle.Shadow, -1, 0f);
+                QuestStyle.Shadow, -2, 0f);
+            _boardFrame = Visual("BoardFrame", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.55f, topY - boardBottom + 0.55f),
+                Color.Lerp(QuestStyle.Board, Color.white, 0.3f), -1, 0f).GetComponent<SpriteRenderer>();
             // Fundalul tablei (ușor transparent, ca să se vadă degradeul).
             _boardBack = Visual("BoardBack", new Vector2(0f, (boardBottom + topY) * 0.5f), new Vector2(halfWidth * 2f + 0.3f, topY - boardBottom + 0.3f),
                 new Color(Palette.BoardBack.r, Palette.BoardBack.g, Palette.BoardBack.b, 0.85f), 0, 0f).GetComponent<SpriteRenderer>();
@@ -101,6 +105,7 @@ namespace SugarDrop
         {
             ChapterTheme theme = ChapterTheme.For(chapter);
             if (_boardBack != null) _boardBack.color = new Color(theme.BoardBack.r, theme.BoardBack.g, theme.BoardBack.b, 0.92f);
+            if (_boardFrame != null) _boardFrame.color = Color.Lerp(theme.BoardBack, Color.white, 0.3f);
             Sprite cane = SugarSprites.Cane(chapter);
             foreach (SpriteRenderer renderer in _canes) renderer.sprite = cane;
             foreach (SpriteRenderer renderer in _stripes) renderer.color = theme.Stripe;

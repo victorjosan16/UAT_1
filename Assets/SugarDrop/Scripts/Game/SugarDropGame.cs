@@ -35,6 +35,7 @@ namespace SugarDrop
         [SerializeField] private LeaderboardPanel leaderboard;
         [SerializeField] private TutorialCoach coach;
         [SerializeField] private WheelPanel wheel;
+        [SerializeField] private ChapterCompletePanel chapterComplete;
         [SerializeField] private WardrobePanel wardrobe;
         [SerializeField] private EventsPanel eventsPanel;
         [SerializeField] private IntroPanel intro;
@@ -363,6 +364,11 @@ namespace SugarDrop
                 + $"\n<size=14> </size>\n<color={green}>{SugarLoc.T("+1 rachetă la start")}</color>"
                 + (boosters ? $"\n<color={green}>{SugarLoc.T("+1 la fiecare ajutor")}</color>" : "")
                 + $"\n<size=14> </size>\n{SugarLoc.F("Urmează: {0}", "<b>" + SugarLoc.T(ChapterTheme.For(chapter + 1).Name) + "</b>")}";
+            if (chapterComplete != null)
+            {
+                chapterComplete.Show(chapter, stars, 30, coins, boosters, null);
+                return;
+            }
             dialog.NextBobo = BoboPose.Star;
             dialog.Show(SugarLoc.F("Capitolul {0} terminat!", chapter + 1), message,
                 new DialogButton(SugarLoc.T("SUPER!"), positive, null));
@@ -885,10 +891,11 @@ namespace SugarDrop
                 + SugarLoc.F("{0} puncte  ·  {1} capitole", points, Data.chaptersRewarded);
             dialog.NextBobo = BoboPose.Wave;
             dialog.Show(string.IsNullOrEmpty(Data.nickname) ? SugarLoc.T("Profil") : Data.nickname, message,
-                new DialogButton(SugarLoc.T("SCHIMBĂ NICKNAME-UL"), panel, () => welcome.Show(false, SetNickname)),
-                new DialogButton(SugarLoc.T("Garderoba lui Bobo"), Palette.Tile(2), ShowWardrobe),
-                new DialogButton(SugarLoc.T("CLASAMENT"), QuarryEmpire.UiRoot.Theme.AccentColor, ShowLeaderboard),
-                new DialogButton(SugarLoc.T("ÎNCHIDE"), positive, null));
+                new DialogButton(SugarLoc.T("SCHIMBĂ NICKNAME-UL"), panel, () => welcome.Show(false, SetNickname), true, SugarSprites.Pencil),
+                new DialogButton(SugarLoc.T("Garderoba lui Bobo"), positive, ShowWardrobe, true, SugarSprites.Shirt),
+                new DialogButton(SugarLoc.T("CLASAMENT"), QuarryEmpire.UiRoot.Theme.AccentColor, ShowLeaderboard, true, SugarSprites.Trophy),
+                new DialogButton(SugarLoc.T("SETĂRI"), QuestStyle.Blue, ShowMapSettings, true, SugarSprites.Gear),
+                new DialogButton(SugarLoc.T("ÎNCHIDE"), QuestStyle.Red, null));
         }
 
         private void ShowNoLives()
@@ -1312,6 +1319,11 @@ namespace SugarDrop
             if (levelStory != null && levelStory.IsOpen)
             {
                 levelStory.Close();
+                return;
+            }
+            if (chapterComplete != null && chapterComplete.IsOpen)
+            {
+                chapterComplete.Dismiss();
                 return;
             }
             if (dialog.IsOpen)
