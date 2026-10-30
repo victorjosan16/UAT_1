@@ -25,6 +25,8 @@ namespace SugarDrop
         Fire,
         /// <summary>Bobo prins pe loc (nivelurile cu foc): nu se mișcă și nu poate fi lovit.</summary>
         Hero,
+        /// <summary>Rezervor de apă (după nivelul 50): obstacol sus pe tablă; când se sparge, apa curge pe coloana lui și stinge focul.</summary>
+        Tank,
     }
 
     /// <summary>Pragurile pentru piesele speciale (configurabile într-un singur loc).</summary>

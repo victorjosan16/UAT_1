@@ -47,6 +47,8 @@ namespace SugarDrop
         public event Action<Vector3> IceBroken;
         /// <summary>Un obstacol (ladă, ciocolată, lanț) a fost lovit (true = s-a spart).</summary>
         public event Action<Vector3, bool> BiscuitHit;
+        /// <summary>Un rezervor s-a spart: apa curge în jos pe coloană (poziția rezervorului și celulele de pe coloană, de sus în jos).</summary>
+        public event Action<Vector3, List<Vector3>> Flooded;
         public event Action<Vector3, int> FrostingMelted;
         /// <summary>O bomboană-ingredient a ieșit jos: poziția și culoarea (cade apoi în borcan).</summary>
         public event Action<Vector3, int> IngredientExited;
@@ -465,7 +467,7 @@ namespace SugarDrop
                 _tiles.Remove(piece.Id);
                 Vector3 position = tile.transform.position;
                 if (piece.Kind == TileKind.Pot) PotBloomed?.Invoke(position);
-                else if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate) BiscuitHit?.Invoke(position, true);
+                else if (piece.Kind == TileKind.Crate || piece.Kind == TileKind.Chocolate || piece.Kind == TileKind.Tank) BiscuitHit?.Invoke(position, true);
                 else
                 {
                     TileCleared?.Invoke(piece.Color, piece.Kind, position);
@@ -483,11 +485,17 @@ namespace SugarDrop
                 if (!_tiles.TryGetValue(piece.Id, out Tile tile)) continue;
                 bool wasIce = tile.Ice > 0;
                 bool wasChain = tile.Chained;
-                tile.Setup(piece, piece.Kind == TileKind.Crate);
+                tile.Setup(piece, piece.Kind == TileKind.Crate || piece.Kind == TileKind.Tank);
                 tile.Wiggle();
                 if (piece.Kind == TileKind.Pot) PotWatered?.Invoke(tile.transform.position);
                 else if (wasIce) IceBroken?.Invoke(tile.transform.position);
                 else BiscuitHit?.Invoke(tile.transform.position, wasChain);
+            }
+            foreach (Vector2Int tank in step.Floods)
+            {
+                var column = new List<Vector3>();
+                for (int y = tank.y - 1; y >= _engine.Config.ColumnBottom[tank.x]; y--) column.Add(World(new Vector2Int(tank.x, y)));
+                Flooded?.Invoke(World(tank), column);
             }
             for (int i = 0; i < step.FrostingCells.Count; i++)
             {

@@ -38,6 +38,12 @@ namespace SugarDrop
         /// <summary>De la ce nivel apar portalurile (Lacul de Afine).</summary>
         public const int PortalsFrom = 21;
 
+        /// <summary>De la ce nivel apar rezervoarele de apă și salvările lui Bobo se țin lanț (Insulele de Nori și mai departe).</summary>
+        public const int FloodFrom = 51;
+
+        /// <summary>De la ce nivel Bobo coboară „sub presiune”: bombe cu ceas ticăie pe tablă cât timp îl duci jos.</summary>
+        public const int PressureFrom = 61;
+
         public readonly int Level;
         public readonly int Chapter;
         public readonly Difficulty Difficulty;
@@ -79,6 +85,9 @@ namespace SugarDrop
         /// <summary>Focul de la start și la câte mutări se întinde (nivelurile „Focul și apa”).</summary>
         public readonly int Fires;
         public readonly int FireEvery;
+        /// <summary>Rezervoare de apă sus pe tablă (nivelurile „Apa din cer”, de la nivelul 51) și câte lovituri rezistă fiecare.</summary>
+        public readonly int Tanks;
+        public readonly int TankHits;
         /// <summary>Bobo e o piesă pe tablă care trebuie dusă jos, la ieșire.</summary>
         public bool HasBobo => Type is LevelType.Descent or LevelType.Frozen;
 
@@ -97,7 +106,7 @@ namespace SugarDrop
             int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget, int specialsTarget,
             int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate,
             int pots, int timeBombs, int timeBombStart, int timeBombGoal, int[] portalIn, int[] portalOut, int bonusSeconds,
-            int boboIce, int fires, int fireEvery)
+            int boboIce, int fires, int fireEvery, int tanks, int tankHits)
         {
             Level = level;
             Chapter = (level - 1) / ChapterSize;
@@ -133,6 +142,8 @@ namespace SugarDrop
             BoboIce = boboIce;
             Fires = fires;
             FireEvery = fireEvery;
+            Tanks = tanks;
+            TankHits = tankHits;
         }
 
         public static bool IsBossLevel(int level) => level > 0 && level % ChapterSize == 0;
@@ -187,6 +198,8 @@ namespace SugarDrop
             LevelType[] rotation = { LevelType.Descent, LevelType.Blaze, LevelType.Frozen };
             (LevelType a, LevelType b) = chapter switch
             {
+                // De la nivelul 51: două niveluri cu foc pe capitol (al 6-lea și al 9-lea), restul coborâre / gheață pe rând.
+                >= 5 => (chapter % 2 == 0 ? LevelType.Frozen : LevelType.Descent, LevelType.Blaze),
                 0 => (LevelType.Descent, LevelType.Descent),
                 1 => (LevelType.Blaze, LevelType.Descent),
                 2 => (LevelType.Frozen, LevelType.Blaze),
@@ -279,7 +292,7 @@ namespace SugarDrop
 
             int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0, specialsTarget = 0;
             int pots = 0, timeBombs = 0, timeBombStart = 0, timeBombGoal = 0, bonusSeconds = 0;
-            int boboIce = 0, fires = 0, fireEvery = 0;
+            int boboIce = 0, fires = 0, fireEvery = 0, tanks = 0, tankHits = 2;
             int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
             int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             // Câte obstacole are nivelul care le are ca obiectiv (lăzi, gheață, lanțuri, ciocolată).
@@ -364,6 +377,14 @@ namespace SugarDrop
                     fires = Focus(3 + chapter * 0.45f, 3, 8);
                     fireEvery = chapter >= 3 && difficulty is Difficulty.Hard or Difficulty.VeryHard ? 2 : 3;
                     moves = 4f + fires * 2.2f;
+                    // „Apa din cer”: de la nivelul 51, două niveluri cu foc pe capitol au rezervoare sus; obiectivul e să le spargi.
+                    int slot = (level - 1) % ChapterSize;
+                    if (level >= FloodFrom && (slot == 5 || slot == 8 && difficulty is Difficulty.Hard or Difficulty.VeryHard))
+                    {
+                        tanks = Mathf.Clamp(2 + (chapter - 5) / 2, 2, 4);
+                        tankHits = chapter >= 7 ? 3 : 2;
+                        moves = 6f + tanks * tankHits * 3f;
+                    }
                     break;
                 case LevelType.Boss:
                     // Lupta: viața Boss-ului se calculează din mutări (BossDefinition), deci mutările decid durata.
@@ -389,6 +410,14 @@ namespace SugarDrop
                     total += collectCounts[i];
                 }
                 moves = 3 + total / 5.5f;
+            }
+            // „Salvare sub presiune”: în al 8-lea nivel al fiecărui ținut de după 60, Bobo coboară (sau iese din gheață)
+            // în timp ce bombele cu ceas ticăie; o bombă neacoperită la timp pierde nivelul.
+            if (type is LevelType.Descent or LevelType.Frozen && level >= PressureFrom && (level - 1) % ChapterSize == 7)
+            {
+                timeBombs = 1;
+                timeBombStart = difficulty switch { Difficulty.Easy => 15, Difficulty.Normal => 13, _ => 11 };
+                moves += 3f;
             }
             int finalMoves = type == LevelType.Bonus ? 33 : Mathf.Clamp(Mathf.RoundToInt(moves * movesFactor), 12, 65);
             // Scorul țintă: cam cât adună jucătorul automat în ~16 mutări, ajustat după dificultate.
@@ -456,7 +485,7 @@ namespace SugarDrop
 
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
                 frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate,
-                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds, boboIce, fires, fireEvery);
+                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds, boboIce, fires, fireEvery, tanks, tankHits);
         }
 
         /// <summary>

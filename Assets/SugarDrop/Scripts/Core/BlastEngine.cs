@@ -24,7 +24,7 @@ namespace SugarDrop
             public int Hits;
             public int Timer;
 
-            public bool IsBlocker => Kind is TileKind.Crate or TileKind.Chocolate or TileKind.Pot or TileKind.Fire or TileKind.Hero;
+            public bool IsBlocker => Kind is TileKind.Crate or TileKind.Chocolate or TileKind.Pot or TileKind.Fire or TileKind.Hero or TileKind.Tank;
             public bool IsBobo => Kind == TileKind.Ingredient && Color == BlastRules.BoboColor;
             public bool IsIngredient => Kind == TileKind.Ingredient;
             public bool IsSpecial => BlastRules.IsSpecial(Kind);
@@ -326,6 +326,7 @@ namespace SugarDrop
                 else if (p.Kind == TileKind.Pot) counts.Pots++;
                 else if (p.Kind == TileKind.Chocolate) counts.Chocolate++;
                 else if (p.Kind == TileKind.Fire) counts.Fires++;
+                else if (p.Kind == TileKind.Tank) counts.Tanks++;
                 counts.IceLayers += p.Ice;
                 if (p.Chained) counts.Chains++;
             }
@@ -435,6 +436,7 @@ namespace SugarDrop
                             if (g.Color == BlastRules.WaterColor) value += 30;
                             continue;
                         }
+                        if (n.Kind == TileKind.Tank) { value += 14; continue; } // rezervorul de apă e ținta nivelului
                         if (n.Locked || n.IsBlocker) value += IngredientAbove(c + d) ? 10 : 3;
                     }
                 }
@@ -858,11 +860,26 @@ namespace SugarDrop
                 {
                     _grid[c.x, c.y] = null;
                     step.Cleared.Add(Info(p, c));
+                    if (p.Kind == TileKind.Tank) Flood(c, step);
                     return;
                 }
             }
             else return;
             step.ObstacleHits.Add(Info(p, c));
+        }
+
+        /// <summary>Rezervorul spart eliberează apa: curge în jos pe coloana lui și stinge tot focul de pe ea.</summary>
+        private void Flood(Vector2Int tank, BoardStep step)
+        {
+            step.Floods.Add(tank);
+            for (int y = tank.y - 1; y >= Config.ColumnBottom[tank.x]; y--)
+            {
+                Piece p = _grid[tank.x, y];
+                if (p is not { Kind: TileKind.Fire }) continue;
+                _grid[tank.x, y] = null;
+                step.Cleared.Add(Info(p, new Vector2Int(tank.x, y)));
+                _fireHit = true; // lupta cu focul e răsplătită: în această mutare focul nu se întinde
+            }
         }
 
         private void Remove(Vector2Int c, Piece p, BoardStep step)
@@ -1139,6 +1156,26 @@ namespace SugarDrop
                 if (c.y >= Config.ColumnTop[c.x] - 2 && At(c) is { Kind: TileKind.Normal, Locked: false } && c.y < Config.ColumnTop[c.x]) top.Add(c);
             Shuffle(top, layout);
             for (int i = 0; i < Config.Fires && i < top.Count; i++) Set(At(top[i]), TileKind.Fire, -1, 1);
+            PlaceTanks(layout);
+        }
+
+        /// <summary>Rezervoarele de apă stau în rândul de sus, pe coloane depărtate una de alta (nivelurile „Apa din cer”).</summary>
+        private void PlaceTanks(System.Random layout)
+        {
+            if (Config.Tanks <= 0) return;
+            var candidates = new List<int>();
+            for (int x = 0; x < Columns; x++)
+                if (At(new Vector2Int(x, Config.ColumnTop[x])) is { Kind: TileKind.Normal, Locked: false }) candidates.Add(x);
+            if (candidates.Count == 0) return;
+            // Alegem coloane la distanță egală, cu o mică abatere la întâmplare.
+            int offset = layout.Next(2);
+            for (int i = 0; i < Config.Tanks; i++)
+            {
+                int index = Math.Min(candidates.Count - 1, (int)((i + 0.5f) * candidates.Count / Config.Tanks) + (i % 2 == 0 ? offset : 0));
+                int column = candidates[index];
+                if (At(new Vector2Int(column, Config.ColumnTop[column])) is not { Kind: TileKind.Normal }) continue;
+                Set(At(new Vector2Int(column, Config.ColumnTop[column])), TileKind.Tank, -1, Config.TankHits);
+            }
         }
 
         /// <summary>

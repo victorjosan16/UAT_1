@@ -198,6 +198,7 @@ namespace SugarDrop
             board.SpecialCreated += OnSpecialCreated;
             board.IceBroken += OnIceBroken;
             board.BiscuitHit += OnBiscuitHit;
+            board.Flooded += OnFlooded;
             board.MoveResolved += OnMoveResolved;
             board.Shuffled += OnShuffled;
             board.StepPlayed += OnStepPlayed;
@@ -244,6 +245,7 @@ namespace SugarDrop
             board.SpecialCreated -= OnSpecialCreated;
             board.IceBroken -= OnIceBroken;
             board.BiscuitHit -= OnBiscuitHit;
+            board.Flooded -= OnFlooded;
             board.MoveResolved -= OnMoveResolved;
             board.Shuffled -= OnShuffled;
             board.StepPlayed -= OnStepPlayed;
@@ -738,15 +740,15 @@ namespace SugarDrop
                 ShowDifficulty = !config.IsBoss && !config.IsBonus && config.Difficulty is Difficulty.Hard or Difficulty.VeryHard,
                 BestStars = SugarSave.GetStars(level),
                 Boosters = true,
-                IsNew = !config.IsBoss && IsNew(MechanicBit(config.Type)),
+                IsNew = !config.IsBoss && IsNew(MechanicBit(config)),
                 Streak = StreakSpecials(config) > 0 ? SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak) : "",
             };
             // O singură propoziție: pericolul ținutului (fără borcan) sau ce e special la nivel.
             bool boboOnBoard = config.HasBobo || config.Type == LevelType.Blaze;
             info.Scenario = config.IsBoss ? SugarLoc.T("Vrăjitorul l-a închis pe Bobo într-un glob! Învinge-l!")
-                : boboOnBoard ? IntroText(config.Type)
+                : boboOnBoard ? IntroText(config)
                 : !NeedsJar(config) && !config.IsBonus ? SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level))))
-                : IntroText(config.Type);
+                : IntroText(config);
             if (config.PortalIn.Length > 0 && IsNew(PortalBit)) info.Scenario += "\n" + SugarLoc.T("Portalurile duc piesele dintr-o coloană în alta!");
             foreach ((Sprite icon, Color color, int count) goal in StartGoals(level, config)) info.Goals.Add(goal);
 
@@ -999,10 +1001,10 @@ namespace SugarDrop
                 if (Vfx != null) Vfx.Shake(0.25f);
                 SugarAudio.Buzz(2);
             }
-            else hud.ShowBanner(IntroText(_config.Type));
+            else hud.ShowBanner(IntroText(_config));
 
             // Mecanicile acestui nivel nu mai sunt „noi” data viitoare.
-            Data.seenMechanics |= MechanicBit(_config.Type) | (_config.PortalIn.Length > 0 ? PortalBit : 0);
+            Data.seenMechanics |= MechanicBit(_config) | (_config.PortalIn.Length > 0 ? PortalBit : 0);
 
             // Seria de victorii: 3 la rând → o rachetă la start, 5 la rând → și o bombă.
             int streakSpecials = tutorial ? 0 : StreakSpecials(_config);
@@ -1143,6 +1145,18 @@ namespace SugarDrop
                 or LevelType.Descent or LevelType.Frozen or LevelType.Blaze => 1 << (int)type,
             _ => 0,
         };
+
+        private const int FloodBit = 1 << 29;
+        private const int PressureBit = 1 << 28;
+
+        /// <summary>Nivelurile cu rezervoare de apă au propria „noutate” (altfel ar fi luate drept simplul nivel cu foc).</summary>
+        private static int MechanicBit(LevelConfig config) =>
+            config.Tanks > 0 ? FloodBit : config.HasBobo && config.TimeBombs > 0 ? PressureBit : MechanicBit(config.Type);
+
+        private static string IntroText(LevelConfig config) =>
+            config.Tanks > 0 ? SugarLoc.T("Sparge rezervoarele de sus: apa lor stinge focul de pe coloană!")
+            : config.HasBobo && config.TimeBombs > 0 ? SugarLoc.T("Du-l pe Bobo jos, dar bombele cu ceas ticăie! Dezamorsează-le la timp!")
+            : IntroText(config.Type);
 
         private static bool IsNew(int bit) => bit != 0 && (Data.seenMechanics & bit) == 0;
 
@@ -1891,6 +1905,21 @@ namespace SugarDrop
         {
             if (Vfx != null) Vfx.IceShatter(position);
             if (Audio != null) Audio.Play(SugarSound.Ice);
+        }
+
+        /// <summary>Rezervorul spart: apa curge pe coloană (stropi la fiecare celulă) și stinge focul de acolo.</summary>
+        private void OnFlooded(Vector3 tank, List<Vector3> column)
+        {
+            if (Vfx != null)
+            {
+                Vfx.WaterSplash(tank);
+                foreach (Vector3 cell in column) Vfx.WaterSplash(cell);
+                Vfx.Shake(0.2f);
+            }
+            if (Audio != null) Audio.Play(SugarSound.Shuffle, 0.9f, 0.8f);
+            SugarAudio.Buzz(2);
+            hud.ShowWord(SugarLoc.T("Apa curge!"), Palette.Tile(1));
+            mascot.Cheer(1.5f);
         }
 
         private void OnBiscuitHit(Vector3 position, bool broken)

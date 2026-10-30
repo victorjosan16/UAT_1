@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Bobo, Fire }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Bobo, Fire, Tanks }
 
     /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
     public struct ObstacleCounts
@@ -13,6 +13,7 @@ namespace SugarDrop
         public int Chocolate;
         public int Pots;
         public int Fires;
+        public int Tanks;
     }
 
     /// <summary>Un obiectiv din HUD: ce (și ce culoare), cât trebuie și cât a mai rămas.</summary>
@@ -51,6 +52,7 @@ namespace SugarDrop
                 case LevelType.Defuse when config.TimeBombGoal > 0: Add(GoalKind.TimeBombs, -1, config.TimeBombGoal); break;
                 case LevelType.Descent:
                 case LevelType.Frozen: Add(GoalKind.Bobo, -1, 1); break;
+                case LevelType.Blaze when obstacles.Tanks > 0: Add(GoalKind.Tanks, -1, obstacles.Tanks); break;
                 case LevelType.Blaze when obstacles.Fires > 0: Add(GoalKind.Fire, -1, obstacles.Fires); break;
             }
             if (config.SpecialsTarget > 0) Add(GoalKind.Specials, -1, config.SpecialsTarget);
@@ -92,6 +94,7 @@ namespace SugarDrop
                 else if (piece.Kind == TileKind.Chocolate) changed |= Decrease(GoalKind.Chocolate, -1);
                 else if (piece.Kind == TileKind.Pot) changed |= Decrease(GoalKind.Flowers, -1);
                 else if (piece.Kind == TileKind.Fire) changed |= Decrease(GoalKind.Fire, -1);
+                else if (piece.Kind == TileKind.Tank) changed |= Decrease(GoalKind.Tanks, -1);
                 if (piece.Timer > 0) changed |= Decrease(GoalKind.TimeBombs, -1);
             }
             for (int i = 0; i < step.IceLayersBroken; i++) changed |= Decrease(GoalKind.Ice, -1);
