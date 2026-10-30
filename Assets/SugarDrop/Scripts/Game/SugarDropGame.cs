@@ -588,7 +588,7 @@ namespace SugarDrop
             UiThemeColors(out Color positive, out Color ad, out Color panel);
             dialog.NextBobo = BoboPose.Worried;
             dialog.Show(SugarLoc.T("Nicio reclamă acum"), SugarLoc.T("Nu e nicio reclamă disponibilă. Verifică internetul și încearcă din nou puțin mai târziu.")
-                + (SugarAds.Instance == null || string.IsNullOrEmpty(SugarAds.Instance.Status) ? "" : "\n(" + SugarAds.Instance.Status + ")"),
+                + (SugarAds.Instance == null || string.IsNullOrEmpty(SugarAds.Instance.StatusShort) ? "" : "  (" + SugarAds.Instance.StatusShort + ")"),
                 new DialogButton(SugarLoc.T("ÎNCHIDE"), panel, null));
         }
 

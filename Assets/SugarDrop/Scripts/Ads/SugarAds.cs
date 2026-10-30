@@ -25,6 +25,18 @@ namespace SugarDrop
         /// <summary>Ultimul mesaj al SDK-ului (inițializare, reclamă, banner): se arată în fereastra „Nicio reclamă”, ca să se vadă motivul.</summary>
         public string Status { get; private set; } = "";
 
+        /// <summary>Varianta scurtă pentru fereastră (doar codul erorii, ex. „cod 509”); textul întreg rămâne în log.</summary>
+        public string StatusShort
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Status)) return "";
+                System.Text.RegularExpressions.Match code = System.Text.RegularExpressions.Regex.Match(Status, @"\b\d{3}\b");
+                string kind = Status.Split(':')[0];
+                return code.Success ? kind + " " + code.Value : Status.Length > 40 ? Status.Substring(0, 40) : Status;
+            }
+        }
+
         /// <summary>Bannerul de jos a apărut sau a dispărut (interfața urcă / coboară cu înălțimea lui).</summary>
         public static event Action BannerChanged;
 
