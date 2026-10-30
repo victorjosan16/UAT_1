@@ -183,9 +183,39 @@ namespace SugarDrop
             }
         }
 
+        private static readonly System.Collections.Generic.Dictionary<int, LevelType> TypeCache = new();
+
+        /// <summary>
+        /// Tipul nivelului. În același ținut, nivelurile obișnuite nu repetă tipul (dacă ciclul ar da același tip a doua
+        /// oară, se alege altul, încă nefolosit în ținut); de la nivelul 51 se aplică planul de scenarii.
+        /// </summary>
         public static LevelType TypeFor(int level)
         {
             level = Mathf.Max(1, level);
+            if (TypeCache.TryGetValue(level, out LevelType cached)) return cached;
+            LevelType type = ComputeType(level);
+            int slot = (level - 1) % ChapterSize;
+            if (level < SchedulerFrom && slot > 0 && type is not (LevelType.Boss or LevelType.Bonus) && BoboTypeFor(level) == null)
+            {
+                var used = new System.Collections.Generic.HashSet<LevelType>();
+                for (int earlier = level - slot; earlier < level; earlier++) used.Add(TypeFor(earlier));
+                if (used.Contains(type))
+                {
+                    LevelType[] fallback =
+                    {
+                        LevelType.Craft, LevelType.Collect, LevelType.Score, LevelType.Ingredients, LevelType.Crates,
+                        LevelType.Specials, LevelType.Ice, LevelType.Chains, LevelType.Frosting,
+                    };
+                    foreach (LevelType candidate in fallback)
+                        if (!used.Contains(candidate) && Unlocked(candidate, level)) { type = candidate; break; }
+                }
+            }
+            TypeCache[level] = type;
+            return type;
+        }
+
+        private static LevelType ComputeType(int level)
+        {
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
             if (IsBonusLevel(level)) return LevelType.Bonus;
@@ -365,6 +395,7 @@ namespace SugarDrop
             LevelType.Chocolate => level >= 25,
             LevelType.Garden => level >= 11,
             LevelType.Defuse => level >= 31,
+            LevelType.Craft => level >= 16,
             _ => true,
         };
 
