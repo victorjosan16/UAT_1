@@ -495,6 +495,8 @@ namespace SugarDrop
             GoalKind.Bobo => SugarSprites.BoboToken,
             GoalKind.Fire => SugarSprites.Flame,
             GoalKind.Tanks => SugarSprites.Tank,
+            GoalKind.Make => item.Color == 1 ? SugarSprites.Bomb : item.Color == 2 ? PieceSprites.ColorBall(-1) : SugarSprites.Rocket,
+            GoalKind.Combos => PieceSprites.ColorBall(-1),
             _ => ProceduralSprites.Star,
         };
 

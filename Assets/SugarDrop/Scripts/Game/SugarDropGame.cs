@@ -744,7 +744,7 @@ namespace SugarDrop
                 Streak = StreakSpecials(config) > 0 ? SugarLoc.F("Serie de {0} victorii: piese speciale gratuite la start!", Data.winStreak) : "",
             };
             // O singură propoziție: pericolul ținutului (fără borcan) sau ce e special la nivel.
-            bool boboOnBoard = config.HasBobo || config.Type == LevelType.Blaze;
+            bool boboOnBoard = config.HasBobo || config.Type is LevelType.Blaze or LevelType.Craft or LevelType.Combo; // și sarcinile noi își arată textul
             info.Scenario = config.IsBoss ? SugarLoc.T("Vrăjitorul l-a închis pe Bobo într-un glob! Învinge-l!")
                 : boboOnBoard ? IntroText(config)
                 : !NeedsJar(config) && !config.IsBonus ? SugarLoc.T(DangerScene.DangerKey(ChapterTheme.IndexOf(ChapterTheme.ChapterOf(level))))
@@ -1142,20 +1142,29 @@ namespace SugarDrop
         {
             LevelType.Crates or LevelType.Ice or LevelType.Chains or LevelType.Chocolate or LevelType.Specials
                 or LevelType.Garden or LevelType.Defuse or LevelType.Bonus or LevelType.Frosting or LevelType.Ingredients
-                or LevelType.Descent or LevelType.Frozen or LevelType.Blaze => 1 << (int)type,
+                or LevelType.Descent or LevelType.Frozen or LevelType.Blaze or LevelType.Craft or LevelType.Combo => 1 << (int)type,
             _ => 0,
         };
 
         private const int FloodBit = 1 << 29;
         private const int PressureBit = 1 << 28;
+        private const int TwinsBit = 1 << 27;
 
         /// <summary>Nivelurile cu rezervoare de apă au propria „noutate” (altfel ar fi luate drept simplul nivel cu foc).</summary>
         private static int MechanicBit(LevelConfig config) =>
-            config.Tanks > 0 ? FloodBit : config.HasBobo && config.TimeBombs > 0 ? PressureBit : MechanicBit(config.Type);
+            config.Tanks > 0 ? FloodBit : config.HasBobo && config.TimeBombs > 0 ? PressureBit : config.Bobos > 1 ? TwinsBit : MechanicBit(config.Type);
 
         private static string IntroText(LevelConfig config) =>
             config.Tanks > 0 ? SugarLoc.T("Sparge rezervoarele de sus: apa lor stinge focul de pe coloană!")
             : config.HasBobo && config.TimeBombs > 0 ? SugarLoc.T("Du-l pe Bobo jos, dar bombele cu ceas ticăie! Dezamorsează-le la timp!")
+            : config.Bobos > 1 ? SugarLoc.T("Du-i jos pe amândoi: Bobo și prietenul lui!")
+            : config.Type == LevelType.Craft ? SugarLoc.F(config.CraftKind switch
+            {
+                0 => "Creează {0} piese dungate: pune 4 la rând!",
+                1 => "Creează {0} bombe: fă o linie în L sau în T!",
+                _ => "Creează {0} bile multicolore: pune 5 la rând!",
+            }, config.CraftTarget)
+            : config.Type == LevelType.Combo ? SugarLoc.F("Fă {0} combinații: unește două piese speciale vecine!", config.ComboTarget)
             : IntroText(config.Type);
 
         private static bool IsNew(int bit) => bit != 0 && (Data.seenMechanics & bit) == 0;

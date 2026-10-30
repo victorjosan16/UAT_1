@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SugarDrop
 {
-    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Bobo, Fire, Tanks }
+    public enum GoalKind { Ingredients, Collect, Frosting, Score, Boss, Crates, Ice, Chains, Chocolate, Specials, Flowers, TimeBombs, Bobo, Fire, Tanks, Make, Combos }
 
     /// <summary>Câte obstacole are tabla (la start), pentru țintele obiectivelor cu obstacole.</summary>
     public struct ObstacleCounts
@@ -51,7 +51,9 @@ namespace SugarDrop
                 case LevelType.Garden when obstacles.Pots > 0: Add(GoalKind.Flowers, -1, obstacles.Pots); break;
                 case LevelType.Defuse when config.TimeBombGoal > 0: Add(GoalKind.TimeBombs, -1, config.TimeBombGoal); break;
                 case LevelType.Descent:
-                case LevelType.Frozen: Add(GoalKind.Bobo, -1, 1); break;
+                case LevelType.Frozen: Add(GoalKind.Bobo, -1, System.Math.Max(1, config.Bobos)); break;
+                case LevelType.Craft: Add(GoalKind.Make, config.CraftKind, config.CraftTarget); break;
+                case LevelType.Combo: Add(GoalKind.Combos, -1, config.ComboTarget); break;
                 case LevelType.Blaze when obstacles.Tanks > 0: Add(GoalKind.Tanks, -1, obstacles.Tanks); break;
                 case LevelType.Blaze when obstacles.Fires > 0: Add(GoalKind.Fire, -1, obstacles.Fires); break;
             }
@@ -97,6 +99,14 @@ namespace SugarDrop
                 else if (piece.Kind == TileKind.Tank) changed |= Decrease(GoalKind.Tanks, -1);
                 if (piece.Timer > 0) changed |= Decrease(GoalKind.TimeBombs, -1);
             }
+            // Piese speciale create (nu din combinații): dungată (4 în linie), bombă (L / T), bilă multicoloră (5 în linie).
+            if (step.Kind == StepKind.Clear && !step.Combo)
+                foreach (PieceInfo made in step.Changed)
+                {
+                    int kind = BlastRules.IsRocket(made.Kind) ? 0 : made.Kind == TileKind.Bomb ? 1 : made.Kind == TileKind.Rainbow ? 2 : -1;
+                    if (kind >= 0) changed |= Decrease(GoalKind.Make, kind);
+                }
+            if (step.Combo) changed |= Decrease(GoalKind.Combos, -1);
             for (int i = 0; i < step.IceLayersBroken; i++) changed |= Decrease(GoalKind.Ice, -1);
             for (int i = 0; i < step.ChainsBroken; i++) changed |= Decrease(GoalKind.Chains, -1);
             for (int i = 0; i < step.Activations.Count; i++) changed |= Decrease(GoalKind.Specials, -1);

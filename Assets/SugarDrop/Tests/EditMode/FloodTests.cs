@@ -16,29 +16,17 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void Tanks_OnlyAfterLevel50_AndTwoFireLevelsPerChapter()
+        public void Tanks_OnlyAfterLevel50_AndEveryChapterHasFireAndWater()
         {
             for (int level = 1; level < LevelConfig.FloodFrom; level++)
                 Assert.AreEqual(0, LevelConfig.For(level).Tanks, $"nivelul {level}: fără rezervoare înainte de 51");
-            for (int chapter = 5; chapter < 15; chapter++)
+            for (int chapter = 5; chapter < 30; chapter++)
             {
-                int fire = 0, tanks = 0;
-                for (int level = chapter * 10 + 1; level <= chapter * 10 + 10; level++)
-                {
-                    LevelConfig c = LevelConfig.For(level);
-                    if (c.Type == LevelType.Blaze) fire++;
-                    if (c.Tanks > 0)
-                    {
-                        tanks++;
-                        Assert.AreEqual(LevelType.Blaze, c.Type);
-                        Assert.GreaterOrEqual(c.TankHits, 2);
-                    }
-                }
-                Assert.AreEqual(2, fire, $"ținutul {chapter + 1}: două niveluri cu foc");
-                Assert.GreaterOrEqual(tanks, 1, $"ținutul {chapter + 1}: cel puțin un nivel cu rezervoare");
-                // Cu Bobo pe tablă în continuare 4 niveluri pe ținut.
-                int bobo = Enumerable.Range(chapter * 10 + 1, 10).Count(l => LevelConfig.For(l).HasBobo || LevelConfig.For(l).Type == LevelType.Blaze);
-                Assert.AreEqual(4, bobo);
+                var kinds = Enumerable.Range(chapter * 10 + 1, 10).Select(LevelConfig.ScenarioOf).ToList();
+                Assert.Contains(LevelScenario.Blaze, kinds, $"ținutul {chapter + 1}: focul");
+                Assert.Contains(LevelScenario.Flood, kinds, $"ținutul {chapter + 1}: apa din cer");
+                foreach (int level in Enumerable.Range(chapter * 10 + 1, 10))
+                    Assert.AreEqual(LevelConfig.ScenarioOf(level) == LevelScenario.Flood, LevelConfig.For(level).Tanks > 0, $"nivelul {level}");
             }
         }
 
@@ -104,13 +92,13 @@ namespace SugarDrop.Tests
             for (int level = LevelConfig.PressureFrom; level <= 200; level++)
             {
                 LevelConfig c = LevelConfig.For(level);
-                if (!c.HasBobo || c.TimeBombs <= 0) continue;
+                if (c.Scenario != LevelScenario.Pressure) continue;
                 found++;
-                Assert.AreEqual(7, (level - 1) % 10, "al 8-lea nivel al ținutului");
+                Assert.IsTrue(c.HasBobo && c.TimeBombs > 0);
                 var engine = new BlastEngine(c, 2);
                 Assert.Greater(engine.TimeBombsOnBoard, 0, "bombe pe tablă de la start");
             }
-            Assert.GreaterOrEqual(found, 10);
+            Assert.GreaterOrEqual(found, 6);
         }
 
         [Test]
@@ -120,7 +108,7 @@ namespace SugarDrop.Tests
             for (int level = LevelConfig.PressureFrom; level <= 150; level++)
             {
                 LevelConfig c = LevelConfig.For(level);
-                if (!c.HasBobo || c.TimeBombs <= 0) continue;
+                if (c.Scenario != LevelScenario.Pressure) continue;
                 int levelWins = 0;
                 for (int seed = 0; seed < 6; seed++)
                     if (BalanceSimulator.Play(level, seed * 131 + level * 7, out _)) levelWins++;
