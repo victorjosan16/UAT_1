@@ -1,154 +1,164 @@
 # Toll Road Tycoon
 
-Idle toll-road management game for Android (Unity 2D, portrait 9:16).
-Joc idle de administrare a unei autostrăzi cu taxă: mașinile vin, stau la coadă, plătesc la cabină,
-bariera se ridică, iar tu investești câștigurile în cabine, angajați, benzi și upgrade-uri.
+Joc idle de administrare a unei autostrăzi cu taxă, pentru Android (Unity 2D, portret 9:16).
+Mașinile vin, stau la coadă, plătesc la cabină, bariera se ridică, iar tu investești câștigurile
+în cabine, angajați, benzi și upgrade-uri.
 
-**Status: Phase 1 (first playable loop).** Read the QA report below before relying on anything:
-the simulation is tested headlessly, but the Unity project has **not** been opened in the
-Unity Editor or built for Android yet.
+**Stadiu: Faza 1 (prima buclă de joc jucabilă).** Citește raportul de verificare de mai jos:
+simularea e testată automat fără Unity, dar proiectul **nu** a fost încă deschis în Unity Editor
+și nici construit pentru Android.
 
-## Project layout
+## Structura proiectului
 
 ```
-Toll Road Tycoon/                      Unity project root (open this folder in Unity Hub)
+Toll Road Tycoon/                      rădăcina proiectului Unity (acest director se deschide în Unity Hub)
   Assets/
     Scripts/
-      TollRoadTycoon.Simulation.asmdef   engine-independent game logic (noEngineReferences)
-      Core/            GameSimulation (root/fixed step), GameConfig, GameStats, Vec2, SimRandom
-      Traffic/         LaneManager (geometry), TrafficManager (car following, plaza gates),
-                       QueueManager (booth choice), VehicleSpawner, Vehicle + VehiclePool
-      TollSystem/      TollBooth (data), TollBoothController (state machine), PaymentProcessor
-      Economy/         EconomyManager, Money (integer cents, K/M/B format), CostCurve
+      TollRoadTycoon.Simulation.asmdef   logica jocului, independentă de Unity (noEngineReferences)
+      Core/            GameSimulation (rădăcina, pas fix), GameConfig, GameStats, Vec2, SimRandom
+      Traffic/         LaneManager (geometria drumului), TrafficManager (urmărirea mașinilor, porțile din plază),
+                       QueueManager (alegerea cabinei), VehicleSpawner, Vehicle + VehiclePool
+      TollSystem/      TollBooth (date), TollBoothController (mașina de stări), PaymentProcessor
+      Economy/         EconomyManager, Money (cenți întregi, format K/M/B), CostCurve
       Workers/         Worker, WorkerManager
-      Upgrades/        UpgradeManager (booth upgrades, vehicle unlocks)
-      RoadExpansion/   RoadExpansionManager (booth slots, lanes)
-      Save/            SaveData (versioned), SaveManager (atomic write, backup, migration)
-      Localization/    Loc (Romanian primary, English complete)
-      Presentation/    Unity layer (TollRoadTycoon.Presentation.asmdef)
+      Upgrades/        UpgradeManager (upgrade-uri de cabină, deblocare vehicule)
+      RoadExpansion/   RoadExpansionManager (cabine noi, benzi noi)
+      Save/            SaveData (cu versiune), SaveManager (scriere atomică, copie de rezervă, migrare)
+      Localization/    Loc (româna principală, engleza completă)
+      Presentation/    stratul Unity (TollRoadTycoon.Presentation.asmdef)
         Core/          GameBootstrap, GameRoot, SaveService, GameConfigAsset (ScriptableObject)
         Views/         WorldView, BoothView, VehicleViews, CoinPopups, SpriteFactory, Palette
         UI/            UIManager, MainMenuScreen, GameplayScreen, Panels, UIFactory, SafeAreaFitter
-        Input/         CameraController (drag pan, pinch/wheel zoom, tap select)
-        Audio/         AudioManager (procedural SFX)
-      Editor/          ProjectSetup (Boot scene, portrait, Android ids), BuildAndroid
-    Tests/EditMode/    NUnit tests (Unity Test Runner + headless dotnet)
+        Input/         CameraController (glisare, zoom cu două degete sau rotița mouse-ului, atingere)
+        Audio/         AudioManager (efecte sonore generate din cod)
+      Editor/          ProjectSetup (scena Boot, portret, identificator Android), BuildAndroid
+    Tests/EditMode/    teste NUnit (Unity Test Runner + dotnet fără Unity)
   Packages/manifest.json
   ProjectSettings/ProjectVersion.txt   2022.3 LTS
-  Tools/SimulationTests/               dotnet project that compiles the simulation + tests without Unity
+  Tools/SimulationTests/               proiect dotnet care compilează simularea și testele fără Unity
 ```
 
-All game rules live in the `Simulation` assembly, which has no `UnityEngine` reference.
-That is why the simulation and its tests can run without the Unity Editor. The Unity layer only reads the
-simulation and calls its purchase APIs.
+Toate regulile jocului sunt în assembly-ul `Simulation`, care nu folosește `UnityEngine`.
+De aceea simularea și testele ei pot rula fără Unity Editor. Stratul Unity doar citește starea
+simulării și apelează funcțiile ei de cumpărare.
 
-## How the core loop works
+## Cum funcționează bucla de joc
 
-* **Road geometry** (`LaneManager`): approach lanes → S-curve plaza-entry connectors → one booth lane
-  per booth → plaza-exit connectors → exit lanes, plus an untolled oncoming carriageway.
-  Buying a lane or booth **adds real segments** that routing uses immediately.
-* **Traffic** (`TrafficManager`): each vehicle follows its route. Its speed is limited so it can always
-  stop before the rear of the car ahead (plus a gap). On top of that, a hard clamp stops it from ever
-  moving past that point, so cars cannot overlap or teleport. Connectors that cross or merge are
-  entered one at a time through reservations, and only the front car of a lane may reserve, so there
-  are no deadlocks.
-* **Booth choice** (`QueueManager`): expected wait plus lateral distance, limited by queue capacity and
-  by the physical space left in the booth lane.
-* **Booth state machine**: `Closed → Idle → WaitingForVehicle → ProcessingPayment → OpeningBarrier →
-  VehiclePassing → ClosingBarrier → Idle`. Vehicle states: `Spawning, Driving, ApproachingQueue,
+* **Geometria drumului** (`LaneManager`): benzi de intrare → racorduri în S spre plază → câte o bandă
+  pentru fiecare cabină → racorduri de ieșire → benzi de ieșire, plus un sens opus fără taxă.
+  Când cumperi o bandă sau o cabină se **adaugă segmente reale** de drum, pe care mașinile le folosesc imediat.
+* **Traficul** (`TrafficManager`): fiecare vehicul își urmează traseul. Viteza e limitată astfel încât
+  să poată opri oricând înainte de spatele mașinii din față (plus o distanță de siguranță). În plus,
+  poziția e blocată fix în acel punct, deci mașinile nu se pot suprapune și nu pot „sări”. Racordurile
+  care se intersectează sau se unesc sunt folosite pe rând, prin rezervări. Doar prima mașină de pe o
+  bandă poate rezerva, deci traficul nu se poate bloca reciproc.
+* **Alegerea cabinei** (`QueueManager`): după timpul de așteptare estimat și distanța laterală, în limita
+  capacității cozii și a spațiului fizic rămas pe banda cabinei.
+* **Stările cabinei**: `Closed → Idle → WaitingForVehicle → ProcessingPayment → OpeningBarrier →
+  VehiclePassing → ClosingBarrier → Idle`. Stările vehiculului: `Spawning, Driving, ApproachingQueue,
   WaitingInQueue, ApproachingBooth, Paying, WaitingForBarrier, PassingBarrier, Exiting, Completed`.
-* **Payment** (`PaymentProcessor`): toll = `BaseVehicleToll × BoothMultiplier × ActiveBonus` in integer
-  cents. Money is awarded **only on payment**, once per trip id (duplicate calls are ignored).
-* **Workers**: manual booths need a worker (level 1 = 3.0 s … level 5 = 1.8 s). A worker staffs at most
-  one booth. Withdrawing a worker from a booth with a queue first serves the whole queue, then closes the booth.
-* **Expansion**: booths 1→6 (booth 3–4 need 2 lanes, booth 5–6 need 3 lanes); lanes 1→3.
-* **Saves**: versioned JSON (`JsonUtility`), temp file + `File.Replace` with `.bak` backup, fallback
-  to the backup when the main file is corrupt, migrations from older versions, and refusal to load
-  saves written by a newer version (the file is kept). Vehicles in transit are not saved. They had
-  not paid yet, so reloading can never pay twice.
+* **Plata** (`PaymentProcessor`): taxa = `Taxa de bază × Multiplicatorul cabinei × Bonusul activ`, în
+  cenți întregi. Banii se primesc **doar la plată**, o singură dată pe călătorie (apelurile duplicate
+  sunt ignorate).
+* **Angajații**: cabinele manuale au nevoie de un angajat (nivel 1 = 3,0 s … nivel 5 = 1,8 s). Un angajat
+  poate lucra la o singură cabină. Dacă retragi un angajat de la o cabină cu coadă, cabina servește
+  întâi toată coada și abia apoi se închide.
+* **Extinderea**: cabine de la 1 la 6 (cabinele 3–4 cer 2 benzi, cabinele 5–6 cer 3 benzi); benzi de la 1 la 3.
+* **Salvarea**: JSON cu versiune (`JsonUtility`). Se scrie întâi un fișier temporar, apoi se înlocuiește
+  fișierul principal (`File.Replace`) păstrând o copie `.bak`. Dacă fișierul principal e corupt, se
+  încarcă copia de rezervă. Salvările vechi sunt migrate, iar cele scrise de o versiune mai nouă nu se
+  încarcă (fișierul e păstrat). Mașinile aflate pe drum nu se salvează: nu plătiseră încă, așa că o
+  reîncărcare nu poate plăti de două ori.
 
-## Running the tests without Unity
+## Rularea testelor fără Unity
 
 ```bash
 cd "Toll Road Tycoon/Tools/SimulationTests"
 dotnet test
 ```
 
-The same test files run inside Unity: **Window → General → Test Runner → EditMode**.
+Aceleași teste rulează și în Unity: **Window → General → Test Runner → EditMode**.
 
-## Opening in Unity
+## Deschiderea în Unity
 
-1. Unity Hub → *Add project from disk* → select the `Toll Road Tycoon` folder. Use Unity **2022.3 LTS**
-   with the **Android Build Support** module.
-2. On first import, `ProjectSetup` creates `Assets/Scenes/Boot.unity`, adds it to Build Settings and
-   sets portrait orientation, `com.animatix.tollroadtycoon`, IL2CPP and ARM64. You can re-run it from
-   *Tools → Toll Road Tycoon → Configure Project*.
-3. Open `Boot.unity` and press Play. `GameBootstrap` builds the camera, world, UI and audio at runtime.
-4. Android test build: *Tools → Toll Road Tycoon → Build Android APK (test)*, or on the command line:
+1. Unity Hub → *Add project from disk* → alege directorul `Toll Road Tycoon`. Folosește Unity
+   **2022.3 LTS** cu modulul **Android Build Support**.
+2. La primul import, `ProjectSetup` creează `Assets/Scenes/Boot.unity`, o adaugă în Build Settings și
+   setează orientarea portret, `com.animatix.tollroadtycoon`, IL2CPP și ARM64. Pasul poate fi repetat
+   din *Tools → Toll Road Tycoon → Configure Project*.
+3. Deschide `Boot.unity` și apasă Play. `GameBootstrap` construiește la rulare camera, lumea, interfața și sunetul.
+4. APK de test pentru Android: *Tools → Toll Road Tycoon → Build Android APK (test)*, sau din linia de comandă:
    `Unity -batchmode -quit -projectPath "Toll Road Tycoon" -executeMethod TollRoadTycoon.EditorTools.BuildAndroid.Apk`.
-   AAB: `...BuildAndroid.Aab`. No signing keystore is configured; add your own before a store release.
+   Pentru AAB: `...BuildAndroid.Aab`. Nu e configurată nicio cheie de semnare; adaug-o pe a ta înainte
+   de publicarea în magazin.
 
-## QA / build report (Phase 1)
+## Raport de verificare (Faza 1)
 
-What was actually executed in this environment (Linux container, no Unity Editor, no Android SDK):
+Ce s-a rulat efectiv în acest mediu (container Linux, fără Unity Editor și fără Android SDK):
 
-| Check | Result |
+| Verificare | Rezultat |
 |---|---|
-| Simulation + tests compiled with .NET 8, C# 9 language level (Unity 2022.3 compatible) | ✅ 0 warnings |
-| NUnit tests (`dotnet test`) | ✅ 57/57 passed |
-| Presentation layer compiled against Unity **reference** assemblies (UnityEngine 2021.3 modules + UnityEngine.UI 2020.3 from NuGet) | ✅ 0 errors, 0 warnings |
-| Editor scripts (`Assets/Scripts/Editor`) compiled | ❌ not checked: no UnityEditor reference assembly was available |
-| Opened in Unity Editor / Play mode / visual check of the procedural art and UI layout | ❌ not done: Unity is not installed here |
-| Android APK/AAB build | ❌ not done: no Unity/Android SDK here |
+| Simularea și testele compilate cu .NET 8, la nivelul de limbaj C# 9 (compatibil cu Unity 2022.3) | ✅ 0 avertismente |
+| Teste NUnit (`dotnet test`) | ✅ 57/57 trecute |
+| Stratul Unity compilat cu bibliotecile de **referință** Unity (modulele UnityEngine 2021.3 + UnityEngine.UI 2020.3, de pe NuGet) | ✅ 0 erori, 0 avertismente |
+| Scripturile de editor (`Assets/Scripts/Editor`) compilate | ❌ neverificat: nu a existat o bibliotecă de referință UnityEditor |
+| Deschis în Unity Editor / Play mode / verificarea vizuală a graficii și a interfeței | ❌ nefăcut: Unity nu e instalat aici |
+| Build Android APK/AAB | ❌ nefăcut: lipsesc Unity și Android SDK |
 
-Covered by the tests:
+Ce acoperă testele:
 
-* full state sequence of a single car through the plaza, and money paid only on payment, not at spawn
-* exact oriented-box overlap check of **every pair of vehicles at every step** for 1/2/4/6 booths
-  over 300 simulated seconds (no overlaps)
-* exactly-once payments (duplicate calls, reset flag), earnings equal to the sum of the collected tolls, free emergency vehicles
-* queue capacity is respected, throughput grows with booths, every lane is used, vehicles are recycled through the pool
-* worker rules (one booth per worker, hire/upgrade costs, the queue drains before a booth closes, traffic reroutes to the open booth)
-* upgrades (real before/after values, failed purchases change nothing, max levels, toll ×2 doubles income
-  under the same traffic, automation prerequisites)
-* expansion (new geometry and routing, lane prerequisites, charged once, new lanes carry traffic)
-* save round-trip, no double award on reload, backup recovery, v0 migration, newer-version refusal, clamping of tampered values
-* localization: the Romanian and English key sets are identical
+* toate stările unei mașini prin plază, iar banii vin doar la plată, nu la apariția mașinii
+* verificarea exactă a suprapunerii pentru **fiecare pereche de vehicule la fiecare pas**, cu 1/2/4/6
+  cabine, pe 300 de secunde simulate (nicio suprapunere)
+* plăți exact o dată (apeluri duplicate, indicator resetat), câștigurile egale cu suma taxelor încasate,
+  vehiculele de urgență trec gratuit
+* capacitatea cozii e respectată, debitul crește cu numărul de cabine, toate benzile sunt folosite,
+  vehiculele sunt refolosite din pool
+* regulile angajaților (o singură cabină pe angajat, costuri de angajare și upgrade, coada se golește
+  înainte de închidere, traficul trece la cabina deschisă)
+* upgrade-urile (valori reale înainte/după, o cumpărare eșuată nu schimbă nimic, niveluri maxime,
+  taxa ×2 dublează venitul la același trafic, condițiile pentru automatizare)
+* extinderea (geometrie și rutare noi, condiția de benzi, plata o singură dată, benzile noi chiar au trafic)
+* salvarea și încărcarea, fără plată dublă la reîncărcare, recuperarea din copia de rezervă, migrarea
+  versiunii 0, refuzul versiunilor mai noi, limitarea valorilor modificate manual
+* traducerile: cheile din română și engleză sunt identice
 
-Stress (headless, one simulation step at 30 Hz, measured on this container's CPU):
+Test de încărcare (fără afișare, un pas de simulare la 30 Hz, măsurat pe procesorul acestui container):
 
-| Vehicles | ms per step |
+| Vehicule | ms pe pas |
 |---|---|
-| ~60 | 0.02 |
-| 100 | 0.03 |
-| ~160 | 0.04 |
-| ~290 | 0.08 |
+| ~60 | 0,02 |
+| 100 | 0,03 |
+| ~160 | 0,04 |
+| ~290 | 0,08 |
 
-These timings cover the simulation only. Rendering cost on a phone has not been profiled.
+Timpii sunt doar pentru simulare. Costul de afișare pe telefon nu a fost măsurat.
 
-Balance check (bot that saves for the next booth/lane when it costs less than ~6 minutes of income, otherwise
-buys the cheapest upgrade): 10 cars processed at ~1 min, first speed upgrade at ~0.2 min,
-booth 2 at ~12 min, booth 3 at ~45 min, booth 4 at ~72 min, trucks unlocked at ~3 h. The early
-game may still feel slow and should be tuned after playtesting on a device.
+Echilibrul economiei, verificat cu un jucător simulat (strânge bani pentru următoarea cabină sau bandă
+când costă mai puțin de ~6 minute de venit, altfel cumpără cel mai ieftin upgrade): 10 mașini servite
+la ~1 min, primul upgrade de viteză la ~0,2 min, cabina 2 la ~12 min, cabina 3 la ~45 min, cabina 4
+la ~72 min, camioanele deblocate la ~3 ore. Începutul jocului poate părea încă lent și trebuie ajustat
+după testarea pe telefon.
 
-### Known limitations and deviations (Phase 1)
+### Limitări cunoscute și abateri (Faza 1)
 
-* **Art is procedural placeholder art** (tinted rounded shapes generated at runtime), following the
-  mockup's palette and layout. It is not final art.
-* **Text uses legacy uGUI `Text` with Unity's built-in font**, not TextMeshPro. TMP needs *TMP Essential
-  Resources* imported in the Editor, and that could not be done or verified here. Moving to TMP is a Phase 2 task.
-* Scenes: a single `Boot` scene (created by `ProjectSetup`). The main menu and gameplay are runtime
-  screens, not separate scenes. RoadMap/Shop scenes come in Phase 2.
-* DRUMURI, MAGAZIN and MISIUNI are visibly marked **"În curând"** and open an explanation instead of
-  pretending to work. Music is marked "în curând". SFX are simple procedural tones.
-* Not implemented yet (Phase 2): five road sections and the road map, offline earnings popup (the
-  last-seen UTC timestamp is already saved), roadside services, missions/tutorial, shop, statistics
-  screen, decorations, ads (`AdService`), PlayMode tests.
+* **Grafica e provizorie**, generată din cod (forme rotunjite colorate), după paleta și aranjarea din
+  schiță. Nu e grafica finală.
+* **Textele folosesc `Text` clasic din uGUI cu fontul inclus în Unity**, nu TextMeshPro. TextMeshPro
+  cere importul *TMP Essential Resources* în editor, ceea ce nu s-a putut face sau verifica aici.
+  Trecerea la TextMeshPro rămâne pentru Faza 2.
+* Scene: o singură scenă, `Boot` (creată de `ProjectSetup`). Meniul principal și jocul sunt ecrane
+  construite la rulare, nu scene separate. Scenele RoadMap și Shop vin în Faza 2.
+* DRUMURI, MAGAZIN și MISIUNI sunt marcate vizibil **„În curând”** și deschid o explicație în loc să
+  pretindă că funcționează. Muzica e marcată „în curând”. Efectele sonore sunt tonuri simple generate din cod.
+* Neimplementat încă (Faza 2): cele cinci porțiuni de drum și harta lor, fereastra de câștiguri offline
+  (momentul ultimei vizite, în UTC, se salvează deja), serviciile de pe marginea drumului, misiunile și
+  tutorialul, magazinul, ecranul de statistici, decorațiunile, reclamele (`AdService`), testele PlayMode.
 
-## Phase 2 plan
+## Planul pentru Faza 2
 
-Five road sections with their own config, analytical income for inactive sections, RoadMap scene,
-offline earnings (8 h cap, estimate label, COLECTEAZĂ / DUBLEAZĂ CU RECLAMA with a test-mode ad service),
-services (gas station, parking, café …) with event-driven income, missions and tutorial, shop,
-statistics overlay, TMP migration, authored art and audio, PlayMode/UI navigation tests, device
-profiling and a real Android build.
+Cinci porțiuni de drum cu configurație proprie, venit calculat pentru porțiunile inactive, scena RoadMap,
+câștiguri offline (limită de 8 ore, etichetă de estimare, COLECTEAZĂ / DUBLEAZĂ CU RECLAMA cu un serviciu
+de reclame în mod test), servicii (benzinărie, parcare, cafenea …) cu venit generat de clienți reali,
+misiuni și tutorial, magazin, statistici, trecerea la TextMeshPro, grafică și sunet finale, teste
+PlayMode și de navigare în interfață, măsurători de performanță pe telefon și un build Android real.
