@@ -39,6 +39,26 @@ namespace QuarryEmpire
             }
         }
 
+        /// <summary>
+        /// Textul se micșorează singur (între min și max) ca să încapă în dreptunghiul etichetei, în loc să iasă din el
+        /// și să se suprapună peste elementele vecine (traduceri mai lungi, texte pe două sau trei rânduri).
+        /// </summary>
+        public void Fit(float minSize, float maxSize)
+        {
+            if (_tmp != null)
+            {
+                _tmp.enableAutoSizing = true;
+                _tmp.fontSizeMin = minSize;
+                _tmp.fontSizeMax = maxSize;
+            }
+            else if (_legacy != null)
+            {
+                _legacy.resizeTextForBestFit = true;
+                _legacy.resizeTextMinSize = Mathf.RoundToInt(minSize);
+                _legacy.resizeTextMaxSize = Mathf.RoundToInt(maxSize);
+            }
+        }
+
         /// <summary>Creează o etichetă nouă sub „parent”.</summary>
         public static UiLabel Create(string name, Transform parent, string text, float fontSize,
             TextAnchor alignment, Color color)

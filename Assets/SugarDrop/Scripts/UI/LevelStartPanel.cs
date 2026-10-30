@@ -99,7 +99,8 @@ namespace SugarDrop
             }
 
             _scenario = UiFactory.CreateText("Scenario", _box, "", 36, TextAnchor.MiddleCenter, theme.TextDarkColor);
-            UiFactory.Place(_scenario.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(Width - 100f, 100f));
+            UiFactory.Place(_scenario.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(Width - 100f, 150f));
+            _scenario.Fit(22f, 36f); // textul încape în casetă (traduceri lungi, două rânduri), fără să acopere stelele sau obiectivele
 
             // Obiectivele: o „tavă” cu iconițe mari și numărul dedesubt.
             Image tray = UiFactory.CreatePanel("Goals", _box, new Color(1f, 0.93f, 0.96f));
@@ -177,7 +178,7 @@ namespace SugarDrop
             y -= 70f;
             _scenario.Text = info.Scenario;
             _scenario.RectTransform.anchoredPosition = new Vector2(0f, y);
-            y -= 110f;
+            y -= 160f;
 
             foreach (GameObject view in _goalViews) Destroy(view);
             _goalViews.Clear();
