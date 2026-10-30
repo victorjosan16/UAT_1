@@ -63,7 +63,7 @@ namespace SugarDrop
             }
         }
 
-        /// <summary>Capacul curcubeu (5 în linie): bilă în culoarea ei, cu luciu alb.</summary>
+        /// <summary>Bila de la 5 în linie: color &lt; 0 = multicoloră (curcubeu); altfel în culoarea dată. Cu luciu alb.</summary>
         public static Sprite ColorBall(int color) => GetUncached("colorball" + color, () => BallSprite(color, false));
 
         /// <summary>Spirala albă a bilei (se rotește peste bila colorată).</summary>
@@ -94,7 +94,10 @@ namespace SugarDrop
                     {
                         float light = Mathf.Clamp01(0.62f + 0.38f * (-p.x * 0.45f + p.y * 0.6f) / 56f);
                         float rim = Mathf.Clamp01((-d - 1f) / 5f);
-                        c = Color.Lerp(tint * 0.7f, tint, light) * Mathf.Lerp(0.75f, 1f, rim);
+                        Color baseTint = color >= 0 && color < Colors.Length
+                            ? tint
+                            : Color.HSVToRGB(Mathf.Repeat(angle + p.magnitude / 90f, 1f), 0.7f, 1f); // multicolor: nuanțele curg în spirală
+                        c = Color.Lerp(baseTint * 0.7f, baseTint, light) * Mathf.Lerp(0.75f, 1f, rim);
                         float gloss = Mathf.Clamp01(1f - (new Vector2(p.x + 22f, p.y - 26f).magnitude) / 14f);
                         c = Color.Lerp(c, Color.white, gloss * 0.8f);
                         c.a = alpha;

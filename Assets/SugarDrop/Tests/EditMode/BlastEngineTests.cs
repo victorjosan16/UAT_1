@@ -122,7 +122,7 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void Rainbow_SwappedWithItsOwnColor_ClearsThatColor()
+        public void Rainbow_SwappedWithACandy_ClearsThatColor()
         {
             BlastEngine engine = Board();
             engine.DebugSet(new Vector2Int(4, 4), TileKind.Rainbow, 0);
@@ -133,13 +133,16 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void Rainbow_SwappedWithAnotherColor_DoesNothing()
+        public void Rainbow_SwappedWithAnotherColor_ClearsThatColor()
         {
+            // Bila multicoloră atinge o piesă de altă culoare: le elimină pe toate de acea culoare.
             BlastEngine engine = Board();
             engine.DebugSet(new Vector2Int(4, 4), TileKind.Rainbow, 0);
-            Paint(engine, 1, (4, 5));
-            Assert.IsFalse(engine.IsValidSwap(new Vector2Int(4, 4), new Vector2Int(4, 5)), "curcubeul nu merge cu altă culoare");
-            Assert.IsNull(engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5)));
+            Paint(engine, 1, (4, 5), (0, 0), (8, 8));
+            Assert.IsTrue(engine.IsValidSwap(new Vector2Int(4, 4), new Vector2Int(4, 5)));
+            BoardStep step = engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5))[1];
+            Assert.IsTrue(step.Cleared.TrueForAll(p => p.Color == 1 || p.Kind == TileKind.Rainbow));
+            Assert.AreEqual(4, step.Cleared.Count, "bila + cele 3 piese de culoarea 1");
         }
 
         [Test]
@@ -149,7 +152,6 @@ namespace SugarDrop.Tests
             Paint(engine, 0, (0, 4), (1, 4), (3, 4), (4, 4));
             BoardStep five = engine.Swap(A, B)[1];
             Assert.AreEqual(TileKind.Rainbow, five.Changed[0].Kind);
-            Assert.AreEqual(0, five.Changed[0].Color, "curcubeul păstrează culoarea");
 
             engine = WithMove();
             Paint(engine, 0, (0, 4), (1, 4), (3, 4));
