@@ -165,10 +165,25 @@ namespace SugarDrop
                     ShowOverlay(SugarSprites.Sparkle, new Color(1f, 1f, 1f, 0.8f));
                     return;
 
+                case TileKind.Rainbow when ColorIndex >= 0:
+                    // Bilă în culoarea ei, cu spirală albă care se rotește.
+                    _base.sprite = PieceSprites.ColorBall(ColorIndex);
+                    _shadow.sprite = PieceSprites.Shadow(-1);
+                    ShowOverlay(PieceSprites.BallSwirl(ColorIndex), Color.white);
+                    return;
+
                 case TileKind.Rainbow:
                     _base.sprite = PieceSprites.Pearl;
                     _shadow.sprite = PieceSprites.Shadow(-1);
                     ShowOverlay(SugarSprites.Rainbow, Color.white);
+                    return;
+
+                case TileKind.RocketH when ColorIndex >= 0:
+                case TileKind.RocketV when ColorIndex >= 0:
+                    // Piesa dungată: își păstrează forma și culoarea, cu dungi albe pe direcția rachetei.
+                    _base.sprite = PieceSprites.Piece(ColorIndex);
+                    _shadow.sprite = PieceSprites.Shadow(ColorIndex);
+                    ShowOverlay(PieceSprites.Stripes(ColorIndex, Kind == TileKind.RocketH), Color.white);
                     return;
 
                 case TileKind.RocketH:

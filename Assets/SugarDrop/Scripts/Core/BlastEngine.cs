@@ -337,11 +337,27 @@ namespace SugarDrop
             if (!AreNeighbours(a, b)) return false;
             Piece pa = At(a), pb = At(b);
             if (!CanMove(pa) || !CanMove(pb)) return false;
-            if (pa.IsSpecial || pb.IsSpecial) return true;
+            if (Activates(pa, pb)) return true;
             Exchange(a, b);
             bool match = HasMatchAt(a) || HasMatchAt(b);
             Exchange(a, b);
             return match;
+        }
+
+        /// <summary>
+        /// Capacul curcubeu (5 în linie) e legat de culoarea lui: se activează doar dacă îl schimbi cu o piesă din
+        /// aceeași culoare (sau cu o altă piesă specială). Cu orice altă piesă se mută ca o piesă obișnuită.
+        /// </summary>
+        private static bool RainbowTriggers(Piece rainbow, Piece other) =>
+            other.IsSpecial || (CanMatch(other) && other.Color == rainbow.Color);
+
+        /// <summary>Schimbul activează o piesă specială (rachetă, bombă sau curcubeu cu piesa potrivită).</summary>
+        private static bool Activates(Piece a, Piece b)
+        {
+            if (!a.IsSpecial && !b.IsSpecial) return false;
+            if (a.Kind == TileKind.Rainbow && !RainbowTriggers(a, b)) return false;
+            if (b.Kind == TileKind.Rainbow && !RainbowTriggers(b, a)) return false;
+            return true;
         }
 
         private void Exchange(Vector2Int a, Vector2Int b) =>
@@ -385,7 +401,7 @@ namespace SugarDrop
         private int SwapValue(Vector2Int a, Vector2Int b, Func<int, int> colorWeight)
         {
             Piece pa = At(a), pb = At(b);
-            if (pa.IsSpecial || pb.IsSpecial)
+            if (Activates(pa, pb))
             {
                 int Weight(Piece p) => p.Kind == TileKind.Rainbow ? 20 : p.Kind == TileKind.Bomb ? 12 : p.IsSpecial ? 8 : 0;
                 int special = 10 + Weight(pa) + Weight(pb) + (pa.IsSpecial && pb.IsSpecial ? 25 : 0);
@@ -451,19 +467,16 @@ namespace SugarDrop
             swap.Moves.Add(new PieceMove { Piece = Info(pb, a), From = b, To = a });
             var steps = new List<BoardStep> { swap };
 
-            if (pa.IsSpecial && pb.IsSpecial) steps.Add(CombineSpecials(b, a));
-            else if (pa.IsSpecial || pb.IsSpecial)
+            if (!Activates(pa, pb)) steps.Add(ResolveMatches(FindMatches(), 0, a, b));
+            else if (pa.IsSpecial && pb.IsSpecial) steps.Add(CombineSpecials(b, a));
+            else
             {
                 Vector2Int cell = pa.IsSpecial ? b : a;
-                Piece special = At(cell), other = pa.IsSpecial ? pb : pa;
-                // Curcubeul ia culoarea bomboanei cu care a fost schimbat.
-                if (special.Kind == TileKind.Rainbow && CanMatch(other)) special.Color = other.Color;
                 var step = new BoardStep(StepKind.Clear) { Origin = cell };
                 Detonate(step, new[] { cell }, new HashSet<Vector2Int>(), new HashSet<Vector2Int>());
                 steps.Add(step);
                 // Bomboana mutată poate face și ea o linie (după cădere, ca o cascadă).
             }
-            else steps.Add(ResolveMatches(FindMatches(), 0, a, b));
             Settle(steps, true);
             TickTimeBombs(steps);
             GrowFire(steps);
@@ -526,7 +539,7 @@ namespace SugarDrop
             foreach ((Vector2Int cell, TileKind kind, int color) in created)
             {
                 if (At(cell) != null) continue; // celula a rămas ocupată (bomboană cu gheață)
-                Piece piece = NewPiece(kind, kind == TileKind.Rainbow ? color : -1);
+                Piece piece = NewPiece(kind, kind == TileKind.Bomb ? -1 : color);
                 _grid[cell.x, cell.y] = piece;
                 step.Changed.Add(Info(piece, cell));
             }
@@ -584,7 +597,7 @@ namespace SugarDrop
                     Piece p = At(c);
                     if (p == null || !p.CanGroup || p.Color != color) continue;
                     p.Kind = other.Kind == TileKind.Bomb ? TileKind.Bomb : _random.Next(2) == 0 ? TileKind.RocketH : TileKind.RocketV;
-                    p.Color = -1;
+                    if (other.Kind == TileKind.Bomb) p.Color = -1;
                     step.Changed.Add(Info(p, c));
                     cells.Add(c);
                 }

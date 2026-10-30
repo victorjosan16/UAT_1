@@ -23,9 +23,88 @@ namespace SugarDrop
         public static Sprite Shadow(int color) =>
             color >= 0 && ArtLibrary.Find("piece" + color) != null ? SugarSprites.SoftDot : Get("pieceshadow" + color, () => Render(Size, color, PieceKind.Shadow));
 
-        /// <summary>Dungi albe decupate după forma piesei (capac dungat), orizontale sau verticale.</summary>
+        /// <summary>
+        /// Dungi albe decupate exact după forma piesei (orizontale sau verticale): piesa dungată își păstrează forma.
+        /// Pentru imaginile pictate (Resources/Art/piece0..4) dungile se iau din transparența imaginii; dacă imaginea nu
+        /// se poate citi, se folosește forma desenată din cod.
+        /// </summary>
         public static Sprite Stripes(int color, bool horizontal) =>
-            Get($"piecestripes{color}{horizontal}", () => Render(Size, color, horizontal ? PieceKind.StripesH : PieceKind.StripesV));
+            GetUncached($"piecestripes{color}{horizontal}", () => StripesFromArt(color, horizontal) ?? Render(Size, color, horizontal ? PieceKind.StripesH : PieceKind.StripesV));
+
+        private static Sprite StripesFromArt(int color, bool horizontal)
+        {
+            Sprite art = ArtLibrary.Find("piece" + color);
+            if (art == null || art.texture == null || !art.texture.isReadable) return null;
+            try
+            {
+                Rect rect = art.rect;
+                int w = Mathf.RoundToInt(rect.width), h = Mathf.RoundToInt(rect.height);
+                Color32[] source = art.texture.GetPixels32();
+                int stride = art.texture.width, x0 = Mathf.RoundToInt(rect.x), y0 = Mathf.RoundToInt(rect.y);
+                var pixels = new Color32[w * h];
+                float scale = 128f / Mathf.Max(w, h);
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        float alpha = source[(y0 + y) * stride + x0 + x].a / 255f;
+                        float coord = (horizontal ? y : x) * scale;
+                        float band = Mathf.Clamp01(4.5f - Mathf.Abs(Mathf.Repeat(coord, 24f) - 12f));
+                        float inner = alpha * alpha * alpha * alpha;
+                        pixels[y * w + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(band * inner * 0.9f * 255f));
+                    }
+                var texture = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                texture.SetPixels32(pixels);
+                texture.Apply(false, true);
+                return Sprite.Create(texture, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), art.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+            }
+            catch (System.Exception)
+            {
+                return null; // textură comprimată / nelizibilă: rămâne desenul din cod
+            }
+        }
+
+        /// <summary>Capacul curcubeu (5 în linie): bilă în culoarea ei, cu luciu alb.</summary>
+        public static Sprite ColorBall(int color) => GetUncached("colorball" + color, () => BallSprite(color, false));
+
+        /// <summary>Spirala albă a bilei (se rotește peste bila colorată).</summary>
+        public static Sprite BallSwirl(int color) => GetUncached("ballswirl" + color, () => BallSprite(color, true));
+
+        private static Sprite BallSprite(int color, bool swirl)
+        {
+            const int size = 128;
+            Color tint = color >= 0 && color < Colors.Length ? Colors[color] : new Color(0.97f, 0.95f, 1f);
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    var p = new Vector2(x + 0.5f - 64f, y + 0.5f - 64f);
+                    float d = p.magnitude - 56f;
+                    float alpha = Mathf.Clamp01(0.5f - d);
+                    // Spirala: benzi albe care se învârt din centru (alternează alb / culoare).
+                    float angle = Mathf.Atan2(p.y, p.x) / (Mathf.PI * 2f);
+                    float t = Mathf.Repeat(angle * 4f + p.magnitude / 28f, 1f);
+                    float white = t < 0.5f ? 1f : 0f;
+                    Color c;
+                    if (swirl)
+                    {
+                        c = new Color(1f, 1f, 1f, alpha * white * 0.92f * Mathf.Clamp01((54f - p.magnitude) / 3f));
+                    }
+                    else
+                    {
+                        float light = Mathf.Clamp01(0.62f + 0.38f * (-p.x * 0.45f + p.y * 0.6f) / 56f);
+                        float rim = Mathf.Clamp01((-d - 1f) / 5f);
+                        c = Color.Lerp(tint * 0.7f, tint, light) * Mathf.Lerp(0.75f, 1f, rim);
+                        float gloss = Mathf.Clamp01(1f - (new Vector2(p.x + 22f, p.y - 26f).magnitude) / 14f);
+                        c = Color.Lerp(c, Color.white, gloss * 0.8f);
+                        c.a = alpha;
+                    }
+                    pixels[y * size + x] = c;
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+        }
 
         /// <summary>Perlă albă lucioasă (baza capacului curcubeu).</summary>
         public static Sprite Pearl => Get("pearl", () => Render(Size, -1, PieceKind.Body));
@@ -241,6 +320,16 @@ namespace SugarDrop
             texture.SetPixels32(pixels);
             texture.Apply(false, true);
             return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+        }
+
+        /// <summary>Ca Get, dar fără imaginea PNG de înlocuire (sprite-uri generate din alte sprite-uri).</summary>
+        private static Sprite GetUncached(string key, Func<Sprite> create)
+        {
+            if (Cache.TryGetValue(key, out Sprite sprite) && sprite != null) return sprite;
+            sprite = create();
+            sprite.name = key;
+            Cache[key] = sprite;
+            return sprite;
         }
 
         private static Sprite Get(string key, Func<Sprite> create)
