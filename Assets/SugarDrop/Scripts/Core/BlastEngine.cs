@@ -350,18 +350,18 @@ namespace SugarDrop
         }
 
         /// <summary>
-        /// Bila multicoloră (5 în linie) se activează când o atingi (o schimbi) cu o piesă colorată din preajmă:
-        /// atunci elimină de pe toată tabla piesele acelei culori. Se combină și cu alte piese speciale.
+        /// Schimbul activează o piesă specială. Piesa dungată (alb + culoare) se mută ca o piesă obișnuită a culorii ei:
+        /// pornește doar când face parte dintr-o linie de 3+ din aceeași culoare, nu când e mutată în orice direcție.
+        /// Bila multicoloră pornește cu o piesă colorată vecină; bomba și piesele speciale fără culoare, la orice mutare.
+        /// Două piese speciale vecine se combină mereu.
         /// </summary>
-        private static bool RainbowTriggers(Piece rainbow, Piece other) =>
-            other.IsSpecial || CanMatch(other);
-
-        /// <summary>Schimbul activează o piesă specială (rachetă, bombă sau curcubeu cu piesa potrivită).</summary>
         private static bool Activates(Piece a, Piece b)
         {
             if (!a.IsSpecial && !b.IsSpecial) return false;
-            if (a.Kind == TileKind.Rainbow && !RainbowTriggers(a, b)) return false;
-            if (b.Kind == TileKind.Rainbow && !RainbowTriggers(b, a)) return false;
+            if (a.IsSpecial && b.IsSpecial) return true;
+            Piece special = a.IsSpecial ? a : b, other = a.IsSpecial ? b : a;
+            if (IsStriped(special)) return false;
+            if (special.Kind == TileKind.Rainbow) return CanMatch(other);
             return true;
         }
 

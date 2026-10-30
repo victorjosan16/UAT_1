@@ -543,7 +543,7 @@ namespace SugarDrop
                     break;
                 case LevelType.Descent:
                     // Bobo pornește din rândul de sus și trebuie dus până jos.
-                    moves = 9f + chapter * 0.4f;
+                    moves = 9f + chapter * 0.4f + (chapter == 0 ? 4f : 0f); // primul ținut: Bobo învață să coboare, cu mutări în plus
                     // „Frații”: doi Bobo de dus jos, mai multe mutări.
                     if (scenario == LevelScenario.Twins)
                     {

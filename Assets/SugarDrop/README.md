@@ -24,8 +24,10 @@ ciupercă, ametist).
 | L sau T | **Bombă** | explozie 3×3 (tăiată la marginea tablei) |
 | 5 în linie | **Bilă multicoloră** | atinsă (schimbată) cu o piesă colorată din preajmă, elimină de pe toată tabla piesele acelei culori |
 
-Piesa specială apare în celula unde ai mutat bomboana (sau la mijlocul liniei, în cascade). **O piesă specială se
-activează când o muți** (schimbi cu orice vecină). Bila multicoloră se activează la fel, cu orice piesă colorată vecină).
+Piesa specială apare în celula unde ai mutat bomboana (sau la mijlocul liniei, în cascade). **Bomba** pornește la orice mutare, **bila
+multicoloră** când o muți peste o piesă colorată vecină, iar **piesa dungată** doar când face parte dintr-o linie de 3+ din
+propria culoare (albastră cu albastre, verde cu verzi etc.); cu altă culoare nu pornește, iar mutarea fără linie nu se face.
+Două piese speciale vecine se combină mereu.
 Exploziile activează în lanț piesele speciale lovite, fiecare o singură dată. Bomboanele cu gheață sau lanț pot face
 parte dintr-o linie: linia le sparge un strat.
 
