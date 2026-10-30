@@ -13,9 +13,9 @@ clasamentul arată doar rândul tău și mesajul „Clasamentul online nu e disp
 
 ## 1. Proiectul în Unity Cloud (o singură dată)
 1. Intră pe **https://cloud.unity.com** cu contul tău Unity.
-2. Alege proiectul folosit de Build Automation pentru Drop Quest. Proiectul din cloud e deja legat de build,
-   deci nu trebuie legat încă o dată.
-3. Notează **Project ID**-ul din **Project settings**. Îți trebuie doar dacă la pasul 4 clasamentul nu se conectează.
+2. Alege proiectul folosit de Build Automation pentru Drop Quest. Build-ul din cloud **nu** leagă singur proiectul: Project ID-ul e scris în
+   `Scripts/Online/SugarOnlineConfig.cs` (`ProjectId`) și aplicat de Pre-Export. Dacă schimbi proiectul, schimbă-l și acolo.
+3. Notează **Project ID**-ul din **Project settings**. Se completează în `SugarOnlineConfig.ProjectId`.
 
 ## 2. Autentificarea anonimă
 **Products → Player Authentication → Identity providers**: verifică dacă **Anonymous** e activ (de obicei e, din oficiu).
