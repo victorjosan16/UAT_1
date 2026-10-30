@@ -15,6 +15,8 @@ namespace SugarDrop
         public event Action PauseClicked;
         public event Action SkipClicked;
         private GameObject _skipFinale;
+        private UiLabel _livesCount;
+        private int _livesShown = -1;
         private UiLabel _skipFinaleLabel;
         /// <summary>Jucătorul a atins butonul Puterii lui Bobo.</summary>
         public event Action PowerClicked;
@@ -133,6 +135,13 @@ namespace SugarDrop
                     PauseClicked?.Invoke();
                 }, 0.45f);
             UiFactory.Place((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -16f), new Vector2(82f, 82f));
+
+            // Viețile rămase, mereu la vedere în nivel (jos-stânga, deasupra ajutoarelor).
+            Image lifeHeart = UiFactory.CreateImage("Lives", transform, SugarSprites.LifeHeart, Color.white);
+            UiFactory.Place(lifeHeart.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(26f, 316f), new Vector2(130f, 130f));
+            lifeHeart.raycastTarget = false;
+            _livesCount = SugarUi.Outlined("Count", lifeHeart.transform, "", 54, Color.white);
+            UiFactory.Stretch(_livesCount.RectTransform);
 
             // „Sari”: în finalul dulce, după câștig, grăbește animațiile (scorul rămâne același).
             Button skip = SugarUi.Button("SkipFinale", transform, "", QuestStyle.Blue, () => SkipClicked?.Invoke(), 40);
@@ -547,6 +556,11 @@ namespace SugarDrop
 
         private void Update()
         {
+            if (_livesCount != null && _livesShown != SugarSave.Data.lives)
+            {
+                _livesShown = SugarSave.Data.lives;
+                _livesCount.Text = _livesShown.ToString();
+            }
             // Puterea lui Bobo plină: cercul strălucește și pulsează ca să fie observată.
             if (_power != null && _power.gameObject.activeSelf)
             {
