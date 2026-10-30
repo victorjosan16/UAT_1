@@ -140,6 +140,7 @@ namespace SugarDrop
             }
 
             PlaceBobo(layout);
+            PlaceComboSpecials(layout);
 
             // Tabla pornește fără linii gata făcute (ca în jocurile clasice).
             BreakMatches();
@@ -1135,16 +1136,21 @@ namespace SugarDrop
                 var columns = new List<int>();
                 for (int x = 1; x < Columns - 1; x++)
                     if (ColumnClear(x)) columns.Add(x);
-                int column = columns.Count > 0 ? columns[layout.Next(columns.Count)] : Columns / 2;
-                int y = Config.Type == LevelType.Frozen
-                    ? Math.Clamp(Rows / 2 + 1, Config.ColumnBottom[column] + 2, Config.ColumnTop[column])
-                    : Config.ColumnTop[column];
-                Piece bobo = At(new Vector2Int(column, y));
-                if (bobo != null)
+                // „Frații”: doi Bobo, în coloane diferite.
+                for (int b = 0; b < Math.Max(1, Config.Bobos); b++)
                 {
-                    Set(bobo, TileKind.Ingredient, BlastRules.BoboColor, 0);
-                    bobo.Ice = Config.BoboIce;
-                    IngredientsOnBoard++;
+                    int column = columns.Count > 0 ? columns[layout.Next(columns.Count)] : Columns / 2;
+                    columns.Remove(column);
+                    int y = Config.Type == LevelType.Frozen
+                        ? Math.Clamp(Rows / 2 + 1, Config.ColumnBottom[column] + 2, Config.ColumnTop[column])
+                        : Config.ColumnTop[column];
+                    Piece bobo = At(new Vector2Int(column, y));
+                    if (bobo != null)
+                    {
+                        Set(bobo, TileKind.Ingredient, BlastRules.BoboColor, 0);
+                        bobo.Ice = Config.BoboIce;
+                        IngredientsOnBoard++;
+                    }
                 }
             }
             if (Config.Fires <= 0) return;
@@ -1157,6 +1163,21 @@ namespace SugarDrop
             Shuffle(top, layout);
             for (int i = 0; i < Config.Fires && i < top.Count; i++) Set(At(top[i]), TileKind.Fire, -1, 1);
             PlaceTanks(layout);
+        }
+
+        /// <summary>Nivelurile „Combinații”: pe tablă sunt de la start piese speciale (rachete și bombe), ca să ai ce uni.</summary>
+        private void PlaceComboSpecials(System.Random layout)
+        {
+            if (Config.Type != LevelType.Combo) return;
+            var cells = new List<Vector2Int>();
+            foreach (Vector2Int c in ValidCells())
+                if (c.y < Config.ColumnTop[c.x] && c.y > Config.ColumnBottom[c.x] && At(c) is { Kind: TileKind.Normal, Locked: false }) cells.Add(c);
+            Shuffle(cells, layout);
+            for (int i = 0; i < Config.ComboTarget * 2 + 2 && i < cells.Count; i++)
+            {
+                TileKind kind = i % 3 == 2 ? TileKind.Bomb : i % 2 == 0 ? TileKind.RocketH : TileKind.RocketV;
+                Set(At(cells[i]), kind, -1, 0);
+            }
         }
 
         /// <summary>Rezervoarele de apă stau în rândul de sus, pe coloane depărtate una de alta (nivelurile „Apa din cer”).</summary>

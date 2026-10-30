@@ -3,7 +3,17 @@ using UnityEngine;
 namespace SugarDrop
 {
     /// <summary>Ce cere un nivel.</summary>
-    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus, Descent, Frozen, Blaze }
+    public enum LevelType { Score, Collect, Ingredients, Frosting, Boss, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse, Bonus, Descent, Frozen, Blaze, Craft, Combo }
+
+    /// <summary>
+    /// Scenariul nivelurilor de după 50: fiecare nivel dintr-un ținut are altă sarcină (niciun scenariu nu se repetă în
+    /// același ținut, iar pe aceeași poziție nu e același ca în ținutul dinainte). Detaliile sunt în <see cref="LevelConfig.ScenarioOf"/>.
+    /// </summary>
+    public enum LevelScenario
+    {
+        None, Score, Collect, Frosting, Ingredients, Crates, Ice, Chains, Chocolate, Specials, Garden, Defuse,
+        Craft, Combo, Descent, Frozen, Blaze, Flood, Pressure, Twins,
+    }
 
     /// <summary>Dificultatea unui nivel în „valul” capitolului său.</summary>
     public enum Difficulty { Easy, Normal, Hard, VeryHard, Boss, MegaBoss }
@@ -88,6 +98,13 @@ namespace SugarDrop
         /// <summary>Rezervoare de apă sus pe tablă (nivelurile „Apa din cer”, de la nivelul 51) și câte lovituri rezistă fiecare.</summary>
         public readonly int Tanks;
         public readonly int TankHits;
+        /// <summary>Câți Bobo trebuie duși jos (2 la „Frații”, de la nivelul 71).</summary>
+        public readonly int Bobos;
+        /// <summary>Nivelurile „Creează”: ce piesă (0 dungată, 1 bombă, 2 bilă multicoloră) și câte; nivelurile „Combinații”: câte.</summary>
+        public readonly int CraftKind;
+        public readonly int CraftTarget;
+        public readonly int ComboTarget;
+        public readonly LevelScenario Scenario;
         /// <summary>Bobo e o piesă pe tablă care trebuie dusă jos, la ieșire.</summary>
         public bool HasBobo => Type is LevelType.Descent or LevelType.Frozen;
 
@@ -106,7 +123,7 @@ namespace SugarDrop
             int ingredients, int[] collectColors, int[] collectCounts, int frosting, int doubleFrosting, int scoreTarget, int specialsTarget,
             int crates, int crateHits, int ice, int iceLayers, int chains, int chocolate,
             int pots, int timeBombs, int timeBombStart, int timeBombGoal, int[] portalIn, int[] portalOut, int bonusSeconds,
-            int boboIce, int fires, int fireEvery, int tanks, int tankHits)
+            int boboIce, int fires, int fireEvery, int tanks, int tankHits, int bobos, int craftKind, int craftTarget, int comboTarget, LevelScenario scenario)
         {
             Level = level;
             Chapter = (level - 1) / ChapterSize;
@@ -144,6 +161,11 @@ namespace SugarDrop
             FireEvery = fireEvery;
             Tanks = tanks;
             TankHits = tankHits;
+            Bobos = bobos;
+            CraftKind = craftKind;
+            CraftTarget = craftTarget;
+            ComboTarget = comboTarget;
+            Scenario = scenario;
         }
 
         public static bool IsBossLevel(int level) => level > 0 && level % ChapterSize == 0;
@@ -167,6 +189,7 @@ namespace SugarDrop
             if (level == 1) return LevelType.Score;
             if (IsBossLevel(level)) return LevelType.Boss;
             if (IsBonusLevel(level)) return LevelType.Bonus;
+            if (level >= SchedulerFrom) return TypeOfScenario(ScenarioOf(level));
             if (BoboTypeFor(level) is LevelType bobo) return bobo;
             // Mecanica ținutului e „vedeta” lui: în Pădurea de Mentă (11–20) grădinile, în Deșertul de Lămâie (31–40)
             // bombele cu ceas apar la fiecare al treilea nivel; după aceea intră în rotația obișnuită.
@@ -194,12 +217,11 @@ namespace SugarDrop
             int index = (Mathf.Max(1, level) - 1) % ChapterSize;
             int chapter = (Mathf.Max(1, level) - 1) / ChapterSize;
             if (index is not (2 or 5 or 7 or 8)) return null;
+            if (level >= SchedulerFrom) return BoboTypeOfScenario(ScenarioOf(level));
             bool first = index is 2 or 7;
             LevelType[] rotation = { LevelType.Descent, LevelType.Blaze, LevelType.Frozen };
             (LevelType a, LevelType b) = chapter switch
             {
-                // De la nivelul 51: două niveluri cu foc pe capitol (al 6-lea și al 9-lea), restul coborâre / gheață pe rând.
-                >= 5 => (chapter % 2 == 0 ? LevelType.Frozen : LevelType.Descent, LevelType.Blaze),
                 0 => (LevelType.Descent, LevelType.Descent),
                 1 => (LevelType.Blaze, LevelType.Descent),
                 2 => (LevelType.Frozen, LevelType.Blaze),
@@ -208,6 +230,130 @@ namespace SugarDrop
             };
             return first ? a : b;
         }
+
+        // ------------------------------------------------------------ Scenariile de după nivelul 50
+
+        /// <summary>De la ce nivel fiecare ținut are 8 sarcini diferite (fără repetări în ținut).</summary>
+        public const int SchedulerFrom = 51;
+
+        private static readonly int[] BoboSlots = { 2, 5, 7, 8 };
+        private static readonly int[] PlainSlots = { 0, 1, 3, 6 };
+        private static readonly System.Collections.Generic.Dictionary<int, LevelScenario[]> Plans = new();
+
+        /// <summary>Scenariul nivelului (None înainte de 51, la Boss și la Sugar Rush).</summary>
+        public static LevelScenario ScenarioOf(int level)
+        {
+            if (level < SchedulerFrom || IsBossLevel(level) || IsBonusLevel(level)) return LevelScenario.None;
+            return PlanFor((level - 1) / ChapterSize)[(level - 1) % ChapterSize];
+        }
+
+        /// <summary>
+        /// Planul unui ținut: 4 niveluri cu Bobo (mereu focul și apa din cer, plus două dintre coborâre / gheață / presiune /
+        /// frați, cel nou al ținutului fiind obligatoriu) și 4 niveluri obișnuite, toate diferite. Pe aceeași poziție nu
+        /// se repetă scenariul din ținutul de dinainte. Determinist: același ținut arată la fel mereu.
+        /// </summary>
+        private static LevelScenario[] PlanFor(int chapter)
+        {
+            if (Plans.TryGetValue(chapter, out LevelScenario[] cached)) return cached;
+            LevelScenario[] previous = chapter > SchedulerFrom / ChapterSize ? PlanFor(chapter - 1) : null;
+            var random = new System.Random(chapter * 7919 + 13);
+            var plan = new LevelScenario[ChapterSize];
+
+            var others = new System.Collections.Generic.List<LevelScenario> { LevelScenario.Descent, LevelScenario.Frozen };
+            if (chapter >= 6) others.Add(LevelScenario.Pressure);
+            if (chapter >= 7) others.Add(LevelScenario.Twins);
+            var bobo = new System.Collections.Generic.List<LevelScenario> { LevelScenario.Blaze, LevelScenario.Flood };
+            LevelScenario fresh = chapter == 6 ? LevelScenario.Pressure : chapter == 7 ? LevelScenario.Twins : LevelScenario.None;
+            if (fresh != LevelScenario.None)
+            {
+                bobo.Add(fresh);
+                others.Remove(fresh);
+            }
+            ShuffleList(others, random);
+            while (bobo.Count < 4)
+            {
+                bobo.Add(others[0]);
+                others.RemoveAt(0);
+            }
+            Assign(plan, BoboSlots, bobo, previous, random);
+
+            var pool = new System.Collections.Generic.List<LevelScenario>
+            {
+                LevelScenario.Collect, LevelScenario.Ingredients, LevelScenario.Crates, LevelScenario.Frosting, LevelScenario.Ice,
+                LevelScenario.Chains, LevelScenario.Chocolate, LevelScenario.Specials, LevelScenario.Garden, LevelScenario.Defuse,
+                LevelScenario.Craft, LevelScenario.Combo, LevelScenario.Score,
+            };
+            var plain = new System.Collections.Generic.List<LevelScenario>();
+            if (chapter == SchedulerFrom / ChapterSize)
+            {
+                // Primul ținut de după 50 aduce sarcinile noi: „Creează” și „Combinații”.
+                plain.Add(LevelScenario.Craft);
+                plain.Add(LevelScenario.Combo);
+                pool.Remove(LevelScenario.Craft);
+                pool.Remove(LevelScenario.Combo);
+            }
+            ShuffleList(pool, random);
+            while (plain.Count < 4)
+            {
+                plain.Add(pool[0]);
+                pool.RemoveAt(0);
+            }
+            Assign(plan, PlainSlots, plain, previous, random);
+            Plans[chapter] = plan;
+            return plan;
+        }
+
+        private static void ShuffleList<T>(System.Collections.Generic.List<T> list, System.Random random)
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
+            }
+        }
+
+        /// <summary>Pune scenariile pe poziții, încercând să nu repete ce era pe aceeași poziție în ținutul dinainte.</summary>
+        private static void Assign(LevelScenario[] plan, int[] slots, System.Collections.Generic.List<LevelScenario> items, LevelScenario[] previous, System.Random random)
+        {
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                ShuffleList(items, random);
+                bool clash = false;
+                if (previous != null)
+                    for (int i = 0; i < slots.Length; i++)
+                        if (previous[slots[i]] == items[i]) clash = true;
+                if (!clash) break;
+            }
+            for (int i = 0; i < slots.Length; i++) plan[slots[i]] = items[i];
+        }
+
+        private static LevelType TypeOfScenario(LevelScenario scenario) => scenario switch
+        {
+            LevelScenario.Collect => LevelType.Collect,
+            LevelScenario.Frosting => LevelType.Frosting,
+            LevelScenario.Ingredients => LevelType.Ingredients,
+            LevelScenario.Crates => LevelType.Crates,
+            LevelScenario.Ice => LevelType.Ice,
+            LevelScenario.Chains => LevelType.Chains,
+            LevelScenario.Chocolate => LevelType.Chocolate,
+            LevelScenario.Specials => LevelType.Specials,
+            LevelScenario.Garden => LevelType.Garden,
+            LevelScenario.Defuse => LevelType.Defuse,
+            LevelScenario.Craft => LevelType.Craft,
+            LevelScenario.Combo => LevelType.Combo,
+            LevelScenario.Descent or LevelScenario.Pressure or LevelScenario.Twins => LevelType.Descent,
+            LevelScenario.Frozen => LevelType.Frozen,
+            LevelScenario.Blaze or LevelScenario.Flood => LevelType.Blaze,
+            _ => LevelType.Score,
+        };
+
+        private static LevelType? BoboTypeOfScenario(LevelScenario scenario) => scenario switch
+        {
+            LevelScenario.Descent or LevelScenario.Pressure or LevelScenario.Twins => LevelType.Descent,
+            LevelScenario.Frozen => LevelType.Frozen,
+            LevelScenario.Blaze or LevelScenario.Flood => LevelType.Blaze,
+            _ => null,
+        };
 
         /// <summary>Un tip de nivel cu obstacole apare abia de la nivelul în care e introdus obstacolul lui.</summary>
         private static bool Unlocked(LevelType type, int level) => type switch
@@ -292,7 +438,8 @@ namespace SugarDrop
 
             int ingredients = 0, frosting = 0, doubleFrosting = 0, scoreTarget = 0, specialsTarget = 0;
             int pots = 0, timeBombs = 0, timeBombStart = 0, timeBombGoal = 0, bonusSeconds = 0;
-            int boboIce = 0, fires = 0, fireEvery = 0, tanks = 0, tankHits = 2;
+            int boboIce = 0, fires = 0, fireEvery = 0, tanks = 0, tankHits = 2, bobos = 1, craftKind = 0, craftTarget = 0, comboTarget = 0;
+            LevelScenario scenario = ScenarioOf(level);
             int crateHits = level >= 15 && difficulty != Difficulty.Easy ? 2 : 1;
             int iceLayers = level < 15 ? 1 : level < 30 ? 2 : 3;
             // Câte obstacole are nivelul care le are ca obiectiv (lăzi, gheață, lanțuri, ciocolată).
@@ -366,6 +513,23 @@ namespace SugarDrop
                 case LevelType.Descent:
                     // Bobo pornește din rândul de sus și trebuie dus până jos.
                     moves = 9f + chapter * 0.4f;
+                    // „Frații”: doi Bobo de dus jos, mai multe mutări.
+                    if (scenario == LevelScenario.Twins)
+                    {
+                        bobos = 2;
+                        moves += 7f;
+                    }
+                    break;
+                case LevelType.Craft:
+                    // Creează piese speciale: 0 = piese dungate (4 în linie), 1 = bombe (L / T), 2 = bile multicolore (5 în linie).
+                    craftKind = random.Next(3);
+                    craftTarget = craftKind switch { 0 => Focus(4 + chapter * 0.2f, 4, 7), 1 => Focus(3 + chapter * 0.15f, 3, 5), _ => Focus(2 + chapter * 0.1f, 2, 4) };
+                    moves = craftKind switch { 0 => 6f + craftTarget * 3f, 1 => 7f + craftTarget * 4.5f, _ => 8f + craftTarget * 6f };
+                    break;
+                case LevelType.Combo:
+                    // Combinații: unește două piese speciale vecine (rachetă + bombă etc.).
+                    comboTarget = Mathf.Clamp(Mathf.RoundToInt((1 + (chapter - 5) / 3f) * goalFactor), 1, 3);
+                    moves = 13f + comboTarget * 8f;
                     break;
                 case LevelType.Frozen:
                     // Întâi se sparge gheața din jurul lui (liniile de lângă el), apoi coboară de la mijloc.
@@ -377,9 +541,8 @@ namespace SugarDrop
                     fires = Focus(3 + chapter * 0.45f, 3, 8);
                     fireEvery = chapter >= 3 && difficulty is Difficulty.Hard or Difficulty.VeryHard ? 2 : 3;
                     moves = 4f + fires * 2.2f;
-                    // „Apa din cer”: de la nivelul 51, două niveluri cu foc pe capitol au rezervoare sus; obiectivul e să le spargi.
-                    int slot = (level - 1) % ChapterSize;
-                    if (level >= FloodFrom && (slot == 5 || slot == 8 && difficulty is Difficulty.Hard or Difficulty.VeryHard))
+                    // „Apa din cer”: rezervoare sus; obiectivul e să le spargi, apa lor stinge focul de pe coloană.
+                    if (scenario == LevelScenario.Flood)
                     {
                         tanks = Mathf.Clamp(2 + (chapter - 5) / 2, 2, 4);
                         tankHits = chapter >= 7 ? 3 : 2;
@@ -411,9 +574,8 @@ namespace SugarDrop
                 }
                 moves = 3 + total / 5.5f;
             }
-            // „Salvare sub presiune”: în al 8-lea nivel al fiecărui ținut de după 60, Bobo coboară (sau iese din gheață)
-            // în timp ce bombele cu ceas ticăie; o bombă neacoperită la timp pierde nivelul.
-            if (type is LevelType.Descent or LevelType.Frozen && level >= PressureFrom && (level - 1) % ChapterSize == 7)
+            // „Salvare sub presiune”: Bobo coboară în timp ce bombele cu ceas ticăie; o bombă neacoperită la timp pierde nivelul.
+            if (scenario == LevelScenario.Pressure)
             {
                 timeBombs = 1;
                 timeBombStart = difficulty switch { Difficulty.Easy => 15, Difficulty.Normal => 13, _ => 11 };
@@ -485,7 +647,7 @@ namespace SugarDrop
 
             return new LevelConfig(level, difficulty, colors, finalMoves, type, bottom, top, ingredients, collectColors, collectCounts,
                 frosting, doubleFrosting, scoreTarget, specialsTarget, crates, crateHits, ice, iceLayers, chains, chocolate,
-                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds, boboIce, fires, fireEvery, tanks, tankHits);
+                pots, timeBombs, timeBombStart, timeBombGoal, portalIn, portalOut, bonusSeconds, boboIce, fires, fireEvery, tanks, tankHits, bobos, craftKind, craftTarget, comboTarget, ScenarioOf(level));
         }
 
         /// <summary>

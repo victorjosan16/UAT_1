@@ -23,7 +23,8 @@ namespace SugarDrop.Tests
                     || c.SpecialsTarget > 0 || c.Type == LevelType.Crates && c.Crates > 0 || c.Type == LevelType.Ice && c.Ice > 0
                     || c.Type == LevelType.Chains && c.Chains > 0 || c.Type == LevelType.Chocolate && c.Chocolate > 0
                     || c.Type == LevelType.Garden && c.Pots > 0 || c.Type == LevelType.Defuse && c.TimeBombGoal > 0 || c.IsBonus
-                    || c.HasBobo || c.Type == LevelType.Blaze && c.Fires > 0;
+                    || c.HasBobo || c.Type == LevelType.Blaze && c.Fires > 0
+                    || c.Type == LevelType.Craft && c.CraftTarget > 0 || c.Type == LevelType.Combo && c.ComboTarget > 0;
                 Assert.IsTrue(hasGoal, $"nivel {level} fără obiectiv");
             }
         }
