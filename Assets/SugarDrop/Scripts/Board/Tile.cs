@@ -130,6 +130,11 @@ namespace SugarDrop
                     ShowOverlay(SugarSprites.Sprout(Mathf.Clamp(BlastRules.PotHits - Hits, 0, 2)), Color.white);
                     return;
 
+                case TileKind.Tank:
+                    _base.sprite = SugarSprites.Tank;
+                    if (cracked) ShowOverlay(SugarSprites.BiscuitCrack, new Color(0.05f, 0.18f, 0.4f, 0.9f));
+                    return;
+
                 case TileKind.Crate:
                     _base.sprite = SugarSprites.Crate;
                     if (cracked) ShowOverlay(SugarSprites.BiscuitCrack, new Color(0.3f, 0.17f, 0.08f, 0.9f));

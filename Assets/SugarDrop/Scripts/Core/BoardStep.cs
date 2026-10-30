@@ -74,6 +74,8 @@ namespace SugarDrop
         public readonly List<PieceInfo> Exits = new();
         /// <summary>Bombele cu ceas care au ajuns la 0 în acest pas (nivel pierdut).</summary>
         public readonly List<PieceInfo> Expired = new();
+        /// <summary>Rezervoare sparte în acest pas: celula lor (apa curge în jos pe coloană și stinge focul).</summary>
+        public readonly List<Vector2Int> Floods = new();
         /// <summary>Straturi de gheață sparte și lanțuri rupte în acest pas (pentru obiective).</summary>
         public int IceLayersBroken;
         public int ChainsBroken;

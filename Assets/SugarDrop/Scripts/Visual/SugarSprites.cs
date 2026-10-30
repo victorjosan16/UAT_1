@@ -356,6 +356,27 @@ namespace SugarDrop
             return c;
         }));
 
+        /// <summary>Rezervor de apă (după nivelul 50): butoi albastru, cu benzi metalice și o picătură albă.</summary>
+        public static Sprite Tank => Get("tank", () => Paint(128, (x, y) =>
+        {
+            float d = RoundRect(x, y, 10, 6, 108, 116, 30);
+            var water = new Color(0.2f, 0.58f, 0.95f);
+            var deep = new Color(0.1f, 0.36f, 0.72f);
+            var band = new Color(0.82f, 0.86f, 0.92f);
+            float shade = Mathf.Clamp01((x - 10f) / 108f);
+            Color c = Color.Lerp(water, deep, Mathf.Abs(shade - 0.35f) * 1.4f);
+            if (Mathf.Abs(y - 30f) < 5f || Mathf.Abs(y - 98f) < 5f) c = band; // benzile
+            // Picătura albă din mijloc.
+            Vector2 p = new(x - 64f, y - 62f);
+            float drop = Mathf.Min(p.magnitude - 17f, Mathf.Max(Mathf.Abs(p.x) * 1.4f + (p.y - 8f) * 0.7f - 15f, -p.y - 17f));
+            if (drop < 0f) c = Color.Lerp(c, Color.white, 0.92f);
+            if (p.x < -4f && p.y > -8f && p.x > -12f && Mathf.Abs(p.y) < 8f) c = Color.Lerp(c, water, 0.5f); // luciu pe picătură
+            // Margine închisă.
+            c = Color.Lerp(c, deep * 0.65f, Mathf.Clamp01((-d - 0f) < 5f ? 1f - (-d) / 5f : 0f));
+            c.a = Alpha(d);
+            return c;
+        }));
+
         /// <summary>Lanț în X peste o bomboană legată.</summary>
         public static Sprite Chain => Get("chain", () => Paint(128, (x, y) =>
         {
