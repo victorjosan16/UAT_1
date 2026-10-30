@@ -175,6 +175,36 @@ namespace SugarDrop.Tests
         }
 
         [Test]
+        public void StripedPiece_MovedWithoutALine_DoesNotActivate_AndTheSwapIsRefused()
+        {
+            // Dungata albastră (culoare 1) mutată pe lângă piese care nu fac linie: nu pornește, mutarea nu se face.
+            BlastEngine engine = Board();
+            engine.DebugSet(new Vector2Int(4, 4), TileKind.RocketH, 1);
+            Paint(engine, 0, (4, 5)); // vecina nu face nicio linie nici ea
+            Assert.IsFalse(engine.IsValidSwap(new Vector2Int(4, 4), new Vector2Int(4, 5)), "mutarea nu face nicio linie");
+            Assert.IsNull(engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5)));
+        }
+
+        [Test]
+        public void StripedPiece_ActivatesOnlyInALineOfItsOwnColor()
+        {
+            // Aceeași dungată (culoare 1): cu două piese de altă culoare (0) alături nu face linie…
+            BlastEngine engine = Board();
+            engine.DebugSet(new Vector2Int(2, 4), TileKind.RocketV, 1);
+            Paint(engine, 0, (3, 4), (4, 5));
+            List<BoardStep> steps = engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5));
+            Assert.IsTrue(steps == null || !steps.Exists(st => st.Activations.Exists(act => act.Kind == TileKind.RocketV)), "culori diferite: dungata nu pornește");
+
+            // …iar cu piese din culoarea ei (1) face linie și pornește.
+            engine = Board();
+            engine.DebugSet(new Vector2Int(2, 4), TileKind.RocketV, 1);
+            Paint(engine, 1, (3, 4), (4, 5));
+            steps = engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5));
+            Assert.IsNotNull(steps);
+            Assert.IsTrue(steps.Exists(st => st.Activations.Exists(act => act.Kind == TileKind.RocketV)), "aceeași culoare: dungata pornește");
+        }
+
+        [Test]
         public void StripedPiece_Horizontal_ClearsItsRow()
         {
             BlastEngine engine = Board();

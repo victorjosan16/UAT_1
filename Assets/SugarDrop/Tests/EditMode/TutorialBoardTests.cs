@@ -30,7 +30,7 @@ namespace SugarDrop.Tests
         }
 
         [Test]
-        public void SecondMove_MakesARocket_ThatCanBeFired()
+        public void SecondMove_MakesAStripedPiece()
         {
             BlastEngine engine = Engine();
             engine.Swap(TutorialBoard.MatchFrom, TutorialBoard.MatchTo);
@@ -40,9 +40,8 @@ namespace SugarDrop.Tests
             foreach (BoardStep step in steps)
                 foreach (PieceInfo piece in step.Changed)
                     rocket |= BlastRules.IsRocket(piece.Kind);
-            Assert.IsTrue(rocket, "4 la rând fac o rachetă");
+            Assert.IsTrue(rocket, "4 la rând fac o piesă dungată");
             Assert.IsTrue(engine.IsSpecialAt(TutorialBoard.RocketTo));
-            Assert.IsTrue(engine.IsValidSwap(TutorialBoard.RocketTo, TutorialBoard.RocketTo + Vector2Int.up), "racheta se poate muta ca să explodeze");
         }
     }
 }

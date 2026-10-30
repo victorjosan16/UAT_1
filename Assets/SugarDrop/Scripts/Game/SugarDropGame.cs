@@ -1036,17 +1036,12 @@ namespace SugarDrop
                     ShowSwapHint(TutorialBoard.MatchFrom, TutorialBoard.MatchTo);
                     break;
                 case TutorialStep.Rocket:
-                    coach.ShowAction(SugarLoc.T("Bravo! Acum fă 4 la rând: așa se face o rachetă!"));
+                    coach.ShowAction(SugarLoc.T("Bravo! Acum fă 4 la rând: așa se face o piesă dungată!"));
                     ShowSwapHint(TutorialBoard.RocketFrom, TutorialBoard.RocketTo);
                     break;
                 case TutorialStep.Fire:
-                    if (!board.TryFindSpecial(out Vector2Int rocket) || !TryNeighbour(rocket, out Vector2Int neighbour))
-                    {
-                        NextTutorialStep();
-                        return;
-                    }
-                    coach.ShowAction(SugarLoc.T("Ai o rachetă! Mut-o ca să explodeze și să curețe o linie întreagă."));
-                    ShowSwapHint(rocket, neighbour);
+                    // Piesa dungată pornește doar într-o linie de 3+ din culoarea ei (nu la orice mutare): o explicăm, fără mutare forțată.
+                    coach.ShowInfo(SugarLoc.T("Ai o piesă dungată! Pune-o într-o linie cu piese de aceeași culoare: curăță tot rândul sau toată coloana."), null, false, NextTutorialStep);
                     break;
                 case TutorialStep.Goal:
                     coach.ShowInfo(SugarLoc.T("Sus vezi obiectivul nivelului. Îndeplinește-l ca să câștigi!"), hud.GoalArea, true, NextTutorialStep);
