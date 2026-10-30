@@ -1032,6 +1032,42 @@ namespace SugarDrop
             return Mathf.Min(Mathf.Min(Mathf.Min(bowl, rim), Mathf.Min(handleL, handleR)), Mathf.Min(stem, foot));
         }));
 
+        /// <summary>Creion (schimbă numele): corp diagonal cu vârf ascuțit.</summary>
+        public static Sprite Pencil => Get("pencil", () => Mask(128, (x, y) =>
+        {
+            var p = new Vector2(x, y);
+            var a = new Vector2(26f, 26f);
+            var b = new Vector2(98f, 98f);
+            Vector2 ab = b - a;
+            float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+            float radius = t < 0.22f ? Mathf.Lerp(2f, 14f, t / 0.22f) : 14f;
+            float body = Vector2.Distance(p, a + ab * t) - radius;
+            return body;
+        }));
+
+        /// <summary>Tricou (garderoba lui Bobo): corp, două mâneci și decolteu.</summary>
+        public static Sprite Shirt => Get("shirt", () => Mask(128, (x, y) =>
+        {
+            var p = new Vector2(x, y);
+            float body = RoundRect(x, y, 34f, 16f, 60f, 76f, 8f);
+            float left = SegmentDistance(p, new Vector2(40f, 84f), new Vector2(16f, 62f)) - 12f;
+            float right = SegmentDistance(p, new Vector2(88f, 84f), new Vector2(112f, 62f)) - 12f;
+            float neck = Vector2.Distance(p, new Vector2(64f, 94f)) - 14f;
+            return Mathf.Max(Mathf.Min(body, Mathf.Min(left, right)), -neck);
+        }));
+
+        /// <summary>Cronometru (ajutoare, timp): cadran, buton sus și două limbi.</summary>
+        public static Sprite Timer => Get("timer", () => Mask(128, (x, y) =>
+        {
+            var p = new Vector2(x, y);
+            float ring = Mathf.Abs(Vector2.Distance(p, new Vector2(64f, 58f)) - 36f) - 8f;
+            float button = RoundRect(x, y, 52f, 98f, 24f, 14f, 4f);
+            float stem = RoundRect(x, y, 58f, 90f, 12f, 12f, 2f);
+            float hand1 = SegmentDistance(p, new Vector2(64f, 58f), new Vector2(64f, 82f)) - 4.5f;
+            float hand2 = SegmentDistance(p, new Vector2(64f, 58f), new Vector2(82f, 48f)) - 4.5f;
+            return Mathf.Min(Mathf.Min(ring, button), Mathf.Min(stem, Mathf.Min(hand1, hand2)));
+        }));
+
         /// <summary>Inimioară plină, colorată (vieți).</summary>
         public static Sprite LifeHeart => Get("lifeheart", () => Paint(128, (x, y) =>
         {

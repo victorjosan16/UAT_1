@@ -85,6 +85,42 @@ namespace SugarDrop
             return root;
         }
 
+        /// <summary>
+        /// Panglică de lemn cu titlul (peste marginea de sus a unei cutii), lată cât se cere: muchia închisă dedesubt,
+        /// text alb cu contur maro. Întoarce eticheta titlului.
+        /// </summary>
+        public static UiLabel Ribbon(RectTransform box, string name, float topOffset, float width, float height, float fontSize)
+        {
+            Image edge = UiFactory.CreatePanel(name + "Edge", box, QuestStyle.WoodDeep);
+            UiFactory.Place((RectTransform)edge.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, topOffset), new Vector2(width, height));
+            Image face = UiFactory.CreatePanel(name, edge.transform, QuestStyle.Wood);
+            UiFactory.Stretch((RectTransform)face.transform);
+            ((RectTransform)face.transform).offsetMin = new Vector2(0f, 10f);
+            UiLabel label = Outlined("Title", face.transform, "", fontSize, Color.white, 4f);
+            UiFactory.Stretch(label.RectTransform);
+            label.Fit(fontSize * 0.55f, fontSize);
+            return label;
+        }
+
+        /// <summary>
+        /// Plăcuță de recompensă: iconiță în stânga și text în dreapta (se micșorează dacă nu încape). Se așază de
+        /// către apelant (anchor, pivot, poziție); mărimea e cea dată.
+        /// </summary>
+        public static RectTransform Chip(Transform parent, string name, Sprite icon, string text, Vector2 size, out UiLabel label)
+        {
+            RectTransform root = Card(name, parent, out Image face, QuestStyle.SurfaceTint);
+            root.sizeDelta = size;
+            float iconSize = size.y * 0.66f;
+            Image image = UiFactory.CreateImage("Icon", face.transform, icon, Color.white);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            UiFactory.Place(image.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 4f), new Vector2(iconSize, iconSize));
+            label = UiFactory.CreateText("Text", face.transform, text, 28, TextAnchor.MiddleLeft, QuestStyle.Text);
+            UiFactory.Place(label.RectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-10f, 4f), new Vector2(size.x - iconSize - 36f, size.y - 20f));
+            label.Fit(18f, 28f);
+            return root;
+        }
+
         /// <summary>Muchia de sub cardurile crem.</summary>
         public static readonly Color CardEdge = new(0.79f, 0.66f, 0.47f);
 

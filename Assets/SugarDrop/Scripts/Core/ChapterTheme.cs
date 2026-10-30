@@ -37,7 +37,7 @@ namespace SugarDrop
         {
             // Drop Quest: cer de natură (sus albastru, jos culoarea ținutului), tablă ardezie închisă, cadru de lemn
             // sau în culoarea ținutului. Imaginile pictate din Resources/Art (sky0–sky9) înlocuiesc degradeul.
-            new("Câmpia cu Flori", "#BFE79A", "#7CC8F5", "#3A4658", "#4C5A6E", "#556479", "#A0612F", 0.3f),
+            new("Câmpia cu Flori", "#8CD5B0", "#78C7D5", "#34545A", "#416268", "#4A6D74", "#9D633B", 0.3f),
             new("Pădurea de Smarald", "#8FD39A", "#6CC0E8", "#34484A", "#465C5E", "#4F6668", "#7A5A2E", 0.38f),
             new("Lacul Albastru", "#9AD8F0", "#5FA8E8", "#33435E", "#44567A", "#4C6086", "#3E7BC0", 0.58f),
             new("Deșertul Auriu", "#F5D98C", "#8CCBF0", "#4A4436", "#5E5746", "#675F4D", "#C08A3A", 0.12f),

@@ -13,13 +13,16 @@ namespace SugarDrop
         public readonly Color Color;
         public readonly Action Action;
         public readonly bool Closes;
+        /// <summary>Iconiță albă în stânga textului (opțională): butoanele se disting din prima privire.</summary>
+        public readonly Sprite Icon;
 
-        public DialogButton(string label, Color color, Action action, bool closes = true)
+        public DialogButton(string label, Color color, Action action, bool closes = true, Sprite icon = null)
         {
             Label = label;
             Color = color;
             Action = action;
             Closes = closes;
+            Icon = icon;
         }
     }
 
@@ -113,6 +116,16 @@ namespace SugarDrop
                 }, 42);
                 UiFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(0f, -top - i * (buttonHeight + gap)), new Vector2(Width - 160f, buttonHeight));
+                if (data.Icon != null)
+                {
+                    // Iconița stă în fața butonului (stânga), textul rămâne pe mijloc.
+                    Transform face = button.transform.Find("Face");
+                    Image icon = UiFactory.CreateImage("Icon", face != null ? face : button.transform, data.Icon, Color.white);
+                    icon.preserveAspect = true;
+                    icon.raycastTarget = false;
+                    float size = buttonHeight * 0.56f;
+                    UiFactory.Place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(size, size));
+                }
                 _buttons.Add(button.gameObject);
             }
 
