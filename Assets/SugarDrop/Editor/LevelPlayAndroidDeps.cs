@@ -1,3 +1,4 @@
+#if UNITY_ANDROID
 using System.IO;
 using UnityEditor;
 using UnityEditor.Android;
@@ -46,3 +47,4 @@ namespace SugarDrop.EditorTools
         }
     }
 }
+#endif
