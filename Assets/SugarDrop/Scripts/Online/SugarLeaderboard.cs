@@ -31,6 +31,8 @@ namespace SugarDrop
     public class LeaderboardResult
     {
         public bool Online;
+        /// <summary>Motivul, când clasamentul online nu merge (se arată sub mesaj, ca să se vadă cauza).</summary>
+        public string Error = "";
         public readonly List<LeaderboardRow> Top = new();
         /// <summary>Rândul jucătorului (Rank = 0 dacă încă nu e în clasament).</summary>
         public LeaderboardRow Me;
@@ -172,6 +174,7 @@ namespace SugarDrop
             {
                 Debug.LogWarning("[Clasament] Nu am putut încărca clasamentul: " + e.Message);
                 result = LocalResult();
+                result.Error = e.GetType().Name + ": " + e.Message;
             }
             if (this != null) done?.Invoke(result);
         }
