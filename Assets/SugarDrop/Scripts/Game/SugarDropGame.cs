@@ -356,9 +356,13 @@ namespace SugarDrop
             if (Vfx != null) Vfx.Confetti(Vector3.zero, 9.2f, 10.5f);
 
             UiThemeColors(out Color positive, out Color ad, out Color panel);
-            string message = SugarLoc.F("Stele: {0}/30", stars) + "  ·  " + SugarLoc.F("+{0} monede", coins)
-                + "\n" + SugarLoc.T("+1 rachetă la start") + (boosters ? "  ·  " + SugarLoc.T("+1 la fiecare ajutor") : "")
-                + "\n" + SugarLoc.F("Urmează: {0}", SugarLoc.T(ChapterTheme.For(chapter + 1).Name));
+            // Trei grupuri, pe rânduri separate: rezultatul (auriu), recompensele (verde), apoi următorul ținut.
+            const string gold = "#D98E0B", green = "#2F8F1F";
+            string message = $"<size=46><b><color={gold}>{SugarLoc.F("Stele: {0}/30", stars)}</color></b></size>"
+                + $"\n<size=44><b><color={gold}>{SugarLoc.F("+{0} monede", coins)}</color></b></size>"
+                + $"\n<size=14> </size>\n<color={green}>{SugarLoc.T("+1 rachetă la start")}</color>"
+                + (boosters ? $"\n<color={green}>{SugarLoc.T("+1 la fiecare ajutor")}</color>" : "")
+                + $"\n<size=14> </size>\n{SugarLoc.F("Urmează: {0}", "<b>" + SugarLoc.T(ChapterTheme.For(chapter + 1).Name) + "</b>")}";
             dialog.NextBobo = BoboPose.Star;
             dialog.Show(SugarLoc.F("Capitolul {0} terminat!", chapter + 1), message,
                 new DialogButton(SugarLoc.T("SUPER!"), positive, null));

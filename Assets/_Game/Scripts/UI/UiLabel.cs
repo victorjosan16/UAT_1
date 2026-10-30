@@ -59,6 +59,14 @@ namespace QuarryEmpire
             }
         }
 
+        /// <summary>Înălțimea de care are nevoie textul curent la lățimea dată (pentru ferestre care se adaptează la text).</summary>
+        public float MeasureHeight(float width)
+        {
+            if (_tmp != null) return _tmp.GetPreferredValues(_tmp.text, width, 0f).y;
+            if (_legacy != null) return _legacy.cachedTextGeneratorForLayout.GetPreferredHeight(_legacy.text, _legacy.GetGenerationSettings(new Vector2(width, 0f))) / Mathf.Max(0.01f, _legacy.pixelsPerUnit);
+            return 0f;
+        }
+
         /// <summary>Creează o etichetă nouă sub „parent”.</summary>
         public static UiLabel Create(string name, Transform parent, string text, float fontSize,
             TextAnchor alignment, Color color)
