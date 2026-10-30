@@ -1,0 +1,246 @@
+using System;
+using System.Collections.Generic;
+
+namespace TollRoadTycoon.Localization
+{
+    /// <summary>Tiny string table. Romanian is the primary locale; English is provided for every key.</summary>
+    public static class Loc
+    {
+        public const string Romanian = "ro";
+        public const string English = "en";
+
+        private static string _language = Romanian;
+
+        public static event Action LanguageChanged;
+
+        public static string Language
+        {
+            get => _language;
+            set
+            {
+                string lang = value == English ? English : Romanian;
+                if (lang == _language) return;
+                _language = lang;
+                LanguageChanged?.Invoke();
+            }
+        }
+
+        public static string T(string key)
+        {
+            var table = _language == English ? En : Ro;
+            if (table.TryGetValue(key, out var text)) return text;
+            if (Ro.TryGetValue(key, out text)) return text;
+            return key;
+        }
+
+        public static string F(string key, params object[] args) => string.Format(T(key), args);
+
+        public static IEnumerable<string> Keys(string language) => (language == English ? En : Ro).Keys;
+
+        private static readonly Dictionary<string, string> Ro = new Dictionary<string, string>
+        {
+            ["menu.play"] = "JOACĂ",
+            ["menu.roads"] = "DRUMURI",
+            ["menu.shop"] = "MAGAZIN",
+            ["menu.missions"] = "MISIUNI",
+            ["menu.settings"] = "SETĂRI",
+            ["menu.soon"] = "În curând",
+            ["menu.soon.body"] = "Această funcție va fi disponibilă într-o actualizare viitoare (Faza 2).",
+            ["hud.section"] = "Porțiunea 1",
+            ["hud.km"] = "Km 0 - Km 5",
+            ["hud.income"] = "Venit/min",
+            ["hud.cars"] = "Mașini: {0}",
+            ["tab.booths"] = "CABINE",
+            ["tab.lanes"] = "BENZI",
+            ["tab.workers"] = "ANGAJAȚI",
+            ["tab.upgrade"] = "UPGRADE",
+            ["booth.name"] = "Cabina {0}",
+            ["booth.build"] = "Construiește cabina {0}",
+            ["booth.build.body"] = "Adaugă o bandă de taxare nouă. Mașinile o vor folosi imediat ce are un angajat.",
+            ["booth.max"] = "Toate cabinele sunt construite",
+            ["booth.needs_lanes"] = "Necesită {0} benzi",
+            ["booth.closed"] = "Închisă",
+            ["booth.closing"] = "Se închide",
+            ["booth.open"] = "Deschisă",
+            ["booth.auto"] = "Automată",
+            ["booth.unstaffed"] = "Fără angajat",
+            ["booth.queue"] = "Coadă {0}/{1}",
+            ["booth.served"] = "Servite: {0}",
+            ["booth.select"] = "Selectează",
+            ["booth.selected"] = "Selectată",
+            ["lane.name"] = "Banda {0}",
+            ["lane.buy"] = "Adaugă banda {0}",
+            ["lane.buy.body"] = "Lărgește drumul: mai multe mașini sosesc și se pot construi mai multe cabine.",
+            ["lane.max"] = "Drumul are numărul maxim de benzi",
+            ["lane.count"] = "Benzi active: {0}/{1}",
+            ["lane.demand"] = "Trafic: {0:0.0} mașini/s",
+            ["worker.name"] = "Angajat #{0}",
+            ["worker.level"] = "Nivel {0}",
+            ["worker.speed"] = "{0:0.0}s / mașină",
+            ["worker.hire"] = "Angajează",
+            ["worker.upgrade"] = "Upgrade",
+            ["worker.assign"] = "Alocă la cabina selectată",
+            ["worker.unassign"] = "Retrage",
+            ["worker.free"] = "Liber",
+            ["worker.at"] = "La cabina {0}",
+            ["worker.pending"] = "Termină coada",
+            ["worker.max"] = "Nivel maxim",
+            ["upgrade.title"] = "UPGRADE CABINĂ",
+            ["upgrade.speed"] = "Viteză de taxare",
+            ["upgrade.toll"] = "Venit per mașină",
+            ["upgrade.capacity"] = "Capacitate coadă",
+            ["upgrade.barrier"] = "Viteză barieră",
+            ["upgrade.automation"] = "Plată automată",
+            ["upgrade.automation.locked"] = "Necesită viteză nivel 3",
+            ["upgrade.max"] = "MAXIM",
+            ["upgrade.vehicles"] = "TIPURI DE VEHICULE",
+            ["upgrade.unlock"] = "Deblochează",
+            ["upgrade.unlocked"] = "Deblocat",
+            ["vehicle.compact"] = "Mașină compactă",
+            ["vehicle.sedan"] = "Sedan",
+            ["vehicle.suv"] = "SUV",
+            ["vehicle.van"] = "Dubă",
+            ["vehicle.truck"] = "Camion",
+            ["vehicle.bus"] = "Autobuz",
+            ["vehicle.heavy_truck"] = "TIR",
+            ["vehicle.emergency"] = "Vehicul de urgență",
+            ["vehicle.free"] = "Nu se taxează",
+            ["vehicle.toll"] = "Taxă: {0}",
+            ["confirm.title"] = "CONFIRMARE",
+            ["confirm.buy"] = "Cumpără",
+            ["confirm.cancel"] = "Anulează",
+            ["toast.no_money"] = "Fonduri insuficiente",
+            ["toast.bought"] = "Cumpărat!",
+            ["toast.needs_worker"] = "Cabina nouă are nevoie de un angajat",
+            ["toast.saved"] = "Progres salvat",
+            ["toast.loaded_backup"] = "Salvarea principală era coruptă; s-a încărcat copia de rezervă",
+            ["toast.select_booth"] = "Selectează o cabină de pe drum sau din lista CABINE",
+            ["pause.title"] = "PAUZĂ",
+            ["pause.resume"] = "Continuă",
+            ["pause.menu"] = "Salvează și ieși în meniu",
+            ["settings.title"] = "SETĂRI",
+            ["settings.music"] = "Muzică (în curând)",
+            ["settings.sfx"] = "Sunete",
+            ["settings.vibration"] = "Vibrații",
+            ["settings.quality"] = "Calitate grafică",
+            ["settings.language"] = "Limbă",
+            ["settings.privacy"] = "Confidențialitate",
+            ["settings.privacy.body"] = "Jocul nu colectează date personale și nu folosește rețele de reclame în această versiune. Progresul se salvează doar local, pe dispozitiv.",
+            ["settings.reset"] = "Resetează progresul",
+            ["settings.reset.body"] = "Ești sigur? Tot progresul va fi șters definitiv.",
+            ["settings.on"] = "Pornit",
+            ["settings.off"] = "Oprit",
+            ["quality.0"] = "Scăzută",
+            ["quality.1"] = "Medie",
+            ["quality.2"] = "Înaltă",
+            ["lang.ro"] = "Română",
+            ["lang.en"] = "English",
+            ["common.close"] = "Închide",
+            ["common.ok"] = "OK",
+            ["common.level"] = "Nv. {0}",
+        };
+
+        private static readonly Dictionary<string, string> En = new Dictionary<string, string>
+        {
+            ["menu.play"] = "PLAY",
+            ["menu.roads"] = "ROADS",
+            ["menu.shop"] = "SHOP",
+            ["menu.missions"] = "MISSIONS",
+            ["menu.settings"] = "SETTINGS",
+            ["menu.soon"] = "Coming soon",
+            ["menu.soon.body"] = "This feature arrives in a future update (Phase 2).",
+            ["hud.section"] = "Section 1",
+            ["hud.km"] = "Km 0 - Km 5",
+            ["hud.income"] = "Income/min",
+            ["hud.cars"] = "Cars: {0}",
+            ["tab.booths"] = "BOOTHS",
+            ["tab.lanes"] = "LANES",
+            ["tab.workers"] = "WORKERS",
+            ["tab.upgrade"] = "UPGRADE",
+            ["booth.name"] = "Booth {0}",
+            ["booth.build"] = "Build booth {0}",
+            ["booth.build.body"] = "Adds a new toll lane. Cars use it as soon as it is staffed.",
+            ["booth.max"] = "All booths are built",
+            ["booth.needs_lanes"] = "Needs {0} lanes",
+            ["booth.closed"] = "Closed",
+            ["booth.closing"] = "Closing",
+            ["booth.open"] = "Open",
+            ["booth.auto"] = "Automatic",
+            ["booth.unstaffed"] = "No worker",
+            ["booth.queue"] = "Queue {0}/{1}",
+            ["booth.served"] = "Served: {0}",
+            ["booth.select"] = "Select",
+            ["booth.selected"] = "Selected",
+            ["lane.name"] = "Lane {0}",
+            ["lane.buy"] = "Add lane {0}",
+            ["lane.buy.body"] = "Widens the road: more cars arrive and more booths can be built.",
+            ["lane.max"] = "The road has the maximum number of lanes",
+            ["lane.count"] = "Active lanes: {0}/{1}",
+            ["lane.demand"] = "Traffic: {0:0.0} cars/s",
+            ["worker.name"] = "Worker #{0}",
+            ["worker.level"] = "Level {0}",
+            ["worker.speed"] = "{0:0.0}s / car",
+            ["worker.hire"] = "Hire",
+            ["worker.upgrade"] = "Upgrade",
+            ["worker.assign"] = "Assign to selected booth",
+            ["worker.unassign"] = "Withdraw",
+            ["worker.free"] = "Free",
+            ["worker.at"] = "At booth {0}",
+            ["worker.pending"] = "Finishing queue",
+            ["worker.max"] = "Max level",
+            ["upgrade.title"] = "BOOTH UPGRADE",
+            ["upgrade.speed"] = "Toll speed",
+            ["upgrade.toll"] = "Income per car",
+            ["upgrade.capacity"] = "Queue capacity",
+            ["upgrade.barrier"] = "Barrier speed",
+            ["upgrade.automation"] = "Automatic payment",
+            ["upgrade.automation.locked"] = "Requires speed level 3",
+            ["upgrade.max"] = "MAX",
+            ["upgrade.vehicles"] = "VEHICLE TYPES",
+            ["upgrade.unlock"] = "Unlock",
+            ["upgrade.unlocked"] = "Unlocked",
+            ["vehicle.compact"] = "Compact car",
+            ["vehicle.sedan"] = "Sedan",
+            ["vehicle.suv"] = "SUV",
+            ["vehicle.van"] = "Van",
+            ["vehicle.truck"] = "Truck",
+            ["vehicle.bus"] = "Bus",
+            ["vehicle.heavy_truck"] = "Heavy truck",
+            ["vehicle.emergency"] = "Emergency vehicle",
+            ["vehicle.free"] = "Toll free",
+            ["vehicle.toll"] = "Toll: {0}",
+            ["confirm.title"] = "CONFIRM",
+            ["confirm.buy"] = "Buy",
+            ["confirm.cancel"] = "Cancel",
+            ["toast.no_money"] = "Not enough money",
+            ["toast.bought"] = "Purchased!",
+            ["toast.needs_worker"] = "The new booth needs a worker",
+            ["toast.saved"] = "Progress saved",
+            ["toast.loaded_backup"] = "The main save was corrupt; the backup was loaded",
+            ["toast.select_booth"] = "Select a booth on the road or in the BOOTHS list",
+            ["pause.title"] = "PAUSED",
+            ["pause.resume"] = "Resume",
+            ["pause.menu"] = "Save and exit to menu",
+            ["settings.title"] = "SETTINGS",
+            ["settings.music"] = "Music (coming soon)",
+            ["settings.sfx"] = "Sound effects",
+            ["settings.vibration"] = "Vibration",
+            ["settings.quality"] = "Graphics quality",
+            ["settings.language"] = "Language",
+            ["settings.privacy"] = "Privacy",
+            ["settings.privacy.body"] = "The game collects no personal data and uses no ad networks in this version. Progress is saved only locally on the device.",
+            ["settings.reset"] = "Reset progress",
+            ["settings.reset.body"] = "Are you sure? All progress will be permanently deleted.",
+            ["settings.on"] = "On",
+            ["settings.off"] = "Off",
+            ["quality.0"] = "Low",
+            ["quality.1"] = "Medium",
+            ["quality.2"] = "High",
+            ["lang.ro"] = "Română",
+            ["lang.en"] = "English",
+            ["common.close"] = "Close",
+            ["common.ok"] = "OK",
+            ["common.level"] = "Lv. {0}",
+        };
+    }
+}

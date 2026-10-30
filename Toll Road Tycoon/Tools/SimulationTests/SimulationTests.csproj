@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Headless build of the engine-independent simulation and its EditMode tests.
+    Compiles the same source files Unity uses, so game logic can be verified without the Unity Editor.
+    Run: dotnet test "Tools/SimulationTests"
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Unity 2022.3 supports C# 9; keep the shared code within that language version. -->
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Core/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Traffic/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/TollSystem/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Economy/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Upgrades/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Workers/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/RoadExpansion/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Save/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Localization/**/*.cs" />
+    <Compile Include="../../Assets/Tests/EditMode/**/*.cs" />
+    <Compile Include="*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+</Project>

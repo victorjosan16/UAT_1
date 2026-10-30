@@ -1,0 +1,19 @@
+{
+    "name": "TollRoadTycoon.Editor",
+    "rootNamespace": "TollRoadTycoon.EditorTools",
+    "references": [
+        "TollRoadTycoon.Simulation",
+        "TollRoadTycoon.Presentation"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

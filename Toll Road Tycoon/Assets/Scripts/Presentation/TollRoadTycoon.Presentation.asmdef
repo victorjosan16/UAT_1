@@ -1,0 +1,17 @@
+{
+    "name": "TollRoadTycoon.Presentation",
+    "rootNamespace": "TollRoadTycoon.Presentation",
+    "references": [
+        "TollRoadTycoon.Simulation",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
