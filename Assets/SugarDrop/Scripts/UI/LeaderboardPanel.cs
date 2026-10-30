@@ -114,7 +114,8 @@ namespace SugarDrop
                 SetRows(result.Top);
                 _mine.Text = MineText(result.Me);
                 _status.Text = result.Online ? (result.Top.Count == 0 ? SugarLoc.T("Fii primul în clasament!") : "")
-                    : SugarLoc.T("Clasamentul online nu e disponibil acum. Verifică internetul.");
+                    : SugarLoc.T("Clasamentul online nu e disponibil acum. Verifică internetul.")
+                      + (string.IsNullOrEmpty(result.Error) ? "" : "\n(" + result.Error + ")");
                 if (!result.Online) _status.RectTransform.anchoredPosition = new Vector2(0f, -RowHeight);
             });
         }
