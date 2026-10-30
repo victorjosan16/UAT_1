@@ -110,7 +110,8 @@ namespace SugarDrop.EditorTools
             var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
             var square = AssetDatabase.LoadAssetAtPath<Texture2D>(squarePath);
             var logo = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
-            if (icon != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+            // Android (și Play) taie singure colțurile: iconița trebuie să fie pătrată, fără colțuri rotunjite. Varianta rotunjită (cu alfa) e doar pentru ecranul de pornire.
+            if (square != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { square }, IconKind.Any);
             if (square != null) PlayerSettings.SetIcons(NamedBuildTarget.iOS, new[] { square }, IconKind.Any);
 
             PlayerSettings.SplashScreen.show = true;
