@@ -13,6 +13,9 @@ namespace SugarDrop
     public class SugarHud : MonoBehaviour
     {
         public event Action PauseClicked;
+        public event Action SkipClicked;
+        private GameObject _skipFinale;
+        private UiLabel _skipFinaleLabel;
         /// <summary>Jucătorul a atins butonul Puterii lui Bobo.</summary>
         public event Action PowerClicked;
 
@@ -130,6 +133,13 @@ namespace SugarDrop
                     PauseClicked?.Invoke();
                 }, 0.45f);
             UiFactory.Place((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -16f), new Vector2(82f, 82f));
+
+            // „Sari”: în finalul dulce, după câștig, grăbește animațiile (scorul rămâne același).
+            Button skip = SugarUi.Button("SkipFinale", transform, "", QuestStyle.Blue, () => SkipClicked?.Invoke(), 40);
+            UiFactory.Place((RectTransform)skip.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 330f), new Vector2(340f, 104f));
+            _skipFinale = skip.gameObject;
+            _skipFinaleLabel = UiFactory.GetButtonLabel(skip);
+            _skipFinale.SetActive(false);
 
             BuildScore(theme);
             BuildBoss(theme);
@@ -503,6 +513,14 @@ namespace SugarDrop
             _word.Color = color;
             _word.gameObject.SetActive(true);
             _wordT = 0f;
+        }
+
+        /// <summary>Butonul „Sari” din finalul dulce (grăbește animațiile până la ecranul de rezultat).</summary>
+        public void ShowSkip(bool visible)
+        {
+            if (_skipFinale == null) return;
+            if (visible) _skipFinaleLabel.Text = SugarLoc.T("SARI") + " ›";
+            _skipFinale.SetActive(visible);
         }
 
         public void ShowBanner(string text)
