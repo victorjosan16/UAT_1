@@ -212,6 +212,7 @@ namespace SugarDrop
             jar.CandyEntered += OnCandyEntered;
             input.Touched += OnTouched;
             hud.PauseClicked += ShowPause;
+            hud.SkipClicked += SkipFinale;
             boosters.Clicked += OnBooster;
             map.PlayClicked += TryPlay;
             map.LevelClicked += TryPlayLevel;
@@ -257,6 +258,7 @@ namespace SugarDrop
             jar.CandyEntered -= OnCandyEntered;
             input.Touched -= OnTouched;
             hud.PauseClicked -= ShowPause;
+            hud.SkipClicked -= SkipFinale;
             boosters.Clicked -= OnBooster;
             map.PlayClicked -= TryPlay;
             map.LevelClicked -= TryPlayLevel;
@@ -634,6 +636,7 @@ namespace SugarDrop
             if (_danger != null) _danger.Hide();
             if (mascot != null) mascot.Scared = false;
             Time.timeScale = 1f;
+            hud.ShowSkip(false);
             _state = State.Map;
             input.enabled = false;
             CancelBomb();
@@ -904,6 +907,7 @@ namespace SugarDrop
         private void StartLevel(int level)
         {
             Time.timeScale = 1f;
+            hud.ShowSkip(false);
             _level = level;
             _config = LevelConfig.For(_level);
             int chapter = ChapterTheme.ChapterOf(_level);
@@ -1342,6 +1346,14 @@ namespace SugarDrop
             }
         }
 
+        /// <summary>„Sari” în finalul dulce: animațiile rulează de câteva ori mai repede; scorul și stelele rămân la fel.</summary>
+        private void SkipFinale()
+        {
+            if (_state != State.Finale) return;
+            Time.timeScale = 4f;
+            hud.ShowSkip(false);
+        }
+
         private void Win()
         {
             if (_danger.Visible) _danger.PlayRescue();
@@ -1380,6 +1392,7 @@ namespace SugarDrop
             SugarSave.Save();
             RefreshBoosters();
             mascot.SetHappy();
+            hud.ShowSkip(true);
             StartCoroutine(FinaleRoutine(coins));
         }
 
@@ -1418,6 +1431,8 @@ namespace SugarDrop
             yield return new WaitForSeconds(0.8f); // bomboanele ieșite mai cad în borcan
 
             _state = State.Result;
+            Time.timeScale = 1f;
+            hud.ShowSkip(false);
             int stars = ScoreRules.Stars(_score, _config);
             if (stars == 3)
             {
@@ -1784,7 +1799,12 @@ namespace SugarDrop
                 Vfx.GroupBurst(center, size, color);
                 if (size >= 5) Vfx.LandBurst(center, size);
             }
-            if (Audio != null) Audio.Play(size >= 7 ? SugarSound.Wrapped : SugarSound.Click, size >= 7 ? 0.7f : 0.5f, 1f + Mathf.Min(size, 12) * 0.03f);
+            if (Audio != null)
+            {
+                if (size >= 7) Audio.Play(SugarSound.MatchHuge, 0.9f);
+                else if (size >= 5) Audio.Play(SugarSound.MatchBig, 0.85f);
+                else Audio.Play(SugarSound.Match, 0.8f, 1f + (size - 3) * 0.06f + Mathf.Min(_popChain, 8) * 0.02f);
+            }
             SugarAudio.Buzz(size >= 10 ? 2 : size >= 5 ? 1 : 0);
             if (size >= 7) mascot.Cheer(size >= 10 ? 2f : 1.5f);
         }

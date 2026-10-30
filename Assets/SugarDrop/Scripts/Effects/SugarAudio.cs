@@ -8,6 +8,8 @@ namespace SugarDrop
     {
         Swap, Invalid, Striped, Wrapped, Rainbow, SpecialCreated, Ice, Biscuit, Candy,
         Win, Lose, Click, Coin, Shuffle, Star, Bomb,
+        /// <summary>Linie de 3–4 piese: două note sclipitoare; 5–6: arpegiu cu bubuit mic; 7+: explozie cu sclipiri.</summary>
+        Match, MatchBig, MatchHuge,
     }
 
     /// <summary>
@@ -30,7 +32,8 @@ namespace SugarDrop
         private int _nextVoice;
         private AudioClip[] _pops;
         private AudioClip[] _clips;
-        private readonly float[] _lastPlayed = new float[32];
+        private readonly float[] _lastPlayed = new float[64];
+        private const int PopSlots = 32;
         private readonly System.Random _random = new(77);
 
         private void Awake()
@@ -73,10 +76,10 @@ namespace SugarDrop
         public void PlayPop(int color, int chain)
         {
             if (!SugarSave.Data.sound || _pops == null) return;
-            if (Time.unscaledTime - _lastPlayed[16 + Mathf.Clamp(color, 0, 4)] < 0.035f) return;
-            _lastPlayed[16 + Mathf.Clamp(color, 0, 4)] = Time.unscaledTime;
+            if (Time.unscaledTime - _lastPlayed[PopSlots + Mathf.Clamp(color, 0, 4)] < 0.035f) return;
+            _lastPlayed[PopSlots + Mathf.Clamp(color, 0, 4)] = Time.unscaledTime;
             float pitch = Mathf.Pow(2f, Mathf.Min(chain, 12) / 12f);
-            PlayClip(_pops[Mathf.Clamp(color, 0, _pops.Length - 1)], 0.55f, pitch);
+            PlayClip(_pops[Mathf.Clamp(color, 0, _pops.Length - 1)], 0.7f, pitch);
         }
 
         public void Play(SugarSound sound, float volume = 1f, float pitch = 1f)
@@ -117,10 +120,14 @@ namespace SugarDrop
             {
                 float f = Pentatonic[i];
                 // „Pluc” dulce: sinus cu armonica a doua și o mică alunecare în jos a frecvenței.
-                _pops[i] = Create("Pop" + i, 0.22f, t =>
+                _pops[i] = Create("Pop" + i, 0.26f, t =>
                 {
                     float freq = f * (1f + 0.25f * Mathf.Exp(-t * 60f));
-                    return (Sine(freq, t) + 0.35f * Sine(freq * 2f, t) + 0.1f * Sine(freq * 3f, t)) * Decay(t, 18f) * 0.45f;
+                    float body = (Sine(freq, t) + 0.35f * Sine(freq * 2f, t) + 0.1f * Sine(freq * 3f, t)) * Decay(t, 16f);
+                    // Clinchet de sticlă (armonica a patra, scurtă) și un „pic” de atac, ca să sune mai viu.
+                    float glass = Sine(freq * 4.01f, t) * Decay(t, 38f) * 0.22f;
+                    float tick = Noise() * Decay(t, 260f) * 0.3f;
+                    return (body * 0.45f + glass + tick) * 0.9f;
                 });
             }
 
@@ -175,6 +182,42 @@ namespace SugarDrop
             _clips[(int)SugarSound.Coin] = ProceduralSfx.Coin;
             _clips[(int)SugarSound.Shuffle] = Create("Shuffle", 0.5f, t => (Noise() * 0.15f + Sweep(300f, 1200f, 0.5f, t) * 0.25f) * Mathf.Sin(t / 0.5f * Mathf.PI));
             _clips[(int)SugarSound.Star] = Create("Star", 0.5f, t => (Sine(1567.98f, t) + 0.5f * Sine(2349.3f, t)) * Decay(t, 7f) * 0.3f);
+            _clips[(int)SugarSound.Match] = Create("Match", 0.38f, t =>
+            {
+                // Două note sclipitoare în sus (Mi–Sol), cu un fâs scurt la început.
+                float a = (Sine(1318.5f, t) + 0.4f * Sine(2637f, t)) * Decay(t, 11f);
+                float lt = t - 0.07f;
+                float b = lt > 0f ? (Sine(1568f, lt) + 0.4f * Sine(3136f, lt)) * Decay(lt, 10f) : 0f;
+                return (a + b) * 0.3f + Noise() * Decay(t, 55f) * 0.08f;
+            });
+            _clips[(int)SugarSound.MatchBig] = Create("MatchBig", 0.7f, t =>
+            {
+                // Arpegiu rapid în sus (Do–Mi–Sol–Do–Mi) peste un bubuit mic.
+                float[] notes = { 1046.5f, 1318.5f, 1568f, 2093f, 2637f };
+                float sum = 0f;
+                for (int i = 0; i < notes.Length; i++)
+                {
+                    float lt = t - i * 0.055f;
+                    if (lt < 0f) continue;
+                    sum += (Sine(notes[i], lt) + 0.35f * Sine(notes[i] * 2f, lt)) * Decay(lt, 8f);
+                }
+                float thump = Sweep(220f, 70f, 0.25f, Mathf.Min(t, 0.25f)) * Decay(t, 14f) * 0.5f;
+                return sum * 0.17f + thump * 0.6f + Noise() * Decay(t, 40f) * 0.08f;
+            });
+            _clips[(int)SugarSound.MatchHuge] = Create("MatchHuge", 1.0f, t =>
+            {
+                // Explozie (bubuit + zgomot) urmată de sclipiri care urcă.
+                float boom = (Sweep(170f, 40f, 0.5f, Mathf.Min(t, 0.5f)) * 0.8f + Noise() * 0.45f) * Decay(t, 7f);
+                float sparkle = 0f;
+                for (int i = 0; i < 7; i++)
+                {
+                    float lt = t - 0.05f - i * 0.06f;
+                    if (lt < 0f) continue;
+                    float f = Pentatonic[i % 5] * (i >= 5 ? 4f : 2f);
+                    sparkle += Sine(f, lt) * Decay(lt, 9f);
+                }
+                return boom * 0.55f + sparkle * 0.16f;
+            });
             _clips[(int)SugarSound.Bomb] = Create("Bomb", 0.8f, t => (Noise() * 0.6f + Sweep(120f, 35f, 0.8f, t) * 0.8f) * Decay(t, 4.5f) * 0.6f);
         }
 
