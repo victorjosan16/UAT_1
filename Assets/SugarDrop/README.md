@@ -20,12 +20,13 @@ ciupercă, ametist).
 | Formă | Piesă | Efect |
 |---|---|---|
 | 3 în linie | — | eliminare normală |
-| 4 în linie | **Rachetă** (perpendiculară pe linie) | curăță tot rândul / toată coloana |
+| 4 în linie | **Piesă dungată** (aceeași formă și culoare, cu dungi albe; perpendiculară pe linie) | curăță tot rândul / toată coloana |
 | L sau T | **Bombă** | explozie 3×3 (tăiată la marginea tablei) |
-| 5 în linie | **Curcubeu** | elimină toate bomboanele unei culori |
+| 5 în linie | **Bilă colorată** (alb + culoarea liniei) | schimbată cu o piesă **de aceeași culoare**, elimină toate piesele acelei culori |
 
 Piesa specială apare în celula unde ai mutat bomboana (sau la mijlocul liniei, în cascade). **O piesă specială se
-activează când o muți** (schimbi cu orice vecină); curcubeul schimbat cu o bomboană elimină toată culoarea ei.
+activează când o muți** (schimbi cu orice vecină). Excepție: bila colorată merge doar cu o piesă din culoarea ei
+(sau cu altă piesă specială); cu altă culoare schimbul nu se face.
 Exploziile activează în lanț piesele speciale lovite, fiecare o singură dată. Bomboanele cu gheață sau lanț pot face
 parte dintr-o linie: linia le sparge un strat.
 
