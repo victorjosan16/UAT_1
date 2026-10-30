@@ -59,7 +59,6 @@ namespace SugarDrop
             UiFactory.Place(_title.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(Width - 60f, 100f));
             _message = UiFactory.CreateText("Message", _box, "", 40, TextAnchor.MiddleCenter, Color.Lerp(theme.TextDarkColor, Color.white, 0.3f));
             UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(Width - 80f, 150f));
-            _message.Fit(24f, 40f); // mesajul încape în casetă, nu acoperă titlul sau butoanele
             if (BoboArt.Available)
             {
                 // Bobo „se sprijină” de colțul din stânga-sus al ferestrei.
@@ -91,12 +90,15 @@ namespace SugarDrop
             _message.Text = liveMessage != null ? liveMessage() : message ?? "";
             bool hasMessage = !string.IsNullOrEmpty(_message.Text);
             _message.gameObject.SetActive(hasMessage);
+            // Fereastra crește cu textul (nu mai acoperă butoanele): măsurăm înălțimea mesajului la lățimea lui.
+            float messageHeight = hasMessage ? Mathf.Clamp(_message.MeasureHeight(Width - 100f) + 10f, 60f, 760f) : 0f;
+            if (hasMessage) UiFactory.Place(_message.RectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(Width - 100f, messageHeight));
 
             // Multe butoane (Setări): rânduri mai joase, ca fereastra să încapă pe ecran.
             bool compact = buttons.Length > 8;
             float buttonHeight = compact ? 100f : ButtonHeight;
             float gap = compact ? 14f : ButtonGap;
-            float top = hasMessage ? 320f : 170f;
+            float top = hasMessage ? 150f + messageHeight + 40f : 170f;
             float height = top + buttons.Length * (buttonHeight + gap) + 30f;
             SugarUi.ResizeBox(_box, new Vector2(Width, height));
 
