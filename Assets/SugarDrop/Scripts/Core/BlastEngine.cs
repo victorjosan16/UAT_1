@@ -228,7 +228,10 @@ namespace SugarDrop
         // ------------------------------------------------------------ Potriviri (3+ în linie)
 
         /// <summary>Bomboană care poate face parte dintr-o linie (și cele cu gheață/lanț: linia le sparge stratul).</summary>
-        private static bool CanMatch(Piece p) => p != null && p.Kind == TileKind.Normal && p.Color >= 0;
+        private static bool CanMatch(Piece p) => p != null && p.Color >= 0 && (p.Kind == TileKind.Normal || IsStriped(p));
+
+        /// <summary>Piesă dungată (4 în linie): are culoarea ei și se potrivește ca o piesă obișnuită, dar când e într-o linie curăță tot rândul / toată coloana.</summary>
+        private static bool IsStriped(Piece p) => BlastRules.IsRocket(p.Kind) && p.Color >= 0;
 
         /// <summary>Piesă care se poate muta (schimba cu o vecină): nu obstacolele și nu bomboanele blocate.</summary>
         private static bool CanMove(Piece p) => p != null && !p.Locked && !p.IsBlocker;
@@ -510,17 +513,24 @@ namespace SugarDrop
             int removed = 0;
             // Liniile de bomboane albastre sunt apă: doar ele sting focul de lângă ele.
             var water = new HashSet<Vector2Int>();
+            var stripedHit = new List<Vector2Int>();
             foreach (Vector2Int c in matched)
             {
                 Piece p = At(c);
                 if (p == null) continue;
                 if (p.Color == BlastRules.WaterColor) water.Add(c);
                 if (p.Locked) Damage(c, p, step, hit);
+                else if (IsStriped(p)) stripedHit.Add(c); // dungata dintr-o linie: pornește (rând / coloană)
                 else
                 {
                     Remove(c, p, step);
                     removed++;
                 }
+            }
+            if (stripedHit.Count > 0)
+            {
+                removed += stripedHit.Count;
+                Detonate(step, stripedHit, hit, new HashSet<Vector2Int>());
             }
             // Obstacolele vecine primesc câte o lovitură; bomboana de sub un ingredient alăturat e strivită.
             foreach (Vector2Int c in matched)

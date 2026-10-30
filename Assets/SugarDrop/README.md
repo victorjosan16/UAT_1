@@ -20,7 +20,7 @@ ciupercă, ametist).
 | Formă | Piesă | Efect |
 |---|---|---|
 | 3 în linie | — | eliminare normală |
-| 4 în linie | **Piesă dungată** (aceeași formă și culoare, cu dungi albe; perpendiculară pe linie) | curăță tot rândul / toată coloana |
+| 4 în linie | **Piesă dungată** (aceeași formă și culoare, cu dungi albe; perpendiculară pe linie) | curăță tot rândul / toată coloana; se potrivește și ca piesă obișnuită: într-o linie de 3+ din culoarea ei pornește și curăță rândul / coloana |
 | L sau T | **Bombă** | explozie 3×3 (tăiată la marginea tablei) |
 | 5 în linie | **Bilă colorată** (alb + culoarea liniei) | schimbată cu o piesă **de aceeași culoare**, elimină toate piesele acelei culori |
 

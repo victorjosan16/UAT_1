@@ -159,6 +159,31 @@ namespace SugarDrop.Tests
         }
 
         [Test]
+        public void StripedPiece_InALineOfThree_ClearsItsColumn()
+        {
+            // Dungata verticală (culoare 0) + o piesă 0 lângă ea + una adusă prin mutare = linie de 3: pornește și curăță coloana.
+            BlastEngine engine = Board();
+            engine.DebugSet(new Vector2Int(2, 4), TileKind.RocketV, 0);
+            Paint(engine, 0, (3, 4), (4, 5));
+            List<BoardStep> steps = engine.Swap(new Vector2Int(4, 4), new Vector2Int(4, 5));
+            Assert.IsNotNull(steps, "linia cu dungata e o mutare validă");
+            BoardStep clear = steps[1];
+            Assert.AreEqual(9, clear.Cleared.FindAll(p => p.Cell.x == 2).Count, "dungata verticală a curățat toată coloana 2");
+            Assert.IsTrue(clear.Activations.Exists(act => act.Kind == TileKind.RocketV), "dungata a pornit");
+        }
+
+        [Test]
+        public void StripedPiece_Horizontal_ClearsItsRow()
+        {
+            BlastEngine engine = Board();
+            engine.DebugSet(new Vector2Int(4, 2), TileKind.RocketH, 0);
+            Paint(engine, 0, (4, 3), (3, 4));
+            List<BoardStep> steps = engine.Swap(new Vector2Int(3, 4), new Vector2Int(4, 4));
+            Assert.IsNotNull(steps, "linia verticală cu dungata e o mutare validă");
+            Assert.AreEqual(9, steps[1].Cleared.FindAll(p => p.Cell.y == 2).Count, "dungata orizontală a curățat tot rândul 2");
+        }
+
+        [Test]
         public void ChainReaction_EachSpecialFiresOnce()
         {
             BlastEngine engine = Board();
