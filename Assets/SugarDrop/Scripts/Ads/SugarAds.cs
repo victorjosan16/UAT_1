@@ -22,6 +22,9 @@ namespace SugarDrop
         /// <summary>Nu există nicio reclamă gata acum (fără internet, fără umplere): jocul arată un mesaj.</summary>
         public static event Action Unavailable;
 
+        /// <summary>Ultimul mesaj al SDK-ului (inițializare, reclamă, banner): se arată în fereastra „Nicio reclamă”, ca să se vadă motivul.</summary>
+        public string Status { get; private set; } = "";
+
         /// <summary>Bannerul de jos a apărut sau a dispărut (interfața urcă / coboară cu înălțimea lui).</summary>
         public static event Action BannerChanged;
 
@@ -77,6 +80,7 @@ namespace SugarDrop
 #if SUGARDROP_LEVELPLAY
             LevelPlay.OnInitSuccess += _ =>
             {
+                Status = "init ok";
                 // Dacă bibliotecile native lipsesc sau SDK-ul se schimbă, o eroare aici nu trebuie să strice jocul.
                 try
                 {
@@ -85,12 +89,14 @@ namespace SugarDrop
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning("[Ads] Nu am putut crea reclamele: " + e.Message);
+                    Status = "creare: " + e.Message;
+                Debug.LogWarning("[Ads] Nu am putut crea reclamele: " + e.Message);
                 }
             };
-            LevelPlay.OnInitFailed += _ =>
+            LevelPlay.OnInitFailed += error =>
             {
-                Debug.LogWarning("[Ads] LevelPlay nu s-a inițializat; reîncerc în 60 s.");
+                Status = "init: " + error;
+                Debug.LogWarning("[Ads] LevelPlay nu s-a inițializat (" + error + "); reîncerc în 60 s.");
                 StartCoroutine(RetryInit());
             };
             try
@@ -99,6 +105,7 @@ namespace SugarDrop
             }
             catch (Exception e)
             {
+                Status = "pornire: " + e.Message;
                 Debug.LogWarning("[Ads] LevelPlay nu a pornit: " + e.Message);
             }
 #endif
@@ -281,7 +288,12 @@ namespace SugarDrop
         {
             if (_ad != null) return;
             _ad = new LevelPlayRewardedAd(AdUnitId);
-            _ad.OnAdLoadFailed += _ => StartCoroutine(RetryLoad());
+            _ad.OnAdLoadFailed += error =>
+            {
+                Status = "reclamă: " + error;
+                Debug.LogWarning("[Ads] Reclama nu s-a încărcat: " + error);
+                StartCoroutine(RetryLoad());
+            };
             _ad.OnAdDisplayed += _ => _displayed = true;
             _ad.OnAdRewarded += (_, _) => _rewarded = true;
             _ad.OnAdClosed += _ => StartCoroutine(AfterClose());
@@ -309,8 +321,10 @@ namespace SugarDrop
                 _bannerLoaded = true;
                 ApplyBanner();
             };
-            _banner.OnAdLoadFailed += _ =>
+            _banner.OnAdLoadFailed += error =>
             {
+                Status = "banner: " + error;
+                Debug.LogWarning("[Ads] Bannerul nu s-a încărcat: " + error);
                 _bannerLoaded = false;
                 ApplyBanner();
                 StartCoroutine(RetryBanner());
