@@ -27,6 +27,24 @@ namespace SugarDrop.EditorTools
             // la checkReleaseDuplicateClasses, iar excluderea trebuie pusă și în launcher (consumatorul final).
             string launcher = Path.Combine(Path.GetDirectoryName(path) ?? path, "launcher", "build.gradle");
             Patch(launcher, false);
+            AddAdIdPermission(Path.Combine(path, "src", "main", "AndroidManifest.xml"));
+        }
+
+        /// <summary>
+        /// De la Android 13 (țintă API 33+), ID-ul de publicitate cere permisiunea AD_ID în manifest; fără ea, rețelele de
+        /// reclame primesc doar zerouri (mai puține reclame, plăți mai mici). Google Play o cere și în „Data safety”.
+        /// </summary>
+        private static void AddAdIdPermission(string manifest)
+        {
+            const string permission = "com.google.android.gms.permission.AD_ID";
+            if (!File.Exists(manifest)) return;
+            string text = File.ReadAllText(manifest);
+            if (text.Contains(permission)) return;
+            int application = text.IndexOf("<application", System.StringComparison.Ordinal);
+            if (application < 0) return;
+            text = text.Insert(application, "<uses-permission android:name=\"" + permission + "\" />\n    ");
+            File.WriteAllText(manifest, text);
+            Debug.Log("[SugarDrop] Adăugat în manifest: " + permission);
         }
 
         private static void Patch(string gradle, bool addLibrary)
