@@ -22,7 +22,8 @@ namespace Veliqora.Tests.EditMode
             Assert.IsNotNull(c.FindOffer(BoosterType.Hint));
             Assert.Greater(c.FindOffer("offer_extra_bottle").Price, 0);
             Assert.IsTrue(c.FindCosmetic("theme_valley").DefaultOwned);
-            Assert.AreEqual(15, c.Cosmetics.Count);
+            Assert.AreEqual(27, c.Cosmetics.Count);
+            Assert.AreEqual(12, c.Cosmetics.FindAll(x => x.Id.StartsWith("dark_") && x.Kind == CosmeticKind.Theme).Count, "twelve dark backgrounds");
         }
 
         [Test]
@@ -118,6 +119,7 @@ namespace Veliqora.Tests.EditMode
         {
             var e = NewService(2000);
             Assert.IsTrue(e.Owns("theme_valley"));
+            foreach (var c in Config.Cosmetics) if (c.Id.StartsWith("dark_")) Assert.IsTrue(e.Owns(c.Id), "dark backgrounds are free to select: " + c.Id);
             Assert.IsTrue(e.Owns("bottle_classic"));
             Assert.AreEqual(TxStatus.Ok, e.BuyCosmetic("theme_sunset", "c1").Status);
             Assert.AreEqual(TxStatus.AlreadyOwned, e.BuyCosmetic("theme_sunset", "c2").Status);

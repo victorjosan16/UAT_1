@@ -42,7 +42,7 @@ namespace Veliqora.Core.Save
 
     public sealed class CosmeticsSelection
     {
-        public string Theme = "theme_valley";
+        public string Theme = "dark_aurora";
         public string Bottle = "bottle_classic";
     }
 

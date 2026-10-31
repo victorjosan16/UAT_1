@@ -26,6 +26,10 @@ namespace Veliqora.Presentation
         private LiquidGraphic _liquid;
         private Image _glass;
         private Image _glassBack;
+        private Image _aura;
+
+        /// <summary>Neon aura behind bottles, tinted by the top liquid (enabled on dark themes).</summary>
+        public static bool NeonAura = true;
         private Image _glow;
         private Image _hintRing;
         private RectTransform _symbolRoot;
@@ -55,6 +59,10 @@ namespace Veliqora.Presentation
             // Generous invisible hit area (touch-friendly even for slim bottles).
             var hit = UIFactory.Image(transform, "Hit", null, new Color(0, 0, 0, 0), true);
             UIFactory.Stretch(hit.rectTransform, -Mathf.Max(18f, (UIStyle.MinTouch - Width) * 0.5f));
+
+            _aura = UIFactory.Image(transform, "Aura", SpriteLibrary.RadialGlow, new Color(1, 1, 1, 0));
+            UIFactory.Stretch(_aura.rectTransform, -Width * 0.55f);
+            _aura.rectTransform.offsetMax = new Vector2(Width * 0.55f, -Height * 0.15f);
 
             _glow = UIFactory.Image(transform, "Glow", SpriteLibrary.RadialGlow, new Color(1f, 0.95f, 0.6f, 0f));
             UIFactory.Stretch(_glow.rectTransform, -Width * 0.45f);
@@ -99,6 +107,12 @@ namespace Veliqora.Presentation
             }
             _liquid.SetLayers(_scratch);
             UpdateSymbols(b);
+            if (_aura != null)
+            {
+                var c = b.IsEmpty ? Color.clear : LiquidPalette.Get(b.TopColor);
+                c.a = NeonAura && !b.IsEmpty ? (b.IsCompleted ? 0.34f : 0.16f) : 0f;
+                _aura.color = c;
+            }
         }
 
         /// <summary>Directly set interpolated layers (used mid-animation). Symbols hide while animating.</summary>

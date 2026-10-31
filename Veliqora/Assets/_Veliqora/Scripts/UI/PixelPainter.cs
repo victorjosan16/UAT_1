@@ -51,6 +51,7 @@ namespace Veliqora.UI
 
         public void Blend(int x, int y, Color src)
         {
+            if (x < 0 || y < 0 || x >= Width || y >= Height) return;
             int i = y * Width + x;
             var dst = _px[i];
             float a = src.a + dst.a * (1f - src.a);
@@ -60,6 +61,53 @@ namespace Veliqora.UI
                 (src.g * src.a + dst.g * dst.a * (1f - src.a)) / a,
                 (src.b * src.a + dst.b * dst.a * (1f - src.a)) / a,
                 a);
+        }
+
+        /// <summary>Additive light (screen-like glow): rgb += c.rgb * c.a, clamped. Assumes an opaque canvas.</summary>
+        public void Add(int x, int y, Color c)
+        {
+            if (x < 0 || y < 0 || x >= Width || y >= Height) return;
+            int i = y * Width + x;
+            var d = _px[i];
+            _px[i] = new Color(Mathf.Min(1f, d.r + c.r * c.a), Mathf.Min(1f, d.g + c.g * c.a), Mathf.Min(1f, d.b + c.b * c.a), d.a);
+        }
+
+        /// <summary>Soft additive radial glow (quadratic falloff), bounded to its radius.</summary>
+        public void Glow(Vector2 center, float radius, Color c, float power = 2f)
+        {
+            int x0 = Mathf.Max(0, (int)(center.x - radius)), x1 = Mathf.Min(Width - 1, (int)(center.x + radius));
+            int y0 = Mathf.Max(0, (int)(center.y - radius)), y1 = Mathf.Min(Height - 1, (int)(center.y + radius));
+            float inv = 1f / Mathf.Max(0.5f, radius);
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    float dx = (x + 0.5f - center.x) * inv, dy = (y + 0.5f - center.y) * inv;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (d >= 1f) continue;
+                    float a = Mathf.Pow(1f - d, power) * c.a;
+                    Add(x, y, new Color(c.r, c.g, c.b, a));
+                }
+        }
+
+        /// <summary>Multi-stop vertical gradient; stops are (t from bottom 0..1, color), sorted ascending.</summary>
+        public void Gradient(params (float t, Color c)[] stops)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                float t = y / (float)(Height - 1);
+                var col = stops[stops.Length - 1].c;
+                for (int k = 0; k < stops.Length - 1; k++)
+                {
+                    if (t <= stops[k + 1].t)
+                    {
+                        float u = Mathf.Clamp01((t - stops[k].t) / Mathf.Max(1e-4f, stops[k + 1].t - stops[k].t));
+                        col = Color.Lerp(stops[k].c, stops[k + 1].c, u);
+                        break;
+                    }
+                }
+                if (t <= stops[0].t) col = stops[0].c;
+                for (int x = 0; x < Width; x++) _px[y * Width + x] = col;
+            }
         }
 
         public void VerticalGradient(Color bottom, Color top)

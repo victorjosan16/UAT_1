@@ -18,6 +18,15 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
+            var current = S.Themes.Theme;
+            if (current.IsDark)
+            {
+                FullBackground(full, BackgroundArt.Valley(current));
+                ReadabilityScrim(full, 0.3f, 0.5f, 0.12f);
+                var glow = UIFactory.Image(full, "Rays", SpriteLibrary.RadialGlow, UIStyle.WithAlpha(current.Accent, 0.28f));
+                UIFactory.Place(glow.rectTransform, new Vector2(0.5f, 0.72f), new Vector2(1500, 1500), Vector2.zero);
+                return;
+            }
             var art = BackgroundArt.ScreenArt("complete");
             if (art != null)
             {
@@ -34,6 +43,7 @@ namespace Veliqora.UI.Screens
 
         protected override void Build(object args)
         {
+            AmbientMotes(6f);
             _result = args as LevelResult ?? new LevelResult { Level = S.Save.Progress.CurrentLevel, Stars = 1 };
 
             // Celebration art behind the stars (authored effects, when present)

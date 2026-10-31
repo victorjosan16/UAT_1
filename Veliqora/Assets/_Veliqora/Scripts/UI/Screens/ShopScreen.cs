@@ -14,8 +14,10 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
-            Texture tex = BackgroundArt.ScreenArt("shop");
-            if (tex == null) tex = BackgroundArt.Valley(S.Themes.Theme);
+            // Dark-fantasy themes carry the whole UI; illustrated themes use the authored shop scene.
+            var theme = S.Themes.Theme;
+            Texture tex = theme.IsDark ? null : BackgroundArt.ScreenArt("shop");
+            if (tex == null) tex = BackgroundArt.Valley(theme);
             FullBackground(full, tex);
             ReadabilityScrim(full, 0.4f, 0.4f, 0.15f);
         }
@@ -72,7 +74,7 @@ namespace Veliqora.UI.Screens
 
         private RectTransform Card(RectTransform list, float y, float h, out Image bg)
         {
-            bg = UIFactory.Panel(list, "Card", Color.white, UIStyle.RadiusMedium, false);
+            bg = UIFactory.Panel(list, "Card", UIStyle.Card, UIStyle.RadiusMedium, false);
             var card = (RectTransform)bg.transform.parent;
             UIFactory.Band(card, 1f, h, y, 0, 1f);
             var edge = UIFactory.Image(card, "Edge", SpriteLibrary.Rounded(UIStyle.RadiusMedium), UIStyle.IvoryDark);

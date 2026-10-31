@@ -10,23 +10,24 @@ namespace Veliqora.Presentation
     /// </summary>
     public static class LiquidPalette
     {
+        // Vibrant neon set tuned for dark backgrounds; ordered so early levels (few colors) get the most distinct hues.
         private static readonly Color[] Colors =
         {
-            UIStyle.Hex("#3D8BFF"), // 1 blue
-            UIStyle.Hex("#FF4FA3"), // 2 pink
-            UIStyle.Hex("#36C46A"), // 3 green
-            UIStyle.Hex("#FFD23F"), // 4 yellow
-            UIStyle.Hex("#8E5CF7"), // 5 purple
-            UIStyle.Hex("#FF8A2B"), // 6 orange
-            UIStyle.Hex("#2ED3E6"), // 7 cyan
-            UIStyle.Hex("#E8364F"), // 8 red
-            UIStyle.Hex("#A6E22E"), // 9 lime
-            UIStyle.Hex("#9C6B3F"), // 10 brown
-            UIStyle.Hex("#E9EEF5"), // 11 pearl
-            UIStyle.Hex("#2B3A8C"), // 12 navy
+            UIStyle.Hex("#2F7BFF"), // 1 electric blue
+            UIStyle.Hex("#FF3FA4"), // 2 hot pink
+            UIStyle.Hex("#2EF07A"), // 3 neon green
+            UIStyle.Hex("#FFE135"), // 4 neon yellow
+            UIStyle.Hex("#A24DFF"), // 5 violet
+            UIStyle.Hex("#FF8A1F"), // 6 neon orange
+            UIStyle.Hex("#1FE8FF"), // 7 cyan
+            UIStyle.Hex("#FF2E4D"), // 8 red
+            UIStyle.Hex("#C6FF3A"), // 9 lime
+            UIStyle.Hex("#B07A45"), // 10 amber brown
+            UIStyle.Hex("#F4F1FF"), // 11 pearl white
+            UIStyle.Hex("#8C93B8"), // 12 moonstone grey
         };
 
-        public static readonly string[] Names = { "Blue", "Pink", "Green", "Yellow", "Purple", "Orange", "Cyan", "Red", "Lime", "Brown", "Pearl", "Navy" };
+        public static readonly string[] Names = { "Blue", "Pink", "Green", "Yellow", "Violet", "Orange", "Cyan", "Red", "Lime", "Amber", "Pearl", "Moonstone" };
 
         public static Color Get(int colorId)
         {

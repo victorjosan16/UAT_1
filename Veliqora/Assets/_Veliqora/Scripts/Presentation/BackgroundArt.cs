@@ -48,12 +48,13 @@ namespace Veliqora.Presentation
 
         public static Texture2D Valley(ThemeVisuals t, int w = 540, int h = 960)
         {
+            if (t.IsDark) { w = 540; h = 960; } // dark scenes are authored at full size; thumbnails reuse the texture
             string key = "valley_" + t.Id + "_" + w + "x" + h;
             Texture2D cached;
             if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
             var authored = Resources.Load<Texture2D>("Veliqora/Art/Backgrounds/" + t.Id);
             if (authored != null) return Cache[key] = authored;
-            var tex = PaintValley(t, w, h).ToTexture();
+            var tex = (t.IsDark ? DarkScenes.Paint(t.Scene, w, h) : PaintValley(t, w, h)).ToTexture();
             tex.name = key;
             Cache[key] = tex;
             return tex;

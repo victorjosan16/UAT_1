@@ -5,18 +5,19 @@ using Veliqora.Core.Puzzle;
 
 namespace Veliqora.Core.Levels
 {
-    public enum DifficultyTier { Tutorial = 0, Beginner = 1, Intermediate = 2, Advanced = 3, Expert = 4 }
+    public enum DifficultyTier { Tutorial = 0, Beginner = 1, Intermediate = 2, Advanced = 3, Expert = 4, Master = 5 }
 
     public static class DifficultyTiers
     {
-        /// <summary>Tutorial 1–5, Beginner 6–25, Intermediate 26–75, Advanced 76–150, Expert 151–200 (and beyond).</summary>
+        /// <summary>Tutorial 1–5, Beginner 6–25, Intermediate 26–75, Advanced 76–150, Expert 151–200, Master 201+.</summary>
         public static DifficultyTier ForLevel(int number)
         {
             if (number <= 5) return DifficultyTier.Tutorial;
             if (number <= 25) return DifficultyTier.Beginner;
             if (number <= 75) return DifficultyTier.Intermediate;
             if (number <= 150) return DifficultyTier.Advanced;
-            return DifficultyTier.Expert;
+            if (number <= 200) return DifficultyTier.Expert;
+            return DifficultyTier.Master;
         }
     }
 

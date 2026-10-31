@@ -4,10 +4,10 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **95 / 95 passed**
+### 1.1 EditMode suite against the pure core: **98 / 98 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 95, Skipped: 0, Total: 95, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 98, Skipped: 0, Total: 98, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
@@ -16,16 +16,17 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 | PuzzleRulesTests | 19 | all legal/illegal pour cases, out-of-range, contiguous run, free-space limit, immutability, custom capacity, win (incl. empty / one-color), stuck, useful moves, canonical keys, color distribution |
 | GameSessionTests | 16 | tap state machine, deselect/reselect, busy lock, rapid-tap conservation, multi-unit undo, undo after win blocked, extra bottle (survives undo/restart, max 1), restart, hint legality + hint-following solves, solver fallback, dead-end truthful message, shuffle restart + par, snapshot round trip, tampered snapshot rejection |
 | SolverAndGeneratorTests | 13 | verified solutions, proven-unsolvable, already solved, node budget, cancellation, illegal-sequence rejection, PRNG determinism/uniformity/golden stability, deal determinism + color conservation, generator determinism + verification, rejection of unsolvable configs, verified shuffle, stuck-rate determinism |
-| LevelCatalogTests | 10 | 200 contiguous levels, **all 200 replay-verified**, **all 200 re-solved independently within budget**, tiers + 10 handcrafted, 2–8 colors, tier-average ramp, no trivial or pre-completed starts, **first 40 levels reproducible from seed**, JSON round trip, star thresholds |
+| LevelCatalogTests | 10 | 300 contiguous levels, **all 300 replay-verified**, **all 300 re-solved independently within budget**, tiers (incl. Master) + 10 handcrafted, 2–8 colors (≤12 in Master), tier-average ramp, no trivial or pre-completed starts, **first 40 levels reproducible from seed**, JSON round trip, star thresholds |
 | EconomyTests | 10 | data-driven prices, starting grant once, purchase atomic + idempotent, insufficient funds (no state change, retryable), never negative, consume/refund idempotency, first-clear vs replay rewards, milestone, cosmetics, bounded ledger |
 | SaveSystemTests | 11 | full round trip incl. in-progress session, checksum corruption + truncation, newer-schema rejection, v1→v2 migration, backup recovery, fresh start with message, write failure reported, damaged session isolated, real file storage atomic write + backup recovery, progress rules |
 | RewardedAdGateTests | 10 | reward only on Completed, duplicate callbacks, cancel/fail/no-fill, timeout + late completion ignored, single in-flight, unavailable, abort on background, cooldown, NoAds never blocks |
 | MiniJsonTests | 6 | round trip, malformed input |
+| ProjectFilesTests | 3 | committed scenes reference `SceneEntry` with the right ScreenId, Build Settings order + GUIDs, 12 distinct dark backgrounds configured |
 
-### 1.2 Batch level validation: **200 / 200 PASS**
+### 1.2 Batch level validation: **300 / 300 PASS**
 ```
 $ dotnet run -c Release --project Tools/LevelGen -- validate
-Validated 200 levels: 200 PASS, 0 FAIL in 0.2s -> Docs/level_validation_report.csv
+Validated 300 levels: 300 PASS, 0 FAIL in 0.2s -> Docs/level_validation_report.csv
 ```
 For each level the validator:
 - checks the color distribution;
@@ -33,8 +34,8 @@ For each level the validator:
 - replays the stored solution to a win;
 - runs an independent solver (`SolverOptions.Validation`: ≤400k nodes, ≤10 s).
 
-All 200 were solved; the worst case was 124 expanded nodes and 5 ms. Per-level seed, colors, bottles, capacity, solution length, nodes, ms,
-branching, stuck rate and pass/fail are in the CSV. Generation itself (`-- build`) takes ≈5 s for all 200 levels, see `Docs/level_generation_report.csv`.
+All 300 were solved; the worst case was 840 expanded nodes and 31 ms. Per-level seed, colors, bottles, capacity, solution length, nodes, ms,
+branching, stuck rate and pass/fail are in the CSV. Generation itself (`-- build`) takes ≈10 s for all 300 levels, see `Docs/level_generation_report.csv`.
 
 ### 1.3 Unity-side static compile check: **0 errors**
 ```
@@ -74,14 +75,14 @@ Two problems found this way were fixed:
 - the first badge mask also caught the button's orange outline;
 - the derived green pill was too neon.
 
-After the change, the 95 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
+After the change, the 98 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
 
 ## 2. Not executed (requires Unity Editor / device)
 
 | Item | Status | How to run |
 |---|---|---|
 | EditMode suite inside Unity | pending | Window → General → Test Runner → EditMode → Run All |
-| 12 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
+| 13 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
 | Unity 6 compilation | pending | open project; check Console |
 | Visual QA / automated screenshots | pending | Play Mode + **Veliqora → Capture Screenshot**; checklist below |
 | Performance (60 FPS target, GC, startup) | **not measured** | Unity Profiler on a midrange Android device (development build) |

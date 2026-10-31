@@ -1,52 +1,491 @@
 {
   "startingCoins": 200,
-  "startingBoosters": { "Undo": 3, "ExtraBottle": 1, "Shuffle": 1, "Hint": 2 },
+  "startingBoosters": {
+    "Undo": 3,
+    "ExtraBottle": 1,
+    "Shuffle": 1,
+    "Hint": 2
+  },
   "levelBaseReward": 20,
   "perStarReward": 10,
   "replayBaseReward": 5,
   "starImprovementReward": 10,
   "milestoneEvery": 10,
   "milestoneCoins": 100,
-  "milestoneBoosters": { "Undo": 2, "Hint": 1 },
+  "milestoneBoosters": {
+    "Undo": 2,
+    "Hint": 1
+  },
   "rewardedBonusBooster": "Undo",
   "rewardedBonusBoosterQuantity": 1,
   "rewardedCooldownSeconds": 30,
   "offers": [
-    { "id": "offer_undo_3", "booster": "Undo", "quantity": 3, "price": 100, "title": "Undo Move", "description": "Take back your last pour. Pack of 3." },
-    { "id": "offer_extra_bottle", "booster": "ExtraBottle", "quantity": 1, "price": 200, "title": "Extra Bottle", "description": "Adds one empty bottle for the current level." },
-    { "id": "offer_shuffle", "booster": "Shuffle", "quantity": 1, "price": 150, "title": "Shuffle Bottles", "description": "Deals a new, verified-solvable layout and restarts the level." },
-    { "id": "offer_hint_2", "booster": "Hint", "quantity": 2, "price": 120, "title": "Hint", "description": "Shows a solver-recommended next move. Pack of 2." }
+    {
+      "id": "offer_undo_3",
+      "booster": "Undo",
+      "quantity": 3,
+      "price": 100,
+      "title": "Undo Move",
+      "description": "Take back your last pour. Pack of 3."
+    },
+    {
+      "id": "offer_extra_bottle",
+      "booster": "ExtraBottle",
+      "quantity": 1,
+      "price": 200,
+      "title": "Extra Bottle",
+      "description": "Adds one empty bottle for the current level."
+    },
+    {
+      "id": "offer_shuffle",
+      "booster": "Shuffle",
+      "quantity": 1,
+      "price": 150,
+      "title": "Shuffle Bottles",
+      "description": "Deals a new, verified-solvable layout and restarts the level."
+    },
+    {
+      "id": "offer_hint_2",
+      "booster": "Hint",
+      "quantity": 2,
+      "price": 120,
+      "title": "Hint",
+      "description": "Shows a solver-recommended next move. Pack of 2."
+    }
   ],
   "cosmetics": [
-    { "id": "theme_valley", "kind": "theme", "title": "Classic Valley", "price": 0, "defaultOwned": true,
-      "visual": { "skyTop": "#7EC8F2", "skyBottom": "#D9F1FB", "mountain": "#9DB7D9", "hill": "#7CCB8B", "hillDark": "#4FA86A", "river": "#5BC0EB", "accent": "#FF8FB1", "gameTop": "#1D2A55", "gameBottom": "#2E5DA8" } },
-    { "id": "theme_sunset", "kind": "theme", "title": "Sunset Shores", "price": 500,
-      "visual": { "skyTop": "#F7A072", "skyBottom": "#FFE3B3", "mountain": "#C98BB9", "hill": "#E9B44C", "hillDark": "#C47F32", "river": "#F27A7D", "accent": "#FFD166", "gameTop": "#3B1F4A", "gameBottom": "#8E3B5B" } },
-    { "id": "theme_garden", "kind": "theme", "title": "Blossom Garden", "price": 600,
-      "visual": { "skyTop": "#B8E3C9", "skyBottom": "#F4FBF0", "mountain": "#A3C4A8", "hill": "#8BD17C", "hillDark": "#5DA04F", "river": "#6CC4D8", "accent": "#F28DB2", "gameTop": "#1F3B34", "gameBottom": "#2F6F5E" } },
-    { "id": "theme_night", "kind": "theme", "title": "Starry Night", "price": 800,
-      "visual": { "skyTop": "#141B3D", "skyBottom": "#3B3F8F", "mountain": "#2B2F66", "hill": "#2F5B5A", "hillDark": "#1F3F45", "river": "#4C7DD9", "accent": "#FFE066", "gameTop": "#0C1030", "gameBottom": "#262A6B" } },
-    { "id": "theme_winter", "kind": "theme", "title": "Winter Glow", "price": 1000,
-      "visual": { "skyTop": "#9FB8E8", "skyBottom": "#EEF4FF", "mountain": "#C7D3EE", "hill": "#E6EEF9", "hillDark": "#B5C6E3", "river": "#7FB3E0", "accent": "#9D7BEA", "gameTop": "#1B2747", "gameBottom": "#3F5E9A" } },
-    { "id": "theme_galaxy", "kind": "theme", "title": "Galaxy Bloom", "price": 1200,
-      "visual": { "skyTop": "#2A0F4C", "skyBottom": "#6B2FA3", "mountain": "#4B1F78", "hill": "#3B2A7A", "hillDark": "#28195A", "river": "#C06EF0", "accent": "#4FE3C1", "gameTop": "#140828", "gameBottom": "#3D1670" } },
-    { "id": "theme_desert", "kind": "theme", "title": "Desert Oasis", "price": 1100,
-      "visual": { "skyTop": "#F6B26B", "skyBottom": "#FFE9C2", "mountain": "#D9A066", "hill": "#E8C07D", "hillDark": "#C08A4A", "river": "#4FB3D9", "accent": "#FF8C42", "gameTop": "#3A2414", "gameBottom": "#8A5A2B" } },
-    { "id": "bottle_classic", "kind": "bottle", "title": "Classic Glass", "price": 0, "defaultOwned": true,
-      "visual": { "shape": "classic", "tint": "#FFFFFF", "neck": 0.22 } },
-    { "id": "bottle_slim", "kind": "bottle", "title": "Slim Vial", "price": 300,
-      "visual": { "shape": "slim", "tint": "#E8F7FF", "neck": 0.12 } },
-    { "id": "bottle_flask", "kind": "bottle", "title": "Round Flask", "price": 500,
-      "visual": { "shape": "flask", "tint": "#F3ECFF", "neck": 0.3 } },
-    { "id": "bottle_crystal", "kind": "bottle", "title": "Crystal", "price": 900,
-      "visual": { "shape": "crystal", "tint": "#E6FFF6", "neck": 0.18 } },
-    { "id": "bottle_milk", "kind": "bottle", "title": "Milk Bottle", "price": 400,
-      "visual": { "shape": "authored", "art": "glass_milk" } },
-    { "id": "bottle_cork", "kind": "bottle", "title": "Cork Bottle", "price": 450,
-      "visual": { "shape": "authored", "art": "glass_cork" } },
-    { "id": "bottle_cone", "kind": "bottle", "title": "Cone Flask", "price": 650,
-      "visual": { "shape": "authored", "art": "glass_cone" } },
-    { "id": "bottle_cap", "kind": "bottle", "title": "Vintage Vial", "price": 750,
-      "visual": { "shape": "authored", "art": "glass_cap" } }
+    {
+      "id": "dark_aurora",
+      "kind": "theme",
+      "title": "Aurora Night",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "aurora",
+        "skyTop": "#0B1B3A",
+        "skyBottom": "#03050F",
+        "mountain": "#0B1B3A",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#FF3FD8",
+        "accent": "#2BFFB0",
+        "gameTop": "#03050F",
+        "gameBottom": "#0B1B3A"
+      }
+    },
+    {
+      "id": "dark_crystal_cave",
+      "kind": "theme",
+      "title": "Crystal Cavern",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "crystal_cave",
+        "skyTop": "#130A2A",
+        "skyBottom": "#07030F",
+        "mountain": "#130A2A",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#C77DFF",
+        "accent": "#5CE8FF",
+        "gameTop": "#07030F",
+        "gameBottom": "#130A2A"
+      }
+    },
+    {
+      "id": "dark_alchemy_lab",
+      "kind": "theme",
+      "title": "Alchemist's Lab",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "alchemy_lab",
+        "skyTop": "#1A0B30",
+        "skyBottom": "#0A0516",
+        "mountain": "#1A0B30",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#C040FF",
+        "accent": "#FF7BF0",
+        "gameTop": "#0A0516",
+        "gameBottom": "#1A0B30"
+      }
+    },
+    {
+      "id": "dark_glow_forest",
+      "kind": "theme",
+      "title": "Glowing Forest",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "glow_forest",
+        "skyTop": "#0B2626",
+        "skyBottom": "#030B0B",
+        "mountain": "#0B2626",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#C46BFF",
+        "accent": "#4DFFE0",
+        "gameTop": "#030B0B",
+        "gameBottom": "#0B2626"
+      }
+    },
+    {
+      "id": "dark_neon_falls",
+      "kind": "theme",
+      "title": "Neon Falls",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "neon_falls",
+        "skyTop": "#0A1A5C",
+        "skyBottom": "#03082A",
+        "mountain": "#0A1A5C",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#5FB8FF",
+        "accent": "#FF3FD8",
+        "gameTop": "#03082A",
+        "gameBottom": "#0A1A5C"
+      }
+    },
+    {
+      "id": "dark_nebula",
+      "kind": "theme",
+      "title": "Nebula Drift",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "nebula",
+        "skyTop": "#0A0620",
+        "skyBottom": "#04030C",
+        "mountain": "#0A0620",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#5F8BFF",
+        "accent": "#B48CFF",
+        "gameTop": "#04030C",
+        "gameBottom": "#0A0620"
+      }
+    },
+    {
+      "id": "dark_abyss",
+      "kind": "theme",
+      "title": "Abyssal Deep",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "abyss",
+        "skyTop": "#0A3E66",
+        "skyBottom": "#010510",
+        "mountain": "#0A3E66",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#FF6BE8",
+        "accent": "#7FFFE0",
+        "gameTop": "#010510",
+        "gameBottom": "#0A3E66"
+      }
+    },
+    {
+      "id": "dark_ember_peaks",
+      "kind": "theme",
+      "title": "Ember Peaks",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "ember_peaks",
+        "skyTop": "#3A0E06",
+        "skyBottom": "#080303",
+        "mountain": "#3A0E06",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#FF4A12",
+        "accent": "#FFA040",
+        "gameTop": "#080303",
+        "gameBottom": "#3A0E06"
+      }
+    },
+    {
+      "id": "dark_moon_citadel",
+      "kind": "theme",
+      "title": "Moonlit Citadel",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "moon_citadel",
+        "skyTop": "#14103A",
+        "skyBottom": "#05050F",
+        "mountain": "#14103A",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#B9A8FF",
+        "accent": "#FFD27A",
+        "gameTop": "#05050F",
+        "gameBottom": "#14103A"
+      }
+    },
+    {
+      "id": "dark_frost_aurora",
+      "kind": "theme",
+      "title": "Frost Aurora",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "frost_aurora",
+        "skyTop": "#0A2546",
+        "skyBottom": "#020812",
+        "mountain": "#0A2546",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#9B6BFF",
+        "accent": "#59C7FF",
+        "gameTop": "#020812",
+        "gameBottom": "#0A2546"
+      }
+    },
+    {
+      "id": "dark_sunken_ruins",
+      "kind": "theme",
+      "title": "Sunken Ruins",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "sunken_ruins",
+        "skyTop": "#0B4A45",
+        "skyBottom": "#010B0A",
+        "mountain": "#0B4A45",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#9FFFF0",
+        "accent": "#5FFFE0",
+        "gameTop": "#010B0A",
+        "gameBottom": "#0B4A45"
+      }
+    },
+    {
+      "id": "dark_starlit_void",
+      "kind": "theme",
+      "title": "Starlit Void",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "starlit_void",
+        "skyTop": "#120838",
+        "skyBottom": "#06031A",
+        "mountain": "#120838",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#8C6BFF",
+        "accent": "#DCD2FF",
+        "gameTop": "#06031A",
+        "gameBottom": "#120838"
+      }
+    },
+    {
+      "id": "theme_valley",
+      "kind": "theme",
+      "title": "Classic Valley",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "skyTop": "#7EC8F2",
+        "skyBottom": "#D9F1FB",
+        "mountain": "#9DB7D9",
+        "hill": "#7CCB8B",
+        "hillDark": "#4FA86A",
+        "river": "#5BC0EB",
+        "accent": "#FF8FB1",
+        "gameTop": "#1D2A55",
+        "gameBottom": "#2E5DA8"
+      }
+    },
+    {
+      "id": "theme_sunset",
+      "kind": "theme",
+      "title": "Sunset Shores",
+      "price": 500,
+      "visual": {
+        "skyTop": "#F7A072",
+        "skyBottom": "#FFE3B3",
+        "mountain": "#C98BB9",
+        "hill": "#E9B44C",
+        "hillDark": "#C47F32",
+        "river": "#F27A7D",
+        "accent": "#FFD166",
+        "gameTop": "#3B1F4A",
+        "gameBottom": "#8E3B5B"
+      }
+    },
+    {
+      "id": "theme_garden",
+      "kind": "theme",
+      "title": "Blossom Garden",
+      "price": 600,
+      "visual": {
+        "skyTop": "#B8E3C9",
+        "skyBottom": "#F4FBF0",
+        "mountain": "#A3C4A8",
+        "hill": "#8BD17C",
+        "hillDark": "#5DA04F",
+        "river": "#6CC4D8",
+        "accent": "#F28DB2",
+        "gameTop": "#1F3B34",
+        "gameBottom": "#2F6F5E"
+      }
+    },
+    {
+      "id": "theme_night",
+      "kind": "theme",
+      "title": "Starry Night",
+      "price": 800,
+      "visual": {
+        "skyTop": "#141B3D",
+        "skyBottom": "#3B3F8F",
+        "mountain": "#2B2F66",
+        "hill": "#2F5B5A",
+        "hillDark": "#1F3F45",
+        "river": "#4C7DD9",
+        "accent": "#FFE066",
+        "gameTop": "#0C1030",
+        "gameBottom": "#262A6B"
+      }
+    },
+    {
+      "id": "theme_winter",
+      "kind": "theme",
+      "title": "Winter Glow",
+      "price": 1000,
+      "visual": {
+        "skyTop": "#9FB8E8",
+        "skyBottom": "#EEF4FF",
+        "mountain": "#C7D3EE",
+        "hill": "#E6EEF9",
+        "hillDark": "#B5C6E3",
+        "river": "#7FB3E0",
+        "accent": "#9D7BEA",
+        "gameTop": "#1B2747",
+        "gameBottom": "#3F5E9A"
+      }
+    },
+    {
+      "id": "theme_galaxy",
+      "kind": "theme",
+      "title": "Galaxy Bloom",
+      "price": 1200,
+      "visual": {
+        "skyTop": "#2A0F4C",
+        "skyBottom": "#6B2FA3",
+        "mountain": "#4B1F78",
+        "hill": "#3B2A7A",
+        "hillDark": "#28195A",
+        "river": "#C06EF0",
+        "accent": "#4FE3C1",
+        "gameTop": "#140828",
+        "gameBottom": "#3D1670"
+      }
+    },
+    {
+      "id": "theme_desert",
+      "kind": "theme",
+      "title": "Desert Oasis",
+      "price": 1100,
+      "visual": {
+        "skyTop": "#F6B26B",
+        "skyBottom": "#FFE9C2",
+        "mountain": "#D9A066",
+        "hill": "#E8C07D",
+        "hillDark": "#C08A4A",
+        "river": "#4FB3D9",
+        "accent": "#FF8C42",
+        "gameTop": "#3A2414",
+        "gameBottom": "#8A5A2B"
+      }
+    },
+    {
+      "id": "bottle_classic",
+      "kind": "bottle",
+      "title": "Classic Glass",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "shape": "classic",
+        "tint": "#FFFFFF",
+        "neck": 0.22
+      }
+    },
+    {
+      "id": "bottle_slim",
+      "kind": "bottle",
+      "title": "Slim Vial",
+      "price": 300,
+      "visual": {
+        "shape": "slim",
+        "tint": "#E8F7FF",
+        "neck": 0.12
+      }
+    },
+    {
+      "id": "bottle_flask",
+      "kind": "bottle",
+      "title": "Round Flask",
+      "price": 500,
+      "visual": {
+        "shape": "flask",
+        "tint": "#F3ECFF",
+        "neck": 0.3
+      }
+    },
+    {
+      "id": "bottle_crystal",
+      "kind": "bottle",
+      "title": "Crystal",
+      "price": 900,
+      "visual": {
+        "shape": "crystal",
+        "tint": "#E6FFF6",
+        "neck": 0.18
+      }
+    },
+    {
+      "id": "bottle_milk",
+      "kind": "bottle",
+      "title": "Milk Bottle",
+      "price": 400,
+      "visual": {
+        "shape": "authored",
+        "art": "glass_milk"
+      }
+    },
+    {
+      "id": "bottle_cork",
+      "kind": "bottle",
+      "title": "Cork Bottle",
+      "price": 450,
+      "visual": {
+        "shape": "authored",
+        "art": "glass_cork"
+      }
+    },
+    {
+      "id": "bottle_cone",
+      "kind": "bottle",
+      "title": "Cone Flask",
+      "price": 650,
+      "visual": {
+        "shape": "authored",
+        "art": "glass_cone"
+      }
+    },
+    {
+      "id": "bottle_cap",
+      "kind": "bottle",
+      "title": "Vintage Vial",
+      "price": 750,
+      "visual": {
+        "shape": "authored",
+        "art": "glass_cap"
+      }
+    }
   ]
 }

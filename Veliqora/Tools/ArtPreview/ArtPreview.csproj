@@ -20,6 +20,7 @@
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/ThemeVisuals.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidGeometry.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidPalette.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/DarkScenes.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Veliqora.Core/Veliqora.Core.csproj" />

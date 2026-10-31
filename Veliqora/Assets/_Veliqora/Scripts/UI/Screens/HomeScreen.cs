@@ -30,6 +30,7 @@ namespace Veliqora.UI.Screens
             var gear = UIFactory.IconButton(bar, Icon.Gear, UIStyle.Violet, 116, () => CommonOverlays.ShowSettings(S));
             UIFactory.Place(gear.Rect, new Vector2(1, 0.5f), gear.Rect.sizeDelta, Vector2.zero, new Vector2(1, 0.5f));
 
+            AmbientMotes(5f);
             BuildLogo();
 
             int level = S.Save.Progress.CurrentLevel;

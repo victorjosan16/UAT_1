@@ -20,7 +20,10 @@ namespace Veliqora.Presentation
         public Color GameTop = UIStyle.Hex("#1D2A55");
         public Color GameBottom = UIStyle.Hex("#2E5DA8");
 
-        public bool IsDarkSky => SkyTop.grayscale < 0.35f;
+        /// <summary>Procedural dark-fantasy scene id (DarkScenes), empty for illustrated/bright themes.</summary>
+        public string Scene = "";
+        public bool IsDark => !string.IsNullOrEmpty(Scene);
+        public bool IsDarkSky => IsDark || SkyTop.grayscale < 0.35f;
 
         public static ThemeVisuals From(CosmeticItem item)
         {
@@ -37,6 +40,7 @@ namespace Veliqora.Presentation
             t.Accent = Col(v, "accent", t.Accent);
             t.GameTop = Col(v, "gameTop", t.GameTop);
             t.GameBottom = Col(v, "gameBottom", t.GameBottom);
+            t.Scene = MiniJson.GetString(v, "scene", "");
             return t;
         }
 

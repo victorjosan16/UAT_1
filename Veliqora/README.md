@@ -3,11 +3,20 @@
 Original water-sort puzzle for Android, built in **Unity 6 (LTS)** with C#.
 The working title for the store is *Veliqora: Color Sort Puzzle*. This repo makes no claim about trademark status or Play Store availability.
 
-> **Status (honest summary):** the pure C# game core, 200 verified levels and 95 automated tests are
+> **Status (honest summary):** the pure C# game core, 300 verified levels and 98 automated tests are
 > implemented and **were executed** in this environment (.NET 8). The Unity layer (scenes, UI, rendering,
 > audio, ads, editor tooling, PlayMode tests) is implemented and **compiles** against Unity reference
 > assemblies. It has **not been run inside the Unity Editor or on a device yet**, because no Unity Editor or license was
 > available here. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) and [TEST_REPORT.md](TEST_REPORT.md).
+
+## Visual direction: premium dark fantasy
+- **12 original dark backgrounds**, all free to select (Themes tab): Aurora Night, Crystal Cavern, Alchemist's Lab, Glowing Forest,
+  Neon Falls, Nebula Drift, Abyssal Deep, Ember Peaks, Moonlit Citadel, Frost Aurora, Sunken Ruins, Starlit Void.
+  They are painted procedurally by `DarkScenes` and inspired by the supplied mood images, which are not copied or shipped.
+  Aurora Night is the default.
+- **Liquids and bottles:** vibrant neon liquids (12 hues, minimum ΔE 36.9 between any two) and glossy transparent bottles with a neon aura tinted by the top liquid.
+- **Particles:** pooled UI particles for pour splashes, rising bubbles, completion sparkles and ambient glowing motes.
+- **UI:** dark glass panels. The earlier illustrated themes and skins remain available.
 
 ## Quick start (Unity)
 
@@ -15,7 +24,7 @@ The working title for the store is *Veliqora: Color Sort Puzzle*. This repo make
 2. In Unity Hub choose **Add project from disk** and select this `Veliqora/` folder. Unity resolves `Packages/manifest.json`
    (uGUI, Input System, Test Framework). If Unity asks to enable the new Input System backend, either choice works,
    because the code supports both.
-3. Run the menu **Veliqora → Setup Project**. It is idempotent and does the following:
+3. The 7 scenes and Build Settings are **committed** (`Assets/_Veliqora/Scenes`, `ProjectSettings/EditorBuildSettings.asset`). Optionally run **Veliqora → Setup Project**. It is idempotent and does the following:
    - creates the scenes `Bootstrap, Home, LevelMap, Gameplay, LevelComplete, Shop, Customization` (each with a `SceneEntry` marker)
      and adds them to Build Settings in that order;
    - sets the Android player settings: package placeholder `com.animatix.veliqora`, portrait, IL2CPP, ARM64, min SDK 24, target SDK *auto*;
@@ -33,7 +42,7 @@ real scenes aren't in Build Settings.
 | Pure game core (no `UnityEngine`) | `Assets/_Veliqora/Scripts/Core` (`Veliqora.Core.asmdef`, `noEngineReferences`) | rules, solver, generator, session/undo/hints, economy, save, ads contract |
 | Unity runtime | `Assets/_Veliqora/Scripts/{Infrastructure,UI,Presentation,Gameplay,Audio,Settings,Ads}` (`Veliqora.Runtime.asmdef`) | composition root, navigation, screens, liquid rendering, audio, haptics, mock ads |
 | Editor tooling | `Assets/_Veliqora/Editor` | Setup Project, Validate Project, Generate/Batch-Validate Levels, Android builds, screenshots |
-| Content | `Assets/_Veliqora/Resources/Veliqora/{Levels,Config}` | `levels.json` (200 levels), `economy.json` (prices/rewards/cosmetics), `ads.json` (placeholder IDs) |
+| Content | `Assets/_Veliqora/Resources/Veliqora/{Levels,Config}` | `levels.json` (300 levels), `economy.json` (prices/rewards/cosmetics), `ads.json` (placeholder IDs) |
 | Tests | `Assets/_Veliqora/Tests/{EditMode,PlayMode}` | EditMode tests run in Unity **and** via `dotnet test` |
 | Offline tools | `Tools/` | .NET projects: core build, LevelGen, test runner, Unity compile check, art preview |
 | Docs | `DESIGN_SPEC.md`, `IMPLEMENTATION_STATUS.md`, `TEST_REPORT.md`, `Docs/` | build/release guide, release checklist, level reports, art previews |
@@ -42,8 +51,8 @@ real scenes aren't in Build Settings.
 
 ```bash
 # from Veliqora/
-dotnet test Tools/Veliqora.Core.Tests                         # 95 EditMode tests against the pure core
-dotnet run -c Release --project Tools/LevelGen -- build       # regenerate the 200 levels deterministically (~5 s)
+dotnet test Tools/Veliqora.Core.Tests                         # 98 EditMode tests against the pure core
+dotnet run -c Release --project Tools/LevelGen -- build       # regenerate the 300 levels deterministically (~10 s)
 dotnet run -c Release --project Tools/LevelGen -- validate    # replay + independent solver check -> Docs/level_validation_report.csv
 dotnet build Tools/UnityCompileCheck                          # compile Unity-side code against reference assemblies (optional)
 dotnet run -c Release --project Tools/ArtPreview -- Docs/ArtPreview   # render procedural art previews to PNG

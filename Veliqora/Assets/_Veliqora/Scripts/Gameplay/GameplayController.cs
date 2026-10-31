@@ -119,7 +119,7 @@ namespace Veliqora.Gameplay
                 _board.SyncTo(Session.Current);
                 if (r.CompletedBottle)
                 {
-                    _board.Views[mr.Move.To].PlayCompleted();
+                    _board.PlayCompleted(mr.Move.To);
                     _s.Audio.PlayComplete();
                     _s.Haptics.Light();
                 }

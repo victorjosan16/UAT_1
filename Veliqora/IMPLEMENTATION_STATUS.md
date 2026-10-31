@@ -31,7 +31,7 @@ an APK/AAB, or on-device performance.
 - ✅ **Solver:** weighted A* with canonicalization, symmetric-empty and pointless-move pruning, node/time budgets and cancellation.
 - ✅ **Generator:** verified generator plus curve builder with stuck-rate difficulty metric.
 - ✅ **Determinism:** the first 40 levels are rebuilt from the seed in tests and match exactly.
-- ✅ **Batch validation:** 200/200 PASS (`Docs/level_validation_report.csv`).
+- ✅ **Batch validation:** 300/300 PASS (`Docs/level_validation_report.csv`).
 - ✅ **Hints:** always legal; following hints solves a level; a truthful fallback covers dead ends.
 - ✅ **Stars:** transparent star thresholds.
 
@@ -51,7 +51,7 @@ an APK/AAB, or on-device performance.
 
 ## Phase G: tests, validators, Android config, release docs
 - ✅ **EditMode tests:** 95, executed via `dotnet test` (same sources as Unity's EditMode suite).
-- 🟡 **PlayMode tests:** 12 written (flows, restart, pause/resume, rapid taps, boosters, shop, themes, save/reload, ads offline/mock, safe area, back button). **Not executed.**
+- 🟡 **PlayMode tests:** 13 written (flows, restart, pause/resume, rapid taps, boosters, shop, themes, save/reload, ads offline/mock, safe area, back button). **Not executed.**
 - 🟡 **Editor tooling:** Validate Project, Generate Levels, Batch Validate, screenshot capture, debug APK / release AAB menus and CLI with env-var signing.
 - ⬜ **Builds:** APK/AAB **not built** (no Unity/Android toolchain here).
 
@@ -68,6 +68,18 @@ an APK/AAB, or on-device performance.
   title sign banners, screen and theme backgrounds with readability scrims, Level Complete effects, opened-chest badge, authored bottle skins,
   Desert theme, `VeliqoraArtImporter` import settings. Compiles, but has not been seen in Unity.
 - ⬜ **Unused assets:** map art (it needs a seamless tile), the Events and Settings screens' art, obstacles and special liquids (no such mechanics yet).
+
+## Dark-fantasy update (latest request)
+- ✅ **Gameplay logic re-validated first:** tests passed and the 200-level replay check passed before any visual work started.
+- ✅ **Master tier:** levels 201–300 (9–12 colors) added; all **300/300** replay- and solver-validated; levels 1–200 unchanged.
+- ✅ **Backgrounds:** 12 original dark backgrounds, rendered offline (`Docs/ArtPreview/dark_backgrounds_12.png`).
+- ✅ **Palette:** neon liquid palette, with distinctness checked numerically.
+- ✅ **Scenes and tests:** committed scenes + build settings, checked by tests; 3 new EditMode tests and 1 new PlayMode test.
+- 🟡 **Runtime integration (compiles, not run in Unity):** dark themes in Customization (now scrollable), dark UI tokens, neon aura, `UiParticles`
+  (splash, bubbles, sparkles, ambient), screen backgrounds for dark themes.
+- ⬜ **Supplied images not imported:** the 4 mood images (cave, lab, forest, waterfall) and the reference game screenshot. Their provenance is unknown, so I used them only as direction.
+  If you own them, drop them in as `Resources/Veliqora/Art/Backgrounds/dark_<scene>.png` and they override the procedural scenes.
+- ⬜ **Reference videos:** none were received; mechanics follow the brief and the screenshot.
 
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.

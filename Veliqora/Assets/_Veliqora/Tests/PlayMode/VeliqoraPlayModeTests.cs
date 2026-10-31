@@ -262,6 +262,25 @@ namespace Veliqora.Tests.PlayMode
             yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Home && !S.Navigator.IsTransitioning);
         }
 
+        [UnityTest]
+        public IEnumerator TwelveDarkBackgrounds_AreSelectable_AndRenderInGameplay()
+        {
+            int dark = 0;
+            foreach (var c in S.EconomyConfig.Cosmetics)
+            {
+                if (!c.Id.StartsWith("dark_")) continue;
+                dark++;
+                Assert.IsTrue(S.Economy.Owns(c.Id), c.Id + " should be free to select");
+                Assert.IsTrue(S.Themes.Apply(c.Id));
+                Assert.AreEqual(c.Id, S.Themes.ThemeId);
+                Assert.IsTrue(S.Themes.Theme.IsDark);
+                Assert.IsNotNull(Presentation.BackgroundArt.Valley(S.Themes.Theme), c.Id + " background");
+            }
+            Assert.AreEqual(12, dark);
+            yield return Go(ScreenId.Gameplay, 5);
+            Assert.IsNotNull(Gameplay.Board.Fx, "particle layer exists on the board");
+        }
+
         private static void ClickButtonContaining(string text)
         {
             foreach (var t in Overlays.Layer.GetComponentsInChildren<Text>(true))

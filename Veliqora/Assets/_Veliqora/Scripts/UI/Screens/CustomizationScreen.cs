@@ -13,7 +13,8 @@ namespace Veliqora.UI.Screens
     {
         private CosmeticKind _tab = CosmeticKind.Theme;
         private string _previewId;
-        private RectTransform _grid;
+        private RectTransform _grid;       // scroll content
+        private ScrollRect _gridScroll;
         private RectTransform _preview;
         private ButtonHandle _tabThemes, _tabBottles, _action;
         private RawImage _bg;
@@ -21,7 +22,7 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
-            var screenArt = BackgroundArt.ScreenArt("themes");
+            var screenArt = S.Themes.Theme.IsDark ? null : BackgroundArt.ScreenArt("themes");
             _bg = FullBackground(full, screenArt != null ? (Texture)screenArt : BackgroundArt.Valley(S.Themes.Theme));
             _bgFollowsTheme = screenArt == null;
             ReadabilityScrim(full, 0.4f, 0.3f, 0.15f);
@@ -51,9 +52,23 @@ namespace Veliqora.UI.Screens
             _action = UIFactory.Button(panel, "Apply", UIStyle.ButtonKind.Primary, OnAction, new Vector2(560, 130), null, UIStyle.FontBody);
             UIFactory.Place(_action.Rect, new Vector2(0.5f, 1f), _action.Rect.sizeDelta, new Vector2(0, -670), new Vector2(0.5f, 1f));
 
-            _grid = UIFactory.Rect("Grid", panel);
-            _grid.offsetMin = new Vector2(40, 40);
-            _grid.offsetMax = new Vector2(-40, -830);
+            var viewport = UIFactory.Rect("GridViewport", panel);
+            viewport.offsetMin = new Vector2(40, 40);
+            viewport.offsetMax = new Vector2(-40, -830);
+            viewport.gameObject.AddComponent<Image>().color = new Color(1, 1, 1, 0.003f); // receives drags
+            viewport.gameObject.AddComponent<RectMask2D>();
+            _grid = UIFactory.Rect("Grid", viewport);
+            _grid.anchorMin = new Vector2(0, 1);
+            _grid.anchorMax = new Vector2(1, 1);
+            _grid.pivot = new Vector2(0.5f, 1);
+            _grid.offsetMin = Vector2.zero;
+            _grid.offsetMax = Vector2.zero;
+            _gridScroll = viewport.gameObject.AddComponent<ScrollRect>();
+            _gridScroll.content = _grid;
+            _gridScroll.viewport = viewport;
+            _gridScroll.horizontal = false;
+            _gridScroll.movementType = ScrollRect.MovementType.Clamped;
+            _gridScroll.scrollSensitivity = 40f;
 
             SetTab(CosmeticKind.Theme);
         }
@@ -83,6 +98,7 @@ namespace Veliqora.UI.Screens
 
         private void RebuildGrid()
         {
+            float keepScroll = _gridScroll != null ? _gridScroll.verticalNormalizedPosition : 1f;
             for (int i = _grid.childCount - 1; i >= 0; i--) Destroy(_grid.GetChild(i).gameObject);
             var items = Items();
             Canvas.ForceUpdateCanvases();
@@ -91,7 +107,8 @@ namespace Veliqora.UI.Screens
             const float gap = 18f;
             float cellW = (w - gap * (cols - 1)) / cols;
             int rows = (items.Count + cols - 1) / cols;
-            float cellH = Mathf.Min(cellW * 1.15f, (_grid.rect.height - gap * (rows - 1)) / Mathf.Max(1, rows));
+            float cellH = cellW * 1.15f;
+            _grid.sizeDelta = new Vector2(0, rows * cellH + (rows - 1) * gap);
             for (int i = 0; i < items.Count; i++)
             {
                 int col = i % cols, row = i / cols;
@@ -103,6 +120,8 @@ namespace Veliqora.UI.Screens
                 cell.anchoredPosition = new Vector2(col * (cellW + gap), -row * (cellH + gap));
                 BuildCell(cell, item);
             }
+            Canvas.ForceUpdateCanvases();
+            _gridScroll.verticalNormalizedPosition = keepScroll;
         }
 
         private void BuildCell(RectTransform cell, CosmeticItem item)
@@ -111,7 +130,7 @@ namespace Veliqora.UI.Screens
             bool applied = item.Id == (item.Kind == CosmeticKind.Theme ? S.Themes.ThemeId : S.Themes.BottleId);
             bool previewing = item.Id == _previewId;
 
-            var frame = UIFactory.Image(cell, "Frame", SpriteLibrary.Rounded(UIStyle.RadiusMedium), previewing ? UIStyle.Mint : Color.white, true);
+            var frame = UIFactory.Image(cell, "Frame", SpriteLibrary.Rounded(UIStyle.RadiusMedium), previewing ? UIStyle.Mint : UIStyle.Card, true);
             var inner = UIFactory.Rect("Inner", frame.transform);
             UIFactory.Stretch(inner, 10);
             inner.offsetMin = new Vector2(10, 64);
@@ -232,7 +251,7 @@ namespace Veliqora.UI.Screens
         {
             if (!S.Themes.Apply(item.Id)) return;
             S.SaveNow();
-            if (item.Kind == CosmeticKind.Theme && _bg != null && _bgFollowsTheme)
+            if (item.Kind == CosmeticKind.Theme && _bg != null && (_bgFollowsTheme || S.Themes.Theme.IsDark))
             {
                 var tex = BackgroundArt.Valley(S.Themes.Theme);
                 _bg.texture = tex;

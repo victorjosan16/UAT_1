@@ -11,6 +11,7 @@ namespace UnityEngine
         public static Vector2 zero => new Vector2(0, 0);
         public static Vector2 one => new Vector2(1, 1);
         public float magnitude => (float)Math.Sqrt(x * x + y * y);
+        public Vector2 normalized { get { float m = magnitude; return m > 1e-5f ? new Vector2(x / m, y / m) : zero; } }
         public static float Dot(Vector2 a, Vector2 b) => a.x * b.x + a.y * b.y;
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t) { t = Mathf.Clamp01(t); return a + (b - a) * t; }
         public static Vector2 operator +(Vector2 a, Vector2 b) => new Vector2(a.x + b.x, a.y + b.y);

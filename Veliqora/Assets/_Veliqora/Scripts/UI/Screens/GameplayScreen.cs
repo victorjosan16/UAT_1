@@ -41,6 +41,13 @@ namespace Veliqora.UI.Screens
         {
             var theme = S.Themes.Theme;
             bool light = S.Settings.Data.LightGameplayBackground;
+            if (!light && theme.IsDark)
+            {
+                // Dark scenes are designed low-contrast already; a light veil keeps the neon liquids dominant.
+                FullBackground(full, BackgroundArt.Valley(theme));
+                ReadabilityScrim(full, 0.45f, 0.5f, 0.22f);
+                return;
+            }
             var art = light ? null : BackgroundArt.ThemeArt(S.Themes.ThemeId);
             if (art != null)
             {
@@ -60,7 +67,7 @@ namespace Veliqora.UI.Screens
             if (number > S.Save.Progress.HighestUnlocked) number = S.Save.Progress.HighestUnlocked;
             _level = S.Levels.Get(number);
             bool light = S.Settings.Data.LightGameplayBackground;
-            Color hudText = light ? UIStyle.Ink : Color.white;
+            Color hudText = light ? UIStyle.InkOnLight : Color.white;
 
             // HUD
             var bar = TopBar();
@@ -75,6 +82,9 @@ namespace Veliqora.UI.Screens
 
             _goalText = UIFactory.Text(Safe, "", UIStyle.FontCaption, UIStyle.WithAlpha(hudText, 0.8f), TextAnchor.MiddleCenter, FontStyle.Normal);
             UIFactory.Band(_goalText.rectTransform, 1f, 60, -UIStyle.TopBarHeight - 30, 40, 1f);
+
+            AmbientMotes(3f);
+            BottleView.NeonAura = !light;
 
             // Board (between HUD and booster bar)
             var boardRt = UIFactory.Rect("Board", Safe);
@@ -131,7 +141,7 @@ namespace Veliqora.UI.Screens
             UIFactory.Place(badge.rectTransform, new Vector2(1, 1), new Vector2(66, 66), new Vector2(6, 6), new Vector2(1, 1));
             UIFactory.AddOutline(badge, Color.white, 3);
             var count = UIFactory.Text(badge.transform, "0", UIStyle.FontCaption, Color.white);
-            var t = UIFactory.Text(holder, label, UIStyle.FontCaption, S.Settings.Data.LightGameplayBackground ? UIStyle.Ink : Color.white);
+            var t = UIFactory.Text(holder, label, UIStyle.FontCaption, S.Settings.Data.LightGameplayBackground ? UIStyle.InkOnLight : Color.white);
             UIFactory.Band(t.rectTransform, 0f, 60, 0, 0, 0f);
             UIFactory.AddShadow(t, new Color(0, 0, 0, 0.3f), new Vector2(0, -2));
             _boosters[type] = new BoosterButton { Button = b, Badge = badge, Count = count };

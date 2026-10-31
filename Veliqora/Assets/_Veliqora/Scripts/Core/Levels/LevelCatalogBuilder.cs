@@ -49,7 +49,7 @@ namespace Veliqora.Core.Levels
     public static class LevelCatalogBuilder
     {
         public const ulong DefaultBaseSeed = 0x5645_4C49_514F_5241UL; // "VELIQORA"
-        public const int DefaultLevelCount = 200;
+        public const int DefaultLevelCount = 300;
 
         // Measured with Tools/LevelGen: 1-spare-bottle deals are often provably unsolvable (rejected) and leave far
         // less room for error; capacity-5 "tall" bottles lengthen solutions. Both are introduced late and gradually.
@@ -71,6 +71,11 @@ namespace Veliqora.Core.Levels
             Seg(151, 165, 8, 22, 5, pairs: 2),
             Seg(166, 180, 7, 24, 4, cap: 5),
             Seg(181, 200, 8, 24, 5, pairs: 2, alt: Seg(181, 200, 6, 14, 3, empties: 1)),
+            // Master: dense boards (up to 14 bottles) like late-game water-sort levels; 9–12 colors.
+            Seg(201, 225, 9, 26, 4, pairs: 2),
+            Seg(226, 250, 10, 30, 4, pairs: 2),
+            Seg(251, 275, 11, 33, 4, pairs: 2, alt: Seg(251, 275, 12, 34, 3, empties: 3)),
+            Seg(276, 300, 12, 38, 4, pairs: 2),
         };
 
         public static LevelCatalog Build(ulong baseSeed, int levelCount, List<BuildReportRow> report, Action<int, int> progress = null,

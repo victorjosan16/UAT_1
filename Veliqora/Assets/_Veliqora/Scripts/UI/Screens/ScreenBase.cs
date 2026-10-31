@@ -81,6 +81,17 @@ namespace Veliqora.UI.Screens
             UIFactory.Stretch(g.rectTransform);
         }
 
+        /// <summary>Slow glowing motes drifting up behind the UI (dark themes only; off in reduced motion).</summary>
+        protected UiParticles AmbientMotes(float perSecond = 4f)
+        {
+            var theme = S.Themes.Theme;
+            if (!theme.IsDark) return null;
+            var fx = UiParticles.Create(Full, 48);
+            fx.transform.SetSiblingIndex(Safe.GetSiblingIndex()); // behind the safe-area UI
+            fx.SetAmbient(true, theme.Accent, Color.Lerp(theme.River, Color.white, 0.2f), perSecond);
+            return fx;
+        }
+
         protected RawImage FullBackground(RectTransform full, Texture tex)
         {
             var raw = UIFactory.Raw(full, "Background", tex, Color.white);

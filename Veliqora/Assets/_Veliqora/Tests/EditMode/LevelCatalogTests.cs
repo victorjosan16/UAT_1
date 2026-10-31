@@ -11,17 +11,17 @@ namespace Veliqora.Tests.EditMode
         private static LevelCatalog Catalog => TestUtil.Catalog;
 
         [Test]
-        public void Catalog_Has200ContiguousLevels()
+        public void Catalog_Has300ContiguousLevels()
         {
-            Assert.AreEqual(200, Catalog.Levels.Count);
+            Assert.AreEqual(300, Catalog.Levels.Count);
             var repo = new LevelRepository(Catalog);
-            for (int n = 1; n <= 200; n++) Assert.AreEqual(n, repo.Get(n).Number);
+            for (int n = 1; n <= 300; n++) Assert.AreEqual(n, repo.Get(n).Number);
             Assert.IsFalse(repo.Has(0));
-            Assert.IsFalse(repo.Has(201));
+            Assert.IsFalse(repo.Has(301));
         }
 
         [Test]
-        public void All200Levels_AreProvablySolvable_ByReplayingStoredSolution()
+        public void AllLevels_AreProvablySolvable_ByReplayingStoredSolution()
         {
             var failures = new List<string>();
             foreach (var l in Catalog.Levels)
@@ -36,19 +36,20 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void All200Levels_AreSolvedIndependently_BySolverWithinBudget()
+        public void AllLevels_AreSolvedIndependently_BySolverWithinBudget()
         {
             var rows = LevelCatalogBuilder.Validate(Catalog, rerunSolver: true, SolverOptions.Validation);
             var failures = rows.FindAll(r => !r.Passed);
             Assert.IsEmpty(failures, string.Join("\n", failures.ConvertAll(f => f.Number + ": " + f.Note)));
             int solverConfirmed = rows.FindAll(r => r.Note.Contains("solver ") && r.Note.Contains(" moves")).Count;
-            Assert.AreEqual(200, solverConfirmed, "independent solver run should confirm every level");
+            Assert.AreEqual(Catalog.Levels.Count, solverConfirmed, "independent solver run should confirm every level");
         }
 
         [Test]
         public void TiersAndHandcraftedOnboarding_MatchTheBrief()
         {
-            for (int n = 1; n <= 200; n++) Assert.AreEqual(DifficultyTiers.ForLevel(n), Catalog.Levels[n - 1].Tier);
+            for (int n = 1; n <= Catalog.Levels.Count; n++) Assert.AreEqual(DifficultyTiers.ForLevel(n), Catalog.Levels[n - 1].Tier);
+            Assert.AreEqual(DifficultyTier.Master, Catalog.Levels[250].Tier);
             int handcrafted = Catalog.Levels.FindAll(l => l.Handcrafted).Count;
             Assert.GreaterOrEqual(handcrafted, 10);
             for (int n = 1; n <= 10; n++) Assert.IsTrue(Catalog.Levels[n - 1].Handcrafted);
@@ -56,11 +57,11 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void ColorCount_StaysWithin2To8_AfterTheFirstLesson()
+        public void ColorCount_StaysWithin2To12_AndUpTo8BeforeMaster()
         {
             foreach (var l in Catalog.Levels)
             {
-                Assert.LessOrEqual(l.ColorCount, 8, l.Id);
+                Assert.LessOrEqual(l.ColorCount, l.Tier == DifficultyTier.Master ? 12 : 8, l.Id);
                 if (l.Number > 1) Assert.GreaterOrEqual(l.ColorCount, 2, l.Id);
             }
         }

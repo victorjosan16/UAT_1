@@ -27,7 +27,27 @@ internal static class Program
         Png(Path.Combine(outDir, "board_level_" + 45 + ".png"), Board(eco, levels.Levels[44], "bottle_classic", tiltBottle: 2, tiltDeg: 75f, light: false));
         Png(Path.Combine(outDir, "board_level_" + 170 + "_flask_light.png"), Board(eco, levels.Levels[169], "bottle_flask", -1, 0, light: true));
         Png(Path.Combine(outDir, "bottle_skins.png"), Skins(eco));
+        Png(Path.Combine(outDir, "dark_gameplay_crystal_cave_L45.png"), Board(eco, levels.Levels[44], "bottle_classic", 2, 75f, false, "crystal_cave"));
+        Png(Path.Combine(outDir, "dark_gameplay_aurora_L276_master.png"), Board(eco, levels.Levels[275], "bottle_classic", -1, 0, false, "aurora"));
+        Png(Path.Combine(outDir, "dark_gameplay_neon_falls_L120.png"), Board(eco, levels.Levels[119], "bottle_slim", -1, 0, false, "neon_falls"));
         Png(Path.Combine(outDir, "tilt_sequence.png"), TiltSequence(eco));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sheet = new PixelPainter(6 * 270, 2 * 480);
+        for (int i = 0; i < DarkScenes.Ids.Length; i++)
+        {
+            var scene = DarkScenes.Paint(DarkScenes.Ids[i], 540, 960);
+            if (i == 0) Console.WriteLine("one scene: " + sw.ElapsedMilliseconds + " ms");
+            // 2x downsample into the contact sheet
+            int ox = (i % 6) * 270, oy = (1 - i / 6) * 480;
+            for (int y = 0; y < 480; y++)
+                for (int x = 0; x < 270; x++)
+                {
+                    var c = scene.Get(x * 2, y * 2);
+                    sheet.Pixels[(oy + y) * sheet.Width + ox + x] = new Color(c.r, c.g, c.b, 1);
+                }
+        }
+        Console.WriteLine("12 scenes: " + sw.ElapsedMilliseconds + " ms");
+        Png(Path.Combine(outDir, "dark_backgrounds_12.png"), sheet);
         Console.WriteLine("Wrote previews to " + Path.GetFullPath(outDir));
     }
 
@@ -79,16 +99,29 @@ internal static class Program
         return p;
     }
 
-    private static PixelPainter Board(EconomyConfig eco, LevelDefinition level, string bottleId, int tiltBottle, float tiltDeg, bool light)
+    private static PixelPainter Board(EconomyConfig eco, LevelDefinition level, string bottleId, int tiltBottle, float tiltDeg, bool light, string scene = null)
     {
         int W = 1080 / 2, H = 1920 / 2;
         var th = ThemeVisuals.From(eco.FindCosmetic("theme_valley"));
         var p = new PixelPainter(W, H);
-        if (light) p.VerticalGradient(UIStyle.Hex("#F3EBDD"), UIStyle.Hex("#FFFBF3"));
+        if (scene != null)
+        {
+            var bg = DarkScenes.Paint(scene, W, H);
+            System.Array.Copy(bg.Pixels, p.Pixels, bg.Pixels.Length);
+            // veil + edge gradients like ReadabilityScrim(0.45, 0.5, 0.12)
+            for (int y = 0; y < H; y++)
+            {
+                float v = y / (float)(H - 1);
+                float a = Mathf.Max(0.5f * Mathf.Pow(Mathf.Clamp01(1f - v / 0.32f), 1.6f), 0.45f * Mathf.Pow(Mathf.Clamp01((v - 0.72f) / 0.28f), 1.6f));
+                a = 1 - (1 - a) * (1 - 0.12f);
+                for (int x = 0; x < W; x++) p.Blend(x, y, new Color(0.04f, 0.05f, 0.15f, a));
+            }
+        }
+        else if (light) p.VerticalGradient(UIStyle.Hex("#F3EBDD"), UIStyle.Hex("#FFFBF3"));
         else p.VerticalGradient(th.GameBottom, th.GameTop);
         var shape = BottleShape.From(eco.FindCosmetic(bottleId), level.Capacity);
         int n = level.Bottles.Length;
-        int rows = n <= 5 ? 1 : 2;
+        int rows = n <= 5 ? 1 : (n <= 12 ? 2 : 3);
         int perRow = (n + rows - 1) / rows;
         float bw = Mathf.Min(W / (perRow * 1.5f + 0.4f), (H * 0.6f) / (rows * shape.Aspect * 1.32f));
         float rowH = bw * shape.Aspect * 1.32f;
@@ -102,6 +135,13 @@ internal static class Program
             {
                 float x = W * 0.5f - rowW * 0.5f + c * bw * 1.5f + bw * 0.5f;
                 bool tilt = idx == tiltBottle;
+                var units = level.Bottles[idx];
+                if (scene != null && units.Length > 0)
+                {
+                    var top = LiquidPalette.Get(units[units.Length - 1]);
+                    bool done = units.Length == level.Capacity && System.Array.TrueForAll(units, u => u == units[0]);
+                    p.Glow(new Vector2(x, y + bw * shape.Aspect * 0.45f), bw * 1.3f, new Color(top.r, top.g, top.b, done ? 0.34f : 0.16f), 1.6f);
+                }
                 DrawBottle(p, shape, level.Capacity, level.Bottles[idx], new Vector2(x, y + (tilt ? bw * 0.6f : 0)), bw, tilt ? tiltDeg : 0f, light ? UIStyle.Hex("#7F8DB0") : Color.white);
             }
         }

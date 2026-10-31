@@ -187,6 +187,25 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
   - **Not imported:** non-convex bottles (heart, star, hourglass, amphora), because the liquid renderer needs a convex interior, and the filled bottle showcases.
 - **TextMeshPro:** not required. The legacy uGUI `Text` with the built-in font is used to avoid an Essentials import step. A move to TMP would be confined to `UIFactory.Text`.
 
+## 9b. Dark-fantasy pass
+- **Backgrounds:** `DarkScenes` paints 12 original 540×960 scenes. Each takes about 120 ms in the offline renderer, runs once per theme and is cached.
+  Glows use additive light and silhouettes use fBm ridges; a vignette keeps the board area calm.
+  Themes `dark_*` in `economy.json` are free. `Resources/Veliqora/Art/Backgrounds/<themeId>.png` overrides any scene with authored art.
+- **Screen treatment:**
+  - Gameplay: the selected scene under a 22% veil plus edge gradients, a neon aura per bottle and ambient motes.
+  - Home, Shop, Themes and Level Complete use the dark scene when a dark theme is active, and the illustrated screens otherwise.
+- **UI tokens:** dark glass surfaces (`#1D1940` panel, `#2A2456` cards), light text (`#F1ECFF`), and an `InkOnLight` color for the optional light gameplay background.
+- **Liquid palette:** neon set blue, pink, green, yellow, violet, orange, cyan, red, lime, amber, pearl, moonstone. The minimum pairwise ΔE (CIE76) is 36.9, and color-blind symbols remain available.
+- **Particles (`UiParticles`):**
+  - pooled (no allocations after warm-up) with one shared glow sprite;
+  - splash droplets every 0.11 s where the stream lands, bubbles after each pour;
+  - 14-spark burst on bottle completion, sparkles on win, ambient motes;
+  - all disabled in reduced motion.
+- **Master tier (levels 201–300):** 9–12 colors and up to 15 bottles, laid out in 3 rows. Benchmark solutions run up to 43 moves.
+  Levels 1–200 are byte-identical to the previous catalog.
+- **Committed scenes:** `Tools/write_scenes.py` writes 7 `.unity` files, each with a `SceneEntry` marker referencing a stable script GUID, plus `EditorBuildSettings.asset`.
+  `ProjectFilesTests` guards them against drift.
+
 ## 10. Accessibility
 - Color-blind symbols, a light gameplay background, reduced motion (decorative motion off, functional motion shortened) and an animation-speed setting.
 - Large touch targets, plus text alongside color for state (ON/OFF labels, "Owned: n", price text).

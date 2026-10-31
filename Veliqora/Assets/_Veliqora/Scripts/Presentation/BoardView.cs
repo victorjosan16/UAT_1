@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Veliqora.Core.Puzzle;
 using Veliqora.UI;
+using Veliqora.UI.Widgets;
 
 namespace Veliqora.Presentation
 {
@@ -36,9 +37,15 @@ namespace Veliqora.Presentation
         /// <summary>Glass tint: white on dark backgrounds; a cool slate on the light background for contrast.</summary>
         public void SetGlassColor(Color c) => _glassColor = c;
 
+        private UiParticles _fx;
+
+        /// <summary>Particle layer drawn above the bottles (splashes, bubbles, sparkles).</summary>
+        public UiParticles Fx => _fx;
+
         public void Init(BottleShape shape, int capacity, bool symbols)
         {
             _rect = (RectTransform)transform;
+            if (_fx == null) _fx = UiParticles.Create(_rect);
             _shape = shape;
             _capacity = capacity;
             _symbols = symbols;
@@ -80,6 +87,7 @@ namespace Veliqora.Presentation
             _stream.rectTransform.anchorMin = _stream.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             _stream.rectTransform.pivot = new Vector2(0.5f, 1f);
             _stream.gameObject.SetActive(false);
+            if (_fx != null) _fx.transform.SetAsLastSibling();
 
             if (animateIn && !MotionPrefs.Reduced)
             {
@@ -284,8 +292,16 @@ namespace Veliqora.Presentation
             _stream.transform.SetAsLastSibling();
             float t2 = MotionPrefs.Dur(0.2f + 0.12f * move.Amount);
             float streamW = Mathf.Max(8f, src.Width * 0.13f);
+            float splashTimer = 0f;
             yield return FillPhase(src, dst, srcBase, dstBase, srcTmp, dstTmp, color, move.Amount, t2, k =>
             {
+                splashTimer -= Time.unscaledDeltaTime;
+                if (splashTimer <= 0f && k > 0.08f && k < 0.95f && _fx != null)
+                {
+                    splashTimer = 0.11f;
+                    float landY = dst.HomePosition.y + dst.UprightSurface(dstCountBefore + move.Amount * k);
+                    _fx.Splash(new Vector2(targetMouth.x, landY), color, dst.Width / 110f);
+                }
                 float a = Mathf.Lerp(aStart, aEnd, k);
                 src.Rect.localEulerAngles = new Vector3(0, 0, a);
                 src.Rect.anchoredPosition = pivotFor(a);
@@ -298,6 +314,7 @@ namespace Veliqora.Presentation
             });
             _stream.gameObject.SetActive(false);
             dst.Kick(4f);
+            if (_fx != null) _fx.Bubbles(dst.HomePosition, dst.Width, dst.UprightSurface(dstCountBefore + move.Amount), color);
 
             // 3) return home
             var from = src.Rect.anchoredPosition;
@@ -379,7 +396,22 @@ namespace Veliqora.Presentation
 
         public void Celebrate()
         {
-            for (int i = 0; i < _views.Count; i++) _views[i].Hop(i * 0.06f);
+            for (int i = 0; i < _views.Count; i++)
+            {
+                _views[i].Hop(i * 0.06f);
+                if (_fx != null && _state != null && i < _state.BottleCount && !_state[i].IsEmpty)
+                    _fx.Sparkle(_views[i].HomePosition + new Vector2(0, _views[i].Height), LiquidPalette.Get(_state[i].TopColor), 8, 0.8f);
+            }
+        }
+
+        /// <summary>Completed-bottle feedback: bounce + glow on the view and a sparkle burst above it.</summary>
+        public void PlayCompleted(int index)
+        {
+            if (index < 0 || index >= _views.Count) return;
+            var v = _views[index];
+            v.PlayCompleted();
+            if (_fx != null && _state != null && index < _state.BottleCount)
+                _fx.Sparkle(v.HomePosition + new Vector2(0, v.Height * 0.95f), LiquidPalette.Get(_state[index].TopColor), 14, v.Width / 100f);
         }
 
         private IEnumerator Run(float duration, Action<float> step, Func<float, float> ease)
