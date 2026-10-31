@@ -9,6 +9,8 @@ decor, misiuni, magazin, statistici, venit offline, reclame în mod test, muzic�
 Citește raportul de verificare de mai jos: logica e testată automat fără Unity, dar proiectul
 **nu** a fost încă deschis în Unity Editor și nici construit pentru Android.
 
+Descrierea completă a funcționalităților, cu toate valorile: [`FUNCTIONAL.md`](FUNCTIONAL.md).
+
 ## Structura proiectului
 
 ```
