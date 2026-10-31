@@ -109,6 +109,19 @@ namespace TollRoadTycoon.Presentation.UI
 
         public static Text ButtonText(Button b) => b.GetComponentInChildren<Text>();
 
+        /// <summary>Authored icon from Resources/Art/{path} (aspect preserved), or null if missing.</summary>
+        public static Image Icon(Transform parent, string path)
+        {
+            var sprite = ArtLibrary.Get(path);
+            if (sprite == null) return null;
+            var rt = Rect(parent, "Icon");
+            var img = rt.gameObject.AddComponent<Image>();
+            img.sprite = sprite;
+            img.preserveAspect = true;
+            img.raycastTarget = false;
+            return img;
+        }
+
         public static VerticalLayoutGroup VerticalList(RectTransform rt, float spacing, int padding)
         {
             var v = rt.gameObject.AddComponent<VerticalLayoutGroup>();

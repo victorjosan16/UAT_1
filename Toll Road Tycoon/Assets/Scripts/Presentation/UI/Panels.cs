@@ -14,7 +14,7 @@ namespace TollRoadTycoon.Presentation.UI
     {
         /// <summary>A card row: icon, title, value line and an action button. Values refresh via the updater.</summary>
         public static Button Row(Transform parent, Color iconColor, string iconText, Func<string> title, Func<string> value,
-            Func<string> buttonLabel, Func<bool> buttonEnabled, Action onClick, Action<Action> register, float height = 140, Color? buttonColor = null, float textRightInset = 300)
+            Func<string> buttonLabel, Func<bool> buttonEnabled, Action onClick, Action<Action> register, float height = 140, Color? buttonColor = null, float textRightInset = 300, string iconPath = null)
         {
             var card = UIFactory.Panel(parent, "Row", Color.white);
             UIFactory.Layout(card, height);
@@ -24,6 +24,14 @@ namespace TollRoadTycoon.Presentation.UI
             var iconLabel = UIFactory.Label(icon.transform, iconText, 40, Color.white);
             UIFactory.AddOutline(iconLabel, new Color(0, 0, 0, 0.3f), 2);
             UIFactory.Stretch(iconLabel.rectTransform);
+            var art = iconPath != null ? UIFactory.Icon(card.transform, iconPath) : null;
+            if (art != null)
+            {
+                // Authored icon replaces the coloured placeholder tile.
+                icon.enabled = false;
+                iconLabel.enabled = false;
+                UIFactory.Place(art.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(height - 28, height - 28));
+            }
 
             var titleText = UIFactory.Label(card.transform, "", 34, Palette.DarkBlue, TextAnchor.LowerLeft);
             var t = titleText.rectTransform;
@@ -101,7 +109,7 @@ namespace TollRoadTycoon.Presentation.UI
                     var p = sim.Upgrades.GetPreview(booth, type);
                     ui.TryPurchase(p.CostCents, () => sim.Upgrades.TryUpgrade(booth, type));
                 },
-                register, height);
+                register, height, null, 300, "Icons/upgrade_" + type.ToString().ToLowerInvariant());
         }
 
         public static string BoothStatus(TollBooth booth)
@@ -125,7 +133,7 @@ namespace TollRoadTycoon.Presentation.UI
                     () => sim.Upgrades.IsVehicleUnlocked(t.Id) ? Loc.T("upgrade.unlocked") : Money.Format(t.UnlockPriceCents),
                     () => !sim.Upgrades.IsVehicleUnlocked(t.Id) && sim.Economy.CanAfford(t.UnlockPriceCents),
                     () => ui.TryPurchase(t.UnlockPriceCents, () => sim.Upgrades.TryUnlockVehicle(t.Id)),
-                    register, 120);
+                    register, 120, null, 300, ArtLibrary.Get("Icons/vehicle_" + t.Id) != null ? "Icons/vehicle_" + t.Id : "Vehicles/" + t.Id);
             }
         }
 

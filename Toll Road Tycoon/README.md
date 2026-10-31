@@ -143,7 +143,8 @@ după testarea pe telefon.
 ### Limitări cunoscute și abateri (Faza 1)
 
 * **Grafica e provizorie**, generată din cod (forme rotunjite colorate), după paleta și aranjarea din
-  schiță. Nu e grafica finală.
+  schiță. Nu e grafica finală. Codul încarcă însă automat grafica desenată din `Assets/Resources/Art/`;
+  lista completă de imagini și prompturile de generare sunt în [`ASSETS.md`](ASSETS.md).
 * **Textele folosesc `Text` clasic din uGUI cu fontul inclus în Unity**, nu TextMeshPro. TextMeshPro
   cere importul *TMP Essential Resources* în editor, ceea ce nu s-a putut face sau verifica aici.
   Trecerea la TextMeshPro rămâne pentru Faza 2.

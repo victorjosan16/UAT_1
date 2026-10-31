@@ -27,7 +27,31 @@ namespace TollRoadTycoon.Presentation.UI
             _balance = UIFactory.Label(balance.transform, "", 50, Color.white);
             UIFactory.Stretch(_balance.rectTransform);
 
-            // Logo badge.
+            // Logo: authored image if present, otherwise the text badge.
+            var logoArt = UIFactory.Icon(transform, "UI/logo");
+            if (logoArt != null)
+            {
+                UIFactory.Place(logoArt.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -140), new Vector2(880, 520));
+            }
+            else
+            {
+                BuildTextLogo();
+            }
+
+            float y = -720;
+            MenuButton(ui, "menu.play", "play", Palette.Green, y, 160, 64, root.StartGameplay);
+            y -= 190;
+            MenuButton(ui, "menu.roads", "map", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.roads"), Loc.T("menu.soon.body")), true);
+            y -= 155;
+            MenuButton(ui, "menu.shop", "shop", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.shop"), Loc.T("menu.soon.body")), true);
+            y -= 155;
+            MenuButton(ui, "menu.missions", "missions", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.missions"), Loc.T("menu.soon.body")), true);
+            y -= 155;
+            MenuButton(ui, "menu.settings", "settings", Palette.Blue, y, 130, 48, ui.ShowSettings);
+        }
+
+        private void BuildTextLogo()
+        {
             var logo = UIFactory.Panel(transform, "Logo", Palette.Blue);
             UIFactory.Place(logo.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -170), new Vector2(820, 470));
             UIFactory.AddDropShadow(logo, 14);
@@ -41,20 +65,9 @@ namespace TollRoadTycoon.Presentation.UI
             UIFactory.Band(subtitle.rectTransform, true, 200, 160, 10);
             var stripe = UIFactory.Panel(inner.transform, "Stripe", Palette.Gold, SpriteFactory.Pill);
             UIFactory.Band(stripe.rectTransform, false, 34, 18, 120);
-
-            float y = -720;
-            MenuButton(ui, "menu.play", Palette.Green, y, 160, 64, root.StartGameplay);
-            y -= 190;
-            MenuButton(ui, "menu.roads", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.roads"), Loc.T("menu.soon.body")), true);
-            y -= 155;
-            MenuButton(ui, "menu.shop", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.shop"), Loc.T("menu.soon.body")), true);
-            y -= 155;
-            MenuButton(ui, "menu.missions", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.missions"), Loc.T("menu.soon.body")), true);
-            y -= 155;
-            MenuButton(ui, "menu.settings", Palette.Blue, y, 130, 48, ui.ShowSettings);
         }
 
-        private void MenuButton(UIManager ui, string key, Color color, float y, float height, int fontSize, System.Action onClick, bool comingSoon = false)
+        private void MenuButton(UIManager ui, string key, string icon, Color color, float y, float height, int fontSize, System.Action onClick, bool comingSoon = false)
         {
             var button = UIFactory.Button(transform, Loc.T(key), color, () =>
             {
@@ -62,6 +75,11 @@ namespace TollRoadTycoon.Presentation.UI
                 onClick();
             }, fontSize);
             UIFactory.Place((RectTransform)button.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, y), new Vector2(640, height));
+            var iconImage = UIFactory.Icon(button.transform, "Icons/menu_" + icon);
+            if (iconImage != null)
+            {
+                UIFactory.Place(iconImage.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 0), new Vector2(height - 30, height - 30));
+            }
             if (!comingSoon) return;
             button.GetComponent<Image>().color = Color.Lerp(color, Palette.Disabled, 0.45f);
             var badge = UIFactory.Panel(button.transform, "Soon", Palette.Gold, SpriteFactory.Pill);

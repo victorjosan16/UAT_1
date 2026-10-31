@@ -22,10 +22,10 @@ namespace TollRoadTycoon.Presentation
         public static Sprite RoundedBody => Get("body", () => Make(BuildRounded(32, 32, 9), 32, Vector4.zero));
 
         /// <summary>9-sliced rounded panel for UI (border 24px).</summary>
-        public static Sprite Panel => Get("panel", () => Make(BuildRounded(64, 64, 22), 100, new Vector4(24, 24, 24, 24)));
+        public static Sprite Panel => ArtLibrary.Get("UI/panel") ?? Get("panel", () => Make(BuildRounded(64, 64, 22), 100, new Vector4(24, 24, 24, 24)));
 
         /// <summary>9-sliced pill/button shape.</summary>
-        public static Sprite Pill => Get("pill", () => Make(BuildRounded(64, 64, 30), 100, new Vector4(31, 31, 31, 31)));
+        public static Sprite Pill => ArtLibrary.Get("UI/button") ?? Get("pill", () => Make(BuildRounded(64, 64, 30), 100, new Vector4(31, 31, 31, 31)));
 
         /// <summary>Soft round shadow.</summary>
         public static Sprite SoftShadow => Get("shadow", () => Make(BuildSoft(32), 32, Vector4.zero));
@@ -34,6 +34,8 @@ namespace TollRoadTycoon.Presentation
         {
             get
             {
+                if (_font != null) return _font;
+                _font = ArtLibrary.Font;
                 if (_font != null) return _font;
                 // Unity 2022.2+ ships LegacyRuntime.ttf; older versions ship Arial.ttf.
                 _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

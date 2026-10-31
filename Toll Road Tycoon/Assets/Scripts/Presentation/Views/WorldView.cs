@@ -153,8 +153,19 @@ namespace TollRoadTycoon.Presentation
                     br = Mathf.Max(br, (float)lanes.BoothX(b.SlotIndex) + half + 0.1f);
                 }
                 Box("CanopyShadow", Palette.Shadow, bl, br, 1.05f, 1.55f, Layers.Canopy - 1);
-                Box("Canopy", Palette.Cream, bl, br, 1.2f, 1.75f, Layers.Canopy);
-                Box("CanopyStripe", Palette.Blue, bl, br, 1.62f, 1.75f, Layers.Canopy + 1);
+                var canopy = ArtLibrary.Get("TollBooths/canopy");
+                if (canopy != null)
+                {
+                    // 9-sliced so one image stretches over any number of booths.
+                    var sr = Shapes.Sprite(_road, "CanopyArt", canopy, Color.white, new Vector2((bl + br) / 2, 1.48f), Vector2.one, Layers.Canopy);
+                    sr.drawMode = SpriteDrawMode.Sliced;
+                    sr.size = new Vector2(br - bl, 0.75f);
+                }
+                else
+                {
+                    Box("Canopy", Palette.Cream, bl, br, 1.2f, 1.75f, Layers.Canopy);
+                    Box("CanopyStripe", Palette.Blue, bl, br, 1.62f, 1.75f, Layers.Canopy + 1);
+                }
                 Shapes.Label(_road, "TollSign", "TOLL", Palette.DarkBlue, new Vector2((bl + br) / 2, 1.42f), 0.5f, Layers.Canopy + 2);
             }
 
@@ -226,6 +237,7 @@ namespace TollRoadTycoon.Presentation
 
         private void Building(Vector2 pos, Vector2 size, Color roof)
         {
+            if (Shapes.Art(_road, "OfficeArt", "Buildings/toll_office", 0, pos, size.x * 1.2f, Layers.Decor) != null) return;
             Shapes.Rounded(_road, "BuildingShadow", Palette.Shadow, pos + new Vector2(0.15f, -0.15f), size, Layers.Decor - 1);
             Shapes.Rounded(_road, "Building", Palette.Cream, pos, size, Layers.Decor);
             Shapes.Rounded(_road, "Roof", roof, pos + new Vector2(0, size.y * 0.18f), new Vector2(size.x * 1.05f, size.y * 0.62f), Layers.Decor + 1);
@@ -237,7 +249,17 @@ namespace TollRoadTycoon.Presentation
         {
             _scenery = new GameObject("Scenery").transform;
             _scenery.SetParent(transform, false);
-            Shapes.Rect(_scenery, "Grass", Palette.Grass, new Vector2(0, 0), new Vector2(80, 140), Layers.Ground);
+            var grass = ArtLibrary.Get("Environment/grass");
+            if (grass != null)
+            {
+                var sr = Shapes.Sprite(_scenery, "GrassArt", grass, Color.white, Vector2.zero, Vector2.one, Layers.Ground);
+                sr.drawMode = SpriteDrawMode.Tiled;
+                sr.size = new Vector2(80, 140);
+            }
+            else
+            {
+                Shapes.Rect(_scenery, "Grass", Palette.Grass, new Vector2(0, 0), new Vector2(80, 140), Layers.Ground);
+            }
             var rng = new System.Random(1234);
             var layout = _sim.Config.Layout;
             float maxRoadX = 0;
@@ -254,12 +276,14 @@ namespace TollRoadTycoon.Presentation
                 var p = new Vector2(x, y);
                 if (rng.NextDouble() < 0.06)
                 {
+                    if (Shapes.Art(_scenery, "HouseArt", "Buildings/house", i, p, 2.0f, Layers.Decor) != null) continue;
                     var houseColor = rng.NextDouble() < 0.5 ? Palette.Red : Palette.Blue;
                     Shapes.Rounded(_scenery, "HouseShadow", Palette.Shadow, p + new Vector2(0.15f, -0.15f), new Vector2(1.8f, 1.5f), Layers.Decor - 1);
                     Shapes.Rounded(_scenery, "House", Palette.Cream, p, new Vector2(1.8f, 1.5f), Layers.Decor);
                     Shapes.Rounded(_scenery, "HouseRoof", houseColor, p + new Vector2(0, 0.25f), new Vector2(1.9f, 0.9f), Layers.Decor + 1);
                     continue;
                 }
+                if (Shapes.Art(_scenery, "TreeArt", "Environment/tree", i, p, size * 1.25f, Layers.Tree) != null) continue;
                 Shapes.Sprite(_scenery, "TreeShadow", SpriteFactory.SoftShadow, Palette.Shadow, p + new Vector2(0.2f, -0.25f), new Vector2(size * 1.3f, size * 1.3f), Layers.Tree - 2);
                 Shapes.Circle(_scenery, "Tree", Palette.TreeDark, p, size, Layers.Tree - 1);
                 Shapes.Circle(_scenery, "TreeTop", Palette.TreeLight, p + new Vector2(-size * 0.12f, size * 0.12f), size * 0.7f, Layers.Tree);

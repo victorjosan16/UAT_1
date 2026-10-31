@@ -28,6 +28,20 @@ namespace TollRoadTycoon.Presentation
         public static SpriteRenderer Circle(Transform parent, string name, Color color, Vector2 pos, float diameter, int order)
             => Sprite(parent, name, SpriteFactory.Circle, color, pos, new Vector2(diameter, diameter), order);
 
+        /// <summary>
+        /// Authored sprite from Resources/Art scaled to a world width (aspect kept), or null when the
+        /// file does not exist so the caller can draw its placeholder instead.
+        /// </summary>
+        public static SpriteRenderer Art(Transform parent, string name, string path, long seed, Vector2 pos, float worldWidth, int order)
+        {
+            var sprite = ArtLibrary.Pick(path, seed);
+            if (sprite == null) return null;
+            float w = sprite.bounds.size.x;
+            float scale = w > 0 ? worldWidth / w : 1f;
+            var sr = Sprite(parent, name, sprite, Color.white, pos, new Vector2(scale, scale), order);
+            return sr;
+        }
+
         /// <summary>World-space label (legacy TextMesh, works without imported font assets).</summary>
         public static TextMesh Label(Transform parent, string name, string text, Color color, Vector2 pos, float size, int order, bool bold = true)
         {

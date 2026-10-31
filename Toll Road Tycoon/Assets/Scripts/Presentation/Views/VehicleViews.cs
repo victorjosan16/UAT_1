@@ -13,14 +13,39 @@ namespace TollRoadTycoon.Presentation
         private SpriteRenderer _paint;
         private SpriteRenderer _beacon;
 
+        private SpriteRenderer _art;
+
         public static VehicleView Create(Transform parent, VehicleTypeConfig type)
         {
             var go = new GameObject("Vehicle_" + type.Id);
             go.transform.SetParent(parent, false);
             var view = go.AddComponent<VehicleView>();
             view.TypeId = type.Id;
-            view.BuildShape(type);
+            if (ArtLibrary.GetVariants("Vehicles/" + type.Id).Count > 0) view.BuildArt(type);
+            else view.BuildShape(type);
             return view;
+        }
+
+        /// <summary>Authored top-down sprite (pointing up), scaled to the simulated vehicle length.</summary>
+        private void BuildArt(VehicleTypeConfig type)
+        {
+            var t = transform;
+            Shapes.Sprite(t, "Shadow", SpriteFactory.SoftShadow, Palette.Shadow, new Vector2(0.06f, -0.08f),
+                new Vector2((float)type.Width * 1.5f, (float)type.Length * 1.25f), Layers.VehicleShadow);
+            var go = new GameObject("Art");
+            go.transform.SetParent(t, false);
+            _art = go.AddComponent<SpriteRenderer>();
+            _art.sortingOrder = Layers.Vehicle;
+        }
+
+        /// <summary>Chooses the colour variant for this trip when authored art is used.</summary>
+        public void SetVariant(long seed)
+        {
+            if (_art == null) return;
+            var sprite = ArtLibrary.Pick("Vehicles/" + TypeId, seed);
+            _art.sprite = sprite;
+            var type = GameRoot.Instance.Config.FindVehicleType(TypeId);
+            _art.transform.localScale = ArtLibrary.FitHeight(sprite, (float)type.Length);
         }
 
         private void BuildShape(VehicleTypeConfig type)
@@ -117,6 +142,7 @@ namespace TollRoadTycoon.Presentation
             view.gameObject.SetActive(true);
             view.Vehicle = v;
             view.SetPaint(Palette.CarColors[(int)(v.TripId % Palette.CarColors.Length)], v.Type.IsEmergency);
+            view.SetVariant(v.TripId);
             _active[v] = view;
             Apply(view, 1f);
         }

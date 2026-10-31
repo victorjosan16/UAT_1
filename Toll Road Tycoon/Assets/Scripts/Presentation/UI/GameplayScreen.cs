@@ -96,10 +96,18 @@ namespace TollRoadTycoon.Presentation.UI
 
             var balance = UIFactory.Panel(transform, "Balance", Palette.DarkBlue, SpriteFactory.Pill);
             UIFactory.Place(balance.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(24, -20), new Vector2(520, 100));
-            var coin = UIFactory.Panel(balance.transform, "Coin", Palette.Gold, SpriteFactory.Pill);
-            UIFactory.Place(coin.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(10, 0), new Vector2(80, 80));
-            var coinMark = UIFactory.Label(coin.transform, "$", 46, Palette.DarkBlue);
-            UIFactory.Stretch(coinMark.rectTransform);
+            var coinArt = UIFactory.Icon(balance.transform, "Icons/coin");
+            if (coinArt != null)
+            {
+                UIFactory.Place(coinArt.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(90, 90));
+            }
+            else
+            {
+                var coin = UIFactory.Panel(balance.transform, "Coin", Palette.Gold, SpriteFactory.Pill);
+                UIFactory.Place(coin.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(10, 0), new Vector2(80, 80));
+                var coinMark = UIFactory.Label(coin.transform, "$", 46, Palette.DarkBlue);
+                UIFactory.Stretch(coinMark.rectTransform);
+            }
             var balanceText = UIFactory.Label(balance.transform, "", 50, Color.white, TextAnchor.MiddleLeft);
             UIFactory.Stretch(balanceText.rectTransform, 110, 20, 0, 0);
             Register(() => balanceText.text = Money.Format(sim().Economy.Balance));
@@ -180,6 +188,15 @@ namespace TollRoadTycoon.Presentation.UI
             }, 34);
             var image = button.GetComponent<Image>();
             _tabImages.Add(image);
+            var icon = UIFactory.Icon(button.transform, "Icons/tab_" + tab.ToString().ToLowerInvariant());
+            if (icon != null)
+            {
+                // Icon on top, label underneath, as in the mockup.
+                UIFactory.Place(icon.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(70, 64));
+                var label = UIFactory.ButtonText(button).rectTransform;
+                label.offsetMax = new Vector2(label.offsetMax.x, -66);
+                UIFactory.ButtonText(button).fontSize = 26;
+            }
             Register(() => image.color = _tab == tab ? Palette.Green : Palette.Blue);
         }
 

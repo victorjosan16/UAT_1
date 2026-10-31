@@ -38,11 +38,14 @@ namespace TollRoadTycoon.Presentation
             Shapes.Rounded(t, "Island", Palette.Cream, new Vector2(islandX, stop - 0.6f), new Vector2(0.32f, 3.4f), Layers.Island);
             Shapes.Rect(t, "IslandNose", Palette.Gold, new Vector2(islandX, stop - 2.2f), new Vector2(0.3f, 0.2f), Layers.Island + 1);
 
-            // Booth house.
-            Shapes.Rounded(t, "BoothShadow", Palette.Shadow, new Vector2(islandX + 0.08f, stop - 0.15f), new Vector2(0.5f, 0.8f), Layers.Booth - 1);
-            Shapes.Rounded(t, "BoothBody", Palette.Cream, new Vector2(islandX, stop - 0.05f), new Vector2(0.48f, 0.78f), Layers.Booth);
-            Shapes.Rounded(t, "BoothRoof", Palette.Blue, new Vector2(islandX, stop + 0.08f), new Vector2(0.54f, 0.42f), Layers.Booth + 1);
-            Shapes.Rect(t, "BoothWindow", Palette.Glass, new Vector2(islandX - 0.2f, stop - 0.2f), new Vector2(0.08f, 0.3f), Layers.Booth + 1);
+            // Booth house (authored art if present).
+            if (Shapes.Art(t, "BoothArt", "TollBooths/booth", 0, new Vector2(islandX, stop - 0.05f), 0.62f, Layers.Booth) == null)
+            {
+                Shapes.Rounded(t, "BoothShadow", Palette.Shadow, new Vector2(islandX + 0.08f, stop - 0.15f), new Vector2(0.5f, 0.8f), Layers.Booth - 1);
+                Shapes.Rounded(t, "BoothBody", Palette.Cream, new Vector2(islandX, stop - 0.05f), new Vector2(0.48f, 0.78f), Layers.Booth);
+                Shapes.Rounded(t, "BoothRoof", Palette.Blue, new Vector2(islandX, stop + 0.08f), new Vector2(0.54f, 0.42f), Layers.Booth + 1);
+                Shapes.Rect(t, "BoothWindow", Palette.Glass, new Vector2(islandX - 0.2f, stop - 0.2f), new Vector2(0.08f, 0.3f), Layers.Booth + 1);
+            }
             _worker = Shapes.Circle(t, "Worker", Palette.Gold, new Vector2(islandX + 0.02f, stop - 0.22f), 0.2f, Layers.Booth + 2);
             _robot = Shapes.Rounded(t, "AutoReader", Palette.Green, new Vector2(islandX - 0.1f, stop - 0.55f), new Vector2(0.14f, 0.2f), Layers.Booth + 2);
             _light = Shapes.Circle(t, "Light", Palette.Green, new Vector2(islandX, stop + 0.32f), 0.16f, Layers.Booth + 3);
@@ -51,10 +54,13 @@ namespace TollRoadTycoon.Presentation
             _barrierPivot = new GameObject("BarrierPivot").transform;
             _barrierPivot.SetParent(t, false);
             _barrierPivot.localPosition = new Vector3(islandX - 0.12f, (float)layout.BarrierY, 0);
-            Shapes.Rect(_barrierPivot, "Arm", Palette.White, new Vector2(-0.7f, 0), new Vector2(1.4f, 0.1f), Layers.Barrier);
-            for (int i = 0; i < 3; i++)
+            if (Shapes.Art(_barrierPivot, "ArmArt", "TollBooths/barrier_arm", 0, new Vector2(-0.7f, 0), 1.4f, Layers.Barrier) == null)
             {
-                Shapes.Rect(_barrierPivot, "Stripe", Palette.Red, new Vector2(-0.3f - i * 0.4f, 0), new Vector2(0.18f, 0.1f), Layers.Barrier + 1);
+                Shapes.Rect(_barrierPivot, "Arm", Palette.White, new Vector2(-0.7f, 0), new Vector2(1.4f, 0.1f), Layers.Barrier);
+                for (int i = 0; i < 3; i++)
+                {
+                    Shapes.Rect(_barrierPivot, "Stripe", Palette.Red, new Vector2(-0.3f - i * 0.4f, 0), new Vector2(0.18f, 0.1f), Layers.Barrier + 1);
+                }
             }
             Shapes.Circle(t, "BarrierPost", Palette.DarkBlue, new Vector2(islandX - 0.12f, (float)layout.BarrierY), 0.2f, Layers.Barrier + 2);
 
