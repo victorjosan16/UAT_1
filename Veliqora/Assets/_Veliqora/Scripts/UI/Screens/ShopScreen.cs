@@ -32,7 +32,7 @@ namespace Veliqora.UI.Screens
             var panel = (RectTransform)bg.transform.parent;
             panel.offsetMin = new Vector2(40, 220);
             panel.offsetMax = new Vector2(-40, -UIStyle.TopBarHeight - 120);
-            Ribbon(Safe, "Boosters", -UIStyle.TopBarHeight - 50, 560);
+            Ribbon(Safe, Loc.T("Boosters"), -UIStyle.TopBarHeight - 50, 560);
 
             var list = UIFactory.Rect("List", panel);
             UIFactory.Stretch(list, 36);
@@ -46,7 +46,7 @@ namespace Veliqora.UI.Screens
             }
             BuildAdCard(list, y, cardH);
 
-            var themes = UIFactory.Button(Safe, "Themes & bottles", UIStyle.ButtonKind.Accent, () => S.Navigator.Go(ScreenId.Themes), new Vector2(640, 140), Icon.Palette);
+            var themes = UIFactory.Button(Safe, Loc.T("Themes & bottles"), UIStyle.ButtonKind.Accent, () => S.Navigator.Go(ScreenId.Themes), new Vector2(640, 140), Icon.Palette);
             UIFactory.Place(themes.Rect, new Vector2(0.5f, 0f), themes.Rect.sizeDelta, new Vector2(0, 50), new Vector2(0.5f, 0f));
         }
 
@@ -89,10 +89,10 @@ namespace Veliqora.UI.Screens
             var icon = UIFactory.IconButton(card, IconFor(offer.Booster), ColorFor(offer.Booster), 150, null);
             UIFactory.Place(icon.Rect, new Vector2(0, 0.5f), icon.Rect.sizeDelta, new Vector2(30, 0), new Vector2(0, 0.5f));
             icon.Button.interactable = false;
-            var title = UIFactory.Text(card, offer.Title + (offer.Quantity > 1 ? "  ×" + offer.Quantity : ""), UIStyle.FontBody, UIStyle.Ink, TextAnchor.UpperLeft);
+            var title = UIFactory.Text(card, Loc.T(offer.Title) + (offer.Quantity > 1 ? "  ×" + offer.Quantity : ""), UIStyle.FontBody, UIStyle.Ink, TextAnchor.UpperLeft);
             title.rectTransform.offsetMin = new Vector2(205, 0);
             title.rectTransform.offsetMax = new Vector2(-300, -26);
-            var desc = UIFactory.Text(card, offer.Description, UIStyle.FontCaption - 2, UIStyle.InkSoft, TextAnchor.UpperLeft, FontStyle.Normal);
+            var desc = UIFactory.Text(card, Loc.T(offer.Description), UIStyle.FontCaption - 2, UIStyle.InkSoft, TextAnchor.UpperLeft, FontStyle.Normal);
             desc.rectTransform.offsetMin = new Vector2(205, 20);
             desc.rectTransform.offsetMax = new Vector2(-300, -84);
             var owned = UIFactory.Text(card, "", UIStyle.FontCaption, UIStyle.MintDark, TextAnchor.LowerRight);
@@ -105,7 +105,7 @@ namespace Veliqora.UI.Screens
 
             System.Action refresh = () =>
             {
-                owned.text = "Owned: " + S.Economy.Count(offer.Booster);
+                owned.text = Loc.F("Owned: {0}", S.Economy.Count(offer.Booster));
                 bool afford = S.Economy.Coins >= offer.Price;
                 buy.Background.color = afford ? UIStyle.ButtonFill(UIStyle.ButtonKind.Gold) : UIStyle.Disabled;
             };
@@ -124,14 +124,14 @@ namespace Veliqora.UI.Screens
                 case TxStatus.Ok:
                     S.Audio.PlayCoin();
                     S.Haptics.Light();
-                    Overlays.Toast(offer.Title + " ×" + offer.Quantity + " added!");
+                    Overlays.Toast(Loc.F("{0} ×{1} added!", Loc.T(offer.Title), offer.Quantity));
                     break;
                 case TxStatus.InsufficientFunds:
                     S.Audio.PlayInvalid();
-                    Overlays.Toast("Not enough coins — you need " + (offer.Price - S.Economy.Coins) + " more. Complete levels to earn coins!", 2.6f);
+                    Overlays.Toast(Loc.F("Not enough coins — you need {0} more. Complete levels to earn coins!", offer.Price - S.Economy.Coins), 2.6f);
                     break;
                 default:
-                    Overlays.Toast("Purchase couldn't be completed (" + r.Status + ").");
+                    Overlays.Toast(Loc.F("Purchase couldn't be completed ({0}).", r.Status));
                     break;
             }
         }
@@ -143,25 +143,25 @@ namespace Veliqora.UI.Screens
             UIFactory.Place(icon.Rect, new Vector2(0, 0.5f), icon.Rect.sizeDelta, new Vector2(30, 0), new Vector2(0, 0.5f));
             icon.Button.interactable = false;
             var bonus = S.EconomyConfig.RewardedBonusBooster;
-            var title = UIFactory.Text(card, "Free " + bonus + " booster", UIStyle.FontBody, UIStyle.Ink, TextAnchor.UpperLeft);
+            var title = UIFactory.Text(card, Loc.F("Free {0} booster", ProgressionOverlays.BoosterName(bonus)), UIStyle.FontBody, UIStyle.Ink, TextAnchor.UpperLeft);
             title.rectTransform.offsetMin = new Vector2(205, 0);
             title.rectTransform.offsetMax = new Vector2(-300, -26);
             bool ready = S.AdGate.CanRequest(AdPlacements.BonusBooster);
-            string note = S.Ads.IsMock ? "Simulated rewarded ad (MOCK — test only)." : (ready ? "Watch a short rewarded ad." : "Ads are unavailable (offline or disabled).");
+            string note = Loc.T(S.Ads.IsMock ? "Simulated rewarded ad (MOCK — test only)." : (ready ? "Watch a short rewarded ad." : "Ads are unavailable (offline or disabled)."));
             var desc = UIFactory.Text(card, note, UIStyle.FontCaption - 2, UIStyle.InkSoft, TextAnchor.UpperLeft, FontStyle.Normal);
             desc.rectTransform.offsetMin = new Vector2(205, 20);
             desc.rectTransform.offsetMax = new Vector2(-300, -84);
             ButtonHandle watch = null;
-            watch = UIFactory.Button(card, ready ? "Watch" : "N/A", UIStyle.ButtonKind.Accent, () =>
+            watch = UIFactory.Button(card, Loc.T(ready ? "Watch" : "N/A"), UIStyle.ButtonKind.Accent, () =>
             {
                 watch.SetInteractable(false);
                 string tx = "shop-ad:" + System.Guid.NewGuid().ToString("N");
                 S.AdGate.Request(AdPlacements.BonusBooster, () =>
                 {
-                    if (S.Economy.GrantBooster(bonus, S.EconomyConfig.RewardedBonusBoosterQuantity, tx).Success) Overlays.Toast("Free booster added!");
+                    if (S.Economy.GrantBooster(bonus, S.EconomyConfig.RewardedBonusBoosterQuantity, tx).Success) Overlays.Toast(Loc.T("Free booster added!"));
                 }, outcome =>
                 {
-                    if (outcome != AdOutcome.Completed) Overlays.Toast("No reward — the ad wasn't completed.");
+                    if (outcome != AdOutcome.Completed) Overlays.Toast(Loc.T("No reward — the ad wasn't completed."));
                     if (watch.Rect != null) watch.SetInteractable(S.AdGate.CanRequest(AdPlacements.BonusBooster));
                 }, S.EconomyConfig.RewardedCooldownSeconds);
             }, new Vector2(250, 112), null, UIStyle.FontBody);

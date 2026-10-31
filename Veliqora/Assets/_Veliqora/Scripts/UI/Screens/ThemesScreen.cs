@@ -40,16 +40,16 @@ namespace Veliqora.UI.Screens
             panel.offsetMax = new Vector2(-40, -UIStyle.TopBarHeight - 40);
 
             // Tabs
-            _tabThemes = UIFactory.Button(panel, "Themes", UIStyle.ButtonKind.Accent, () => SetTab(CosmeticKind.Theme), new Vector2(420, 120), null, UIStyle.FontBody);
+            _tabThemes = UIFactory.Button(panel, Loc.T("Themes"), UIStyle.ButtonKind.Accent, () => SetTab(CosmeticKind.Theme), new Vector2(420, 120), null, UIStyle.FontBody);
             UIFactory.Place(_tabThemes.Rect, new Vector2(0.5f, 1f), _tabThemes.Rect.sizeDelta, new Vector2(-220, -30), new Vector2(0.5f, 1f));
-            _tabBottles = UIFactory.Button(panel, "Bottles", UIStyle.ButtonKind.Secondary, () => SetTab(CosmeticKind.BottleSkin), new Vector2(420, 120), null, UIStyle.FontBody);
+            _tabBottles = UIFactory.Button(panel, Loc.T("Bottles"), UIStyle.ButtonKind.Secondary, () => SetTab(CosmeticKind.BottleSkin), new Vector2(420, 120), null, UIStyle.FontBody);
             UIFactory.Place(_tabBottles.Rect, new Vector2(0.5f, 1f), _tabBottles.Rect.sizeDelta, new Vector2(220, -30), new Vector2(0.5f, 1f));
 
             // Preview
             _preview = UIFactory.Rect("Preview", panel);
             UIFactory.Band(_preview, 1f, 470, -175, 40, 1f);
 
-            _action = UIFactory.Button(panel, "Apply", UIStyle.ButtonKind.Primary, OnAction, new Vector2(560, 130), null, UIStyle.FontBody);
+            _action = UIFactory.Button(panel, Loc.T("Apply"), UIStyle.ButtonKind.Primary, OnAction, new Vector2(560, 130), null, UIStyle.FontBody);
             UIFactory.Place(_action.Rect, new Vector2(0.5f, 1f), _action.Rect.sizeDelta, new Vector2(0, -670), new Vector2(0.5f, 1f));
 
             var viewport = UIFactory.Rect("GridViewport", panel);
@@ -154,7 +154,7 @@ namespace Veliqora.UI.Screens
                 v.Rect.anchoredPosition = new Vector2(0, -bw * shape.Aspect * 0.5f);
                 foreach (var g in b.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
             }
-            var label = UIFactory.Text(frame.transform, item.Title, UIStyle.FontCaption - 4, UIStyle.Ink);
+            var label = UIFactory.Text(frame.transform, Loc.T(item.Title), UIStyle.FontCaption - 4, UIStyle.Ink);
             UIFactory.Band(label.rectTransform, 0f, 60, 4, 8, 0f);
 
             if (applied)
@@ -213,18 +213,18 @@ namespace Veliqora.UI.Screens
                 v.Rect.anchoredPosition = new Vector2((i - 1) * 125, -150);
                 foreach (var g in b.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
             }
-            var name = UIFactory.Text(frame.transform, item.Title, UIStyle.FontBody, Color.white, TextAnchor.UpperLeft);
+            var name = UIFactory.Text(frame.transform, Loc.T(item.Title), UIStyle.FontBody, Color.white, TextAnchor.UpperLeft);
             name.rectTransform.offsetMin = new Vector2(30, 0);
             name.rectTransform.offsetMax = new Vector2(0, -24);
             UIFactory.AddShadow(name, new Color(0, 0, 0, 0.45f), new Vector2(0, -3));
 
             bool owned = S.Economy.Owns(item.Id);
             bool applied = item.Id == (item.Kind == CosmeticKind.Theme ? S.Themes.ThemeId : S.Themes.BottleId);
-            if (applied) { _action.SetLabel("Applied"); _action.Kind = UIStyle.ButtonKind.Secondary; _action.SetInteractable(false); }
-            else if (owned) { _action.SetLabel("Apply"); _action.Kind = UIStyle.ButtonKind.Primary; _action.SetInteractable(true); }
+            if (applied) { _action.SetLabel(Loc.T("Applied")); _action.Kind = UIStyle.ButtonKind.Secondary; _action.SetInteractable(false); }
+            else if (owned) { _action.SetLabel(Loc.T("Apply")); _action.Kind = UIStyle.ButtonKind.Primary; _action.SetInteractable(true); }
             else
             {
-                _action.SetLabel("Unlock for " + item.Price + " coins");
+                _action.SetLabel(Loc.F("Unlock for {0} coins", item.Price));
                 _action.Kind = UIStyle.ButtonKind.Gold;
                 _action.SetInteractable(S.Economy.Coins >= item.Price);
             }
@@ -236,12 +236,12 @@ namespace Veliqora.UI.Screens
             if (item == null) return;
             if (!S.Economy.Owns(item.Id))
             {
-                Overlays.Confirm("Unlock " + item.Title + "?", "Spend " + item.Price + " coins to unlock and apply it.", "Unlock", () =>
+                Overlays.Confirm(Loc.F("Unlock {0}?", Loc.T(item.Title)), Loc.F("Spend {0} coins to unlock and apply it.", item.Price), Loc.T("Unlock"), () =>
                 {
                     var r = S.Economy.BuyCosmetic(item.Id, "cosmetic:" + item.Id + ":" + System.Guid.NewGuid().ToString("N"));
                     if (r.Success) { S.Audio.PlayCoin(); Apply(item); }
-                    else Overlays.Toast(r.Status == TxStatus.InsufficientFunds ? "Not enough coins yet." : "Couldn't unlock (" + r.Status + ").");
-                }, "Cancel", UIStyle.ButtonKind.Gold);
+                    else Overlays.Toast(r.Status == TxStatus.InsufficientFunds ? Loc.T("Not enough coins yet.") : Loc.F("Couldn't unlock ({0}).", r.Status));
+                }, Loc.T("Cancel"), UIStyle.ButtonKind.Gold);
                 return;
             }
             Apply(item);
@@ -256,7 +256,7 @@ namespace Veliqora.UI.Screens
                 var tex = BackgroundArt.Valley(S.Themes.Theme);
                 _bg.texture = tex;
             }
-            Overlays.Toast(item.Title + " applied!");
+            Overlays.Toast(Loc.F("{0} applied!", Loc.T(item.Title)));
             RebuildGrid();
             RebuildPreview();
         }

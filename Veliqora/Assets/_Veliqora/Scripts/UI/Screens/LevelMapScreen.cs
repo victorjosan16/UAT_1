@@ -77,7 +77,7 @@ namespace Veliqora.UI.Screens
             var bar = TopBar();
             AddBack(bar, () => S.Navigator.Go(ScreenId.MainMenu));
             AddCoins(bar);
-            Ribbon(Safe, "Valley Map", -UIStyle.TopBarHeight - UIStyle.Space3, 520, UIStyle.Mint);
+            Ribbon(Safe, Loc.T("Valley Map"), -UIStyle.TopBarHeight - UIStyle.Space3, 520, UIStyle.Mint);
             var gear = UIFactory.IconButton(Safe, Icon.Gear, UIStyle.Violet, 110, () => CommonOverlays.ShowSettings(S));
             UIFactory.Place(gear.Rect, new Vector2(1, 0), gear.Rect.sizeDelta, new Vector2(-UIStyle.Space3, UIStyle.Space3), new Vector2(1, 0));
 
@@ -196,8 +196,8 @@ namespace Veliqora.UI.Screens
                 cb.transition = Selectable.Transition.None;
                 int level = n;
                 cb.onClick.AddListener(() => Overlays.Toast(open
-                    ? "Milestone chest from level " + level + " already collected."
-                    : "Milestone chest: finish level " + level + " for +" + S.EconomyConfig.MilestoneCoins + " coins and bonus boosters!"));
+                    ? Loc.F("Milestone chest from level {0} already collected.", level)
+                    : Loc.F("Milestone chest: finish level {0} for +{1} coins and bonus boosters!", level, S.EconomyConfig.MilestoneCoins)));
             }
             return node;
         }
@@ -206,7 +206,7 @@ namespace Veliqora.UI.Screens
         {
             if (n > S.Save.Progress.HighestUnlocked)
             {
-                Overlays.Toast("Complete level " + S.Save.Progress.HighestUnlocked + " to unlock this one.");
+                Overlays.Toast(Loc.F("Complete level {0} to unlock this one.", S.Save.Progress.HighestUnlocked));
                 return;
             }
             S.Navigator.Go(ScreenId.Gameplay, n);

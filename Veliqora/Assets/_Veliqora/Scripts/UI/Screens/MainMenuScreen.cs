@@ -13,6 +13,21 @@ namespace Veliqora.UI.Screens
 
         private RectTransform _logo;
         private RectTransform _play;
+        private Image _dailyDot, _achDot;
+
+        private static Image Dot(RectTransform parent)
+        {
+            var d = UIFactory.Image(parent, "Dot", SpriteLibrary.Circle, UIStyle.Danger);
+            UIFactory.Place(d.rectTransform, new Vector2(1, 1), new Vector2(38, 38), new Vector2(4, 4), new Vector2(1, 1));
+            UIFactory.AddOutline(d, Color.white, 3f);
+            return d;
+        }
+
+        private void RefreshDots()
+        {
+            if (_dailyDot != null) _dailyDot.gameObject.SetActive(S.Daily.CanClaim(ProgressionOverlays.Today));
+            if (_achDot != null) _achDot.gameObject.SetActive(S.Achievements.ClaimableCount() > 0);
+        }
 
         protected override void BuildBackground(RectTransform full)
         {
@@ -29,6 +44,12 @@ namespace Veliqora.UI.Screens
             AddCoins(bar, right: false);
             var gear = UIFactory.IconButton(bar, Icon.Gear, UIStyle.Violet, 116, () => CommonOverlays.ShowSettings(S));
             UIFactory.Place(gear.Rect, new Vector2(1, 0.5f), gear.Rect.sizeDelta, Vector2.zero, new Vector2(1, 0.5f));
+            var trophy = UIFactory.IconButton(bar, Icon.Crown, UIStyle.Hex("#C9A13B"), 116, () => ProgressionOverlays.ShowAchievements(S, RefreshDots));
+            UIFactory.Place(trophy.Rect, new Vector2(1, 0.5f), trophy.Rect.sizeDelta, new Vector2(-136, 0), new Vector2(1, 0.5f));
+            _achDot = Dot(trophy.Rect);
+            var daily = UIFactory.IconButton(bar, Icon.Chest, UIStyle.Coral, 116, () => ProgressionOverlays.ShowDaily(S, RefreshDots));
+            UIFactory.Place(daily.Rect, new Vector2(1, 0.5f), daily.Rect.sizeDelta, new Vector2(-272, 0), new Vector2(1, 0.5f));
+            _dailyDot = Dot(daily.Rect);
 
             AmbientMotes(5f);
             BuildLogo();
@@ -49,8 +70,8 @@ namespace Veliqora.UI.Screens
             var pill = UIFactory.Image(Safe, "LevelPill", SpriteLibrary.Rounded(50), new Color(0.1f, 0.12f, 0.3f, 0.7f));
             UIFactory.Place(pill.rectTransform, new Vector2(0.5f, 0.36f), new Vector2(820, 110), new Vector2(0, -250));
             var levelDef = S.Levels.Get(Mathf.Clamp(level, 1, S.Levels.Count));
-            string kindTag = levelDef.Kind == Core.Levels.LevelKind.Boss ? "  ·  BOSS" : (levelDef.Kind == Core.Levels.LevelKind.Hard ? "  ·  HARD" : "");
-            string label = allDone ? "All levels complete!" : (resume ? "Continue  ·  " : "") + "Stage " + levelDef.Stage + "  ·  Level " + level + kindTag;
+            string kindTag = levelDef.Kind == Core.Levels.LevelKind.Boss ? "  ·  " + Loc.T("BOSS") : (levelDef.Kind == Core.Levels.LevelKind.Hard ? "  ·  " + Loc.T("HARD") : "");
+            string label = allDone ? Loc.T("All levels complete!") : (resume ? Loc.T("Continue") + "  ·  " : "") + Loc.F("Stage {0}", levelDef.Stage) + "  ·  " + Loc.F("Level {0}", level) + kindTag;
             var lt = UIFactory.Text(pill.transform, label, UIStyle.FontBody, Color.white);
             UIFactory.AddShadow(lt, new Color(0, 0, 0, 0.3f), new Vector2(0, -3));
 
@@ -61,16 +82,22 @@ namespace Veliqora.UI.Screens
             // Bottom navigation
             var nav = UIFactory.Rect("Nav", Safe);
             UIFactory.Band(nav, 0f, 230, 60, 60, 0f);
-            NavButton(nav, Icon.Map, "Map", UIStyle.Mint, 0.17f, () => S.Navigator.Go(ScreenId.LevelMap));
-            NavButton(nav, Icon.Bag, "Shop", UIStyle.Coral, 0.5f, () => S.Navigator.Go(ScreenId.Shop));
-            NavButton(nav, Icon.Palette, "Themes", UIStyle.Violet, 0.83f, () => S.Navigator.Go(ScreenId.Themes));
+            NavButton(nav, Icon.Map, Loc.T("Map"), UIStyle.Mint, 0.17f, () => S.Navigator.Go(ScreenId.LevelMap));
+            NavButton(nav, Icon.Bag, Loc.T("Shop"), UIStyle.Coral, 0.5f, () => S.Navigator.Go(ScreenId.Shop));
+            NavButton(nav, Icon.Palette, Loc.T("Themes"), UIStyle.Violet, 0.83f, () => S.Navigator.Go(ScreenId.Themes));
 
             // First-time onboarding
             if (!S.Save.TutorialsSeen.Contains("home_play"))
             {
                 var coach = CoachMark.Create(Safe);
-                coach.Show("Welcome to Veliqora! Tap Play to begin your color-sorting adventure.", _play, 0.6f);
+                coach.Show(Loc.T("Welcome to Veliqora! Tap Play to begin your color-sorting adventure."), _play, 0.6f);
             }
+
+            RefreshDots();
+            ProgressionOverlays.CheckAchievementNotices(S);
+            // Auto-open the daily reward once it's claimable (not during first-time onboarding).
+            if (S.Save.TutorialsSeen.Contains("home_play") && S.Daily.CanClaim(ProgressionOverlays.Today) && !Overlays.AnyOpen)
+                Tween.Delay(this, MotionPrefs.Reduced ? 0.1f : 0.6f, () => { if (!Overlays.AnyOpen) ProgressionOverlays.ShowDaily(S, RefreshDots); });
         }
 
         private void BuildLogo()
@@ -95,7 +122,7 @@ namespace Veliqora.UI.Screens
             var ribbon = UIFactory.Image(_logo, "Subtitle", SpriteLibrary.Rounded(36), UIStyle.Hex("#9A4F1E"));
             UIFactory.Place(ribbon.rectTransform, new Vector2(0.5f, 0f), new Vector2(760, 96), new Vector2(0, 40), new Vector2(0.5f, 0f));
             UIFactory.AddShadow(ribbon, UIStyle.Shadow, new Vector2(0, -6));
-            var sub = UIFactory.Text(ribbon.transform, "COLOR SORTING ADVENTURE", UIStyle.FontLabel, UIStyle.Hex("#FFF1C9"));
+            var sub = UIFactory.Text(ribbon.transform, Loc.T("COLOR SORTING ADVENTURE"), UIStyle.FontLabel, UIStyle.Hex("#FFF1C9"));
             UIFactory.AddShadow(sub, new Color(0, 0, 0, 0.25f), new Vector2(0, -3));
 
             if (!MotionPrefs.Reduced)
