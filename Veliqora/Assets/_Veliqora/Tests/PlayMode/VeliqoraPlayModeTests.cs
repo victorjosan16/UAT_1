@@ -30,8 +30,11 @@ namespace Veliqora.Tests.PlayMode
             Directory.CreateDirectory(_dir);
             yield return null; // AppRoot auto-creates before the first scene
             Assert.IsNotNull(AppRoot.Instance, "AppRoot should auto-create");
+            MainMenuScreen.AutoOpenDaily = false;
             AppRoot.Instance.Reboot(_dir);
             yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.MainMenu && !S.Navigator.IsTransitioning);
+            S.Settings.SetLanguage("en");   // button-label lookups below use the English strings
+            Loc.Load("en");
         }
 
         [TearDown]
@@ -307,6 +310,142 @@ namespace Veliqora.Tests.PlayMode
             Assert.AreEqual(bottles + 1, c.Session.Current.BottleCount);
             Assert.AreEqual(bottles + 1, Gameplay.Board.Views.Count);
             Assert.IsTrue(c.Session.Current[bottles].IsEmpty);
+        }
+
+        private int FindLevel(Func<Core.Levels.LevelDefinition, bool> pred)
+        {
+            for (int i = 1; i <= S.Levels.Count; i++) if (pred(S.Levels.Get(i))) return i;
+            return -1;
+        }
+
+        private void UnlockUpTo(int level)
+        {
+            S.Save.Progress.HighestUnlocked = Math.Max(S.Save.Progress.HighestUnlocked, level);
+            S.MarkDirty();
+        }
+
+        [UnityTest]
+        public IEnumerator CorkedBottle_RejectsTaps_UntilConditionMet()
+        {
+            int n = FindLevel(l => l.HasLocks);
+            Assert.Greater(n, 0, "catalog contains corked levels");
+            UnlockUpTo(n);
+            yield return Go(ScreenId.Gameplay, n);
+            var c = Gameplay.Controller;
+            int corked = -1;
+            for (int i = 0; i < c.Session.Current.BottleCount; i++) if (c.Session.Current[i].IsCorked) { corked = i; break; }
+            Assert.GreaterOrEqual(corked, 0);
+            var before = c.Session.Current;
+            var r = c.Session.Tap(corked);
+            Assert.AreEqual(Core.Session.TapKind.Invalid, r.Kind);
+            Assert.AreEqual(MoveRejection.Locked, r.Move.Rejection);
+            Assert.AreEqual(before, c.Session.Current, "a corked bottle never changes the board");
+        }
+
+        [UnityTest]
+        public IEnumerator RewardBottle_UnlocksOnlyAfterCompletedAd()
+        {
+            if (!S.Ads.IsMock) Assert.Ignore("Mock ads not active in this configuration.");
+            if (Application.internetReachability == NetworkReachability.NotReachable) Assert.Ignore("Mock ads mimic offline as unavailable.");
+            int n = FindLevel(l => l.RewardBottles != null && l.RewardBottles.Length > 0);
+            Assert.Greater(n, 0, "catalog contains reward-bottle levels");
+            UnlockUpTo(n);
+            yield return Go(ScreenId.Gameplay, n);
+            var c = Gameplay.Controller;
+            int idx = -1;
+            for (int i = 0; i < c.Session.Current.BottleCount; i++) if (c.Session.IsRewardBottle(i)) { idx = i; break; }
+            Assert.GreaterOrEqual(idx, 0);
+
+            bool? result = null;
+            c.UnlockRewardBottle(idx, ok => result = ok);
+            yield return null;
+            ClickButtonContaining("Close early");
+            yield return WaitFor(() => result.HasValue);
+            Assert.IsFalse(result.Value);
+            Assert.IsTrue(c.Session.IsRewardBottle(idx), "cancelled ad leaves the bottle locked");
+
+            yield return WaitFor(() => c.CanUnlockRewardBottle(idx), 30f);
+            result = null;
+            c.UnlockRewardBottle(idx, ok => result = ok);
+            yield return null;
+            ClickButtonContaining("Finish");
+            yield return WaitFor(() => result.HasValue);
+            Assert.IsTrue(result.Value);
+            Assert.IsFalse(c.Session.IsRewardBottle(idx));
+        }
+
+        [UnityTest]
+        public IEnumerator MysteryLevel_HidesLayers_AndObjectivesAreTracked()
+        {
+            int n = FindLevel(l => l.HasMystery && l.Objectives.Count > 0);
+            Assert.Greater(n, 0, "catalog contains mystery levels with objectives");
+            UnlockUpTo(n);
+            yield return Go(ScreenId.Gameplay, n);
+            var c = Gameplay.Controller;
+            Assert.Greater(c.Session.Current.HiddenTotal(), 0);
+            var objectives = c.Objectives();
+            Assert.AreEqual(S.Levels.Get(n).Objectives.Count, objectives.Count);
+            foreach (var o in objectives) Assert.IsFalse(o.Complete && o.Def.Type == Core.Objectives.ObjectiveType.FinishLevel);
+        }
+
+        [UnityTest]
+        public IEnumerator RemoveColor_ChargesOnlyOnSuccess()
+        {
+            int n = FindLevel(l => !l.IsBoosterDisabled("RemoveColor") && !l.HasLocks && l.Number > 10);
+            UnlockUpTo(n);
+            yield return Go(ScreenId.Gameplay, n);
+            var c = Gameplay.Controller;
+            int before = S.Economy.Count(BoosterType.RemoveColor);
+            if (before <= 0) { S.Economy.GrantBooster(BoosterType.RemoveColor, 1, "test-remove"); before = 1; }
+            int target = -1;
+            for (int i = 0; i < c.Session.Current.BottleCount; i++) if (c.Session.CanRemoveColorAt(i)) { target = i; break; }
+            Assert.GreaterOrEqual(target, 0);
+            bool? result = null;
+            c.UseRemoveColor(target, ok => result = ok);
+            yield return WaitFor(() => result.HasValue, 15f);
+            Assert.AreEqual(result.Value ? before - 1 : before, S.Economy.Count(BoosterType.RemoveColor));
+        }
+
+        [UnityTest]
+        public IEnumerator DailyReward_ClaimsOncePerDay()
+        {
+            int today = ProgressionOverlays.Today;
+            Assert.IsTrue(S.Daily.CanClaim(today));
+            long coins = S.Economy.Coins;
+            var reward = S.Daily.Claim(today);
+            Assert.IsNotNull(reward);
+            Assert.AreEqual(coins + reward.Coins, S.Economy.Coins);
+            Assert.IsNull(S.Daily.Claim(today), "second claim on the same day is refused");
+            Assert.IsFalse(S.Daily.CanClaim(today));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Language_SwitchesToRomanian_AndPersists()
+        {
+            S.Settings.SetLanguage("ro");
+            Loc.Load("ro");
+            Assert.AreEqual("ro", S.Save.Settings.Language);
+            Assert.AreNotEqual("Undo", Loc.T("Undo"), "Romanian table is loaded");
+            yield return Go(ScreenId.Settings);
+            yield return Go(ScreenId.MainMenu);
+            S.Settings.SetLanguage("en");
+            Loc.Load("en");
+            Assert.AreEqual("Undo", Loc.T("Undo"));
+        }
+
+        [UnityTest]
+        public IEnumerator AchievementNotices_ShowOnce()
+        {
+            S.Save.Progress.BestStars[1] = 3;
+            for (int i = 2; i <= 5; i++) S.Save.Progress.BestStars[i] = 1;   // "First Steps": 5 levels
+            ProgressionOverlays.CheckAchievementNotices(S);
+            int queued = UnlockNotifications.QueuedCount;
+            Assert.Greater(queued, 0);
+            ProgressionOverlays.CheckAchievementNotices(S);
+            Assert.AreEqual(queued, UnlockNotifications.QueuedCount, "no duplicate notices");
+            Assert.Greater(S.Achievements.ClaimableCount(), 0);
+            yield return null;
         }
 
         private static void ClickButtonContaining(string text)

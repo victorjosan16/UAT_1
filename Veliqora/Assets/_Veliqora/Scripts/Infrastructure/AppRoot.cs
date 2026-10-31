@@ -113,10 +113,10 @@ namespace Veliqora.Infrastructure
                 if (load.TechnicalDetail != null) Debug.LogWarning("[Veliqora] Save recovery: " + load.TechnicalDetail);
 
                 // 2) Content
-                var levelsText = Resources.Load<TextAsset>("Veliqora/Levels/levels");
+                var levelsText = Veliqora.Data.VeliqoraContentConfig.Load("Veliqora/Levels/levels", c => c.Levels);
                 if (levelsText == null) throw new InvalidOperationException("Level catalog missing (Resources/Veliqora/Levels/levels.json). Run Veliqora > Generate Levels.");
                 s.Levels = new LevelRepository(LevelCatalog.FromJson(levelsText.text));
-                var ecoText = Resources.Load<TextAsset>("Veliqora/Config/economy");
+                var ecoText = Veliqora.Data.VeliqoraContentConfig.Load("Veliqora/Config/economy", c => c.Economy);
                 if (ecoText == null) throw new InvalidOperationException("Economy config missing (Resources/Veliqora/Config/economy.json).");
                 s.EconomyConfig = EconomyConfig.FromJson(ecoText.text);
 
@@ -153,7 +153,7 @@ namespace Veliqora.Infrastructure
                 s.Consent = new Veliqora.Monetization.PlaceholderConsentService();
 
                 // 6b) Progression (daily rewards, achievements) + language
-                var progText = Resources.Load<TextAsset>("Veliqora/Config/progression");
+                var progText = Veliqora.Data.VeliqoraContentConfig.Load("Veliqora/Config/progression", c => c.Progression);
                 if (progText == null) throw new InvalidOperationException("progression.json missing (Resources/Veliqora/Config).");
                 s.ProgressionConfig = Veliqora.Core.Progression.ProgressionConfig.FromJson(progText.text);
                 s.Daily = new Veliqora.Core.Progression.DailyRewardService(s.Save.Daily, s.ProgressionConfig, s.Economy);

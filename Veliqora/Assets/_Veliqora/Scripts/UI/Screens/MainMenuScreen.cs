@@ -11,6 +11,9 @@ namespace Veliqora.UI.Screens
     {
         public override bool AllowsBanner => true;
 
+        /// <summary>Auto-open the daily reward when claimable (PlayMode tests switch this off to keep flows deterministic).</summary>
+        public static bool AutoOpenDaily = true;
+
         private RectTransform _logo;
         private RectTransform _play;
         private Image _dailyDot, _achDot;
@@ -96,7 +99,7 @@ namespace Veliqora.UI.Screens
             RefreshDots();
             ProgressionOverlays.CheckAchievementNotices(S);
             // Auto-open the daily reward once it's claimable (not during first-time onboarding).
-            if (S.Save.TutorialsSeen.Contains("home_play") && S.Daily.CanClaim(ProgressionOverlays.Today) && !Overlays.AnyOpen)
+            if (AutoOpenDaily && S.Save.TutorialsSeen.Contains("home_play") && S.Daily.CanClaim(ProgressionOverlays.Today) && !Overlays.AnyOpen)
                 Tween.Delay(this, MotionPrefs.Reduced ? 0.1f : 0.6f, () => { if (!Overlays.AnyOpen) ProgressionOverlays.ShowDaily(S, RefreshDots); });
         }
 
