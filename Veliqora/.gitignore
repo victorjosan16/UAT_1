@@ -1,0 +1,38 @@
+# Unity generated
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+*.csproj.user
+/*.csproj
+/*.sln
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+.vscode/
+sysinfo.txt
+crashlytics-build.properties
+
+# Android build outputs & signing material — NEVER commit keystores or passwords
+*.apk
+*.aab
+*.keystore
+*.jks
+keystore.properties
+/Assets/_Veliqora/Editor/Signing/*.local.*
+
+# .NET tooling outputs (Tools/)
+Tools/**/bin/
+Tools/**/obj/
+Tools/**/TestResults/

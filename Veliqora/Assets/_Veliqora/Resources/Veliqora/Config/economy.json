@@ -1,0 +1,42 @@
+{
+  "startingCoins": 200,
+  "startingBoosters": { "Undo": 3, "ExtraBottle": 1, "Shuffle": 1, "Hint": 2 },
+  "levelBaseReward": 20,
+  "perStarReward": 10,
+  "replayBaseReward": 5,
+  "starImprovementReward": 10,
+  "milestoneEvery": 10,
+  "milestoneCoins": 100,
+  "milestoneBoosters": { "Undo": 2, "Hint": 1 },
+  "rewardedBonusBooster": "Undo",
+  "rewardedBonusBoosterQuantity": 1,
+  "rewardedCooldownSeconds": 30,
+  "offers": [
+    { "id": "offer_undo_3", "booster": "Undo", "quantity": 3, "price": 100, "title": "Undo Move", "description": "Take back your last pour. Pack of 3." },
+    { "id": "offer_extra_bottle", "booster": "ExtraBottle", "quantity": 1, "price": 200, "title": "Extra Bottle", "description": "Adds one empty bottle for the current level." },
+    { "id": "offer_shuffle", "booster": "Shuffle", "quantity": 1, "price": 150, "title": "Shuffle Bottles", "description": "Deals a new, verified-solvable layout and restarts the level." },
+    { "id": "offer_hint_2", "booster": "Hint", "quantity": 2, "price": 120, "title": "Hint", "description": "Shows a solver-recommended next move. Pack of 2." }
+  ],
+  "cosmetics": [
+    { "id": "theme_valley", "kind": "theme", "title": "Classic Valley", "price": 0, "defaultOwned": true,
+      "visual": { "skyTop": "#7EC8F2", "skyBottom": "#D9F1FB", "mountain": "#9DB7D9", "hill": "#7CCB8B", "hillDark": "#4FA86A", "river": "#5BC0EB", "accent": "#FF8FB1", "gameTop": "#1D2A55", "gameBottom": "#2E5DA8" } },
+    { "id": "theme_sunset", "kind": "theme", "title": "Sunset Shores", "price": 500,
+      "visual": { "skyTop": "#F7A072", "skyBottom": "#FFE3B3", "mountain": "#C98BB9", "hill": "#E9B44C", "hillDark": "#C47F32", "river": "#F27A7D", "accent": "#FFD166", "gameTop": "#3B1F4A", "gameBottom": "#8E3B5B" } },
+    { "id": "theme_garden", "kind": "theme", "title": "Blossom Garden", "price": 600,
+      "visual": { "skyTop": "#B8E3C9", "skyBottom": "#F4FBF0", "mountain": "#A3C4A8", "hill": "#8BD17C", "hillDark": "#5DA04F", "river": "#6CC4D8", "accent": "#F28DB2", "gameTop": "#1F3B34", "gameBottom": "#2F6F5E" } },
+    { "id": "theme_night", "kind": "theme", "title": "Starry Night", "price": 800,
+      "visual": { "skyTop": "#141B3D", "skyBottom": "#3B3F8F", "mountain": "#2B2F66", "hill": "#2F5B5A", "hillDark": "#1F3F45", "river": "#4C7DD9", "accent": "#FFE066", "gameTop": "#0C1030", "gameBottom": "#262A6B" } },
+    { "id": "theme_winter", "kind": "theme", "title": "Winter Glow", "price": 1000,
+      "visual": { "skyTop": "#9FB8E8", "skyBottom": "#EEF4FF", "mountain": "#C7D3EE", "hill": "#E6EEF9", "hillDark": "#B5C6E3", "river": "#7FB3E0", "accent": "#9D7BEA", "gameTop": "#1B2747", "gameBottom": "#3F5E9A" } },
+    { "id": "theme_galaxy", "kind": "theme", "title": "Galaxy Bloom", "price": 1200,
+      "visual": { "skyTop": "#2A0F4C", "skyBottom": "#6B2FA3", "mountain": "#4B1F78", "hill": "#3B2A7A", "hillDark": "#28195A", "river": "#C06EF0", "accent": "#4FE3C1", "gameTop": "#140828", "gameBottom": "#3D1670" } },
+    { "id": "bottle_classic", "kind": "bottle", "title": "Classic Glass", "price": 0, "defaultOwned": true,
+      "visual": { "shape": "classic", "tint": "#FFFFFF", "neck": 0.22 } },
+    { "id": "bottle_slim", "kind": "bottle", "title": "Slim Vial", "price": 300,
+      "visual": { "shape": "slim", "tint": "#E8F7FF", "neck": 0.12 } },
+    { "id": "bottle_flask", "kind": "bottle", "title": "Round Flask", "price": 500,
+      "visual": { "shape": "flask", "tint": "#F3ECFF", "neck": 0.3 } },
+    { "id": "bottle_crystal", "kind": "bottle", "title": "Crystal", "price": 900,
+      "visual": { "shape": "crystal", "tint": "#E6FFF6", "neck": 0.18 } }
+  ]
+}
