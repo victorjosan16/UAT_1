@@ -1,0 +1,120 @@
+# VELIQORA — automatic checks + Android debug APK (GameCI).
+# Required repository secrets for the Unity jobs (Settings → Secrets and variables → Actions):
+#   UNITY_LICENSE  – full contents of your Unity_lic.ulf file (Unity Personal works)
+#   UNITY_EMAIL    – Unity account e-mail
+#   UNITY_PASSWORD – Unity account password
+# Without these secrets only the offline core checks run; the Unity jobs are skipped (not failed).
+# See Veliqora/Docs/CI.md.
+name: Veliqora Android
+
+on:
+  push:
+    branches: [ "ccr-454f53a2-sy5k23", "main" ]
+    paths: [ "Veliqora/**", ".github/workflows/veliqora-android.yml" ]
+  workflow_dispatch:
+
+concurrency:
+  group: veliqora-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Core tests + level validation (no Unity)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: Veliqora
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: EditMode tests (pure core)
+        run: dotnet test Tools/Veliqora.Core.Tests -c Release
+      - name: Validate all 300 levels
+        run: dotnet run -c Release --project Tools/LevelGen -- validate
+      - name: Unity-side compile check (reference assemblies)
+        run: dotnet build Tools/UnityCompileCheck
+
+  license:
+    name: Check Unity license secret
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_LICENSE secret not set — Unity test and build jobs are skipped."; fi
+
+  unity-tests:
+    name: Unity EditMode + PlayMode tests
+    needs: [ core, license ]
+    if: needs.license.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Veliqora/Library
+          key: Library-tests-${{ hashFiles('Veliqora/Packages/packages-lock.json', 'Veliqora/Packages/manifest.json', 'Veliqora/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-tests-
+      - uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Veliqora
+          testMode: all
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Veliqora Unity test results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-test-results
+          path: test-results
+
+  android-apk:
+    name: Android debug APK
+    needs: [ core, license ]
+    if: needs.license.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Free disk space (Android editor image is large)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Veliqora/Library
+          key: Library-android-${{ hashFiles('Veliqora/Packages/packages-lock.json', 'Veliqora/Packages/manifest.json', 'Veliqora/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-android-
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Veliqora
+          targetPlatform: Android
+          # Project's own build entry point: applies player settings (portrait, IL2CPP, ARM64, min SDK 24)
+          # and writes Veliqora/Builds/Android/Veliqora-debug.apk (development build, labelled mock ads).
+          buildMethod: Veliqora.EditorTools.VeliqoraBuild.BuildDebugApkCli
+          androidExportType: androidPackage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Veliqora-debug-apk-${{ github.run_number }}
+          path: Veliqora/Builds/Android/*.apk
+          if-no-files-found: error
+          retention-days: 14

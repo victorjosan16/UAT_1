@@ -48,6 +48,7 @@
 - Complete `Docs/RELEASE_CHECKLIST.md`.
 
 ## CI options
+- **Ready to use:** `.github/workflows/veliqora-android.yml` (core checks always; Unity tests + debug APK once the Unity license secrets are set). Setup steps: `Docs/CI.md`.
 - **GameCI** (`game-ci/unity-builder`, `unity-test-runner`) with a Unity license secret can run the EditMode/PlayMode suites and both build methods above.
 - Without Unity, CI can still run `dotnet test Tools/Veliqora.Core.Tests`, `dotnet run --project Tools/LevelGen -- validate`, and
   `dotnet build Tools/UnityCompileCheck`.
