@@ -33,14 +33,14 @@ namespace TollRoadTycoon.Presentation.UI
                 UIFactory.Place(art.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(height - 28, height - 28));
             }
 
-            var titleText = UIFactory.Label(card.transform, "", 34, Palette.DarkBlue, TextAnchor.LowerLeft);
+            var titleText = UIFactory.FitText(UIFactory.Label(card.transform, "", 34, Palette.DarkBlue, TextAnchor.LowerLeft), 20);
             var t = titleText.rectTransform;
             t.anchorMin = new Vector2(0, 0.5f);
             t.anchorMax = new Vector2(1, 1);
             t.offsetMin = new Vector2(height, 0);
             t.offsetMax = new Vector2(-textRightInset, -10);
 
-            var valueText = UIFactory.Label(card.transform, "", 32, Palette.Ink, TextAnchor.UpperLeft, FontStyle.Normal);
+            var valueText = UIFactory.FitText(UIFactory.Label(card.transform, "", 32, Palette.Ink, TextAnchor.UpperLeft, FontStyle.Normal), 18);
             var v = valueText.rectTransform;
             v.anchorMin = new Vector2(0, 0);
             v.anchorMax = new Vector2(1, 0.5f);
@@ -153,8 +153,8 @@ namespace TollRoadTycoon.Presentation.UI
             ToggleRow(ui, content, Loc.T("settings.vibration"), () => s.VibrationEnabled, () => { s.VibrationEnabled = !s.VibrationEnabled; Changed(); }, register);
             CycleRow(content, Loc.T("settings.quality"), () => Loc.T("quality." + Mathf.Clamp(s.GraphicsQuality, 0, 2)),
                 d => { s.GraphicsQuality = (s.GraphicsQuality + d + 3) % 3; Changed(); }, register);
-            CycleRow(content, Loc.T("settings.language"), () => Loc.T("lang." + s.Language),
-                d => { s.Language = s.Language == Loc.Romanian ? Loc.English : Loc.Romanian; Changed(); }, register);
+            CycleRow(content, Loc.T("settings.language"), () => Loc.Info(Loc.Language).NativeName,
+                d => { s.Language = Loc.Cycle(Loc.Language, d); Changed(); }, register);
 
             var privacy = UIFactory.Button(content, Loc.T("settings.privacy"), Palette.Blue,
                 () => ui.ShowInfo(Loc.T("settings.privacy"), Loc.T("settings.privacy.body")), 38);

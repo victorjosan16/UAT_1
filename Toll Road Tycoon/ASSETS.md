@@ -14,7 +14,7 @@
 > Obiectele verzi (mașina și autobuzul verde, copacii din foile verzi) nu se pot separa curat de fundalul
 > verde, deci nu au fost folosite.
 > Pentru grafică mai clară, aceleași obiecte generate la rezoluție mare (~512 px) le pot înlocui
-> direct. Încă lipsesc: clădirea de taxare, copertina „TOLL” și fontul.
+> direct. Încă lipsesc: clădirea de taxare, copertina „TOLL” și fontul (trebuie să aibă și litere chirilice).
 
 Jocul caută automat imaginile de mai jos în `Assets/Resources/Art/`. Fiecare imagine pe care o adaugi
 înlocuiește forma provizorie generată din cod. Cele care lipsesc rămân provizorii, deci grafica se
@@ -80,7 +80,7 @@ deschis**, cu relief.
 | `UI/panel.png` | 256×256 | white rounded rectangle game UI panel, soft inner bevel, thick rounded corners |
 | `UI/button.png` | 256×128 | white glossy pill-shaped game button, bottom bevel, rounded |
 | `UI/logo.png` | 1024×600 | logo „TOLL ROAD TYCOON”, litere aurii groase cu contur albastru închis, ca în schiță (cu text) |
-| `UI/GameFont.ttf` | – | font rotunjit și gros, cu diacritice românești (de exemplu Fredoka sau Baloo 2, licență OFL) |
+| `UI/GameFont.ttf` | – | font rotunjit și gros, cu diacritice românești care acoperă latina extinsă și chirilica, pentru toate cele 9 limbi (de exemplu Nunito sau Rubik, licență OFL; Fredoka și Baloo 2 nu au chirilice) |
 | `Icons/coin.png` | 128×128 | shiny gold coin with dollar sign |
 | `Icons/menu_play.png` | 128×128 | white play triangle icon |
 | `Icons/menu_map.png` | 128×128 | folded map icon |

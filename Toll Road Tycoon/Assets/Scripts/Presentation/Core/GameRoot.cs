@@ -210,6 +210,11 @@ namespace TollRoadTycoon.Presentation
 
         public void ApplySettings()
         {
+            // First start: follow the device language when it is supported, otherwise English.
+            if (string.IsNullOrEmpty(Settings.Language) || !Loc.IsSupported(Settings.Language))
+            {
+                Settings.Language = Loc.FromSystemLanguage(Application.systemLanguage.ToString());
+            }
             Loc.Language = Settings.Language;
             Audio.SfxEnabled = Settings.SfxEnabled;
             Audio.SfxVolume = Settings.SfxVolume;

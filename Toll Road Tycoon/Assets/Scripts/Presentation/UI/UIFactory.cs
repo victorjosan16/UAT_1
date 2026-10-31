@@ -72,6 +72,16 @@ namespace TollRoadTycoon.Presentation.UI
             return t;
         }
 
+        /// <summary>Shrinks the text to fit its box (longer translations such as German or Russian).</summary>
+        public static Text FitText(Text t, int minSize = 14)
+        {
+            t.resizeTextForBestFit = true;
+            t.resizeTextMinSize = Mathf.Min(minSize, t.fontSize);
+            t.resizeTextMaxSize = t.fontSize;
+            t.verticalOverflow = VerticalWrapMode.Truncate;
+            return t;
+        }
+
         public static void AddOutline(Graphic g, Color color, float distance = 2f)
         {
             var o = g.gameObject.AddComponent<Outline>();
@@ -101,7 +111,7 @@ namespace TollRoadTycoon.Presentation.UI
             img.gameObject.AddComponent<PressFeedback>();
             if (onClick != null) button.onClick.AddListener(() => onClick());
 
-            var text = Label(img.transform, label, fontSize, Color.white);
+            var text = FitText(Label(img.transform, label, fontSize, Color.white));
             AddOutline(text, new Color(0, 0, 0, 0.35f), 2);
             Stretch(text.rectTransform, 12, 12, 4, 4);
             return button;

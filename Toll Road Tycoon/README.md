@@ -30,7 +30,7 @@ Toll Road Tycoon/                      rădăcina proiectului Unity (acest direc
       Shop/            DecorationManager (decor cosmetic)
       Missions/        MissionManager (misiuni zilnice + lanțul de obiective / tutorial)
       Monetization/    IAdService (dezactivat / test), AdRewards, BoostManager
-      Localization/    Loc (româna principală, engleza completă)
+      Localization/    Loc + Strings/Loc.<limbă>.cs (engleză implicită + 8 limbi)
       Presentation/    stratul Unity (TollRoadTycoon.Presentation.asmdef)
         Core/          GameBootstrap, GameRoot, SaveService, GameConfigAsset (ScriptableObject)
         Views/         WorldView, BoothView, VehicleViews, CoinPopups, SpriteFactory, Palette
@@ -122,6 +122,11 @@ Aceleași teste rulează și în Unity: **Window → General → Test Runner →
   de release reclamele sunt **dezactivate** și butoanele lor nu apar. Nu există niciun SDK sau ID de producție.
 * **Statistici**, setări (muzică, sunete, vibrații, calitate, limbă, confidențialitate, resetare),
   muzică de fundal generată din cod.
+* **Limbi**: engleza e implicită și limba de rezervă. Mai sunt incluse româna și limbile din regiune:
+  maghiară, bulgară, ucraineană, rusă, poloneză, germană, turcă. La prima pornire se alege limba
+  telefonului dacă e una dintre acestea, altfel engleza; se poate schimba din Setări. Testele verifică
+  pentru fiecare limbă că are toate textele și aceleași placeholder-e. Traducerile sunt făcute de mine,
+  nu de traducători nativi, și merită o verificare înainte de lansare.
 * **Salvare v3** cu migrare automată a salvărilor vechi (drumul unic devine porțiunea 1).
 
 ## Raport de verificare
@@ -131,7 +136,7 @@ Ce s-a rulat efectiv în acest mediu (container Linux, fără Unity Editor și f
 | Verificare | Rezultat |
 |---|---|
 | Logica jocului + teste compilate cu .NET 8, la nivelul de limbaj C# 9 (compatibil cu Unity 2022.3) | ✅ 0 avertismente |
-| Teste NUnit (`dotnet test`) | ✅ 85/85 trecute |
+| Teste NUnit (`dotnet test`) | ✅ 103/103 trecute |
 | Stratul Unity compilat cu bibliotecile de **referință** Unity (UnityEngine 2021.3 + UnityEngine.UI 2020.3, de pe NuGet) | ✅ 0 erori, 0 avertismente |
 | Scripturile de editor (`Assets/Scripts/Editor`) compilate | ❌ neverificat: nu a existat o bibliotecă de referință UnityEditor |
 | Deschis în Unity Editor / Play mode / verificare vizuală a interfeței | ❌ nefăcut: Unity nu e instalat aici |
@@ -159,6 +164,8 @@ Echilibrul porțiunilor 2–5 nu a fost simulat pe durate lungi; prețurile lor 
 * Grafica vine din foile de imagini primite, decupate automat; unele obiecte sunt mici în sursă și pot
   părea neclare pe ecran (vezi `ASSETS.md`).
 * Textele folosesc `Text` clasic din uGUI, nu TextMeshPro (TMP cere importul resurselor în editor).
+  Fontul încorporat al Unity e dinamic: literele pe care nu le are sunt luate din fonturile sistemului
+  (neverificat pe dispozitiv pentru chirilice). Un font de joc ales ulterior trebuie să aibă latină extinsă și chirilice.
 * O singură scenă (`Boot`); meniul, harta, magazinul și jocul sunt ecrane/ferestre construite la rulare.
 * Nu există achiziții reale (fără „Restabilește achizițiile”) și niciun SDK de reclame real.
 * Clienții serviciilor nu sunt animați ca mașini care merg la clădire.

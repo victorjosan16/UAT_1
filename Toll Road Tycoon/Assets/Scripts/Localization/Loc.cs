@@ -3,13 +3,38 @@ using System.Collections.Generic;
 
 namespace TollRoadTycoon.Localization
 {
-    /// <summary>Tiny string table. Romanian is the primary locale; English is provided for every key.</summary>
-    public static class Loc
+    public sealed class LanguageInfo
     {
-        public const string Romanian = "ro";
-        public const string English = "en";
+        public string Code;
+        public string NativeName;
+        /// <summary>Unity SystemLanguage names that map to this language.</summary>
+        public string[] SystemLanguages;
+    }
 
-        private static string _language = Romanian;
+    /// <summary>
+    /// String tables. English is the default and the fallback for any missing text; the other
+    /// languages cover Romania and its region. Tables live in Strings/Loc.*.cs.
+    /// </summary>
+    public static partial class Loc
+    {
+        public const string English = "en";
+        public const string Romanian = "ro";
+        public const string Default = English;
+
+        public static readonly IReadOnlyList<LanguageInfo> Languages = new[]
+        {
+            new LanguageInfo { Code = "en", NativeName = "English", SystemLanguages = new[] { "English" } },
+            new LanguageInfo { Code = "ro", NativeName = "Română", SystemLanguages = new[] { "Romanian" } },
+            new LanguageInfo { Code = "hu", NativeName = "Magyar", SystemLanguages = new[] { "Hungarian" } },
+            new LanguageInfo { Code = "bg", NativeName = "Български", SystemLanguages = new[] { "Bulgarian" } },
+            new LanguageInfo { Code = "uk", NativeName = "Українська", SystemLanguages = new[] { "Ukrainian" } },
+            new LanguageInfo { Code = "ru", NativeName = "Русский", SystemLanguages = new[] { "Russian", "Belarusian" } },
+            new LanguageInfo { Code = "pl", NativeName = "Polski", SystemLanguages = new[] { "Polish" } },
+            new LanguageInfo { Code = "de", NativeName = "Deutsch", SystemLanguages = new[] { "German" } },
+            new LanguageInfo { Code = "tr", NativeName = "Türkçe", SystemLanguages = new[] { "Turkish" } },
+        };
+
+        private static string _language = Default;
 
         public static event Action LanguageChanged;
 
@@ -18,465 +43,79 @@ namespace TollRoadTycoon.Localization
             get => _language;
             set
             {
-                string lang = value == English ? English : Romanian;
+                string lang = IsSupported(value) ? value : Default;
                 if (lang == _language) return;
                 _language = lang;
                 LanguageChanged?.Invoke();
             }
         }
 
+        public static bool IsSupported(string code) => Table(code) != null;
+
+        public static LanguageInfo Info(string code)
+        {
+            foreach (var l in Languages)
+            {
+                if (l.Code == code) return l;
+            }
+            return Languages[0];
+        }
+
+        /// <summary>Language for a device language name (Unity SystemLanguage), English when unsupported.</summary>
+        public static string FromSystemLanguage(string systemLanguage)
+        {
+            foreach (var l in Languages)
+            {
+                if (Array.IndexOf(l.SystemLanguages, systemLanguage) >= 0) return l.Code;
+            }
+            return Default;
+        }
+
+        /// <summary>Next language in the list (wraps around), for the settings selector.</summary>
+        public static string Cycle(string code, int direction)
+        {
+            int index = 0;
+            for (int i = 0; i < Languages.Count; i++)
+            {
+                if (Languages[i].Code == code) index = i;
+            }
+            index = ((index + direction) % Languages.Count + Languages.Count) % Languages.Count;
+            return Languages[index].Code;
+        }
+
         public static string T(string key)
         {
-            var table = _language == English ? En : Ro;
-            if (table.TryGetValue(key, out var text)) return text;
-            if (Ro.TryGetValue(key, out text)) return text;
+            var table = Table(_language);
+            if (table != null && table.TryGetValue(key, out var text)) return text;
+            if (En.TryGetValue(key, out text)) return text;
             return key;
         }
 
         public static string F(string key, params object[] args) => string.Format(T(key), args);
 
-        public static IEnumerable<string> Keys(string language) => (language == English ? En : Ro).Keys;
+        public static IEnumerable<string> Keys(string language) => Table(language)?.Keys ?? (IEnumerable<string>)Array.Empty<string>();
 
-        private static readonly Dictionary<string, string> Ro = new Dictionary<string, string>
+        public static string Get(string language, string key)
         {
-            ["menu.play"] = "JOACĂ",
-            ["menu.roads"] = "DRUMURI",
-            ["menu.shop"] = "MAGAZIN",
-            ["menu.missions"] = "MISIUNI",
-            ["menu.settings"] = "SETĂRI",
-            ["menu.soon"] = "În curând",
-            ["menu.soon.body"] = "Această funcție va fi disponibilă într-o actualizare viitoare (Faza 2).",
-            ["hud.section"] = "Porțiunea 1",
-            ["hud.km"] = "Km 0 - Km 5",
-            ["hud.income"] = "Venit/min",
-            ["hud.cars"] = "Mașini: {0}",
-            ["tab.booths"] = "CABINE",
-            ["tab.lanes"] = "BENZI",
-            ["tab.workers"] = "ANGAJAȚI",
-            ["tab.upgrade"] = "UPGRADE",
-            ["booth.name"] = "Cabina {0}",
-            ["booth.build"] = "Construiește cabina {0}",
-            ["booth.build.body"] = "Adaugă o bandă de taxare nouă. Mașinile o vor folosi imediat ce are un angajat.",
-            ["booth.max"] = "Toate cabinele sunt construite",
-            ["booth.needs_lanes"] = "Necesită {0} benzi",
-            ["booth.closed"] = "Închisă",
-            ["booth.closing"] = "Se închide",
-            ["booth.open"] = "Deschisă",
-            ["booth.auto"] = "Automată",
-            ["booth.unstaffed"] = "Fără angajat",
-            ["booth.queue"] = "Coadă {0}/{1}",
-            ["booth.served"] = "Servite: {0}",
-            ["booth.select"] = "Selectează",
-            ["booth.selected"] = "Selectată",
-            ["lane.name"] = "Banda {0}",
-            ["lane.buy"] = "Adaugă banda {0}",
-            ["lane.buy.body"] = "Lărgește drumul: mai multe mașini sosesc și se pot construi mai multe cabine.",
-            ["lane.max"] = "Drumul are numărul maxim de benzi",
-            ["lane.count"] = "Benzi active: {0}/{1}",
-            ["lane.demand"] = "Trafic: {0:0.0} mașini/s",
-            ["worker.name"] = "Angajat #{0}",
-            ["worker.level"] = "Nivel {0}",
-            ["worker.speed"] = "{0:0.0}s / mașină",
-            ["worker.hire"] = "Angajează",
-            ["worker.upgrade"] = "Upgrade",
-            ["worker.assign"] = "Alocă la cabina selectată",
-            ["worker.unassign"] = "Retrage",
-            ["worker.free"] = "Liber",
-            ["worker.at"] = "La cabina {0}",
-            ["worker.pending"] = "Termină coada",
-            ["worker.max"] = "Nivel maxim",
-            ["upgrade.title"] = "UPGRADE CABINĂ",
-            ["upgrade.speed"] = "Viteză de taxare",
-            ["upgrade.toll"] = "Venit per mașină",
-            ["upgrade.capacity"] = "Capacitate coadă",
-            ["upgrade.barrier"] = "Viteză barieră",
-            ["upgrade.automation"] = "Plată automată",
-            ["upgrade.automation.locked"] = "Necesită viteză nivel 3",
-            ["upgrade.max"] = "MAXIM",
-            ["upgrade.vehicles"] = "TIPURI DE VEHICULE",
-            ["upgrade.unlock"] = "Deblochează",
-            ["upgrade.unlocked"] = "Deblocat",
-            ["vehicle.compact"] = "Mașină compactă",
-            ["vehicle.sedan"] = "Sedan",
-            ["vehicle.suv"] = "SUV",
-            ["vehicle.van"] = "Dubă",
-            ["vehicle.truck"] = "Camion",
-            ["vehicle.bus"] = "Autobuz",
-            ["vehicle.heavy_truck"] = "TIR",
-            ["vehicle.emergency"] = "Vehicul de urgență",
-            ["vehicle.free"] = "Nu se taxează",
-            ["vehicle.toll"] = "Taxă: {0}",
-            ["confirm.title"] = "CONFIRMARE",
-            ["confirm.buy"] = "Cumpără",
-            ["confirm.cancel"] = "Anulează",
-            ["toast.no_money"] = "Fonduri insuficiente",
-            ["toast.bought"] = "Cumpărat!",
-            ["toast.needs_worker"] = "Cabina nouă are nevoie de un angajat",
-            ["toast.saved"] = "Progres salvat",
-            ["toast.loaded_backup"] = "Salvarea principală era coruptă; s-a încărcat copia de rezervă",
-            ["toast.select_booth"] = "Selectează o cabină de pe drum sau din lista CABINE",
-            ["pause.title"] = "PAUZĂ",
-            ["pause.resume"] = "Continuă",
-            ["pause.menu"] = "Salvează și ieși în meniu",
-            ["settings.title"] = "SETĂRI",
-            ["settings.music"] = "Muzică",
-            ["settings.sfx"] = "Sunete",
-            ["settings.vibration"] = "Vibrații",
-            ["settings.quality"] = "Calitate grafică",
-            ["settings.language"] = "Limbă",
-            ["settings.privacy"] = "Confidențialitate",
-            ["settings.privacy.body"] = "Jocul nu colectează date personale și nu folosește rețele de reclame în această versiune. Progresul se salvează doar local, pe dispozitiv.",
-            ["settings.reset"] = "Resetează progresul",
-            ["settings.reset.body"] = "Ești sigur? Tot progresul va fi șters definitiv.",
-            ["settings.on"] = "Pornit",
-            ["settings.off"] = "Oprit",
-            ["quality.0"] = "Scăzută",
-            ["quality.1"] = "Medie",
-            ["quality.2"] = "Înaltă",
-            ["lang.ro"] = "Română",
-            ["lang.en"] = "English",
-            ["common.close"] = "Închide",
-            ["common.ok"] = "OK",
-            ["common.level"] = "Nv. {0}",
-            ["section.s1"] = "Drum local",
-            ["section.s2"] = "Șosea suburbană",
-            ["section.s3"] = "Drum expres regional",
-            ["section.s4"] = "Autostradă principală",
-            ["section.s5"] = "Autostradă premium",
-            ["hud.section_n"] = "Porțiunea {0}",
-            ["hud.km_range"] = "Km {0} - Km {1}",
-            ["hud.goal"] = "Obiectiv: {0}",
-            ["hud.claim"] = "Ia recompensa",
-            ["hud.boost"] = "x2",
-            ["hud.boost_active"] = "x2 · {0}s",
-            ["hud.map"] = "HARTĂ",
-            ["hud.stats"] = "STATISTICI",
-            ["hud.missions"] = "MISIUNI",
-            ["hud.shop"] = "MAGAZIN",
-            ["tab.services"] = "SERVICII",
-            ["tab.decor"] = "DECOR",
-            ["mission.ProcessCars"] = "Deservește {0} mașini",
-            ["mission.EarnMoney"] = "Încasează {0}",
-            ["mission.ServeTrucks"] = "Deservește {0} camioane",
-            ["mission.UpgradeWorker"] = "Îmbunătățește angajații ({0})",
-            ["mission.BuildBooth"] = "Construiește {0} cabine",
-            ["mission.BuildService"] = "Construiește {0} servicii",
-            ["mission.ReachIncome"] = "Atinge un venit de {0}/min",
-            ["mission.UnlockRoad"] = "Deblochează {0} porțiune nouă",
-            ["mission.SpeedUpgrade"] = "Upgrade de viteză ({0})",
-            ["mission.CapacityUpgrade"] = "Mărește capacitatea cozii ({0})",
-            ["mission.UnlockVehicle"] = "Deblochează: {0}",
-            ["missions.title"] = "MISIUNI",
-            ["missions.daily"] = "MISIUNI ZILNICE",
-            ["missions.milestones"] = "OBIECTIVE",
-            ["missions.claim"] = "Ia",
-            ["missions.claimed"] = "Primit",
-            ["missions.reward"] = "Recompensă: {0}",
-            ["missions.done"] = "Toate obiectivele sunt îndeplinite!",
-            ["map.title"] = "HARTĂ PORȚIUNI",
-            ["map.enter"] = "Intră",
-            ["map.current"] = "Aici",
-            ["map.unlock"] = "Deblochează",
-            ["map.locked"] = "Blocat",
-            ["map.income"] = "Venit estimat: {0}/min",
-            ["map.booths"] = "Cabine: {0}/{1}",
-            ["map.req_prev"] = "Porțiunea anterioară deblocată",
-            ["map.req_booths"] = "{0} cabine pe porțiunea anterioară",
-            ["map.req_income"] = "Venit de {0}/min",
-            ["map.req_price"] = "Preț: {0}",
-            ["map.estimate_note"] = "Porțiunile pe care nu ești acum câștigă din estimare (fără simularea fiecărei mașini).",
-            ["map.unlock_title"] = "EXTINDE PORȚIUNEA",
-            ["shop.title"] = "MAGAZIN",
-            ["shop.vehicles"] = "VEHICULE",
-            ["shop.decor"] = "DECOR",
-            ["shop.buildings"] = "CLĂDIRI",
-            ["shop.bonus"] = "BONUSURI",
-            ["shop.ad_boost"] = "Venit x2 timp de 2 minute",
-            ["shop.ad_cash"] = "Bani instant: {0}",
-            ["shop.cash_boost"] = "Venit x2 timp de 5 minute",
-            ["shop.watch"] = "Reclamă",
-            ["shop.ads_off"] = "Reclamele nu sunt disponibile în această versiune.",
-            ["shop.ads_test"] = "Reclamele rulează în mod TEST.",
-            ["shop.buildings_hint"] = "Serviciile se construiesc pe porțiunea curentă, pe un loc liber de lângă drum.",
-            ["service.parking"] = "Parcare",
-            ["service.cafe"] = "Cafenea",
-            ["service.gas"] = "Benzinărie",
-            ["service.rest_area"] = "Zonă de odihnă (WC)",
-            ["service.store"] = "Magazin de proximitate",
-            ["service.car_wash"] = "Spălătorie auto",
-            ["service.charging"] = "Stație de încărcare",
-            ["service.desc"] = "{0} locuri · {1:0}s · {2}/client",
-            ["service.build"] = "Construiește",
-            ["service.not_here"] = "Nu e disponibil pe această porțiune",
-            ["service.placed"] = "Nivel {0} · câștigat {1}",
-            ["service.move"] = "Mută",
-            ["service.remove"] = "Demolează",
-            ["service.remove_body"] = "Clădirea dispare, iar tu primești înapoi {0}.",
-            ["service.pick_slot"] = "Atinge un loc liber marcat lângă drum",
-            ["service.cancel"] = "Anulează",
-            ["service.title"] = "CLĂDIRE",
-            ["service.upgrade"] = "Upgrade",
-            ["decor.bench"] = "Bancă",
-            ["decor.lamp"] = "Felinar",
-            ["decor.flowers"] = "Ronduri de flori",
-            ["decor.bin"] = "Coș de gunoi",
-            ["decor.cone"] = "Con rutier",
-            ["decor.fence"] = "Gard",
-            ["decor.note"] = "Decorațiunile sunt doar estetice și nu schimbă venitul.",
-            ["decor.remove"] = "Elimină",
-            ["decor.no_slot"] = "Nu mai sunt locuri libere pentru decor",
-            ["decor.buy"] = "Cumpără",
-            ["stats.title"] = "STATISTICI",
-            ["stats.income"] = "Venit pe minut (porțiunea curentă)",
-            ["stats.cars"] = "Mașini deservite",
-            ["stats.trucks"] = "Vehicule grele deservite",
-            ["stats.wait"] = "Timp mediu de așteptare",
-            ["stats.utilization"] = "Utilizare cabine",
-            ["stats.booths"] = "Cabine active",
-            ["stats.sections"] = "Porțiuni deblocate",
-            ["stats.services"] = "Venit din servicii",
-            ["stats.offline"] = "Venit offline (estimat)",
-            ["stats.passive"] = "Venit porțiuni inactive (estimat)",
-            ["stats.earnings"] = "Total câștigat",
-            ["stats.expenses"] = "Total cheltuit",
-            ["stats.playtime"] = "Timp de joc",
-            ["offline.title"] = "VENIT OFFLINE",
-            ["offline.body"] = "Cât ai lipsit ({0}), drumurile tale au produs aproximativ:",
-            ["offline.note"] = "Estimare pe baza vitezei de încasare (maximum 8 ore), nu simulare mașină cu mașină.",
-            ["offline.collect"] = "Colectează",
-            ["offline.double"] = "Dublează cu reclamă",
-            ["ad.title"] = "RECLAMĂ DE TEST",
-            ["ad.body"] = "Mod test: nu se afișează o reclamă reală. Recompensa se acordă doar dacă aștepți până la final.",
-            ["ad.skip"] = "Închide (fără recompensă)",
-            ["ad.wait"] = "Recompensă în {0}s",
-            ["ad.done"] = "Recompensă primită!",
-            ["ad.unavailable"] = "Reclamă indisponibilă",
-            ["toast.section_unlocked"] = "Porțiune nouă deblocată!",
-            ["toast.reward"] = "Recompensă: {0}",
-            ["toast.slot_taken"] = "Locul e ocupat",
-            ["toast.not_allowed"] = "Nu se poate construi aici",
-            ["toast.boost"] = "Venit x2 activ!",
-        };
+            var table = Table(language);
+            return table != null && table.TryGetValue(key, out var text) ? text : null;
+        }
 
-        private static readonly Dictionary<string, string> En = new Dictionary<string, string>
+        private static Dictionary<string, string> Table(string code)
         {
-            ["menu.play"] = "PLAY",
-            ["menu.roads"] = "ROADS",
-            ["menu.shop"] = "SHOP",
-            ["menu.missions"] = "MISSIONS",
-            ["menu.settings"] = "SETTINGS",
-            ["menu.soon"] = "Coming soon",
-            ["menu.soon.body"] = "This feature arrives in a future update (Phase 2).",
-            ["hud.section"] = "Section 1",
-            ["hud.km"] = "Km 0 - Km 5",
-            ["hud.income"] = "Income/min",
-            ["hud.cars"] = "Cars: {0}",
-            ["tab.booths"] = "BOOTHS",
-            ["tab.lanes"] = "LANES",
-            ["tab.workers"] = "WORKERS",
-            ["tab.upgrade"] = "UPGRADE",
-            ["booth.name"] = "Booth {0}",
-            ["booth.build"] = "Build booth {0}",
-            ["booth.build.body"] = "Adds a new toll lane. Cars use it as soon as it is staffed.",
-            ["booth.max"] = "All booths are built",
-            ["booth.needs_lanes"] = "Needs {0} lanes",
-            ["booth.closed"] = "Closed",
-            ["booth.closing"] = "Closing",
-            ["booth.open"] = "Open",
-            ["booth.auto"] = "Automatic",
-            ["booth.unstaffed"] = "No worker",
-            ["booth.queue"] = "Queue {0}/{1}",
-            ["booth.served"] = "Served: {0}",
-            ["booth.select"] = "Select",
-            ["booth.selected"] = "Selected",
-            ["lane.name"] = "Lane {0}",
-            ["lane.buy"] = "Add lane {0}",
-            ["lane.buy.body"] = "Widens the road: more cars arrive and more booths can be built.",
-            ["lane.max"] = "The road has the maximum number of lanes",
-            ["lane.count"] = "Active lanes: {0}/{1}",
-            ["lane.demand"] = "Traffic: {0:0.0} cars/s",
-            ["worker.name"] = "Worker #{0}",
-            ["worker.level"] = "Level {0}",
-            ["worker.speed"] = "{0:0.0}s / car",
-            ["worker.hire"] = "Hire",
-            ["worker.upgrade"] = "Upgrade",
-            ["worker.assign"] = "Assign to selected booth",
-            ["worker.unassign"] = "Withdraw",
-            ["worker.free"] = "Free",
-            ["worker.at"] = "At booth {0}",
-            ["worker.pending"] = "Finishing queue",
-            ["worker.max"] = "Max level",
-            ["upgrade.title"] = "BOOTH UPGRADE",
-            ["upgrade.speed"] = "Toll speed",
-            ["upgrade.toll"] = "Income per car",
-            ["upgrade.capacity"] = "Queue capacity",
-            ["upgrade.barrier"] = "Barrier speed",
-            ["upgrade.automation"] = "Automatic payment",
-            ["upgrade.automation.locked"] = "Requires speed level 3",
-            ["upgrade.max"] = "MAX",
-            ["upgrade.vehicles"] = "VEHICLE TYPES",
-            ["upgrade.unlock"] = "Unlock",
-            ["upgrade.unlocked"] = "Unlocked",
-            ["vehicle.compact"] = "Compact car",
-            ["vehicle.sedan"] = "Sedan",
-            ["vehicle.suv"] = "SUV",
-            ["vehicle.van"] = "Van",
-            ["vehicle.truck"] = "Truck",
-            ["vehicle.bus"] = "Bus",
-            ["vehicle.heavy_truck"] = "Heavy truck",
-            ["vehicle.emergency"] = "Emergency vehicle",
-            ["vehicle.free"] = "Toll free",
-            ["vehicle.toll"] = "Toll: {0}",
-            ["confirm.title"] = "CONFIRM",
-            ["confirm.buy"] = "Buy",
-            ["confirm.cancel"] = "Cancel",
-            ["toast.no_money"] = "Not enough money",
-            ["toast.bought"] = "Purchased!",
-            ["toast.needs_worker"] = "The new booth needs a worker",
-            ["toast.saved"] = "Progress saved",
-            ["toast.loaded_backup"] = "The main save was corrupt; the backup was loaded",
-            ["toast.select_booth"] = "Select a booth on the road or in the BOOTHS list",
-            ["pause.title"] = "PAUSED",
-            ["pause.resume"] = "Resume",
-            ["pause.menu"] = "Save and exit to menu",
-            ["settings.title"] = "SETTINGS",
-            ["settings.music"] = "Music",
-            ["settings.sfx"] = "Sound effects",
-            ["settings.vibration"] = "Vibration",
-            ["settings.quality"] = "Graphics quality",
-            ["settings.language"] = "Language",
-            ["settings.privacy"] = "Privacy",
-            ["settings.privacy.body"] = "The game collects no personal data and uses no ad networks in this version. Progress is saved only locally on the device.",
-            ["settings.reset"] = "Reset progress",
-            ["settings.reset.body"] = "Are you sure? All progress will be permanently deleted.",
-            ["settings.on"] = "On",
-            ["settings.off"] = "Off",
-            ["quality.0"] = "Low",
-            ["quality.1"] = "Medium",
-            ["quality.2"] = "High",
-            ["lang.ro"] = "Română",
-            ["lang.en"] = "English",
-            ["common.close"] = "Close",
-            ["common.ok"] = "OK",
-            ["common.level"] = "Lv. {0}",
-            ["section.s1"] = "Local road",
-            ["section.s2"] = "Suburban highway",
-            ["section.s3"] = "Regional expressway",
-            ["section.s4"] = "Main motorway",
-            ["section.s5"] = "Premium motorway",
-            ["hud.section_n"] = "Section {0}",
-            ["hud.km_range"] = "Km {0} - Km {1}",
-            ["hud.goal"] = "Goal: {0}",
-            ["hud.claim"] = "Claim reward",
-            ["hud.boost"] = "x2",
-            ["hud.boost_active"] = "x2 · {0}s",
-            ["hud.map"] = "MAP",
-            ["hud.stats"] = "STATS",
-            ["hud.missions"] = "MISSIONS",
-            ["hud.shop"] = "SHOP",
-            ["tab.services"] = "SERVICES",
-            ["tab.decor"] = "DECOR",
-            ["mission.ProcessCars"] = "Serve {0} cars",
-            ["mission.EarnMoney"] = "Earn {0}",
-            ["mission.ServeTrucks"] = "Serve {0} trucks",
-            ["mission.UpgradeWorker"] = "Upgrade workers ({0})",
-            ["mission.BuildBooth"] = "Build {0} booths",
-            ["mission.BuildService"] = "Build {0} services",
-            ["mission.ReachIncome"] = "Reach {0}/min income",
-            ["mission.UnlockRoad"] = "Unlock {0} new section",
-            ["mission.SpeedUpgrade"] = "Speed upgrade ({0})",
-            ["mission.CapacityUpgrade"] = "Increase queue capacity ({0})",
-            ["mission.UnlockVehicle"] = "Unlock: {0}",
-            ["missions.title"] = "MISSIONS",
-            ["missions.daily"] = "DAILY MISSIONS",
-            ["missions.milestones"] = "GOALS",
-            ["missions.claim"] = "Claim",
-            ["missions.claimed"] = "Claimed",
-            ["missions.reward"] = "Reward: {0}",
-            ["missions.done"] = "All goals completed!",
-            ["map.title"] = "SECTION MAP",
-            ["map.enter"] = "Enter",
-            ["map.current"] = "Here",
-            ["map.unlock"] = "Unlock",
-            ["map.locked"] = "Locked",
-            ["map.income"] = "Estimated income: {0}/min",
-            ["map.booths"] = "Booths: {0}/{1}",
-            ["map.req_prev"] = "Previous section unlocked",
-            ["map.req_booths"] = "{0} booths on the previous section",
-            ["map.req_income"] = "Income of {0}/min",
-            ["map.req_price"] = "Price: {0}",
-            ["map.estimate_note"] = "Sections you are not on earn from an estimate (no per-car simulation).",
-            ["map.unlock_title"] = "EXPAND ROAD",
-            ["shop.title"] = "SHOP",
-            ["shop.vehicles"] = "VEHICLES",
-            ["shop.decor"] = "DECOR",
-            ["shop.buildings"] = "BUILDINGS",
-            ["shop.bonus"] = "BONUSES",
-            ["shop.ad_boost"] = "x2 income for 2 minutes",
-            ["shop.ad_cash"] = "Instant cash: {0}",
-            ["shop.cash_boost"] = "x2 income for 5 minutes",
-            ["shop.watch"] = "Watch ad",
-            ["shop.ads_off"] = "Ads are not available in this version.",
-            ["shop.ads_test"] = "Ads run in TEST mode.",
-            ["shop.buildings_hint"] = "Services are built on the current section, on a free spot beside the road.",
-            ["service.parking"] = "Parking",
-            ["service.cafe"] = "Café",
-            ["service.gas"] = "Gas station",
-            ["service.rest_area"] = "Rest area (WC)",
-            ["service.store"] = "Convenience store",
-            ["service.car_wash"] = "Car wash",
-            ["service.charging"] = "Charging station",
-            ["service.desc"] = "{0} spots · {1:0}s · {2}/customer",
-            ["service.build"] = "Build",
-            ["service.not_here"] = "Not available on this section",
-            ["service.placed"] = "Level {0} · earned {1}",
-            ["service.move"] = "Move",
-            ["service.remove"] = "Demolish",
-            ["service.remove_body"] = "The building is removed and you get back {0}.",
-            ["service.pick_slot"] = "Tap a highlighted free spot beside the road",
-            ["service.cancel"] = "Cancel",
-            ["service.title"] = "BUILDING",
-            ["service.upgrade"] = "Upgrade",
-            ["decor.bench"] = "Bench",
-            ["decor.lamp"] = "Street lamp",
-            ["decor.flowers"] = "Flower bed",
-            ["decor.bin"] = "Trash bin",
-            ["decor.cone"] = "Traffic cone",
-            ["decor.fence"] = "Fence",
-            ["decor.note"] = "Decorations are cosmetic only and do not change income.",
-            ["decor.remove"] = "Remove",
-            ["decor.no_slot"] = "No free decoration spots left",
-            ["decor.buy"] = "Buy",
-            ["stats.title"] = "STATISTICS",
-            ["stats.income"] = "Income per minute (current section)",
-            ["stats.cars"] = "Cars served",
-            ["stats.trucks"] = "Heavy vehicles served",
-            ["stats.wait"] = "Average waiting time",
-            ["stats.utilization"] = "Booth utilization",
-            ["stats.booths"] = "Active booths",
-            ["stats.sections"] = "Sections unlocked",
-            ["stats.services"] = "Service income",
-            ["stats.offline"] = "Offline income (estimated)",
-            ["stats.passive"] = "Inactive section income (estimated)",
-            ["stats.earnings"] = "Total earned",
-            ["stats.expenses"] = "Total spent",
-            ["stats.playtime"] = "Play time",
-            ["offline.title"] = "OFFLINE INCOME",
-            ["offline.body"] = "While you were away ({0}), your roads produced about:",
-            ["offline.note"] = "Estimate based on your income rate (8 hours max), not a car-by-car simulation.",
-            ["offline.collect"] = "Collect",
-            ["offline.double"] = "Double with ad",
-            ["ad.title"] = "TEST AD",
-            ["ad.body"] = "Test mode: no real ad is shown. The reward is granted only if you wait until the end.",
-            ["ad.skip"] = "Close (no reward)",
-            ["ad.wait"] = "Reward in {0}s",
-            ["ad.done"] = "Reward granted!",
-            ["ad.unavailable"] = "Ad unavailable",
-            ["toast.section_unlocked"] = "New section unlocked!",
-            ["toast.reward"] = "Reward: {0}",
-            ["toast.slot_taken"] = "That spot is taken",
-            ["toast.not_allowed"] = "Cannot build here",
-            ["toast.boost"] = "x2 income active!",
-        };
+            switch (code)
+            {
+                case "en": return En;
+                case "ro": return Ro;
+                case "hu": return Hu;
+                case "bg": return Bg;
+                case "uk": return Uk;
+                case "ru": return Ru;
+                case "pl": return Pl;
+                case "de": return De;
+                case "tr": return Tr;
+                default: return null;
+            }
+        }
     }
 }

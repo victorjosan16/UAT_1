@@ -132,6 +132,7 @@ namespace TollRoadTycoon.Save
         public float MusicVolume = 0.6f;
         public float SfxVolume = 0.8f;
         public int GraphicsQuality = 2;
-        public string Language = "ro";
+        /// <summary>Language code; empty means "use the device language" (English when unsupported).</summary>
+        public string Language = "";
     }
 }
