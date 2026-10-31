@@ -54,6 +54,8 @@ namespace Veliqora.Gameplay
         public event Action<string> Notice;              // toast-worthy messages
         public event Action<int> BottleUnlocked;         // a cork came off (index)
         public event Action ObjectivesChanged;
+        /// <summary>Screen-level tap handler (booster selection modes, ad bottles). Return true to consume the tap.</summary>
+        public Func<int, bool> TapInterceptor;
 
         public GameplayController(AppServices services, LevelDefinition level, BoardView board, MonoBehaviour host)
         {
@@ -82,6 +84,7 @@ namespace Veliqora.Gameplay
         private void OnBottleTapped(int index)
         {
             if (InputLocked) return;
+            if (TapInterceptor != null && TapInterceptor(index)) return;
             _board.ClearHints();
             var r = Session.Tap(index);
             Tapped?.Invoke(r);
