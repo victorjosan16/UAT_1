@@ -24,6 +24,8 @@ internal static class Program
             Png(Path.Combine(outDir, "valley_" + id + ".png"), BackgroundArt.PaintValley(ThemeVisuals.From(eco.FindCosmetic(id)), 540, 960));
         Png(Path.Combine(outDir, "map_tile_valley.png"), BackgroundArt.PaintMapTile(ThemeVisuals.From(eco.FindCosmetic("theme_valley"))));
         Png(Path.Combine(outDir, "icons.png"), IconSheet());
+        Png(Path.Combine(outDir, "clean_level_001.png"), Board(eco, levels.Levels[0], "bottle_classic", -1, 0, light: false, themeId: "theme_clean"));
+        Png(Path.Combine(outDir, "clean_level_060.png"), Board(eco, levels.Levels[59], "bottle_classic", tiltBottle: 1, tiltDeg: 60f, light: false, themeId: "theme_clean"));
         Png(Path.Combine(outDir, "board_level_" + 45 + ".png"), Board(eco, levels.Levels[44], "bottle_classic", tiltBottle: 2, tiltDeg: 75f, light: false));
         Png(Path.Combine(outDir, "board_level_" + 170 + "_flask_light.png"), Board(eco, levels.Levels[169], "bottle_flask", -1, 0, light: true));
         Png(Path.Combine(outDir, "bottle_skins.png"), Skins(eco));
@@ -99,12 +101,17 @@ internal static class Program
         return p;
     }
 
-    private static PixelPainter Board(EconomyConfig eco, LevelDefinition level, string bottleId, int tiltBottle, float tiltDeg, bool light, string scene = null)
+    private static PixelPainter Board(EconomyConfig eco, LevelDefinition level, string bottleId, int tiltBottle, float tiltDeg, bool light, string scene = null, string themeId = "theme_valley")
     {
         int W = 1080 / 2, H = 1920 / 2;
-        var th = ThemeVisuals.From(eco.FindCosmetic("theme_valley"));
+        var th = ThemeVisuals.From(eco.FindCosmetic(themeId));
         var p = new PixelPainter(W, H);
-        if (scene != null)
+        if (th.Flat)
+        {
+            var bg = BackgroundArt.PaintClean(th, W, H);
+            System.Array.Copy(bg.Pixels, p.Pixels, bg.Pixels.Length);
+        }
+        else if (scene != null)
         {
             var bg = DarkScenes.Paint(scene, W, H);
             System.Array.Copy(bg.Pixels, p.Pixels, bg.Pixels.Length);

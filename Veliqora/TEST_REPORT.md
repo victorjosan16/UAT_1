@@ -4,10 +4,10 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **133 / 133 passed**
+### 1.1 EditMode suite against the pure core: **138 / 138 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 133, Skipped: 0, Total: 133, Duration: 57 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 138, Skipped: 0, Total: 138, Duration: 59 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
@@ -22,6 +22,7 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 | RewardedAdGateTests | 10 | reward only on Completed, duplicate callbacks, cancel/fail/no-fill, timeout + late completion ignored, single in-flight, unavailable, abort on background, cooldown, NoAds never blocks |
 | MiniJsonTests | 6 | round trip, malformed input |
 | StagePacingTests | 6 | deterministic planner, boss at every stage finale, random hard levels appear early (≤ L20) at ~10–30% and never back-to-back, hard/boss harder than normal (par + stuck rate) in every tier, non-linear difficulty, hard/boss first-clear bonus |
+| LevelProgressionTests | 5 | level 1 spec (3 colors × 4, 3 mixed + 2 empty, ≥ 6 pours by exhaustive search), levels 2–10 ≥ 7 pours, first 100 complete/distinct/solvable, no duplicates in 300, level 1 undo/restart/hint + win unlocks level 2 + save round trip |
 | SpecialBottlesTests | 18 | mystery reveal/undo/hidden units never move, corks (all 4 conditions, chained unlocks), bonus bottles never required, mixed capacities win rule, objectives, Remove Color, JSON round trip |
 | ProgressionTests | 6 | daily streak/claim once/ad double once, achievements claim once, newly completed, v2→v3 save migration |
 | LocalizationTests | 3 | Romanian covers every direct `Loc.T/F` call and every achievement title; placeholders kept; English fallback |
@@ -30,7 +31,7 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 ### 1.2 Batch level validation: **300 / 300 PASS**
 ```
 $ dotnet run -c Release --project Tools/LevelGen -- validate
-Validated 300 levels: 300 PASS, 0 FAIL in 35.4s -> Docs/level_validation_report.csv
+Validated 300 levels: 300 PASS, 0 FAIL in 35.1s -> Docs/level_validation_report.csv
 ```
 For each level the validator:
 - checks the color distribution;

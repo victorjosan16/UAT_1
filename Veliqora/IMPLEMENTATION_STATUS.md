@@ -110,6 +110,18 @@ an APK/AAB, or on-device performance.
 - 🟡 **PlayMode tests:** 21 written (7 new: corks, bonus bottle ad, mystery + objectives, Remove Color, daily, language, achievement notices). Not executed.
 - ⬜ Still requires you: real ad SDK + IDs, real consent (UMP/CMP), IAP products, Unity run, device QA, store assets.
 
+## Complete levels from level 1 (latest request)
+- ✅ Tutorial levels, coach marks (animated hand), instruction texts and the home welcome bubble removed; `CoachMark` deleted.
+- ✅ First launch opens Level 1 directly (`AppRoot.GoToStartScreen`); returning players get the main menu.
+- ✅ Level 1: 3 colors × 4 layers, 3 mixed bottles + 2 empty, proven minimum **10 pours**; levels 2–10 proven ≥ 7.
+- ✅ Color progression enforced by `StagePlanner.ColorRange` and checked by the validator; max 8 colors (palette size).
+- ✅ Exact minimum-move search (`MinimumMoves`, breadth-first over canonical states) for levels 1–100: 99 proven, 1 above budget (level 90).
+- ✅ Quality gates: no monochrome/complete bottle at start, every color in ≥ 2 bottles, no duplicate layouts (whole catalog).
+- ✅ 300/300 validated; report for levels 1–100: `Docs/LEVELS_VERIFICATION.md`. 138 EditMode tests pass.
+- 🟡 Clean premium look (default theme "Clean Midnight", `#101827`, 8-color palette, no neon aura, neutral panels): compiles,
+  offline preview `Docs/ArtPreview/clean_level_001.png`; not yet seen in Unity.
+- 🟡 PlayMode test `FirstLaunch_OpensLevel1_ReadyToPlay_WithoutTutorial` written, not run.
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

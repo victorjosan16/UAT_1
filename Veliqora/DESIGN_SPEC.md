@@ -113,6 +113,14 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
 - **UI:** stage banners and red **HARD** / violet crowned **BOSS** nodes on the map; HUD shows "Stage N" and a pulsing HARD/BOSS badge plus an intro toast;
   Home shows the stage; Level Complete shows the bonus.
 
+## 5a. Level set without tutorials (content version 4)
+- Every level, including level 1, is a generated, solver-verified, complete puzzle. No tutorial levels or coach marks.
+- Level 1: 3 colors × 4 layers, 3 full mixed bottles + 2 empty, exact minimum ≥ 6 pours (actual: 10). Levels 2–10: ≥ 7.
+- Colors: 1–10 → 3–4, 11–25 → 4–5, 26–50 → 5–6, 51–100 → 6–8, 101+ → 6–8 (201+ → 7–8) with mechanics for extra difficulty.
+- Candidate gates: well mixed (no monochrome bottle, each color in ≥ 2 bottles), not a duplicate, minimum pours where required.
+- Exact minimum (`MinimumMoves`): breadth-first search over canonical states with full information (mystery treated as known),
+  budget 300 000 states; stored in `validation.min`.
+
 ## 5c. Special bottles, objectives and the brief's curve (content version 3)
 - **Capacity per bottle (2–6).** A bottle is *complete* when it is non-empty, monochrome and either full or holding every unit of that
   color on the board. The level is won when every bottle is empty or complete. Color totals must fit a bottle or be a multiple of a capacity.
