@@ -1,15 +1,16 @@
 # Grafica jocului: lista de imagini
 
-> **Stadiu:** din cele două foi de grafică primite s-au decupat automat (fundal eliminat, mărire ×3–×4):
-> * din foaia cu fundal verde: compacte (11 culori), sedanuri (8), SUV-uri (2), dube (5),
->   camioane (11 dube de marfă), TIR-uri (11, inclusiv cisternă și transport bușteni), ambulanță,
->   clădirile SHOP și HOTEL (case decorative pe marginea drumului);
-> * din prima foaie: autobuzele, mașinile de poliție/pompieri, cabinele de taxare, copacii și iconițele.
+> **Stadiu:** din foile de grafică primite s-au decupat automat (fundal eliminat):
+> * **vehiculele** din ultima foaie (cea mai mare rezoluție, ~80×130 px, mărite ×2), toate văzute de sus și
+>   rotite cu fața în sus: compacte (5), sedanuri (5, inclusiv taxi), SUV-uri (4), dube (5), camioane (4),
+>   autobuze (4), poliție / ambulanță / pompieri, TIR-uri (7: macara, cisternă, bușteni, containere,
+>   platformă, basculantă);
+> * din foaia cu fundal verde: clădirile SHOP și HOTEL (case decorative);
+> * din prima foaie: cabinele de taxare, copacii și iconițele;
+> * din imaginea cu logo: logo-ul, butonul și panoul (colorate din cod), bariera și iarba (repetabilă).
 >
-> * din a treia imagine: logo-ul, butonul și panoul (colorate din cod), bariera orizontală și iarba
->   (făcută repetabilă prin oglindire).
->
-> Mașinile verzi și copacii din foaia verde nu se pot separa de fundalul verde, deci nu au fost folosiți.
+> Obiectele verzi (mașina și autobuzul verde, copacii din foile verzi) nu se pot separa curat de fundalul
+> verde, deci nu au fost folosite.
 > Pentru grafică mai clară, aceleași obiecte generate la rezoluție mare (~512 px) le pot înlocui
 > direct. Încă lipsesc: clădirea de taxare, copertina „TOLL” și fontul.
 
