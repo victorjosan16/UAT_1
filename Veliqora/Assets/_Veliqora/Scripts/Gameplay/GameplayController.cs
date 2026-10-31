@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -23,6 +24,10 @@ namespace Veliqora.Gameplay
         public int Par;
         public Core.Levels.LevelKind Kind;
         public LevelReward Reward;
+        /// <summary>Coins granted for completed (non-rewarded) objectives.</summary>
+        public int ObjectiveCoins;
+        /// <summary>Completed rewarded objectives whose bonus can be claimed via an ad on the victory screen.</summary>
+        public List<Core.Objectives.ObjectiveDef> RewardedObjectives = new List<Core.Objectives.ObjectiveDef>();
         public string AttemptId;
         public bool IsLastLevel;
     }
@@ -47,6 +52,8 @@ namespace Veliqora.Gameplay
         public event Action Stuck;
         public event Action<TapResult> Tapped;
         public event Action<string> Notice;              // toast-worthy messages
+        public event Action<int> BottleUnlocked;         // a cork came off (index)
+        public event Action ObjectivesChanged;
 
         public GameplayController(AppServices services, LevelDefinition level, BoardView board, MonoBehaviour host)
         {
@@ -114,10 +121,24 @@ namespace Veliqora.Gameplay
             Session.IsBusy = true;
             _board.SetSelected(-1);
             var mr = r.Move;
+            int revealedBefore = mr.Before.HiddenTotal();
             _board.AnimatePour(mr.Move, mr.Before, mr.After, () =>
             {
                 Session.IsBusy = false;
                 _board.SyncTo(Session.Current);
+                foreach (int u in mr.Unlocked)
+                {
+                    _board.PlayUnlock(u);
+                    _s.Save.Stats.CorksOpened++;
+                    BottleUnlocked?.Invoke(u);
+                }
+                int revealed = revealedBefore - mr.After.HiddenTotal();
+                if (revealed > 0)
+                {
+                    _s.Save.Stats.MysteryRevealed += revealed;
+                    _board.PlayReveal(mr.Move.From);
+                }
+                ObjectivesChanged?.Invoke();
                 if (r.CompletedBottle)
                 {
                     _board.PlayCompleted(mr.Move.To);
@@ -136,15 +157,20 @@ namespace Veliqora.Gameplay
         public int Count(BoosterType t) => _s.Economy.Count(t);
 
         /// <summary>Returns false (and does nothing) when the booster can't apply right now.</summary>
+        public bool IsDisabledHere(BoosterType t) => Level.IsBoosterDisabled(t.ToString());
+
+        private void CountBooster() { _s.Save.Stats.BoostersUsed++; _s.MarkDirty(); }
+
         public bool CanUse(BoosterType t)
         {
-            if (InputLocked) return false;
+            if (InputLocked || IsDisabledHere(t)) return false;
             switch (t)
             {
                 case BoosterType.Undo: return Session.CanUndo;
                 case BoosterType.ExtraBottle: return Session.CanAddExtraBottle;
                 case BoosterType.Shuffle: return !Session.IsComplete;
                 case BoosterType.Hint: return !Session.IsComplete;
+                case BoosterType.RemoveColor: return !Session.IsComplete;
             }
             return false;
         }
@@ -156,6 +182,7 @@ namespace Veliqora.Gameplay
             if (!_s.Economy.ConsumeBooster(BoosterType.Undo, tx).Success) return;
             var u = Session.Undo();
             if (u == null) { _s.Economy.RefundBooster(BoosterType.Undo, tx); return; }
+            CountBooster();
             Session.IsBusy = true;
             _board.SetSelected(-1);
             PersistSession();
@@ -170,6 +197,7 @@ namespace Veliqora.Gameplay
             string tx = Tx("extra");
             if (!_s.Economy.ConsumeBooster(BoosterType.ExtraBottle, tx).Success) return;
             if (!Session.AddExtraBottle()) { _s.Economy.RefundBooster(BoosterType.ExtraBottle, tx); return; }
+            CountBooster();
             _board.Build(Session.Current, false);
             var added = _board.Views[_board.Views.Count - 1];
             if (!MotionPrefs.Reduced) Tween.Scale(_host, added.Rect, new Vector3(0.2f, 0.2f, 1), Vector3.one, 0.35f, Ease.OutBack);
@@ -207,6 +235,73 @@ namespace Veliqora.Gameplay
             });
         }
 
+        // ---------------- Remove Top Color ----------------
+
+        /// <summary>
+        /// Removes the top color of <paramref name="bottle"/> from every unlocked bottle. The result is solver-verified
+        /// off the main thread first; if it would not be solvable the board is untouched and nothing is charged.
+        /// </summary>
+        public void UseRemoveColor(int bottle, Action<bool> finished)
+        {
+            if (!CanUse(BoosterType.RemoveColor) || _s.Economy.Count(BoosterType.RemoveColor) <= 0) { finished?.Invoke(false); return; }
+            int color; GameState current, initial;
+            if (!Session.PreviewRemoveColor(bottle, out color, out current, out initial)) { Notice?.Invoke(UI.Loc.T("That color can't be removed right now.")); finished?.Invoke(false); return; }
+            Session.IsBusy = true;
+            var token = _cts.Token;
+            var opts = new Core.Solver.SolverOptions { MaxNodes = 80_000, TimeoutMs = 1500, HeuristicWeight = 2.0, IsCancelled = () => token.IsCancellationRequested };
+            var task = Task.Run(() => PuzzleRules.IsWon(current) || PuzzleSolver.Solve(current, opts).IsSolved, token);
+            _host.StartCoroutine(Await(task, ok =>
+            {
+                Session.IsBusy = false;
+                if (!ok) { Notice?.Invoke(UI.Loc.T("That color can't be removed right now.")); finished?.Invoke(false); return; }
+                if (!_s.Economy.ConsumeBooster(BoosterType.RemoveColor, Tx("remove")).Success) { finished?.Invoke(false); return; }
+                Session.CommitRemoveColor(color, current, initial);
+                CountBooster();
+                _board.SyncTo(Session.Current);
+                if (_board.Fx != null) foreach (var v in _board.Views) _board.Fx.Sparkle(v.HomePosition + new Vector2(0, v.Height * 0.5f), Presentation.LiquidPalette.Get(color), 5, v.Width / 140f);
+                PersistSession();
+                StateChanged?.Invoke();
+                ObjectivesChanged?.Invoke();
+                finished?.Invoke(true);
+                if (Session.IsComplete) OnWin();
+            }));
+        }
+
+        // ---------------- rewarded (ad-locked) bottle ----------------
+
+        public bool CanUnlockRewardBottle(int index) => !InputLocked && Session.IsRewardBottle(index) && _s.AdGate.CanRequest(Core.Ads.AdPlacements.EmptyBottle);
+
+        /// <summary>Unlocks an ad-locked bottle only after a completed rewarded ad; failures change nothing.</summary>
+        public void UnlockRewardBottle(int index, Action<bool> finished)
+        {
+            if (!CanUnlockRewardBottle(index)) { finished?.Invoke(false); return; }
+            bool ok = false;
+            Paused = true;
+            _s.AdGate.Request(Core.Ads.AdPlacements.EmptyBottle, () =>
+            {
+                if (!Session.UnlockRewardBottle(index)) return;
+                ok = true;
+                _board.SyncTo(Session.Current);
+                _board.PlayUnlock(index);
+                PersistSession();
+                StateChanged?.Invoke();
+            }, outcome => { Paused = false; finished?.Invoke(ok); });
+        }
+
+        /// <summary>Rewarded ad that grants one booster of the given type (Hint / Shuffle / Undo …) to the inventory.</summary>
+        public void RequestRewardedBooster(BoosterType type, Action<bool> finished)
+        {
+            string placement = type == BoosterType.Hint ? Core.Ads.AdPlacements.Hint : (type == BoosterType.Shuffle ? Core.Ads.AdPlacements.Shuffle : Core.Ads.AdPlacements.BonusBooster);
+            string tx = "ad-booster:" + Session.AttemptId + ":" + type + ":" + Guid.NewGuid().ToString("N");
+            bool ok = false;
+            Paused = true;
+            _s.AdGate.Request(placement, () => ok = _s.Economy.GrantBooster(type, Math.Max(1, _s.EconomyConfig.RewardedBonusBoosterQuantity), tx).Success,
+                outcome => { Paused = false; finished?.Invoke(ok); }, _s.EconomyConfig.RewardedCooldownSeconds);
+        }
+
+        public List<Core.Objectives.ObjectiveStatus> Objectives() =>
+            Core.Objectives.ObjectiveTracker.Evaluate(Level.Objectives, Session.Initial, Session.Current, Session.IsComplete);
+
         /// <summary>Generates a verified-solvable layout off the main thread; refunds if none found.</summary>
         public void UseShuffle(Action<bool> finished)
         {
@@ -215,8 +310,9 @@ namespace Veliqora.Gameplay
             if (!_s.Economy.ConsumeBooster(BoosterType.Shuffle, tx).Success) { finished?.Invoke(false); return; }
             Session.IsBusy = true;
             int index = Session.ShuffleCount;
-            var level = Level;
-            var task = Task.Run(() => LevelGenerator.GenerateShuffle(level, index), _cts.Token);
+            var layout = Session.Initial;     // includes extra bottles, unlocked ad bottles, corks, mystery depth
+            ulong seed = Core.Random.DeterministicRandom.Combine(Level.Seed, 7919, index + 1);
+            var task = Task.Run(() => LevelGenerator.ShuffleLayout(layout, seed), _cts.Token);
             _host.StartCoroutine(Await(task, result =>
             {
                 Session.IsBusy = false;
@@ -228,6 +324,7 @@ namespace Veliqora.Gameplay
                     return;
                 }
                 Session.ApplyShuffle(result);
+                CountBooster();
                 _board.Build(Session.Current, true);
                 PersistSession();
                 StateChanged?.Invoke();
@@ -258,6 +355,7 @@ namespace Veliqora.Gameplay
                     return;
                 }
                 if (!_s.Economy.ConsumeBooster(BoosterType.Hint, Tx("hint")).Success) return;
+                CountBooster();
                 _board.ShowHint(hint.Move.From, hint.Move.To);
                 StateChanged?.Invoke();
             }));
@@ -292,8 +390,24 @@ namespace Veliqora.Gameplay
             var prog = _s.Save.Progress;
             int stars = Session.CurrentStars;
             int prev = prog.Stars(Level.Number);
-            var reward = _s.Economy.GrantLevelReward(Level.Number, stars, prev, Session.AttemptId, Level.Kind);
+            var reward = _s.Economy.GrantLevelReward(Level.Number, stars, prev, Session.AttemptId, Level.Kind, Level.RewardCoins);
             ProgressRules.RecordCompletion(prog, Level.Number, stars, _s.Levels.Count);
+            if (prev <= 0 && Level.Kind == Core.Levels.LevelKind.Hard) _s.Save.Stats.HardCompleted++;
+            if (prev <= 0 && Level.Kind == Core.Levels.LevelKind.Boss) _s.Save.Stats.BossCompleted++;
+
+            // Objective rewards: granted once per attempt (ledger keys); rewarded objectives wait for an ad on the victory screen.
+            int objectiveCoins = 0;
+            var rewardedObjectives = new List<Core.Objectives.ObjectiveDef>();
+            foreach (var st in Objectives())
+            {
+                if (!st.Complete) continue;
+                if (st.Def.Rewarded) { rewardedObjectives.Add(st.Def); continue; }
+                if (st.Def.RewardCoins > 0 && _s.Economy.GrantCoins(st.Def.RewardCoins, "obj:" + Session.AttemptId + ":" + st.Def.Id).Success)
+                {
+                    objectiveCoins += st.Def.RewardCoins;
+                    _s.Save.Stats.ObjectivesCompleted++;
+                }
+            }
             _s.Save.Session = null;
             _s.SaveNow();
             _s.Audio.PlayWin();
@@ -307,6 +421,8 @@ namespace Veliqora.Gameplay
                 Par = Session.ParMoves,
                 Kind = Level.Kind,
                 Reward = reward,
+                ObjectiveCoins = objectiveCoins,
+                RewardedObjectives = rewardedObjectives,
                 AttemptId = Session.AttemptId,
                 IsLastLevel = Level.Number >= _s.Levels.Count,
             });

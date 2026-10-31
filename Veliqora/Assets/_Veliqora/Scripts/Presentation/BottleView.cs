@@ -92,19 +92,142 @@ namespace Veliqora.Presentation
 
         public void OnPointerClick(PointerEventData eventData) => Tapped?.Invoke(Index);
 
+        // ---------------- special bottles ----------------
+
+        private RectTransform _specialRoot;
+        private readonly List<Text> _questionMarks = new List<Text>();
+        private Image _cork;
+        private RectTransform _lockTag;
+        private Text _lockText;
+        private Image _lockDot;
+        private RectTransform _adOverlay;
+        private int _lastHidden = -1;
+
+        /// <summary>Mystery "?" marks, cork + live unlock condition, ad-lock overlay. Call after ShowState.</summary>
+        public void ShowSpecial(BottleState b, string lockLabel, Color lockColor, int index)
+        {
+            if (_specialRoot == null)
+            {
+                _specialRoot = UIFactory.Rect("Special", transform);
+                _specialRoot.SetAsLastSibling();
+            }
+            // mystery marks
+            while (_questionMarks.Count < Capacity)
+            {
+                var q = UIFactory.Text(_specialRoot, "?", Mathf.RoundToInt(Width * 0.42f), new Color(1f, 1f, 1f, 0.85f));
+                q.rectTransform.anchorMin = q.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+                q.rectTransform.sizeDelta = new Vector2(Width, Width * 0.5f);
+                UIFactory.AddShadow(q, new Color(0, 0, 0, 0.5f), new Vector2(0, -2));
+                _questionMarks.Add(q);
+            }
+            for (int i = 0; i < _questionMarks.Count; i++)
+            {
+                bool on = i < b.Hidden;
+                _questionMarks[i].gameObject.SetActive(on);
+                if (on) _questionMarks[i].rectTransform.anchoredPosition = new Vector2(0, UprightUnitCenter(i));
+            }
+            _lastHidden = b.Hidden;
+
+            // cork + condition tag
+            bool corked = b.IsCorked;
+            if (corked && _cork == null)
+            {
+                _cork = UIFactory.Image(_specialRoot, "Cork", SpriteLibrary.Get(Icon.Cork), Color.white);
+                _cork.rectTransform.anchorMin = _cork.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+                _cork.rectTransform.sizeDelta = new Vector2(Width * Shape.NeckWidth * 1.25f, Width * 0.62f);
+                _cork.rectTransform.anchoredPosition = new Vector2(0, Height - Width * 0.12f);
+                var tagBg = UIFactory.Image(_specialRoot, "LockTag", SpriteLibrary.Rounded(20), new Color(0.08f, 0.06f, 0.2f, 0.92f));
+                _lockTag = tagBg.rectTransform;
+                _lockTag.anchorMin = _lockTag.anchorMax = new Vector2(0.5f, 0f);
+                _lockTag.sizeDelta = new Vector2(Mathf.Max(150f, Width * 1.5f), 46f);
+                _lockTag.anchoredPosition = new Vector2(0, -30f);
+                UIFactory.AddOutline(tagBg, UIStyle.WithAlpha(UIStyle.ThemeAccent, 0.8f), 2f);
+                var lockIcon = UIFactory.Image(_lockTag, "Lock", SpriteLibrary.Get(Icon.Lock), Color.white);
+                UIFactory.Place(lockIcon.rectTransform, new Vector2(0, 0.5f), new Vector2(30, 30), new Vector2(8, 0), new Vector2(0, 0.5f));
+                _lockDot = UIFactory.Image(_lockTag, "Dot", SpriteLibrary.Circle, Color.white);
+                UIFactory.Place(_lockDot.rectTransform, new Vector2(1, 0.5f), new Vector2(22, 22), new Vector2(-10, 0), new Vector2(1, 0.5f));
+                _lockText = UIFactory.Text(_lockTag, "", 22, Color.white);
+                _lockText.rectTransform.offsetMin = new Vector2(38, 0);
+                _lockText.rectTransform.offsetMax = new Vector2(-34, 0);
+                _lockText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            }
+            if (_cork != null)
+            {
+                _cork.gameObject.SetActive(corked);
+                _lockTag.gameObject.SetActive(corked);
+                if (corked)
+                {
+                    _lockText.text = lockLabel ?? "";
+                    bool colorCond = b.Lock.Kind == LockKind.CompleteColor;
+                    _lockDot.gameObject.SetActive(colorCond);
+                    _lockDot.color = lockColor;
+                }
+            }
+
+            // rewarded (ad-locked) bottle
+            if (b.RewardLocked && _adOverlay == null)
+            {
+                _adOverlay = UIFactory.Rect("AdLock", _specialRoot);
+                var icon = UIFactory.Image(_adOverlay, "Video", SpriteLibrary.Get(Icon.Ad), Color.white);
+                UIFactory.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(Width * 0.8f, Width * 0.6f), Vector2.zero);
+                var t = UIFactory.Text(_adOverlay, Loc.T("Watch ad"), 22, Color.white);
+                UIFactory.Place(t.rectTransform, new Vector2(0.5f, 0f), new Vector2(Width * 1.8f, 40), new Vector2(0, -26), new Vector2(0.5f, 0.5f));
+                UIFactory.AddShadow(t, new Color(0, 0, 0, 0.6f), new Vector2(0, -2));
+            }
+            if (_adOverlay != null) _adOverlay.gameObject.SetActive(b.RewardLocked);
+            _glass.color = UIStyle.WithAlpha(_glass.color, b.RewardLocked ? 0.45f : (Shape.IsAuthored ? 0.38f : 1f));
+            _liquid.color = b.IsLocked ? new Color(0.82f, 0.82f, 0.82f, 1f) : Color.white;
+        }
+
+        /// <summary>Cork flies up and fades; condition tag disappears.</summary>
+        public void PlayUncork()
+        {
+            if (_cork == null) return;
+            var cork = _cork.rectTransform;
+            var tag = _lockTag;
+            var start = cork.anchoredPosition;
+            if (tag != null) tag.gameObject.SetActive(false);
+            if (MotionPrefs.Reduced) { _cork.gameObject.SetActive(false); return; }
+            _cork.gameObject.SetActive(true);
+            Tween.Run(this, 0.45f, k =>
+            {
+                cork.anchoredPosition = start + new Vector2(Mathf.Sin(k * 3f) * 10f, k * Height * 0.5f);
+                cork.localEulerAngles = new Vector3(0, 0, k * 200f);
+                _cork.color = new Color(1, 1, 1, 1f - k);
+            }, () =>
+            {
+                cork.anchoredPosition = start;
+                cork.localEulerAngles = Vector3.zero;
+                _cork.color = Color.white;
+                _cork.gameObject.SetActive(false);
+            }, Ease.OutCubic);
+            Kick(5f);
+        }
+
         // ---------------- state display ----------------
 
-        public void ShowState(BottleState b)
+        /// <summary>Smoky color used for hidden mystery layers (the real color is never shown until revealed).</summary>
+        public static readonly Color MysteryColor = new Color(0.24f, 0.21f, 0.34f, 1f);
+
+        /// <summary>Visible layers: hidden units render as mystery smoke, revealed runs in their real colors.</summary>
+        public static List<LiquidGraphic.Layer> DisplayLayers(BottleState b, List<LiquidGraphic.Layer> output)
         {
-            _scratch.Clear();
-            int i = 0;
+            output.Clear();
+            if (b.Hidden > 0) output.Add(new LiquidGraphic.Layer(MysteryColor, b.Hidden));
+            int i = b.Hidden;
             while (i < b.Count)
             {
                 int c = b[i];
                 int run = 0;
                 while (i < b.Count && b[i] == c) { run++; i++; }
-                _scratch.Add(new LiquidGraphic.Layer(LiquidPalette.Get(c), run));
+                output.Add(new LiquidGraphic.Layer(LiquidPalette.Get(c), run));
             }
+            return output;
+        }
+
+        public void ShowState(BottleState b)
+        {
+            DisplayLayers(b, _scratch);
             _liquid.SetLayers(_scratch);
             UpdateSymbols(b);
             if (_aura != null)
@@ -142,7 +265,7 @@ namespace Veliqora.Presentation
             float size = Width * 0.36f;
             for (int i = 0; i < _symbols.Count; i++)
             {
-                bool on = i < b.Count;
+                bool on = i < b.Count && i >= b.Hidden;
                 _symbols[i].gameObject.SetActive(on);
                 if (!on) continue;
                 _symbols[i].sprite = LiquidPalette.Symbol(b[i]);

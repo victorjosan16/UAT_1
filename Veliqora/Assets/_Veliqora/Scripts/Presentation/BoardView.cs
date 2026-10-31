@@ -42,13 +42,63 @@ namespace Veliqora.Presentation
         /// <summary>Particle layer drawn above the bottles (splashes, bubbles, sparkles).</summary>
         public UiParticles Fx => _fx;
 
-        public void Init(BottleShape shape, int capacity, bool symbols)
+        private Func<int, BottleShape> _shapeFor;
+
+        public void Init(BottleShape shape, int capacity, bool symbols) => Init(_ => shape, capacity, symbols);
+
+        /// <summary>Per-capacity bottle shapes (levels may mix 2–6 unit bottles).</summary>
+        public void Init(Func<int, BottleShape> shapeFor, int capacity, bool symbols)
         {
             _rect = (RectTransform)transform;
             if (_fx == null) _fx = UiParticles.Create(_rect);
-            _shape = shape;
+            _shapeFor = shapeFor;
+            _shape = shapeFor(capacity);
             _capacity = capacity;
             _symbols = symbols;
+        }
+
+        /// <summary>Label + color for a corked bottle's unlock condition (live: remaining moves, completed counts).</summary>
+        public static string LockLabel(GameState s, int index, out Color color)
+        {
+            color = Color.white;
+            var lk = s[index].Lock;
+            if (lk == null) return null;
+            switch (lk.Kind)
+            {
+                case LockKind.Moves: return Loc.F("{0} moves", Mathf.Max(0, lk.Param - s.Moves));
+                case LockKind.CompletedBottles: return Loc.F("{0}/{1} bottles", Mathf.Min(s.CompletedBottleCount(), lk.Param), lk.Param);
+                case LockKind.AfterBottle: return Loc.F("After #{0}", lk.Param + 1);
+                case LockKind.CompleteColor:
+                    color = LiquidPalette.Get(lk.Param);
+                    return Loc.F("Fill {0}", Loc.T(LiquidPalette.Names[(lk.Param - 1) % LiquidPalette.Names.Length]));
+                default: return null;
+            }
+        }
+
+        private void ShowBottle(int i)
+        {
+            Color c;
+            string label = LockLabel(_state, i, out c);
+            _views[i].ShowState(_state[i]);
+            _views[i].ShowSpecial(_state[i], label, c, i);
+        }
+
+        /// <summary>Cork pop + sparkle when a bottle unlocks.</summary>
+        public void PlayUnlock(int index)
+        {
+            if (index < 0 || index >= _views.Count) return;
+            var v = _views[index];
+            v.PlayUncork();
+            if (_fx != null) _fx.Sparkle(v.HomePosition + new Vector2(0, v.Height), UIStyle.ThemeAccent, 14, v.Width / 100f);
+        }
+
+        /// <summary>Flash for newly revealed mystery layers.</summary>
+        public void PlayReveal(int index)
+        {
+            if (index < 0 || index >= _views.Count) return;
+            var v = _views[index];
+            v.Kick(4f);
+            if (_fx != null && _state != null) _fx.Sparkle(v.HomePosition + new Vector2(0, v.UprightSurface(_state[index].Count)), LiquidPalette.Get(_state[index].TopColor), 8, v.Width / 120f);
         }
 
         public void SetSymbols(bool on)
@@ -70,16 +120,17 @@ namespace Veliqora.Presentation
             if (_stream != null) Destroy(_stream.gameObject);
             _state = state;
 
-            float width = ComputeBottleWidth(state.BottleCount);
+            float width = ComputeBottleWidth(state);
             for (int i = 0; i < state.BottleCount; i++)
             {
                 var go = new GameObject("Bottle_" + i, typeof(RectTransform));
                 go.transform.SetParent(transform, false);
                 var view = go.AddComponent<BottleView>();
-                view.Init(i, _shape, _capacity, width, _symbols, _glassColor);
+                int cap = state[i].Capacity;
+                view.Init(i, _shapeFor(cap), cap, width, _symbols, _glassColor);
                 view.Tapped = idx => BottleTapped?.Invoke(idx);
-                view.ShowState(state[i]);
                 _views.Add(view);
+                ShowBottle(i);
             }
             Layout(false);
 
@@ -118,12 +169,14 @@ namespace Veliqora.Presentation
             perRow = Mathf.CeilToInt(n / (float)rows);
         }
 
-        private float ComputeBottleWidth(int n)
+        private float ComputeBottleWidth(GameState state)
         {
-            Rows(n, out int rows, out int perRow);
+            Rows(state.BottleCount, out int rows, out int perRow);
+            float aspect = 0f;
+            for (int i = 0; i < state.BottleCount; i++) aspect = Mathf.Max(aspect, _shapeFor(state[i].Capacity).Aspect);
             var size = _rect.rect.size;
             float byWidth = size.x / (perRow * 1.5f + 0.4f);
-            float byHeight = size.y / (rows * (_shape.Aspect * 1.32f) + 0.2f);
+            float byHeight = size.y / (rows * (aspect * 1.32f) + 0.2f);
             return Mathf.Clamp(Mathf.Min(byWidth, byHeight), 60f, 190f);
         }
 
@@ -132,7 +185,8 @@ namespace Veliqora.Presentation
             int n = _views.Count;
             if (n == 0) return;
             Rows(n, out int rows, out int perRow);
-            float w = _views[0].Width, h = _views[0].Height;
+            float w = _views[0].Width, h = 0f;
+            foreach (var v in _views) h = Mathf.Max(h, v.Height); // rows sized by the tallest bottle; bottoms aligned
             float gapX = w * 0.5f;
             float rowH = h * 1.32f;
             float totalH = rows * rowH;
@@ -157,7 +211,7 @@ namespace Veliqora.Presentation
             _state = state;
             for (int i = 0; i < _views.Count && i < state.BottleCount; i++)
             {
-                _views[i].ShowState(state[i]);
+                ShowBottle(i);
                 _views[i].Rect.localEulerAngles = Vector3.zero;
                 _views[i].Rect.anchoredPosition = _views[i].HomePosition;
             }
@@ -190,18 +244,7 @@ namespace Veliqora.Presentation
 
         // ---------------- move animations ----------------
 
-        private static List<LiquidGraphic.Layer> LayersOf(BottleState b)
-        {
-            var list = new List<LiquidGraphic.Layer>();
-            int i = 0;
-            while (i < b.Count)
-            {
-                int c = b[i], run = 0;
-                while (i < b.Count && b[i] == c) { run++; i++; }
-                list.Add(new LiquidGraphic.Layer(LiquidPalette.Get(c), run));
-            }
-            return list;
-        }
+        private static List<LiquidGraphic.Layer> LayersOf(BottleState b) => BottleView.DisplayLayers(b, new List<LiquidGraphic.Layer>());
 
         /// <summary>Layers of <paramref name="baseState"/> with <paramref name="delta"/> units of color added (+) or removed (-) on top.</summary>
         private static void Interpolate(List<LiquidGraphic.Layer> baseLayers, Color color, float delta, List<LiquidGraphic.Layer> output)
@@ -271,8 +314,8 @@ namespace Veliqora.Presentation
             var dstMouth = dst.HomePosition + new Vector2(0, dst.Height);
             var targetMouth = dstMouth + new Vector2(dir * dst.Width * 0.12f, dst.Height * 0.16f);
             var mouthLocal = new Vector2(0, src.Height);
-            float aStart = dir * TiltFor(srcCountBefore, _capacity);
-            float aEnd = dir * TiltFor(srcCountBefore - move.Amount, _capacity);
+            float aStart = dir * TiltFor(srcCountBefore, src.Capacity);
+            float aEnd = dir * TiltFor(srcCountBefore - move.Amount, src.Capacity);
             Func<float, Vector2> pivotFor = a => targetMouth - Rotate(mouthLocal, a);
 
             // 1) lift & travel, tilting to the pouring angle
