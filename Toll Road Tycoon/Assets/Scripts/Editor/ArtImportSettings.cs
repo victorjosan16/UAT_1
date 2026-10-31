@@ -27,10 +27,11 @@ namespace TollRoadTycoon.EditorTools
             importer.maxTextureSize = 2048;
 
             string name = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            bool fullRect = false;
             if (assetPath.Contains("/Environment/grass"))
             {
                 importer.wrapMode = TextureWrapMode.Repeat;
-                importer.spriteMeshType = SpriteMeshType.FullRect;
+                fullRect = true;
             }
             else
             {
@@ -38,8 +39,15 @@ namespace TollRoadTycoon.EditorTools
             }
 
             bool sliced = assetPath.Contains("/UI/panel") || assetPath.Contains("/UI/button") || name == "canopy";
+            if (fullRect || sliced)
+            {
+                // Tiled and 9-sliced sprites need a full-rect mesh (set through TextureImporterSettings).
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(settings);
+            }
             if (!sliced) return;
-            importer.spriteMeshType = SpriteMeshType.FullRect;
             // Corners stay crisp while the middle stretches. Buttons are pills, so their border is
             // almost half the height; panels and the canopy keep 30% of their shorter side.
             importer.GetSourceTextureWidthAndHeight(out int width, out int height);

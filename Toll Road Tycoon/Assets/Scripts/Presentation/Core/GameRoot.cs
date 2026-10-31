@@ -146,7 +146,7 @@ namespace TollRoadTycoon.Presentation
 
         private static void CreateEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null) return;
+            if (FindAnyObjectByType<EventSystem>() != null) return;
             var go = new GameObject("EventSystem");
             go.AddComponent<EventSystem>();
             go.AddComponent<StandaloneInputModule>();
