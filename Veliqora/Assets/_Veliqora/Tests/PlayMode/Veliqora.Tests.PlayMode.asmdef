@@ -1,0 +1,24 @@
+{
+    "name": "Veliqora.Tests.PlayMode",
+    "rootNamespace": "Veliqora.Tests.PlayMode",
+    "references": [
+        "Veliqora.Core",
+        "Veliqora.Runtime",
+        "UnityEngine.UI",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

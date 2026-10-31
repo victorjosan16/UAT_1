@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Renders the procedural placeholder art (valley, map tile, icons, bottles + liquid incl. tilted pour) to PNGs
+       outside Unity, using a tiny managed shim of the UnityEngine value types (UnityShim.cs) instead of the engine.
+       Usage: dotnet run (project Tools/ArtPreview), first argument = output directory -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="UnityShim.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/UI/PixelPainter.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/UI/UIStyle.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/UI/SpriteLibrary.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/BackgroundArt.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/ThemeVisuals.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidGeometry.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidPalette.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Veliqora.Core/Veliqora.Core.csproj" />
+  </ItemGroup>
+</Project>

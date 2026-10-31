@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- OPTIONAL static compile check of the Unity-dependent code WITHOUT the Unity Editor.
+       References third-party repackaged Unity reference assemblies from NuGet (UnityEngine 2021.3 modules,
+       uGUI 2020.3, UnityEditor 2021.1). This only proves the C# compiles against a close API surface;
+       it is NOT a substitute for opening the project in Unity 6.
+       Usage: dotnet build Tools/UnityCompileCheck -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);UNITY_ANDROID;UNITY_EDITOR;ENABLE_LEGACY_INPUT_MANAGER;UNITY_INCLUDE_TESTS</DefineConstants>
+    <NoWarn>$(NoWarn);CS0649;CS0414;CS1701;CS1702</NoWarn>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/_Veliqora/Scripts/**/*.cs" Exclude="../../Assets/_Veliqora/Scripts/Core/**/*.cs" />
+    <Compile Include="../../Assets/_Veliqora/Editor/**/*.cs" />
+    <Compile Include="../../Assets/_Veliqora/Tests/PlayMode/**/*.cs" />
+    <Compile Include="Stubs/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Veliqora.Core/Veliqora.Core.csproj" />
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" ExcludeAssets="runtime" />
+    <PackageReference Include="Unity3D.UnityEngine.UI" Version="2020.3.21" ExcludeAssets="runtime" />
+    <PackageReference Include="Unity3D.SDK" Version="2021.1.14.1" ExcludeAssets="runtime" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+{
+  "mode": "mock",
+  "bannerEnabled": false,
+  "allowMockInReleaseBuilds": false,
+  "childDirected": false,
+  "rewardedTimeoutSeconds": 30,
+  "android": {
+    "appKey": "REPLACE_WITH_ANDROID_APP_KEY",
+    "rewardedAdUnitId": "REPLACE_WITH_REWARDED_AD_UNIT_ID",
+    "bannerAdUnitId": "REPLACE_WITH_BANNER_AD_UNIT_ID"
+  }
+}

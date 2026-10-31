@@ -1,3 +1,14 @@
+# UAT_1
+
+This repository contains two independent projects:
+
+| Project | Folder | Description |
+|---|---|---|
+| **VELIQORA — Color Sorting Adventure** | [`Veliqora/`](Veliqora/README.md) | Unity 6 Android water-sort puzzle game (core, 200 verified levels, tests, docs) |
+| Serviciu de procesare imagini pentru print | `backend/`, `frontend/` | FastAPI + HTML (documentația de mai jos) |
+
+---
+
 # Serviciu de procesare automată a imaginilor pentru print
 
 Modul independent (backend + frontend simplu) pentru pregătirea automată a
