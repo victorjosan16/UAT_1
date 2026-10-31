@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Veliqora.Core.Economy;
+using Veliqora.Core.Progression;
 using Veliqora.Core.Session;
 
 namespace Veliqora.Core.Save
@@ -38,6 +39,8 @@ namespace Veliqora.Core.Save
         public bool LightGameplayBackground;
         /// <summary>Mock ads only: simulate offline/no-fill for testing failure paths.</summary>
         public bool DebugSimulateAdFailure;
+        /// <summary>UI language code ("en", "ro"); empty = follow the device language.</summary>
+        public string Language = "";
     }
 
     public sealed class CosmeticsSelection
@@ -49,7 +52,7 @@ namespace Veliqora.Core.Save
     /// <summary>Root of the local save file (see SaveSerializer for the on-disk envelope).</summary>
     public sealed class SaveData
     {
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         public int SchemaVersion = CurrentSchemaVersion;
         public int ContentVersion = 1;
@@ -61,5 +64,8 @@ namespace Veliqora.Core.Save
         public CosmeticsSelection Cosmetics = new CosmeticsSelection();
         public HashSet<string> TutorialsSeen = new HashSet<string>();
         public SessionSnapshot Session;   // in-progress puzzle, may be null
+        public PlayerStats Stats = new PlayerStats();
+        public DailyState Daily = new DailyState();
+        public HashSet<string> ClaimedAchievements = new HashSet<string>();
     }
 }

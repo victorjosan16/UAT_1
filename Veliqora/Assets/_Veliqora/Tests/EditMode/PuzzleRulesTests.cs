@@ -147,7 +147,8 @@ namespace Veliqora.Tests.EditMode
         public void ColorDistribution_Validation()
         {
             Assert.IsTrue(PuzzleRules.HasValidColorDistribution(S(4, B(1, 1, 2, 2), B(2, 2, 1, 1)), out _));
-            Assert.IsFalse(PuzzleRules.HasValidColorDistribution(S(4, B(1, 1, 2), B(2, 2, 1, 1)), out _));
+            Assert.IsTrue(PuzzleRules.HasValidColorDistribution(S(4, B(1, 1, 2), B(2, 2, 1, 1)), out _), "3 units of a color fit in one bottle");
+            Assert.IsFalse(PuzzleRules.HasValidColorDistribution(S(2, B(1, 1), B(1, 2), B(2)), out _), "3 units can never fit a 2-unit bottle");
         }
     }
 }

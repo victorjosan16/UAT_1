@@ -5,15 +5,18 @@ using Veliqora.Core.Puzzle;
 
 namespace Veliqora.Core.Session
 {
-    /// <summary>Serializable in-progress puzzle (current board, initial layout, bounded undo window).</summary>
+    /// <summary>
+    /// Serializable in-progress puzzle: full boards (capacities, mystery visibility, corks, ad-unlocked bottles,
+    /// move counter), the initial layout of this attempt and a bounded undo window.
+    /// </summary>
     public sealed class SessionSnapshot
     {
         public int LevelNumber;
         public string AttemptId;
         public int Capacity;
-        public int[][] Initial;
-        public int[][] Current;
-        public List<int[][]> History = new List<int[][]>();
+        public GameState Initial;
+        public GameState Current;
+        public List<GameState> History = new List<GameState>();
         public List<int[]> Moves = new List<int[]>();
         public int MovesBeforeHistory;
         public int ExtraBottlesAdded;
@@ -22,28 +25,41 @@ namespace Veliqora.Core.Session
         public int TotalPours;
         public int UndosUsed;
         public int[][] Solution;
+        /// <summary>Colors taken off the board by the Remove Top Color booster during this attempt.</summary>
+        public List<int> RemovedColors = new List<int>();
 
-        /// <summary>Checks the snapshot uses exactly the level's colors (plus allowed extra empty bottles).</summary>
+        /// <summary>
+        /// Checks the snapshot belongs to this level: same bottle structure (plus allowed extra bottles), only the
+        /// level's colors, never more units of a color than the level has, and identical liquid across all boards.
+        /// </summary>
         public bool IsConsistentWith(LevelDefinition level)
         {
             if (Initial == null || Current == null || History.Count != Moves.Count) return false;
-            int expectedBottles = level.Bottles.Length + ExtraBottlesAdded;
-            if (Initial.Length != expectedBottles || Current.Length != expectedBottles) return false;
             if (ExtraBottlesAdded < 0 || ExtraBottlesAdded > GameSession.MaxExtraBottles) return false;
-            try
+            int expectedBottles = level.Bottles.Length + ExtraBottlesAdded;
+            var levelCounts = level.CreateInitialState().ColorCounts();
+            var reference = Current.ColorCounts();
+            if (!Fits(level, Initial, expectedBottles, levelCounts) || !Fits(level, Current, expectedBottles, levelCounts)) return false;
+            if (!SameCounts(reference, Initial.ColorCounts())) return false;
+            foreach (var h in History)
+                if (!Fits(level, h, expectedBottles, levelCounts) || !SameCounts(reference, h.ColorCounts())) return false;
+            foreach (var kv in levelCounts)
             {
-                var levelCounts = level.CreateInitialState().ColorCounts();
-                if (!SameCounts(levelCounts, GameState.FromArrays(level.Capacity, Initial).ColorCounts())) return false;
-                if (!SameCounts(levelCounts, GameState.FromArrays(level.Capacity, Current).ColorCounts())) return false;
-                foreach (var h in History)
-                {
-                    if (h.Length != expectedBottles) return false;
-                    if (!SameCounts(levelCounts, GameState.FromArrays(level.Capacity, h).ColorCounts())) return false;
-                }
+                int have;
+                reference.TryGetValue(kv.Key, out have);
+                if (have != kv.Value && !RemovedColors.Contains(kv.Key)) return false;
             }
-            catch (System.ArgumentException)
+            return true;
+        }
+
+        private static bool Fits(LevelDefinition level, GameState s, int expectedBottles, Dictionary<int, int> levelCounts)
+        {
+            if (s.BottleCount != expectedBottles) return false;
+            for (int i = 0; i < level.Bottles.Length; i++) if (s[i].Capacity != level.CapacityOf(i)) return false;
+            foreach (var kv in s.ColorCounts())
             {
-                return false;
+                int max;
+                if (!levelCounts.TryGetValue(kv.Key, out max) || kv.Value > max) return false;
             }
             return true;
         }
@@ -59,16 +75,18 @@ namespace Veliqora.Core.Session
         public Dictionary<string, object> ToJson()
         {
             var history = new List<object>();
-            foreach (var h in History) history.Add(Board(h));
+            foreach (var h in History) history.Add(GameStateJson.ToJson(h));
             var moves = new List<object>();
             foreach (var m in Moves) moves.Add(MiniJson.FromIntArray(m));
+            var removed = new List<object>();
+            foreach (var c in RemovedColors) removed.Add((long)c);
             return new Dictionary<string, object>
             {
                 ["level"] = (long)LevelNumber,
                 ["attemptId"] = AttemptId ?? "",
                 ["capacity"] = (long)Capacity,
-                ["initial"] = Board(Initial),
-                ["current"] = Board(Current),
+                ["initial"] = GameStateJson.ToJson(Initial),
+                ["current"] = GameStateJson.ToJson(Current),
                 ["history"] = history,
                 ["moves"] = moves,
                 ["movesBeforeHistory"] = (long)MovesBeforeHistory,
@@ -77,19 +95,23 @@ namespace Veliqora.Core.Session
                 ["par"] = (long)ParMoves,
                 ["totalPours"] = (long)TotalPours,
                 ["undosUsed"] = (long)UndosUsed,
+                ["removedColors"] = removed,
                 ["solution"] = Solution != null ? Board(Solution) : null,
             };
         }
 
         public static SessionSnapshot FromJson(Dictionary<string, object> d)
         {
+            int cap = MiniJson.GetInt(d, "capacity", BottleState.DefaultCapacity);
+            object ini, cur;
+            if (!MiniJson.TryGet(d, "initial", out ini) || !MiniJson.TryGet(d, "current", out cur)) throw new System.FormatException("Snapshot boards missing");
             var s = new SessionSnapshot
             {
                 LevelNumber = MiniJson.GetInt(d, "level"),
                 AttemptId = MiniJson.GetString(d, "attemptId", ""),
-                Capacity = MiniJson.GetInt(d, "capacity", BottleState.DefaultCapacity),
-                Initial = ReadBoard(d, "initial"),
-                Current = ReadBoard(d, "current"),
+                Capacity = cap,
+                Initial = GameStateJson.FromJson(ini, cap),
+                Current = GameStateJson.FromJson(cur, cap),
                 MovesBeforeHistory = MiniJson.GetInt(d, "movesBeforeHistory"),
                 ExtraBottlesAdded = MiniJson.GetInt(d, "extraBottles"),
                 ShuffleCount = MiniJson.GetInt(d, "shuffles"),
@@ -98,8 +120,9 @@ namespace Veliqora.Core.Session
                 UndosUsed = MiniJson.GetInt(d, "undosUsed"),
                 Solution = MiniJson.TryGet(d, "solution", out _) ? ReadBoard(d, "solution") : null,
             };
-            foreach (var h in MiniJson.GetList(d, "history")) s.History.Add(ToBoard(h));
+            foreach (var h in MiniJson.GetList(d, "history")) s.History.Add(GameStateJson.FromJson(h, cap));
             foreach (var m in MiniJson.GetList(d, "moves")) s.Moves.Add(MiniJson.ToIntArray(m));
+            foreach (var c in MiniJson.GetList(d, "removedColors")) s.RemovedColors.Add((int)MiniJson.ToLong(c));
             return s;
         }
 
@@ -110,11 +133,9 @@ namespace Veliqora.Core.Session
             return list;
         }
 
-        private static int[][] ReadBoard(Dictionary<string, object> d, string key) => ToBoard(MiniJson.GetList(d, key));
-
-        private static int[][] ToBoard(object o)
+        private static int[][] ReadBoard(Dictionary<string, object> d, string key)
         {
-            var list = MiniJson.AsList(o);
+            var list = MiniJson.GetList(d, key);
             var b = new int[list.Count][];
             for (int i = 0; i < list.Count; i++) b[i] = MiniJson.ToIntArray(list[i]);
             return b;

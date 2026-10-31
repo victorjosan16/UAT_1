@@ -4,7 +4,8 @@
     "Undo": 3,
     "ExtraBottle": 1,
     "Shuffle": 1,
-    "Hint": 2
+    "Hint": 2,
+    "RemoveColor": 1
   },
   "levelBaseReward": 20,
   "perStarReward": 10,
@@ -53,6 +54,14 @@
       "price": 120,
       "title": "Hint",
       "description": "Shows a solver-recommended next move. Pack of 2."
+    },
+    {
+      "id": "offer_remove_color",
+      "booster": "RemoveColor",
+      "quantity": 1,
+      "price": 250,
+      "title": "Remove Top Color",
+      "description": "Removes one color from the board (only when the puzzle stays solvable)."
     }
   ],
   "cosmetics": [

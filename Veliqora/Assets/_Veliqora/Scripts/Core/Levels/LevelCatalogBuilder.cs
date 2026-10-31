@@ -17,6 +17,11 @@ namespace Veliqora.Core.Levels
         public int MinSolution;
         public int Candidates = 3;
         public int MaxAdjacentPairs = 99;
+        // special mechanics
+        public CapacityMode CapMode = CapacityMode.Uniform;
+        public int Mystery;          // mystery depth (0 = none)
+        public int Locks;            // corked bottles
+        public int RewardBottles;    // ad-locked helper bottles
         /// <summary>Optional variant used on even level numbers (introduces constraints gradually).</summary>
         public CurveSegment AlternateOnEven;
 
@@ -53,29 +58,36 @@ namespace Veliqora.Core.Levels
 
         // Measured with Tools/LevelGen: 1-spare-bottle deals are often provably unsolvable (rejected) and leave far
         // less room for error; capacity-5 "tall" bottles lengthen solutions. Both are introduced late and gradually.
-        private static CurveSegment Seg(int a, int b, int colors, int minSol, int cand, int empties = 2, int cap = 4, int pairs = 3, CurveSegment alt = null) =>
-            new CurveSegment { FirstLevel = a, LastLevel = b, Colors = colors, MinSolution = minSol, Candidates = cand, EmptyBottles = empties, Capacity = cap, MaxAdjacentPairs = pairs, AlternateOnEven = alt };
+        private static CurveSegment Seg(int a, int b, int colors, int minSol, int cand, int empties = 2, int cap = 4, int pairs = 3, CurveSegment alt = null,
+            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0) =>
+            new CurveSegment
+            {
+                FirstLevel = a, LastLevel = b, Colors = colors, MinSolution = minSol, Candidates = cand, EmptyBottles = empties, Capacity = cap,
+                MaxAdjacentPairs = pairs, AlternateOnEven = alt, CapMode = caps, Mystery = mystery, Locks = locks, RewardBottles = reward,
+            };
 
+        // Curve follows the design brief:
+        //   11–30 more colors · 31–70 reduced empty space · 71–120 mystery layers, size variations and corked bottles
+        //   (plus optional ad bottles) · 121–200 combinations · 201–300 Master combinations with 9–12 colors.
+        // StagePlanner adds random Hard levels and stage-finale Boss levels on top of this curve.
         public static readonly CurveSegment[] DefaultCurve =
         {
-            Seg(11, 17, 4, 7, 2),
-            Seg(18, 25, 5, 9, 2),
-            Seg(26, 40, 5, 10, 3, pairs: 2),
-            Seg(41, 60, 6, 12, 3),
-            Seg(61, 75, 7, 14, 3),
-            Seg(76, 90, 7, 16, 3, pairs: 2),
-            Seg(91, 100, 7, 16, 3, alt: Seg(91, 100, 4, 8, 3, empties: 1)),
-            Seg(101, 110, 7, 17, 3, alt: Seg(101, 110, 5, 10, 3, empties: 1)),
-            Seg(111, 140, 8, 18, 3),
-            Seg(141, 150, 8, 20, 3, alt: Seg(141, 150, 5, 11, 4, empties: 1)),
-            Seg(151, 165, 8, 22, 5, pairs: 2),
-            Seg(166, 180, 7, 24, 4, cap: 5),
-            Seg(181, 200, 8, 24, 5, pairs: 2, alt: Seg(181, 200, 6, 14, 3, empties: 1)),
-            // Master: dense boards (up to 14 bottles) like late-game water-sort levels; 9–12 colors.
-            Seg(201, 225, 9, 26, 4, pairs: 2),
-            Seg(226, 250, 10, 30, 4, pairs: 2),
-            Seg(251, 275, 11, 33, 4, pairs: 2, alt: Seg(251, 275, 12, 34, 3, empties: 3)),
-            Seg(276, 300, 12, 38, 4, pairs: 2),
+            Seg(11, 20, 4, 7, 2),
+            Seg(21, 30, 5, 9, 3),
+            Seg(31, 45, 5, 10, 3, alt: Seg(31, 45, 4, 8, 3, empties: 1)),
+            Seg(46, 60, 6, 12, 3, alt: Seg(46, 60, 5, 10, 3, empties: 1)),
+            Seg(61, 70, 7, 14, 3, alt: Seg(61, 70, 5, 11, 3, empties: 1)),
+            Seg(71, 85, 6, 12, 3, mystery: 2, alt: Seg(71, 85, 6, 12, 3, mystery: 3)),
+            Seg(86, 100, 6, 12, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 12, 3, caps: CapacityMode.SmallLarge, mystery: 2)),
+            Seg(101, 110, 6, 12, 3, locks: 1, alt: Seg(101, 110, 6, 12, 3, locks: 1, mystery: 2)),
+            Seg(111, 120, 7, 14, 3, locks: 1, reward: 1, alt: Seg(111, 120, 7, 14, 3, caps: CapacityMode.SmallLarge, locks: 1)),
+            Seg(121, 150, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, alt: Seg(121, 150, 7, 16, 3, mystery: 3, locks: 2)),
+            Seg(151, 175, 8, 18, 3, mystery: 3, locks: 1, reward: 1, alt: Seg(151, 175, 7, 16, 3, caps: CapacityMode.Wide, locks: 2)),
+            Seg(176, 200, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 20, 3, caps: CapacityMode.Wide, mystery: 2, reward: 1)),
+            Seg(201, 225, 9, 24, 3, mystery: 2, alt: Seg(201, 225, 9, 24, 3, locks: 2)),
+            Seg(226, 250, 10, 26, 3, caps: CapacityMode.SmallLarge, locks: 1, alt: Seg(226, 250, 10, 26, 3, mystery: 3)),
+            Seg(251, 275, 11, 30, 3, mystery: 3, locks: 1, alt: Seg(251, 275, 11, 30, 3, empties: 3, caps: CapacityMode.Wide)),
+            Seg(276, 300, 12, 34, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2, reward: 1, alt: Seg(276, 300, 12, 34, 3, mystery: 3, locks: 1)),
         };
 
         public static LevelCatalog Build(ulong baseSeed, int levelCount, List<BuildReportRow> report, Action<int, int> progress = null,
@@ -90,7 +102,12 @@ namespace Veliqora.Core.Levels
                 if (n <= HandcraftedLevels.All.Length) def = BuildHandcrafted(n, report);
                 else def = BuildGenerated(n, baseSeed, FindSegment(curve, n).ForLevel(n), report, StagePlanner.Plan(baseSeed, n));
                 if (def == null) throw new InvalidOperationException("Failed to build level " + n + " — see report");
-                // Contextual tip the first time a new constraint appears.
+                // Contextual tip the first time a new constraint / mechanic appears.
+                if (def.TutorialKey == null && def.HasMystery && !catalog.Levels.Exists(l => l.HasMystery)) def.TutorialKey = "mystery_intro";
+                if (def.TutorialKey == null && def.HasMixedCapacities && !catalog.Levels.Exists(l => l.HasMixedCapacities)) def.TutorialKey = "sizes_intro";
+                if (def.TutorialKey == null && def.HasLocks && !catalog.Levels.Exists(l => l.HasLocks)) def.TutorialKey = "cork_intro";
+                if (def.TutorialKey == null && def.RewardBottles.Length > 0 && !catalog.Levels.Exists(l => l.RewardBottles.Length > 0)) def.TutorialKey = "reward_bottle_intro";
+                if (def.TutorialKey == null && def.Objectives.Count > 0 && !catalog.Levels.Exists(l => l.Objectives.Count > 0)) def.TutorialKey = "objectives_intro";
                 if (def.TutorialKey == null && def.EmptyBottleCount == 1 && !catalog.Levels.Exists(l => l.EmptyBottleCount == 1))
                     def.TutorialKey = "one_spare_bottle";
                 if (def.TutorialKey == null && def.Capacity == 5 && !catalog.Levels.Exists(l => l.Capacity == 5))
@@ -130,6 +147,9 @@ namespace Veliqora.Core.Levels
                 Solution = LevelDefinition.EncodeMoves(solve.Moves),
                 TutorialKey = entry.TutorialKey,
                 Validation = ToValidation(solve, 1),
+                Difficulty = Math.Max(1, Math.Min(3, 1 + solve.Length / 6)),
+                RewardCoins = 20,
+                DisabledBoosters = n <= 4 ? new List<string> { "Shuffle", "RemoveColor" } : new List<string>(),
             };
         }
 
@@ -155,13 +175,18 @@ namespace Veliqora.Core.Levels
                     MinSolutionLength = Math.Max(6, seg.MinSolution + 2 * (colors - seg.Colors)),
                     MaxAdjacentPairs = seg.MaxAdjacentPairs,
                     Solver = SolverOptions.Generation,
+                    CapacityMode = seg.CapMode,
+                    MysteryDepth = seg.Mystery,
+                    Locks = seg.Locks,
+                    RewardBottles = seg.RewardBottles,
+                    MaxAttempts = seg.Locks > 0 || seg.Mystery > 0 ? 250 : 400,
                 };
                 candidates = new List<GeneratedLevel>();
                 for (int c = 0; c < candidateCount; c++)
                 {
                     var g = LevelGenerator.Generate(spec, DeterministicRandom.Combine(baseSeed, n, c + 100 * bonus));
                     if (g == null) continue;
-                    g.StuckRate = DifficultyAnalyzer.StuckRate(GameState.FromArrays(spec.Capacity, g.Bottles), DeterministicRandom.Combine(g.Seed, 1));
+                    g.StuckRate = DifficultyAnalyzer.StuckRate(g.State, DeterministicRandom.Combine(g.Seed, 1));
                     candidates.Add(g);
                 }
                 if (candidates.Count > 0) break;
@@ -179,7 +204,7 @@ namespace Veliqora.Core.Levels
 
             // Tighter benchmark for stars: re-solve the chosen level with plain A* (weight 1). Keep whichever
             // verified solution is shorter. Still reported as a benchmark, not as proven optimal.
-            var start = GameState.FromArrays(seg.Capacity, chosen.Bottles);
+            var start = chosen.State;
             var tight = PuzzleSolver.Solve(start, new SolverOptions { MaxNodes = 300_000, TimeoutMs = 5_000, HeuristicWeight = 1.0 });
             if (tight.Status == SolveStatus.Solved && tight.Length < chosen.Solve.Length && PuzzleSolver.VerifySolution(start, tight.Moves, out _))
                 chosen.Solve = tight;
@@ -189,7 +214,7 @@ namespace Veliqora.Core.Levels
             report?.Add(row);
             int attempts = 0;
             foreach (var cnd in candidates) attempts += cnd.Attempts;
-            return new LevelDefinition
+            var generated = new LevelDefinition
             {
                 Number = n,
                 Seed = chosen.Seed,
@@ -203,6 +228,43 @@ namespace Veliqora.Core.Levels
                 Solution = LevelDefinition.EncodeMoves(chosen.Solve.Moves),
                 Validation = ToValidation(chosen.Solve, attempts, chosen.StuckRate),
             };
+            generated.ApplyLayout(chosen.State);
+            Decorate(generated, baseSeed, chosen);
+            return generated;
+        }
+
+        /// <summary>Objectives, per-level rewards, booster restrictions and a 1–10 difficulty rating.</summary>
+        public static void Decorate(LevelDefinition def, ulong baseSeed, GeneratedLevel chosen)
+        {
+            var rng = new DeterministicRandom(DeterministicRandom.Combine(baseSeed, def.Number, 0x0B1E));
+            var start = def.CreateInitialState();
+            int filled = 0;
+            var colors = new List<int>();
+            for (int i = 0; i < start.BottleCount; i++)
+            {
+                if (start[i].IsEmpty) continue;
+                filled++;
+                for (int u = 0; u < start[i].Count; u++) if (!colors.Contains(start[i][u])) colors.Add(start[i][u]);
+            }
+            colors.Sort();
+
+            if (def.Number >= 31)
+            {
+                def.Objectives.Add(new Objectives.ObjectiveDef { Id = "bottles", Type = Objectives.ObjectiveType.CompleteBottles, Target = Math.Min(colors.Count, 2 + def.Number % 3), RewardCoins = 10 });
+                def.Objectives.Add(new Objectives.ObjectiveDef { Id = "color", Type = Objectives.ObjectiveType.CollectColor, Color = colors[rng.Range(0, colors.Count)], Target = 1, RewardCoins = 10 });
+                if (def.HasLocks)
+                    def.Objectives.Add(new Objectives.ObjectiveDef { Id = "corks", Type = Objectives.ObjectiveType.UnlockBottles, Target = def.Locks.Count, RewardCoins = 15, RequiresId = "bottles" });
+                else if (def.HasMystery)
+                    def.Objectives.Add(new Objectives.ObjectiveDef { Id = "mystery", Type = Objectives.ObjectiveType.RevealMystery, Target = start.HiddenTotal(), RewardCoins = 15 });
+                if (def.Kind == LevelKind.Boss)
+                    def.Objectives.Add(new Objectives.ObjectiveDef { Id = "bonus", Type = Objectives.ObjectiveType.FinishLevel, Target = 1, RewardCoins = 40, Rewarded = true });
+            }
+
+            int features = (def.HasMystery ? 1 : 0) + (def.HasLocks ? 1 : 0) + (def.HasMixedCapacities ? 1 : 0);
+            double score = 1 + def.ParMoves / 6.0 + chosen.StuckRate * 2 + features * 0.7 + (def.Kind == LevelKind.Boss ? 0.8 : 0);
+            def.Difficulty = Math.Max(1, Math.Min(10, (int)Math.Round(score)));
+            def.RewardCoins = 20 + 2 * (def.Difficulty - 1);
+            if (def.Kind == LevelKind.Boss) def.DisabledBoosters.Add("RemoveColor");
         }
 
         private static LevelValidation ToValidation(SolverResult r, int attempts, double stuck = 0) => new LevelValidation
@@ -252,8 +314,15 @@ namespace Veliqora.Core.Levels
                 bool structural = PuzzleRules.HasValidColorDistribution(state, out err);
                 bool replay = structural && PuzzleSolver.VerifySolution(state, l.SolutionMoves(), out err);
                 bool notTrivial = !PuzzleRules.IsWon(state);
+                bool objectives = true;
+                if (replay && l.Objectives.Count > 0)
+                {
+                    var end = state;
+                    foreach (var m in l.SolutionMoves()) end = PuzzleRules.Evaluate(end, m.From, m.To).After;
+                    objectives = Objectives.ObjectiveTracker.AllAchievableAtWin(l.Objectives, state, end, out err);
+                }
                 row.SolutionLength = l.Solution.Length;
-                row.Passed = structural && replay && notTrivial;
+                row.Passed = structural && replay && notTrivial && objectives;
                 row.Note = row.Passed ? "replay ok" : ("FAIL: " + (err ?? "already solved"));
                 if (rerunSolver && row.Passed)
                 {

@@ -1,0 +1,26 @@
+{
+  "daily": [
+    { "coins": 30 },
+    { "coins": 40, "booster": "Undo", "quantity": 1 },
+    { "coins": 50 },
+    { "coins": 60, "booster": "Hint", "quantity": 1 },
+    { "coins": 70 },
+    { "coins": 80, "booster": "Shuffle", "quantity": 1 },
+    { "coins": 150, "booster": "ExtraBottle", "quantity": 1 }
+  ],
+  "achievements": [
+    { "id": "first_steps", "title": "First Steps", "metric": "levels", "target": 5, "reward": 50 },
+    { "id": "stage_runner", "title": "Stage Runner", "metric": "levels", "target": 30, "reward": 120 },
+    { "id": "valley_master", "title": "Master Sorter", "metric": "levels", "target": 100, "reward": 300 },
+    { "id": "star_collector", "title": "Star Collector", "metric": "stars", "target": 60, "reward": 100 },
+    { "id": "perfectionist", "title": "Perfectionist", "metric": "threeStars", "target": 25, "reward": 150 },
+    { "id": "hard_hitter", "title": "Hard Hitter", "metric": "hard", "target": 5, "reward": 100 },
+    { "id": "boss_slayer", "title": "Boss Slayer", "metric": "boss", "target": 3, "reward": 150 },
+    { "id": "mystery_seeker", "title": "Mystery Seeker", "metric": "mystery", "target": 30, "reward": 100 },
+    { "id": "cork_popper", "title": "Cork Popper", "metric": "corks", "target": 10, "reward": 100 },
+    { "id": "goal_getter", "title": "Goal Getter", "metric": "objectives", "target": 40, "reward": 120 },
+    { "id": "loyal", "title": "Loyal Alchemist", "metric": "daily", "target": 7, "reward": 150 },
+    { "id": "collector", "title": "Collector", "metric": "themes", "target": 14, "reward": 100 },
+    { "id": "helping_hand", "title": "Helping Hand", "metric": "boosters", "target": 20, "reward": 60 }
+  ]
+}

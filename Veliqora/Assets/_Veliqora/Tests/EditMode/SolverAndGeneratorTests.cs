@@ -123,8 +123,8 @@ namespace Veliqora.Tests.EditMode
             var level = Catalog.Levels[30];
             var g = LevelGenerator.GenerateShuffle(level, 0);
             Assert.IsNotNull(g);
-            var shuffled = GameState.FromArrays(level.Capacity, g.Bottles);
-            Assert.AreEqual(level.Bottles.Length, g.Bottles.Length);
+            var shuffled = g.State;
+            Assert.AreEqual(level.Bottles.Length, shuffled.BottleCount);
             CollectionAssert.AreEquivalent(level.CreateInitialState().ColorCounts(), shuffled.ColorCounts());
             Assert.IsTrue(PuzzleSolver.VerifySolution(shuffled, g.Solve.Moves, out _));
             Assert.AreNotEqual(level.CreateInitialState().CanonicalKey(), shuffled.CanonicalKey());

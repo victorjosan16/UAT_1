@@ -221,7 +221,7 @@ namespace Veliqora.Tests.EditMode
             Assert.AreEqual(0, s.MoveCount);
             Assert.AreEqual(1, s.ShuffleCount);
             Assert.AreEqual(g.Solve.Length, s.ParMoves);
-            Assert.AreEqual(GameState.FromArrays(level.Capacity, g.Bottles), s.Current);
+            Assert.AreEqual(g.State, s.Current);
             var h = s.GetHint();
             Assert.AreEqual(HintSource.StoredSolution, h.Source);
         }
@@ -253,7 +253,7 @@ namespace Veliqora.Tests.EditMode
             var s = new GameSession(level, "x");
             var snap = s.ToSnapshot();
             Assert.IsNull(GameSession.FromSnapshot(Catalog.Levels[13], snap));
-            snap.Current[0] = new[] { 1, 1, 1, 1 };
+            snap.Current = snap.Current.WithBottle(0, new BottleState(level.Capacity, 1, 1, 1, 1));
             Assert.IsNull(GameSession.FromSnapshot(level, snap));
         }
     }

@@ -18,7 +18,8 @@ namespace Veliqora.Tests.EditMode
         public void Config_LoadsPricesFromData()
         {
             var c = Config;
-            Assert.AreEqual(4, c.Offers.Count);
+            Assert.AreEqual(5, c.Offers.Count);
+            Assert.IsNotNull(c.FindOffer(BoosterType.RemoveColor));
             Assert.IsNotNull(c.FindOffer(BoosterType.Hint));
             Assert.Greater(c.FindOffer("offer_extra_bottle").Price, 0);
             Assert.IsTrue(c.FindCosmetic("theme_valley").DefaultOwned);

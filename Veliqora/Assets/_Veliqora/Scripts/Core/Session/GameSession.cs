@@ -112,7 +112,7 @@ namespace Veliqora.Core.Session
                 Selected = -1;
                 r.Kind = TapKind.Moved;
                 r.Move = mr;
-                r.CompletedBottle = mr.After[index].IsCompleted;
+                r.CompletedBottle = mr.After.IsBottleComplete(index);
                 r.Won = IsComplete;
                 return r;
             }
@@ -178,7 +178,7 @@ namespace Veliqora.Core.Session
         public bool AddExtraBottle()
         {
             if (!CanAddExtraBottle || IsBusy) return false;
-            var empty = BottleState.Empty(Level.Capacity);
+            var empty = BottleState.Empty(Level.ExtraCapacity);
             Current = Current.AddBottle(empty);
             Initial = Initial.AddBottle(empty);
             // History snapshots gain the bottle too, so undo never removes it.
@@ -199,17 +199,83 @@ namespace Veliqora.Core.Session
             IsBusy = false;
         }
 
-        /// <summary>Replaces the layout with a verified-solvable shuffle and restarts the puzzle.</summary>
-        public void ApplyShuffle(GeneratedLevel shuffled)
+        /// <summary>Replaces the layout with a verified-solvable shuffle (see LevelGenerator.ShuffleLayout) and restarts.</summary>
+        public void ApplyShuffle(LevelGenerator.ShuffleResult shuffled)
         {
             if (shuffled == null) throw new ArgumentNullException(nameof(shuffled));
-            var state = GameState.FromArrays(Level.Capacity, shuffled.Bottles);
-            for (int i = 0; i < ExtraBottlesAdded; i++) state = state.AddBottle(BottleState.Empty(Level.Capacity));
-            Initial = state;
+            if (shuffled.State.BottleCount != Initial.BottleCount) throw new ArgumentException("Shuffle changed the bottle count");
+            Initial = shuffled.State;
             ShuffleCount++;
             ParMoves = shuffled.Solve.Length;
             _currentSolution = LevelDefinition.EncodeMoves(shuffled.Solve.Moves);
             Restart();
+        }
+
+        // ---------------- rewarded bottle ----------------
+
+        public bool IsRewardBottle(int index) => index >= 0 && index < Current.BottleCount && Current[index].RewardLocked;
+
+        /// <summary>
+        /// Unlocks an ad-locked bottle after a CONFIRMED rewarded ad. The unlock is applied to the initial layout and
+        /// every undo snapshot too, so it persists through undo, restart and save/load.
+        /// </summary>
+        public bool UnlockRewardBottle(int index)
+        {
+            if (!IsRewardBottle(index) || IsBusy) return false;
+            Current = Current.WithBottle(index, Current[index].WithRewardLock(false));
+            if (index < Initial.BottleCount && Initial[index].RewardLocked) Initial = Initial.WithBottle(index, Initial[index].WithRewardLock(false));
+            for (int i = 0; i < _history.Count; i++)
+                if (index < _history[i].BottleCount && _history[i][index].RewardLocked)
+                    _history[i] = _history[i].WithBottle(index, _history[i][index].WithRewardLock(false));
+            Selected = -1;
+            return true;
+        }
+
+        // ---------------- remove top color ----------------
+
+        private readonly List<int> _removedColors = new List<int>();
+        public IReadOnlyList<int> RemovedColors => _removedColors;
+
+        /// <summary>A color can be removed when it is the (visible) top color of an unlocked, incomplete bottle.</summary>
+        public bool CanRemoveColorAt(int bottle)
+        {
+            if (IsComplete || IsBusy || bottle < 0 || bottle >= Current.BottleCount) return false;
+            var b = Current[bottle];
+            return !b.IsEmpty && !b.IsLocked && !Current.IsBottleComplete(bottle);
+        }
+
+        /// <summary>
+        /// Computes (without committing) the boards after removing every unit of the top color of
+        /// <paramref name="bottle"/> from all unlocked bottles. The caller verifies solvability before committing.
+        /// </summary>
+        public bool PreviewRemoveColor(int bottle, out int color, out GameState current, out GameState initial)
+        {
+            color = 0; current = null; initial = null;
+            if (!CanRemoveColorAt(bottle)) return false;
+            color = Current[bottle].TopColor;
+            current = PuzzleRules.ResolveLocks(RemoveFrom(Current, color));
+            initial = PuzzleRules.ResolveLocks(RemoveFrom(Initial, color).WithMoves(0));
+            return true;
+        }
+
+        private static GameState RemoveFrom(GameState s, int color)
+        {
+            var bottles = new BottleState[s.BottleCount];
+            for (int i = 0; i < s.BottleCount; i++) bottles[i] = s[i].IsLocked ? s[i] : s[i].RemoveColor(color);
+            return s.WithAllBottles(bottles);
+        }
+
+        /// <summary>Commits a verified removal. Undo history is cleared (the booster's effect is permanent for this attempt).</summary>
+        public void CommitRemoveColor(int color, GameState current, GameState initial)
+        {
+            Current = current;
+            Initial = initial;
+            _history.Clear();
+            _prefixMoves = _moves.Count;
+            _removedColors.Add(color);
+            _currentSolution = null; // the stored solution no longer applies; hints use the live solver
+            Selected = -1;
+            IsComplete = PuzzleRules.IsWon(Current);
         }
 
         // ---------------- hint ----------------
@@ -258,8 +324,8 @@ namespace Veliqora.Core.Session
                 LevelNumber = Level.Number,
                 AttemptId = AttemptId,
                 Capacity = Level.Capacity,
-                Initial = Initial.ToArrays(),
-                Current = Current.ToArrays(),
+                Initial = Initial,
+                Current = Current,
                 ExtraBottlesAdded = ExtraBottlesAdded,
                 ShuffleCount = ShuffleCount,
                 ParMoves = ParMoves,
@@ -267,13 +333,17 @@ namespace Veliqora.Core.Session
                 UndosUsed = UndosUsed,
                 Solution = _currentSolution,
             };
-            int start = Math.Max(0, _history.Count - maxHistory);
+            snap.RemovedColors.AddRange(_removedColors);
+            int movesInWindow = _history.Count;
+            int start = Math.Max(0, movesInWindow - maxHistory);
+            int offset = _moves.Count - _history.Count; // moves made before the undo window (not undoable)
             for (int i = start; i < _history.Count; i++)
             {
-                snap.History.Add(_history[i].ToArrays());
-                snap.Moves.Add(new[] { _moves[i].From, _moves[i].To, _moves[i].Amount, _moves[i].Color });
+                snap.History.Add(_history[i]);
+                var m = _moves[offset + i];
+                snap.Moves.Add(new[] { m.From, m.To, m.Amount, m.Color });
             }
-            snap.MovesBeforeHistory = start;
+            snap.MovesBeforeHistory = offset + start;
             return snap;
         }
 
@@ -286,27 +356,24 @@ namespace Veliqora.Core.Session
             {
                 var s = new GameSession(level, snap.AttemptId)
                 {
-                    Initial = GameState.FromArrays(level.Capacity, snap.Initial),
-                    Current = GameState.FromArrays(level.Capacity, snap.Current),
+                    Initial = snap.Initial,
+                    Current = snap.Current,
                     ExtraBottlesAdded = snap.ExtraBottlesAdded,
                     ShuffleCount = snap.ShuffleCount,
                     ParMoves = snap.ParMoves > 0 ? snap.ParMoves : level.ParMoves,
                     TotalPours = snap.TotalPours,
                     UndosUsed = snap.UndosUsed,
-                    _currentSolution = snap.Solution ?? level.Solution,
+                    _currentSolution = snap.RemovedColors.Count > 0 ? null : (snap.Solution ?? level.Solution),
                 };
+                s._removedColors.AddRange(snap.RemovedColors);
                 // Moves made before the saved history window still count toward the move counter but can't be undone.
-                for (int i = 0; i < snap.MovesBeforeHistory; i++)
-                {
-                    s._moves.Add(new Move(-1, -1, 0, 0));
-                }
+                for (int i = 0; i < snap.MovesBeforeHistory; i++) s._moves.Add(new Move(-1, -1, 0, 0));
                 for (int i = 0; i < snap.History.Count; i++)
                 {
-                    s._history.Add(GameState.FromArrays(level.Capacity, snap.History[i]));
+                    s._history.Add(snap.History[i]);
                     var m = snap.Moves[i];
                     s._moves.Add(new Move(m[0], m[1], m[2], m[3]));
                 }
-                // Pre-window placeholder moves are not undoable: drop them from the undo path by aligning counts.
                 s._prefixMoves = snap.MovesBeforeHistory;
                 s.IsComplete = PuzzleRules.IsWon(s.Current);
                 return s;

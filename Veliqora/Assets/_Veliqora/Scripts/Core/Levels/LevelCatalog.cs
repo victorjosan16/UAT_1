@@ -9,7 +9,7 @@ namespace Veliqora.Core.Levels
     {
         public const int CurrentGeneratorVersion = 1;
 
-        public int ContentVersion = 2; // 2: stage pacing with random hard levels + boss levels
+        public int ContentVersion = 3; // 3: special bottles (mystery, corks, sizes, ad bottles), objectives
         public int GeneratorVersion = CurrentGeneratorVersion;
         public ulong BaseSeed;
         public string GeneratedAtUtc = "";

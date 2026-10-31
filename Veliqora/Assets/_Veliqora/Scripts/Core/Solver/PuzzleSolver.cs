@@ -90,20 +90,20 @@ namespace Veliqora.Core.Solver
                 result.NodesExpanded++;
 
                 var state = node.State;
-                int firstEmpty = -1;
                 for (int f = 0; f < state.BottleCount; f++)
                 {
                     var src = state[f];
-                    if (src.IsEmpty || src.IsCompleted) continue;
-                    firstEmpty = -1;
+                    if (src.IsEmpty || src.IsLocked || state.IsBottleComplete(f)) continue;
+                    int triedEmptyCaps = 0; // bitmask of capacities already tried as an empty destination
                     for (int t = 0; t < state.BottleCount; t++)
                     {
                         if (!PuzzleRules.IsUseful(state, f, t)) continue;
                         if (state[t].IsEmpty)
                         {
-                            // All empty bottles are equivalent: only try the first one.
-                            if (firstEmpty >= 0) continue;
-                            firstEmpty = t;
+                            // Empty bottles of the same capacity are equivalent: only try one of each size.
+                            int bit = 1 << state[t].Capacity;
+                            if ((triedEmptyCaps & bit) != 0) continue;
+                            triedEmptyCaps |= bit;
                         }
                         var mr = PuzzleRules.Evaluate(state, f, t);
                         var next = mr.After;

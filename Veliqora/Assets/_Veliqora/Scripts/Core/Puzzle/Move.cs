@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Veliqora.Core.Puzzle
 {
@@ -32,6 +33,8 @@ namespace Veliqora.Core.Puzzle
         SourceEmpty,
         DestinationFull,
         ColorMismatch,
+        /// <summary>Source or destination is corked / ad-locked.</summary>
+        Locked,
     }
 
     /// <summary>Result of validating a requested pour. When legal, NewState holds the committed board.</summary>
@@ -42,17 +45,22 @@ namespace Veliqora.Core.Puzzle
         public Move Move { get; }
         public GameState Before { get; }
         public GameState After { get; }
+        /// <summary>Bottles whose cork came off because of this move (empty when none).</summary>
+        public IReadOnlyList<int> Unlocked { get; }
 
-        private MoveResult(MoveRejection rejection, Move move, GameState before, GameState after)
+        private static readonly int[] None = new int[0];
+
+        private MoveResult(MoveRejection rejection, Move move, GameState before, GameState after, IReadOnlyList<int> unlocked)
         {
             Rejection = rejection;
             Move = move;
             Before = before;
             After = after;
+            Unlocked = unlocked ?? None;
         }
 
-        public static MoveResult Legal(Move move, GameState before, GameState after) => new MoveResult(MoveRejection.None, move, before, after);
-        public static MoveResult Illegal(MoveRejection reason, int from, int to, GameState before) => new MoveResult(reason, new Move(from, to, 0, 0), before, before);
+        public static MoveResult Legal(Move move, GameState before, GameState after, IReadOnlyList<int> unlocked = null) => new MoveResult(MoveRejection.None, move, before, after, unlocked);
+        public static MoveResult Illegal(MoveRejection reason, int from, int to, GameState before) => new MoveResult(reason, new Move(from, to, 0, 0), before, before, null);
 
         public override string ToString() => IsLegal ? "Legal " + Move : "Illegal (" + Rejection + ")";
     }

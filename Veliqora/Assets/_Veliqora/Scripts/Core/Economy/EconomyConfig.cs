@@ -4,7 +4,7 @@ using Veliqora.Core.Json;
 
 namespace Veliqora.Core.Economy
 {
-    public enum BoosterType { Undo = 0, ExtraBottle = 1, Shuffle = 2, Hint = 3 }
+    public enum BoosterType { Undo = 0, ExtraBottle = 1, Shuffle = 2, Hint = 3, RemoveColor = 4 }
 
     public enum CosmeticKind { Theme, BottleSkin }
 

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using Veliqora.Core.Economy;
 using Veliqora.Core.Json;
+using Veliqora.Core.Progression;
 using Veliqora.Core.Session;
 
 namespace Veliqora.Core.Save
@@ -130,7 +131,20 @@ namespace Veliqora.Core.Save
                     ["animationSpeed"] = (double)s.AnimationSpeed,
                     ["lightGameplay"] = s.LightGameplayBackground,
                     ["debugAdFailure"] = s.DebugSimulateAdFailure,
+                    ["language"] = s.Language ?? "",
                 },
+                ["stats"] = new Dictionary<string, object>
+                {
+                    ["hard"] = (long)d.Stats.HardCompleted,
+                    ["boss"] = (long)d.Stats.BossCompleted,
+                    ["boosters"] = (long)d.Stats.BoostersUsed,
+                    ["daily"] = (long)d.Stats.DailyClaims,
+                    ["objectives"] = (long)d.Stats.ObjectivesCompleted,
+                    ["mystery"] = (long)d.Stats.MysteryRevealed,
+                    ["corks"] = (long)d.Stats.CorksOpened,
+                },
+                ["dailyReward"] = new Dictionary<string, object> { ["lastDay"] = (long)d.Daily.LastClaimDay, ["streak"] = (long)d.Daily.Streak },
+                ["achievements"] = ToList(d.ClaimedAchievements),
                 ["cosmetics"] = new Dictionary<string, object>
                 {
                     ["theme"] = d.Cosmetics.Theme ?? "",
@@ -139,6 +153,13 @@ namespace Veliqora.Core.Save
                 ["tutorials"] = tutorials,
                 ["session"] = d.Session?.ToJson(),
             };
+        }
+
+        private static List<object> ToList(HashSet<string> set)
+        {
+            var list = new List<object>();
+            foreach (var x in set) list.Add(x);
+            return list;
         }
 
         private static SaveData FromPayload(Dictionary<string, object> p)
@@ -184,6 +205,20 @@ namespace Veliqora.Core.Save
             d.Settings.AnimationSpeed = speed < 0.5f || speed > 2f ? 1f : speed;
             d.Settings.LightGameplayBackground = MiniJson.GetBool(s, "lightGameplay");
             d.Settings.DebugSimulateAdFailure = MiniJson.GetBool(s, "debugAdFailure");
+            d.Settings.Language = MiniJson.GetString(s, "language", "");
+
+            var st = MiniJson.GetObject(p, "stats");
+            d.Stats.HardCompleted = Math.Max(0, MiniJson.GetInt(st, "hard"));
+            d.Stats.BossCompleted = Math.Max(0, MiniJson.GetInt(st, "boss"));
+            d.Stats.BoostersUsed = Math.Max(0, MiniJson.GetInt(st, "boosters"));
+            d.Stats.DailyClaims = Math.Max(0, MiniJson.GetInt(st, "daily"));
+            d.Stats.ObjectivesCompleted = Math.Max(0, MiniJson.GetInt(st, "objectives"));
+            d.Stats.MysteryRevealed = Math.Max(0, MiniJson.GetInt(st, "mystery"));
+            d.Stats.CorksOpened = Math.Max(0, MiniJson.GetInt(st, "corks"));
+            var dr = MiniJson.GetObject(p, "dailyReward");
+            d.Daily.LastClaimDay = MiniJson.GetInt(dr, "lastDay", -1);
+            d.Daily.Streak = Math.Max(0, MiniJson.GetInt(dr, "streak"));
+            foreach (var a in MiniJson.GetList(p, "achievements")) if (a is string id) d.ClaimedAchievements.Add(id);
 
             var cos = MiniJson.GetObject(p, "cosmetics");
             d.Cosmetics.Theme = MiniJson.GetString(cos, "theme", d.Cosmetics.Theme);
@@ -212,6 +247,17 @@ namespace Veliqora.Core.Save
         {
             var p = payload;
             if (fromVersion < 2) p = V1ToV2(p);
+            if (fromVersion < 3) p = V2ToV3(p);
+            return p;
+        }
+
+        /// <summary>v3 adds stats, daily reward state, claimed achievements and language; older sessions use the old board format.</summary>
+        private static Dictionary<string, object> V2ToV3(Dictionary<string, object> v2)
+        {
+            var p = new Dictionary<string, object>(v2);
+            if (!p.ContainsKey("stats")) p["stats"] = new Dictionary<string, object>();
+            if (!p.ContainsKey("dailyReward")) p["dailyReward"] = new Dictionary<string, object> { ["lastDay"] = -1L, ["streak"] = 0L };
+            if (!p.ContainsKey("achievements")) p["achievements"] = new List<object>();
             return p;
         }
 
