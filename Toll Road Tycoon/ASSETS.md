@@ -1,12 +1,15 @@
 # Grafica jocului: lista de imagini
 
-> **Stadiu:** din foaia de grafică primită s-au decupat automat (fundal eliminat, mărire ×3–×4):
-> toate vehiculele (4 variante pe tip, rotite cu fața în sus), cabina de taxare (+4 variante),
-> 5 copaci și iconițele (monedă, diamant, stea, cronometru, mașină, clipboard, drum, con, unelte,
-> ciocan, glob, cabină, angajat). Sursa avea obiecte mici (30–70 px), deci aceste imagini sunt
-> mai neclare decât ar fi niște fișiere generate separat la rezoluție mare. Restul listei
-> (iarbă, case, clădirea de taxare, copertină, barieră, panouri, butoane, logo, font) încă lipsește
-> și rămâne provizoriu.
+> **Stadiu:** din cele două foi de grafică primite s-au decupat automat (fundal eliminat, mărire ×3–×4):
+> * din foaia cu fundal verde: compacte (11 culori), sedanuri (8), SUV-uri (2), dube (5),
+>   camioane (11 dube de marfă), TIR-uri (11, inclusiv cisternă și transport bușteni), ambulanță,
+>   clădirile SHOP și HOTEL (case decorative pe marginea drumului);
+> * din prima foaie: autobuzele, mașinile de poliție/pompieri, cabinele de taxare, copacii și iconițele.
+>
+> Mașinile verzi și copacii din foaia verde nu se pot separa de fundalul verde, deci nu au fost folosiți.
+> Pentru grafică mai clară, aceleași obiecte generate la rezoluție mare (~512 px) le pot înlocui
+> direct. Încă lipsesc: iarba, clădirea de taxare, copertina, bariera orizontală, panourile, butoanele,
+> logo-ul și fontul.
 
 Jocul caută automat imaginile de mai jos în `Assets/Resources/Art/`. Fiecare imagine pe care o adaugi
 înlocuiește forma provizorie generată din cod. Cele care lipsesc rămân provizorii, deci grafica se
