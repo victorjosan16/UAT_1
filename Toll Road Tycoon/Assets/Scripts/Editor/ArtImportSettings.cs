@@ -40,11 +40,11 @@ namespace TollRoadTycoon.EditorTools
             bool sliced = assetPath.Contains("/UI/panel") || assetPath.Contains("/UI/button") || name == "canopy";
             if (!sliced) return;
             importer.spriteMeshType = SpriteMeshType.FullRect;
-            // Corners stay crisp; the middle 40% stretches.
+            // Corners stay crisp while the middle stretches. Buttons are pills, so their border is
+            // almost half the height; panels and the canopy keep 30% of their shorter side.
             importer.GetSourceTextureWidthAndHeight(out int width, out int height);
-            float bx = width * 0.3f;
-            float by = height * 0.3f;
-            importer.spriteBorder = new Vector4(bx, by, bx, by);
+            float corner = Mathf.Min(width, height) * (assetPath.Contains("/UI/button") ? 0.48f : 0.3f);
+            importer.spriteBorder = new Vector4(corner, corner, corner, corner);
         }
     }
 }

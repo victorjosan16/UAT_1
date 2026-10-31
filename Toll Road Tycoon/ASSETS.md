@@ -6,10 +6,12 @@
 >   clădirile SHOP și HOTEL (case decorative pe marginea drumului);
 > * din prima foaie: autobuzele, mașinile de poliție/pompieri, cabinele de taxare, copacii și iconițele.
 >
+> * din a treia imagine: logo-ul, butonul și panoul (colorate din cod), bariera orizontală și iarba
+>   (făcută repetabilă prin oglindire).
+>
 > Mașinile verzi și copacii din foaia verde nu se pot separa de fundalul verde, deci nu au fost folosiți.
 > Pentru grafică mai clară, aceleași obiecte generate la rezoluție mare (~512 px) le pot înlocui
-> direct. Încă lipsesc: iarba, clădirea de taxare, copertina, bariera orizontală, panourile, butoanele,
-> logo-ul și fontul.
+> direct. Încă lipsesc: clădirea de taxare, copertina „TOLL” și fontul.
 
 Jocul caută automat imaginile de mai jos în `Assets/Resources/Art/`. Fiecare imagine pe care o adaugi
 înlocuiește forma provizorie generată din cod. Cele care lipsesc rămân provizorii, deci grafica se
