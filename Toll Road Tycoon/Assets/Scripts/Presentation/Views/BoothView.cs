@@ -39,7 +39,7 @@ namespace TollRoadTycoon.Presentation
             Shapes.Rect(t, "IslandNose", Palette.Gold, new Vector2(islandX, stop - 2.2f), new Vector2(0.3f, 0.2f), Layers.Island + 1);
 
             // Booth house (authored art if present).
-            if (Shapes.Art(t, "BoothArt", "TollBooths/booth", 0, new Vector2(islandX, stop - 0.05f), 0.62f, Layers.Booth) == null)
+            if (Shapes.Art(t, "BoothArt", "TollBooths/booth", 0, new Vector2(islandX + 0.05f, stop + 0.1f), 0.9f, Layers.Booth) == null)
             {
                 Shapes.Rounded(t, "BoothShadow", Palette.Shadow, new Vector2(islandX + 0.08f, stop - 0.15f), new Vector2(0.5f, 0.8f), Layers.Booth - 1);
                 Shapes.Rounded(t, "BoothBody", Palette.Cream, new Vector2(islandX, stop - 0.05f), new Vector2(0.48f, 0.78f), Layers.Booth);
