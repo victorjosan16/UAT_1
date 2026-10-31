@@ -113,6 +113,31 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
 - **UI:** stage banners and red **HARD** / violet crowned **BOSS** nodes on the map; HUD shows "Stage N" and a pulsing HARD/BOSS badge plus an intro toast;
   Home shows the stage; Level Complete shows the bonus.
 
+## 5c. Special bottles, objectives and the brief's curve (content version 3)
+- **Capacity per bottle (2–6).** A bottle is *complete* when it is non-empty, monochrome and either full or holding every unit of that
+  color on the board. The level is won when every bottle is empty or complete. Color totals must fit a bottle or be a multiple of a capacity.
+- **Mystery layers.** `BottleState.Hidden` counts hidden units at the bottom; the top unit is always visible. Only revealed units pour.
+  Units are revealed when they become the top, or when their bottle completes. Validation uses full information; hints never reveal.
+- **Corks.** `BottleLock(kind, param)`: `CompleteColor` (a color finished), `Moves` (after N pours), `AfterBottle` (another bottle opened),
+  `CompletedBottles` (N complete bottles). Locks are resolved after every pour (chains resolve in one step). Corked bottles are neither
+  source nor destination; the board shows the condition on a tag and a tap explains it.
+- **Bonus bottles.** Empty, ad-locked bottles (`RewardLocked`). They are never required by the verified solution; a completed rewarded ad
+  unlocks one (also in the undo history).
+- **Objectives** (`ObjectiveDef`): CollectColor, CompleteBottles, UnlockBottles, RevealMystery, FinishLevel; optional `requires` chain and
+  ad-only `rewarded` bonus. Progress is derived from (initial, current) states, so undo/restart are consistent. Coins are granted at the win,
+  once per attempt (`obj:<attempt>:<id>`, ad bonus `objad:<attempt>:<id>`). The catalog validator checks all objectives are achievable at the win.
+- **Remove Top Color** removes the tapped bottle's top color from all unlocked bottles, only if the solver proves the result solvable; it is
+  charged only on success and clears undo history. Boss levels and tutorials can disable boosters (`disabledBoosters`).
+- **Curve:** 1–10 handcrafted; 11–70 classic 3–6 colors with one-spare alternates; 71–85 mystery; 86–100 mixed sizes; 101–110 corks;
+  111–120 corks + bonus bottle; 121–200 combinations; 201–300 Master combinations. Stage pacing (random Hard, Boss finales) is applied on top.
+  Per-level difficulty 1–10 and base coins `20 + 2·(difficulty−1)`.
+
+## 6c. Daily rewards, achievements, localization
+- `progression.json`: 7-day reward cycle (streak resets after a missed day; claim `daily:<day>`, optional ad double `dailyad:<day>`), 13
+  achievements on metrics (levels, stars, three-star levels, hard, boss, mystery, corks, objectives, daily, themes, boosters), claim `ach:<id>`.
+  Completed achievements raise a one-time unlock notification.
+- Localization: English source strings are keys; `strings_<lang>.json` overrides (Romanian shipped). Missing keys fall back to English.
+
 ## 6. Boosters and economy (`economy.json`)
 - **Starting grant (once):** 200 coins, Undo ×3, Add bottle ×1, Shuffle ×1, Hint ×2.
 - **Level reward:**

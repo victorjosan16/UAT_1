@@ -4,17 +4,17 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **106 / 106 passed**
+### 1.1 EditMode suite against the pure core: **133 / 133 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 106, Skipped: 0, Total: 106, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 133, Skipped: 0, Total: 133, Duration: 57 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
 | Fixture | Tests | Covers |
 |---|---|---|
 | PuzzleRulesTests | 19 | all legal/illegal pour cases, out-of-range, contiguous run, free-space limit, immutability, custom capacity, win (incl. empty / one-color), stuck, useful moves, canonical keys, color distribution |
-| GameSessionTests | 16 | tap state machine, deselect/reselect, busy lock, rapid-tap conservation, multi-unit undo, undo after win blocked, extra bottle (survives undo/restart, max 1), restart, hint legality + hint-following solves, solver fallback, dead-end truthful message, shuffle restart + par, snapshot round trip, tampered snapshot rejection |
+| GameSessionTests | 18 | tap state machine, deselect/reselect, busy lock, rapid-tap conservation, multi-unit undo, undo after win blocked, extra bottle (survives undo/restart, max 2), locked taps, Remove Color commit, restart, hint legality + hint-following solves, solver fallback, dead-end truthful message, shuffle restart + par, snapshot round trip, tampered snapshot rejection |
 | SolverAndGeneratorTests | 13 | verified solutions, proven-unsolvable, already solved, node budget, cancellation, illegal-sequence rejection, PRNG determinism/uniformity/golden stability, deal determinism + color conservation, generator determinism + verification, rejection of unsolvable configs, verified shuffle, stuck-rate determinism |
 | LevelCatalogTests | 10 | 300 contiguous levels, **all 300 replay-verified**, **all 300 re-solved independently within budget**, tiers (incl. Master) + 10 handcrafted, 2–8 colors (≤12 in Master), tier-average ramp, no trivial or pre-completed starts, **first 40 levels reproducible from seed**, JSON round trip, star thresholds |
 | EconomyTests | 10 | data-driven prices, starting grant once, purchase atomic + idempotent, insufficient funds (no state change, retryable), never negative, consume/refund idempotency, first-clear vs replay rewards, milestone, cosmetics, bounded ledger |
@@ -22,12 +22,15 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 | RewardedAdGateTests | 10 | reward only on Completed, duplicate callbacks, cancel/fail/no-fill, timeout + late completion ignored, single in-flight, unavailable, abort on background, cooldown, NoAds never blocks |
 | MiniJsonTests | 6 | round trip, malformed input |
 | StagePacingTests | 6 | deterministic planner, boss at every stage finale, random hard levels appear early (≤ L20) at ~10–30% and never back-to-back, hard/boss harder than normal (par + stuck rate) in every tier, non-linear difficulty, hard/boss first-clear bonus |
+| SpecialBottlesTests | 18 | mystery reveal/undo/hidden units never move, corks (all 4 conditions, chained unlocks), bonus bottles never required, mixed capacities win rule, objectives, Remove Color, JSON round trip |
+| ProgressionTests | 6 | daily streak/claim once/ad double once, achievements claim once, newly completed, v2→v3 save migration |
+| LocalizationTests | 3 | Romanian covers every direct `Loc.T/F` call and every achievement title; placeholders kept; English fallback |
 | ProjectFilesTests | 3 | committed scenes reference `SceneEntry` with the right ScreenId, Build Settings order + GUIDs, 12 distinct dark backgrounds configured |
 
 ### 1.2 Batch level validation: **300 / 300 PASS**
 ```
 $ dotnet run -c Release --project Tools/LevelGen -- validate
-Validated 300 levels: 300 PASS, 0 FAIL in 0.2s -> Docs/level_validation_report.csv
+Validated 300 levels: 300 PASS, 0 FAIL in 35.4s -> Docs/level_validation_report.csv
 ```
 For each level the validator:
 - checks the color distribution;
@@ -83,7 +86,7 @@ After the change, the 106 EditMode tests still pass (the economy test now expect
 | Item | Status | How to run |
 |---|---|---|
 | EditMode suite inside Unity | pending | Window → General → Test Runner → EditMode → Run All |
-| 14 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
+| 21 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button, 12 dark themes, rewarded empty bottle, corked bottle, bonus bottle ad, mystery + objectives, Remove Color, daily reward, language switch, achievement notices) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
 | Unity 6 compilation | pending | open project; check Console |
 | Visual QA / automated screenshots | pending | Play Mode + **Veliqora → Capture Screenshot**; checklist below |
 | Performance (60 FPS target, GC, startup) | **not measured** | Unity Profiler on a midrange Android device (development build) |

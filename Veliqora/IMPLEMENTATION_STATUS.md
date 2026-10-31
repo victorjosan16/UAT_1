@@ -93,6 +93,23 @@ an APK/AAB, or on-device performance.
 - 🟡 **UI (compiles, not run):** "Colors are blocked!" panel with 3 helps + ad bottle + restart + close; rewarded empty bottle (mock ads now,
   real SDK later); "No move limit" HUD text. The PlayMode test checks that a cancelled ad gives nothing and a completed ad adds exactly one bottle.
 
+## Full brief coverage ("aplică tot")
+- ✅ **Core mechanics (tested):** per-bottle capacity 2–6, generalized win rule, mystery layers (reveal on exposure / completion, never moved
+  while hidden), corks with 4 unlock conditions resolved iteratively, ad-locked bonus bottles, move counter, lossless board JSON, solver and
+  generator aware of all of them (locked bottles never sources, reward bottles never needed by the verified solution).
+- ✅ **Objectives:** model + tracker derived from board state (undo-safe), rewards once per attempt via ledger keys, validated at win for every level.
+- ✅ **Remove Top Color:** solver-verified before it is applied, charged only on success, undo history cleared.
+- ✅ **Levels:** content version 3, curve per brief (mechanics from 71, combos 121–200, Master 201–300) merged with stage pacing; 300/300 validated.
+- ✅ **Daily rewards / achievements / stats:** services, config (`progression.json`), save schema v3 + v2→v3 migration.
+- ✅ **Localization:** `Localizer` (English source keys), `strings_ro.json`; a test fails if any direct `Loc.T/F` string lacks a Romanian entry.
+- 🟡 **UI (compiles, not run in Unity):** objective panel, 5-button booster bar with disabled state, Remove Color selection mode, bonus-bottle
+  ad dialog, cork condition toasts, unlock/reveal FX, 5 new tutorials, Daily Reward overlay (auto-opens), Achievements overlay, unlock
+  notification queue, objective/ad bonus on Level Complete, Settings scene with language switch, themes renamed to the brief list.
+- 🟡 **Architecture:** `IPurchaseService`/`NoPurchaseService`, `IConsentService`/`PlaceholderConsentService`, optional
+  `VeliqoraContentConfig` ScriptableObject, folders Monetization/Themes/Data.
+- 🟡 **PlayMode tests:** 21 written (7 new: corks, bonus bottle ad, mystery + objectives, Remove Color, daily, language, achievement notices). Not executed.
+- ⬜ Still requires you: real ad SDK + IDs, real consent (UMP/CMP), IAP products, Unity run, device QA, store assets.
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

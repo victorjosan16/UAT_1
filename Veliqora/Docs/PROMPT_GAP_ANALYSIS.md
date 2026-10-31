@@ -1,5 +1,30 @@
 # VELIQORA — analiză: prompt-ul „COMPLETE UNITY GAME IMPLEMENTATION” vs. proiectul actual
 
+## Actualizare după „Da aplică tot” (2026-10-31)
+
+Toate golurile A–J de mai jos au fost implementate, cu excepția celor care cer conturi sau SDK-uri reale:
+
+| # | Sistem | Stare acum |
+|---|---|---|
+| A | Sticle cu dop (4 condiții de deblocare) | ✅ motor + solver + generator + teste · 🟡 UI (etichetă cu condiția, mesaj la atingere, animație la deschidere) |
+| B | Mystery layers | ✅ motor + teste (dezvăluire, undo, unitățile ascunse nu se mută) · 🟡 UI cu „?” |
+| C | Rewarded Bottle | ✅ motor (niciodată necesară pentru soluție) · 🟡 UI cu dialog de reclamă; deblocare doar la reclamă completă |
+| D | Capacități 2/3/5/6 în același nivel | ✅ regula de victorie generalizată, generator SmallLarge/Wide, 300/300 validate |
+| E | Obiective | ✅ model, progres derivat din stare (corect la undo), recompense o singură dată · 🟡 panou sus + bonus pe ecranul de victorie |
+| F | Remove Top Color | ✅ verificat cu solverul înainte, taxat doar la succes · 🟡 al 5-lea buton + mod de selecție |
+| G | Daily Reward, Achievements, Unlock Notification | ✅ servicii + salvare v3 + teste · 🟡 overlay-uri, notificări în coadă |
+| H | Localizare RO/EN | ✅ tabel de traduceri + test care cere traducere pentru fiecare text · 🟡 comutator în Setări |
+| I | ScriptableObjects | 🟡 `VeliqoraContentConfig` opțional (suprascrie JSON-urile) |
+| J | IAP și consimțământ | 🟡 doar interfețe (`IPurchaseService`, `IConsentService`) + implementări placeholder; SDK-urile reale lipsesc intenționat |
+
+De asemenea: Settings a devenit scenă, temele poartă exact numele din brief (inclusiv Dark Royal, Mystic Garden, Cyber Neon), iar curba
+urmează brief-ul (mecanici de la 71, combinații 121–200), împreună cu etapele Hard/Boss. 133 de teste EditMode trec, 21 de teste PlayMode
+sunt scrise (nerulate: Unity nu există aici). Rămân la tine: SDK de reclame + ID-uri, consimțământ real, produse IAP, rulare în Unity, QA pe telefon.
+
+---
+
+## Analiza inițială (înainte de implementare)
+
 Data: 2026-10-31 · branch `ccr-454f53a2-sy5k23`. Am verificat în cod, nu din memorie.
 
 Legendă:
