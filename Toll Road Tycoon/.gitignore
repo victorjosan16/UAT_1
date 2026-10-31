@@ -20,3 +20,7 @@
 # Headless simulation test build output
 /Tools/SimulationTests/bin/
 /Tools/SimulationTests/obj/
+
+# Signing keys are never committed
+*.keystore
+*.jks

@@ -78,6 +78,10 @@ simulării și apelează funcțiile ei de cumpărare.
   încarcă (fișierul e păstrat). Mașinile aflate pe drum nu se salvează: nu plătiseră încă, așa că o
   reîncărcare nu poate plăti de două ori.
 
+## Build automat
+
+Testele și build-urile Android rulează automat pe GitHub Actions: vezi [`BUILD.md`](BUILD.md).
+
 ## Rularea testelor fără Unity
 
 ```bash

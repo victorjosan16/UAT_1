@@ -1,0 +1,123 @@
+# Automatic tests and Android builds for "Toll Road Tycoon".
+#
+# - tests:   always runs; compiles the game logic and runs all NUnit tests with .NET (no Unity needed).
+# - android: builds a test APK and a release AAB with Unity (GameCI). Runs only when the Unity
+#            licence secrets are set (see "Toll Road Tycoon/BUILD.md").
+name: Toll Road Tycoon
+
+on:
+  push:
+    branches: [toll-road-tycoon, main]
+    paths:
+      - "Toll Road Tycoon/**"
+      - ".github/workflows/toll-road-tycoon.yml"
+    tags: ["trt-v*"]
+  pull_request:
+    paths:
+      - "Toll Road Tycoon/**"
+  workflow_dispatch:
+
+concurrency:
+  group: trt-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Simulation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run tests
+        working-directory: "Toll Road Tycoon/Tools/SimulationTests"
+        run: dotnet test --logger "trx;LogFileName=results.trx" --logger "console;verbosity=normal"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "Toll Road Tycoon/Tools/SimulationTests/TestResults/*.trx"
+
+  android:
+    name: Android ${{ matrix.format }}
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [apk, aab]
+    env:
+      HAS_UNITY_LICENSE: ${{ secrets.UNITY_LICENSE != '' }}
+    steps:
+      - name: Unity licence missing
+        if: env.HAS_UNITY_LICENSE != 'true'
+        run: echo "::warning::UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD secrets are not set, skipping the Unity build. See Toll Road Tycoon/BUILD.md."
+
+      - name: Free disk space
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: false
+          large-packages: false
+
+      - uses: actions/checkout@v4
+        if: env.HAS_UNITY_LICENSE == 'true'
+
+      - name: Cache Unity Library
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: actions/cache@v4
+        with:
+          path: "Toll Road Tycoon/Library"
+          key: trt-library-android-${{ hashFiles('Toll Road Tycoon/Packages/manifest.json', 'Toll Road Tycoon/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: trt-library-android-
+
+      - name: Decode signing key
+        if: env.HAS_UNITY_LICENSE == 'true' && matrix.format == 'aab'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "Toll Road Tycoon/release.keystore"
+            echo "Signing key decoded."
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set: the AAB is signed with the debug key and cannot be uploaded to Google Play."
+          fi
+
+      - name: Build with Unity
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: "Toll Road Tycoon"
+          targetPlatform: Android
+          buildMethod: TollRoadTycoon.EditorTools.BuildAndroid.Ci
+          versioning: None
+          customParameters: >-
+            -trtFormat ${{ matrix.format }}
+            -trtBuildNumber ${{ github.run_number }}
+            -trtKeystore release.keystore
+            -trtKeystorePass ${{ secrets.ANDROID_KEYSTORE_PASS }}
+            -trtKeyAlias ${{ secrets.ANDROID_KEYALIAS_NAME }}
+            -trtKeyAliasPass ${{ secrets.ANDROID_KEYALIAS_PASS }}
+
+      - name: Upload build
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TollRoadTycoon-${{ matrix.format }}-${{ github.run_number }}
+          path: "Toll Road Tycoon/Builds/Android/TollRoadTycoon.${{ matrix.format }}"
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: env.HAS_UNITY_LICENSE == 'true' && startsWith(github.ref, 'refs/tags/trt-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "Toll Road Tycoon/Builds/Android/TollRoadTycoon.${{ matrix.format }}"

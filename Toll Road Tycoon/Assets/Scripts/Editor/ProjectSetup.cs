@@ -40,7 +40,7 @@ namespace TollRoadTycoon.EditorTools
             Directory.CreateDirectory("Assets/Scenes");
             if (!File.Exists(BootScenePath))
             {
-                if (EditorSceneManager.GetActiveScene().isDirty && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+                if (!Application.isBatchMode && EditorSceneManager.GetActiveScene().isDirty && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
                 // The game builds its world at runtime (GameBootstrap); the scene only needs to exist.
                 var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 EditorSceneManager.SaveScene(scene, BootScenePath);
