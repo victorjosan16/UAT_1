@@ -12,6 +12,8 @@
   "starImprovementReward": 10,
   "milestoneEvery": 10,
   "milestoneCoins": 100,
+  "hardLevelBonus": 25,
+  "bossLevelBonus": 60,
   "milestoneBoosters": {
     "Undo": 2,
     "Hint": 1

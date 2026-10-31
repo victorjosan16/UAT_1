@@ -88,7 +88,7 @@ namespace Veliqora.Core.Levels
             {
                 LevelDefinition def;
                 if (n <= HandcraftedLevels.All.Length) def = BuildHandcrafted(n, report);
-                else def = BuildGenerated(n, baseSeed, FindSegment(curve, n).ForLevel(n), report);
+                else def = BuildGenerated(n, baseSeed, FindSegment(curve, n).ForLevel(n), report, StagePlanner.Plan(baseSeed, n));
                 if (def == null) throw new InvalidOperationException("Failed to build level " + n + " — see report");
                 // Contextual tip the first time a new constraint appears.
                 if (def.TutorialKey == null && def.EmptyBottleCount == 1 && !catalog.Levels.Exists(l => l.EmptyBottleCount == 1))
@@ -134,36 +134,48 @@ namespace Veliqora.Core.Levels
         }
 
         public static LevelDefinition BuildGenerated(int n, ulong baseSeed, CurveSegment seg, List<BuildReportRow> report)
-        {
-            var spec = new GenerationSpec
-            {
-                Colors = seg.Colors,
-                EmptyBottles = seg.EmptyBottles,
-                Capacity = seg.Capacity,
-                MinSolutionLength = seg.MinSolution,
-                MaxAdjacentPairs = seg.MaxAdjacentPairs,
-                Solver = SolverOptions.Generation,
-            };
+            => BuildGenerated(n, baseSeed, seg, report, new LevelPlan { Number = n, Stage = StagePlanner.StageOf(n), PickQuantile = 0.5 });
 
-            var candidates = new List<GeneratedLevel>();
-            for (int c = 0; c < seg.Candidates; c++)
+        public static LevelDefinition BuildGenerated(int n, ulong baseSeed, CurveSegment seg, List<BuildReportRow> report, LevelPlan plan)
+        {
+            // Hard/Boss levels add colors; if that layout family is (near) unsolvable within budget, step the bonus down.
+            List<GeneratedLevel> candidates = null;
+            GenerationSpec spec = null;
+            int candidateCount = plan.Kind == LevelKind.Boss ? 8 : (plan.Kind == LevelKind.Hard ? 6 : seg.Candidates);
+            for (int bonus = plan.HardBonusColors; bonus >= 0; bonus--)
             {
-                var g = LevelGenerator.Generate(spec, DeterministicRandom.Combine(baseSeed, n, c));
-                if (g == null) continue;
-                g.StuckRate = DifficultyAnalyzer.StuckRate(GameState.FromArrays(spec.Capacity, g.Bottles), DeterministicRandom.Combine(g.Seed, 1));
-                candidates.Add(g);
+                var p = plan;
+                p.HardBonusColors = bonus;
+                int colors = StagePlanner.ColorsFor(p, seg.Colors, n);
+                spec = new GenerationSpec
+                {
+                    Colors = colors,
+                    EmptyBottles = seg.EmptyBottles,
+                    Capacity = seg.Capacity,
+                    MinSolutionLength = Math.Max(6, seg.MinSolution + 2 * (colors - seg.Colors)),
+                    MaxAdjacentPairs = seg.MaxAdjacentPairs,
+                    Solver = SolverOptions.Generation,
+                };
+                candidates = new List<GeneratedLevel>();
+                for (int c = 0; c < candidateCount; c++)
+                {
+                    var g = LevelGenerator.Generate(spec, DeterministicRandom.Combine(baseSeed, n, c + 100 * bonus));
+                    if (g == null) continue;
+                    g.StuckRate = DifficultyAnalyzer.StuckRate(GameState.FromArrays(spec.Capacity, g.Bottles), DeterministicRandom.Combine(g.Seed, 1));
+                    candidates.Add(g);
+                }
+                if (candidates.Count > 0) break;
             }
-            if (candidates.Count == 0)
+            if (candidates == null || candidates.Count == 0)
             {
                 report?.Add(new BuildReportRow { Number = n, Tier = DifficultyTiers.ForLevel(n).ToString(), Colors = seg.Colors, Passed = false, Note = "no verified candidate within budget" });
                 return null;
             }
 
-            // Gentle sawtooth ramp: early in a segment pick the easiest candidate, late in the segment the hardest.
+            // Pick by difficulty: Hard/Boss take the hardest verified candidate; normal levels a random easy-to-medium one.
             candidates.Sort((a, b) => a.DifficultyScore.CompareTo(b.DifficultyScore));
-            double t = seg.LastLevel == seg.FirstLevel ? 1.0 : (double)(n - seg.FirstLevel) / (seg.LastLevel - seg.FirstLevel);
-            int pick = (int)Math.Round(t * (candidates.Count - 1));
-            var chosen = candidates[pick];
+            int pick = (int)Math.Round(plan.PickQuantile * (candidates.Count - 1));
+            var chosen = candidates[Math.Max(0, Math.Min(candidates.Count - 1, pick))];
 
             // Tighter benchmark for stars: re-solve the chosen level with plain A* (weight 1). Keep whichever
             // verified solution is shorter. Still reported as a benchmark, not as proven optimal.
@@ -172,7 +184,7 @@ namespace Veliqora.Core.Levels
             if (tight.Status == SolveStatus.Solved && tight.Length < chosen.Solve.Length && PuzzleSolver.VerifySolution(start, tight.Moves, out _))
                 chosen.Solve = tight;
 
-            var row = Row(n, chosen.Seed, chosen.Bottles, seg.Capacity, chosen.Solve, false, true, "candidates=" + candidates.Count);
+            var row = Row(n, chosen.Seed, chosen.Bottles, seg.Capacity, chosen.Solve, false, true, plan.Kind.ToString().ToLowerInvariant() + " stage=" + plan.Stage + " candidates=" + candidates.Count);
             row.StuckRate = chosen.StuckRate;
             report?.Add(row);
             int attempts = 0;
@@ -182,8 +194,9 @@ namespace Veliqora.Core.Levels
                 Number = n,
                 Seed = chosen.Seed,
                 Capacity = seg.Capacity,
-                ColorCount = seg.Colors,
+                ColorCount = spec.Colors,
                 Bottles = chosen.Bottles,
+                Kind = plan.Kind,
                 Tier = DifficultyTiers.ForLevel(n),
                 Handcrafted = false,
                 ParMoves = chosen.Solve.Length,

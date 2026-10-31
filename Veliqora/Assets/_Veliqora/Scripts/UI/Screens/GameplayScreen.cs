@@ -75,13 +75,29 @@ namespace Veliqora.UI.Screens
             UIFactory.Place(pause.Rect, new Vector2(0, 0.5f), pause.Rect.sizeDelta, Vector2.zero, new Vector2(0, 0.5f));
             AddCoins(bar);
             _levelText = UIFactory.Text(bar, "Level " + number, UIStyle.FontHeading, hudText);
+            var stageText = UIFactory.Text(bar, "Stage " + _level.Stage, UIStyle.FontCaption, UIStyle.WithAlpha(hudText, 0.7f), TextAnchor.MiddleCenter, FontStyle.Normal);
+            UIFactory.Place(stageText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(300, 44), new Vector2(-40, 66));
             UIFactory.Place(_levelText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(420, 90), new Vector2(-40, 18));
             UIFactory.AddShadow(_levelText, new Color(0, 0, 0, light ? 0.08f : 0.3f), new Vector2(0, -3));
             _movesText = UIFactory.Text(bar, "", UIStyle.FontCaption, UIStyle.WithAlpha(hudText, 0.85f), TextAnchor.MiddleCenter, FontStyle.Normal);
             UIFactory.Place(_movesText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(460, 50), new Vector2(-40, -40));
 
+            if (_level.IsHard)
+            {
+                bool boss = _level.Kind == LevelKind.Boss;
+                var badge = UIFactory.Image(Safe, "HardBadge", SpriteLibrary.Rounded(30), boss ? UIStyle.Violet : UIStyle.Danger);
+                UIFactory.Place(badge.rectTransform, new Vector2(0.5f, 1f), new Vector2(boss ? 380 : 340, 64), new Vector2(-40, -UIStyle.TopBarHeight - 4), new Vector2(0.5f, 1f));
+                UIFactory.AddOutline(badge, new Color(1, 1, 1, 0.6f), 2f);
+                var bt = UIFactory.Text(badge.transform, boss ? "BOSS LEVEL" : "HARD LEVEL", UIStyle.FontCaption, Color.white);
+                if (boss)
+                {
+                    var crown = UIFactory.Image(badge.transform, "Crown", SpriteLibrary.Get(Icon.Crown), Color.white);
+                    UIFactory.Place(crown.rectTransform, new Vector2(0, 0.5f), new Vector2(56, 56), new Vector2(14, 2), new Vector2(0, 0.5f));
+                }
+                if (!MotionPrefs.Reduced) Tween.Pulse(this, badge.rectTransform, 0.05f, 0.9f);
+            }
             _goalText = UIFactory.Text(Safe, "", UIStyle.FontCaption, UIStyle.WithAlpha(hudText, 0.8f), TextAnchor.MiddleCenter, FontStyle.Normal);
-            UIFactory.Band(_goalText.rectTransform, 1f, 60, -UIStyle.TopBarHeight - 30, 40, 1f);
+            UIFactory.Band(_goalText.rectTransform, 1f, 60, -UIStyle.TopBarHeight - (_level.IsHard ? 82 : 30), 40, 1f);
 
             AmbientMotes(3f);
             BottleView.NeonAura = !light;
@@ -116,6 +132,13 @@ namespace Veliqora.UI.Screens
             S.Settings.Changed += OnSettingsChanged;
             Refresh();
             StartTutorial();
+            if (_level.IsHard && _ctl.Session.MoveCount == 0)
+            {
+                int bonus = _level.Kind == LevelKind.Boss ? S.EconomyConfig.BossLevelBonus : S.EconomyConfig.HardLevelBonus;
+                bool firstClear = !S.Save.Progress.IsCompleted(_level.Number);
+                Tween.Delay(this, 0.5f, () => Overlays.Toast((_level.Kind == LevelKind.Boss ? "Boss level — end of stage " + _level.Stage + "!" : "Hard level!")
+                    + (firstClear ? "  Bonus +" + bonus + " coins" : ""), 2.4f));
+            }
         }
 
         private void OnDestroy()

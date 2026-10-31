@@ -47,8 +47,10 @@ namespace Veliqora.UI.Screens
             Tween.Pulse(this, play.Rect, 0.04f, 1.4f);
 
             var pill = UIFactory.Image(Safe, "LevelPill", SpriteLibrary.Rounded(50), new Color(0.1f, 0.12f, 0.3f, 0.7f));
-            UIFactory.Place(pill.rectTransform, new Vector2(0.5f, 0.36f), new Vector2(560, 110), new Vector2(0, -250));
-            string label = allDone ? "All levels complete!" : (resume ? "Continue  ·  Level " + level : "Level " + level);
+            UIFactory.Place(pill.rectTransform, new Vector2(0.5f, 0.36f), new Vector2(820, 110), new Vector2(0, -250));
+            var levelDef = S.Levels.Get(Mathf.Clamp(level, 1, S.Levels.Count));
+            string kindTag = levelDef.Kind == Core.Levels.LevelKind.Boss ? "  ·  BOSS" : (levelDef.Kind == Core.Levels.LevelKind.Hard ? "  ·  HARD" : "");
+            string label = allDone ? "All levels complete!" : (resume ? "Continue  ·  " : "") + "Stage " + levelDef.Stage + "  ·  Level " + level + kindTag;
             var lt = UIFactory.Text(pill.transform, label, UIStyle.FontBody, Color.white);
             UIFactory.AddShadow(lt, new Color(0, 0, 0, 0.3f), new Vector2(0, -3));
 

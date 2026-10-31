@@ -35,9 +35,11 @@ namespace Veliqora.Core.Economy
         public int BaseCoins;
         public int StarCoins;
         public int MilestoneCoins;
+        /// <summary>Hard/Boss first-clear bonus.</summary>
+        public int DifficultyBonus;
         public Dictionary<BoosterType, int> Boosters = new Dictionary<BoosterType, int>();
         public bool FirstClear;
-        public int Total => BaseCoins + StarCoins + MilestoneCoins;
+        public int Total => BaseCoins + StarCoins + MilestoneCoins + DifficultyBonus;
         public TxStatus Status;
     }
 
@@ -147,7 +149,7 @@ namespace Veliqora.Core.Economy
         /// Computes the reward for finishing a level. First clear: base + per-star coins (+ milestone every N levels).
         /// Replays: small base + coins only for newly earned stars, so replaying can't farm large amounts.
         /// </summary>
-        public LevelReward ComputeLevelReward(int levelNumber, int stars, int previousBestStars)
+        public LevelReward ComputeLevelReward(int levelNumber, int stars, int previousBestStars, Levels.LevelKind kind = Levels.LevelKind.Normal)
         {
             var r = new LevelReward { FirstClear = previousBestStars <= 0 };
             stars = Math.Max(1, Math.Min(3, stars));
@@ -155,6 +157,8 @@ namespace Veliqora.Core.Economy
             {
                 r.BaseCoins = _config.LevelBaseReward;
                 r.StarCoins = stars * _config.PerStarReward;
+                if (kind == Levels.LevelKind.Hard) r.DifficultyBonus = _config.HardLevelBonus;
+                else if (kind == Levels.LevelKind.Boss) r.DifficultyBonus = _config.BossLevelBonus;
                 if (_config.MilestoneEvery > 0 && levelNumber % _config.MilestoneEvery == 0)
                 {
                     r.MilestoneCoins = _config.MilestoneCoins;
@@ -170,9 +174,9 @@ namespace Veliqora.Core.Economy
         }
 
         /// <summary>Grants the level reward exactly once per attempt id.</summary>
-        public LevelReward GrantLevelReward(int levelNumber, int stars, int previousBestStars, string attemptId)
+        public LevelReward GrantLevelReward(int levelNumber, int stars, int previousBestStars, string attemptId, Levels.LevelKind kind = Levels.LevelKind.Normal)
         {
-            var r = ComputeLevelReward(levelNumber, stars, previousBestStars);
+            var r = ComputeLevelReward(levelNumber, stars, previousBestStars, kind);
             string tx = "level:" + levelNumber + ":" + attemptId;
             if (IsProcessed(tx)) { r.Status = TxStatus.Duplicate; return r; }
             _state.Coins += r.Total;

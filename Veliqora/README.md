@@ -3,7 +3,7 @@
 Original water-sort puzzle for Android, built in **Unity 6 (LTS)** with C#.
 The working title for the store is *Veliqora: Color Sort Puzzle*. This repo makes no claim about trademark status or Play Store availability.
 
-> **Status (honest summary):** the pure C# game core, 300 verified levels and 98 automated tests are
+> **Status (honest summary):** the pure C# game core, 300 verified levels and 104 automated tests are
 > implemented and **were executed** in this environment (.NET 8). The Unity layer (scenes, UI, rendering,
 > audio, ads, editor tooling, PlayMode tests) is implemented and **compiles** against Unity reference
 > assemblies. It has **not been run inside the Unity Editor or on a device yet**, because no Unity Editor or license was
@@ -51,7 +51,7 @@ real scenes aren't in Build Settings.
 
 ```bash
 # from Veliqora/
-dotnet test Tools/Veliqora.Core.Tests                         # 98 EditMode tests against the pure core
+dotnet test Tools/Veliqora.Core.Tests                         # 104 EditMode tests against the pure core
 dotnet run -c Release --project Tools/LevelGen -- build       # regenerate the 300 levels deterministically (~10 s)
 dotnet run -c Release --project Tools/LevelGen -- validate    # replay + independent solver check -> Docs/level_validation_report.csv
 dotnet build Tools/UnityCompileCheck                          # compile Unity-side code against reference assemblies (optional)

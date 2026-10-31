@@ -117,8 +117,11 @@ namespace Veliqora.UI.Screens
             node.sizeDelta = new Vector2(150, 150);
             node.anchoredPosition = pos;
 
-            float size = current ? 170 : 140;
-            Color fill = completed ? UIStyle.Sunshine : (unlocked ? UIStyle.Violet : UIStyle.Hex("#9AA3B5"));
+            var def = S.Levels.Get(n);
+            bool boss = def.Kind == Core.Levels.LevelKind.Boss, hard = def.Kind == Core.Levels.LevelKind.Hard;
+            float size = (current ? 170 : 140) + (boss ? 30 : 0);
+            Color pending = boss ? UIStyle.Hex("#7A3CFF") : (hard ? UIStyle.Danger : UIStyle.Violet);
+            Color fill = completed ? UIStyle.Sunshine : (unlocked ? pending : UIStyle.Hex("#5A5F7A"));
             var btn = UIFactory.IconButton(node, unlocked ? Icon.Play : Icon.Lock, fill, size, () => OnNode(n));
             UIFactory.Place(btn.Rect, new Vector2(0.5f, 0.5f), new Vector2(size, size), Vector2.zero);
             if (unlocked)
@@ -131,6 +134,31 @@ namespace Veliqora.UI.Screens
             {
                 btn.Icon.rectTransform.offsetMin = btn.Icon.rectTransform.offsetMax = Vector2.zero;
                 UIFactory.Stretch(btn.Icon.rectTransform, size * 0.3f);
+            }
+
+            if (boss || hard)
+            {
+                if (boss)
+                {
+                    var crown = UIFactory.Image(node, "Crown", SpriteLibrary.Get(Icon.Crown), Color.white);
+                    UIFactory.Place(crown.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(84, 84), new Vector2(0, size * 0.5f + 24));
+                }
+                var tag = UIFactory.Image(node, "Tag", SpriteLibrary.Rounded(20), boss ? UIStyle.Hex("#7A3CFF") : UIStyle.Danger);
+                float tagSide = pos.x > 0 ? 1f : -1f; // milestone chests sit on the other side
+                UIFactory.Place(tag.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(boss ? 110 : 104, 40), new Vector2(tagSide * (size * 0.5f + 34), size * 0.32f));
+                UIFactory.AddOutline(tag, new Color(1, 1, 1, 0.7f), 2f);
+                UIFactory.Text(tag.transform, boss ? "BOSS" : "HARD", UIStyle.FontCaption - 6, Color.white);
+            }
+
+            if ((n - 1) % Core.Levels.StagePlanner.StageSize == 0)
+            {
+                // Stage banner at the first level of each stage.
+                float side = pos.x > 0 ? -1 : 1;
+                var banner = UIFactory.Image(node, "Stage", SpriteLibrary.Rounded(28), new Color(0.08f, 0.06f, 0.2f, 0.82f));
+                UIFactory.Place(banner.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(230, 70), new Vector2(side * 220, 0));
+                UIFactory.AddOutline(banner, UIStyle.WithAlpha(S.Themes.Theme.Accent, 0.8f), 2f);
+                var bt = UIFactory.Text(banner.transform, "STAGE " + def.Stage, UIStyle.FontLabel, Color.white);
+                UIFactory.AddShadow(bt, new Color(0, 0, 0, 0.4f), new Vector2(0, -2));
             }
 
             if (completed)

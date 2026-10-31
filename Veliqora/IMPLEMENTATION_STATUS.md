@@ -81,6 +81,13 @@ an APK/AAB, or on-device performance.
   If you own them, drop them in as `Resources/Veliqora/Art/Backgrounds/dark_<scene>.png` and they override the procedural scenes.
 - ⬜ **Reference videos:** none were received; mechanics follow the brief and the screenshot.
 
+## Stage pacing (random hard levels from the start)
+- ✅ **Planner:** `StagePlanner` (stages of 10, Boss finales, ~18% random Hard from L12, ±1 color wobble) feeds the catalog builder.
+- ✅ **Catalog:** regenerated (content version 2): 300/300 validated, and 6 new tests prove the pacing properties.
+- ✅ **Economy:** the hard/boss coin bonus is covered by tests.
+- 🟡 **UI (compiles, not run):** map stage banners and HARD/BOSS nodes, HUD badge + toast, Home stage label, Level Complete bonus line.
+- ℹ️ **Save impact:** the content-version bump drops an in-progress puzzle on update; progress, stars and coins are kept.
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

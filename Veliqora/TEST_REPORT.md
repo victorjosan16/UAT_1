@@ -4,10 +4,10 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **98 / 98 passed**
+### 1.1 EditMode suite against the pure core: **104 / 104 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 98, Skipped: 0, Total: 98, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 104, Skipped: 0, Total: 104, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
@@ -21,6 +21,7 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 | SaveSystemTests | 11 | full round trip incl. in-progress session, checksum corruption + truncation, newer-schema rejection, v1→v2 migration, backup recovery, fresh start with message, write failure reported, damaged session isolated, real file storage atomic write + backup recovery, progress rules |
 | RewardedAdGateTests | 10 | reward only on Completed, duplicate callbacks, cancel/fail/no-fill, timeout + late completion ignored, single in-flight, unavailable, abort on background, cooldown, NoAds never blocks |
 | MiniJsonTests | 6 | round trip, malformed input |
+| StagePacingTests | 6 | deterministic planner, boss at every stage finale, random hard levels appear early (≤ L20) at ~10–30% and never back-to-back, hard/boss harder than normal (par + stuck rate) in every tier, non-linear difficulty, hard/boss first-clear bonus |
 | ProjectFilesTests | 3 | committed scenes reference `SceneEntry` with the right ScreenId, Build Settings order + GUIDs, 12 distinct dark backgrounds configured |
 
 ### 1.2 Batch level validation: **300 / 300 PASS**
@@ -75,7 +76,7 @@ Two problems found this way were fixed:
 - the first badge mask also caught the button's orange outline;
 - the derived green pill was too neon.
 
-After the change, the 98 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
+After the change, the 104 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
 
 ## 2. Not executed (requires Unity Editor / device)
 

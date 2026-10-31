@@ -7,7 +7,7 @@ namespace Veliqora.UI
     public enum Icon
     {
         Coin, Star, StarEmpty, Lock, Check, Plus, Gear, Pause, Back, Undo, Shuffle, Bulb, BottlePlus,
-        Play, Close, Home, Restart, Chest, ChestOpen, Droplet, Map, Bag, Palette, Ad,
+        Play, Close, Home, Restart, Chest, ChestOpen, Droplet, Map, Bag, Palette, Ad, Crown,
     }
 
     /// <summary>
@@ -293,6 +293,15 @@ namespace Veliqora.UI
                     p.Fill(q => PixelPainter.Circle(q, new Vector2(92, 74), 10), UIStyle.Mint);
                     p.Fill(q => PixelPainter.Circle(q, new Vector2(38, 52), 10), UIStyle.Violet);
                     break;
+                case Icon.Crown:
+                {
+                    var gold = UIStyle.Hex("#FFC93C");
+                    p.Fill(q => PixelPainter.Polygon(q, new[] { new Vector2(14, 30), new Vector2(114, 30), new Vector2(118, 96), new Vector2(90, 64), new Vector2(64, 104), new Vector2(38, 64), new Vector2(10, 96) }), gold,
+                        q => Color.Lerp(UIStyle.Hex("#E08A12"), UIStyle.Hex("#FFE27A"), q.y / 128f));
+                    p.Fill(q => PixelPainter.RoundedRect(q, new Rect(14, 18, 100, 16), 5), UIStyle.Hex("#E08A12"));
+                    p.Fill(q => PixelPainter.Circle(q, new Vector2(64, 50), 9), UIStyle.Coral);
+                    break;
+                }
                 case Icon.Ad:
                     p.Fill(q => PixelPainter.RoundedRect(q, new Rect(10, 26, 108, 76), 16), w);
                     p.Fill(q => PixelPainter.Polygon(q, new[] { new Vector2(52, 44), new Vector2(52, 84), new Vector2(84, 64) }), UIStyle.Violet);

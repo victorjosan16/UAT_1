@@ -21,6 +21,7 @@ namespace Veliqora.Gameplay
         public int Stars;
         public int Moves;
         public int Par;
+        public Core.Levels.LevelKind Kind;
         public LevelReward Reward;
         public string AttemptId;
         public bool IsLastLevel;
@@ -262,7 +263,7 @@ namespace Veliqora.Gameplay
             var prog = _s.Save.Progress;
             int stars = Session.CurrentStars;
             int prev = prog.Stars(Level.Number);
-            var reward = _s.Economy.GrantLevelReward(Level.Number, stars, prev, Session.AttemptId);
+            var reward = _s.Economy.GrantLevelReward(Level.Number, stars, prev, Session.AttemptId, Level.Kind);
             ProgressRules.RecordCompletion(prog, Level.Number, stars, _s.Levels.Count);
             _s.Save.Session = null;
             _s.SaveNow();
@@ -275,6 +276,7 @@ namespace Veliqora.Gameplay
                 Stars = stars,
                 Moves = Session.MoveCount,
                 Par = Session.ParMoves,
+                Kind = Level.Kind,
                 Reward = reward,
                 AttemptId = Session.AttemptId,
                 IsLastLevel = Level.Number >= _s.Levels.Count,

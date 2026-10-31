@@ -97,6 +97,22 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
   Undone moves don't count, and the HUD shows the ★★★ target. After a Shuffle, par becomes the shuffled layout's verified solution length.
 - **Optional challenge:** the ★★★ move target shown on every level.
 
+## 5b. Stages and random hard levels (content version 2)
+- **Stages:** the game is split into stages of 10 levels; stage 1 (L1–10) is the handcrafted tutorial.
+- **Boss levels:** the **last level of every stage** (L20, L30, …) is a **Boss** level: +2 colors and the hardest of 8 verified candidates.
+- **Random Hard levels:** from L12, about **18% of levels** are randomly **Hard**: +1 color and the hardest of 6 candidates.
+  A hard level is never followed by another hard level. The first one lands at L13, so hard levels show up even at the beginning.
+- **Normal levels:** a random ±1 color wobble and a random easy-to-medium candidate. Difficulty is a wave with breathers, not a straight line.
+- **Determinism and fallback:** everything is deterministic from the base seed and still solver-verified. If a hard layout family is unsolvable in budget (e.g. 7 colors with one spare bottle), the bonus steps down automatically.
+- **Measured results:**
+  - hard/boss levels average 18–24 moves vs 13 for normal ones in Beginner, and so on up to Master;
+  - stuck rate rises from 0.03 to 0.37–0.80;
+  - 33 Hard + 29 Boss levels;
+  - 79 moments where difficulty drops by more than 3 moves.
+- **Rewards:** first clear gives a bonus of +25 coins (Hard) or +60 (Boss), configured by `hardLevelBonus` / `bossLevelBonus` in `economy.json`.
+- **UI:** stage banners and red **HARD** / violet crowned **BOSS** nodes on the map; HUD shows "Stage N" and a pulsing HARD/BOSS badge plus an intro toast;
+  Home shows the stage; Level Complete shows the bonus.
+
 ## 6. Boosters and economy (`economy.json`)
 - **Starting grant (once):** 200 coins, Undo ×3, Add bottle ×1, Shuffle ×1, Hint ×2.
 - **Level reward:**

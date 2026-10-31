@@ -50,6 +50,11 @@ namespace Veliqora.Core.Levels
         /// <summary>Optional contextual tutorial key consumed by the presentation layer.</summary>
         public string TutorialKey;
         public LevelValidation Validation = new LevelValidation();
+        /// <summary>Pacing role from StagePlanner (Normal / random Hard / stage-finale Boss).</summary>
+        public LevelKind Kind = LevelKind.Normal;
+
+        public int Stage => StagePlanner.StageOf(Number);
+        public bool IsHard => Kind != LevelKind.Normal;
 
         public string Id => "L" + Number.ToString("000");
         public int EmptyBottleCount
@@ -109,6 +114,7 @@ namespace Veliqora.Core.Levels
                 },
             };
             if (!string.IsNullOrEmpty(TutorialKey)) d["tutorial"] = TutorialKey;
+            if (Kind != LevelKind.Normal) d["kind"] = Kind.ToString().ToLowerInvariant();
             return d;
         }
 
@@ -124,6 +130,8 @@ namespace Veliqora.Core.Levels
                 ParMoves = MiniJson.GetInt(d, "par"),
                 TutorialKey = MiniJson.GetString(d, "tutorial"),
             };
+            LevelKind kind;
+            def.Kind = Enum.TryParse(MiniJson.GetString(d, "kind", "normal"), true, out kind) ? kind : LevelKind.Normal;
             DifficultyTier tier;
             def.Tier = Enum.TryParse(MiniJson.GetString(d, "tier", ""), out tier) ? tier : DifficultyTiers.ForLevel(def.Number);
             var bottles = MiniJson.GetList(d, "bottles");

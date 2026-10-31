@@ -42,6 +42,9 @@ namespace Veliqora.Core.Economy
         public int StarImprovementReward = 10;
         public int MilestoneEvery = 10;
         public int MilestoneCoins = 100;
+        /// <summary>Extra first-clear coins for a random Hard level / a stage-finale Boss level.</summary>
+        public int HardLevelBonus = 25;
+        public int BossLevelBonus = 60;
         public Dictionary<BoosterType, int> MilestoneBoosters = new Dictionary<BoosterType, int>();
         public int RewardedBonusBoosterQuantity = 1;
         public BoosterType RewardedBonusBooster = BoosterType.Undo;
@@ -65,6 +68,8 @@ namespace Veliqora.Core.Economy
                 StarImprovementReward = MiniJson.GetInt(root, "starImprovementReward", 10),
                 MilestoneEvery = MiniJson.GetInt(root, "milestoneEvery", 10),
                 MilestoneCoins = MiniJson.GetInt(root, "milestoneCoins", 100),
+                HardLevelBonus = MiniJson.GetInt(root, "hardLevelBonus", 25),
+                BossLevelBonus = MiniJson.GetInt(root, "bossLevelBonus", 60),
                 RewardedBonusBoosterQuantity = MiniJson.GetInt(root, "rewardedBonusBoosterQuantity", 1),
                 RewardedCooldownSeconds = MiniJson.GetInt(root, "rewardedCooldownSeconds", 30),
             };

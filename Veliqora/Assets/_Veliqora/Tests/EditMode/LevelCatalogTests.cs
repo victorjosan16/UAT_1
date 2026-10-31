@@ -57,11 +57,11 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void ColorCount_StaysWithin2To12_AndUpTo8BeforeMaster()
+        public void ColorCount_StaysWithin2To12_AndUpTo9BeforeMaster()
         {
             foreach (var l in Catalog.Levels)
             {
-                Assert.LessOrEqual(l.ColorCount, l.Tier == DifficultyTier.Master ? 12 : 8, l.Id);
+                Assert.LessOrEqual(l.ColorCount, l.Tier == DifficultyTier.Master ? 12 : 9, l.Id);
                 if (l.Number > 1) Assert.GreaterOrEqual(l.ColorCount, 2, l.Id);
             }
         }

@@ -111,6 +111,12 @@ namespace Veliqora.UI.Screens
             UIFactory.Place(_coinsText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(360, 140), new Vector2(110, 0));
             UIFactory.AddShadow(_coinsText, new Color(0, 0, 0, 0.3f), new Vector2(0, -4));
             Tween.Run(this, MotionPrefs.Dur(0.8f), k => _coinsText.text = "+" + Mathf.RoundToInt(total * k), null, Ease.OutCubic);
+            if (_result.Reward != null && _result.Reward.DifficultyBonus > 0)
+            {
+                var hb = UIFactory.Text(Safe, (_result.Kind == Core.Levels.LevelKind.Boss ? "Boss" : "Hard") + " level bonus +" + _result.Reward.DifficultyBonus, UIStyle.FontLabel, UIStyle.Coral);
+                UIFactory.Place(hb.rectTransform, new Vector2(0.5f, 0.34f), new Vector2(900, 60), new Vector2(0, _result.Reward.MilestoneCoins > 0 ? 150 : 95));
+                UIFactory.AddShadow(hb, new Color(0, 0, 0, 0.4f), new Vector2(0, -3));
+            }
             if (_result.Reward != null && _result.Reward.MilestoneCoins > 0)
             {
                 var ms = UIFactory.Text(Safe, "Milestone chest opened! Bonus coins and boosters added.", UIStyle.FontCaption, UIStyle.Sunshine);
