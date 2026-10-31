@@ -9,7 +9,8 @@ namespace TollRoadTycoon.EditorTools
     /// <summary>
     /// One-time project configuration done through Unity's own APIs (so Unity writes valid scene and
     /// settings files): Boot scene in build settings, portrait orientation, Android identifiers.
-    /// Runs automatically on first import and is available under Tools > Toll Road Tycoon.
+    /// Runs automatically on first import (also in batch-mode / Unity Cloud builds) and is available
+    /// under Tools > Toll Road Tycoon. Can also be set as the Cloud Build pre-export method.
     /// </summary>
     [InitializeOnLoad]
     public static class ProjectSetup
@@ -19,7 +20,24 @@ namespace TollRoadTycoon.EditorTools
 
         static ProjectSetup()
         {
-            if (Application.isBatchMode || SessionState.GetBool(DoneKey, false)) return;
+            if (Application.isBatchMode)
+            {
+                // Cloud / command-line builds: make sure the Boot scene exists and is in the build
+                // before the build starts, without needing a pre-export method.
+                if (!File.Exists(BootScenePath) || EditorBuildSettings.scenes.Length == 0)
+                {
+                    try
+                    {
+                        Run();
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("[Toll Road Tycoon] Automatic project setup failed: " + e);
+                    }
+                }
+                return;
+            }
+            if (SessionState.GetBool(DoneKey, false)) return;
             SessionState.SetBool(DoneKey, true);
             EditorApplication.delayCall += () =>
             {
