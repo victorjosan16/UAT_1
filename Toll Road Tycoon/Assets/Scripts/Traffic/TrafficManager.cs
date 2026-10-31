@@ -14,6 +14,8 @@ namespace TollRoadTycoon.Traffic
     {
         private const double Lookahead = 12;
         private const double GateGrantDistance = 1.6;
+        private const double CurveExtraGap = 0.6;
+        private const double DivergeClearance = 3.0;
 
         private readonly LaneManager _lanes;
         private readonly QueueManager _queues;
@@ -92,6 +94,7 @@ namespace TollRoadTycoon.Traffic
             if (_completed.Count == 0) return;
             foreach (var v in _completed)
             {
+                ReleaseReservation(v);
                 _active.Remove(v);
                 v.Segment?.Vehicles.Remove(v);
                 VehicleDespawned?.Invoke(v);
@@ -179,10 +182,22 @@ namespace TollRoadTycoon.Traffic
                 }
                 v.Distance -= current.Length;
                 current.Vehicles.Remove(v);
-                current.Reservations.Remove(v);
+                if (current.IsConnector)
+                {
+                    // Keep the connector reserved until the whole body is off it.
+                    ReleaseReservation(v);
+                    v.ReservationToRelease = current;
+                }
                 v.RouteIndex++;
                 next.Vehicles.Add(v);
             }
+            if (v.ReservationToRelease != null && v.Rear >= 0) ReleaseReservation(v);
+        }
+
+        private static void ReleaseReservation(Vehicle v)
+        {
+            v.ReservationToRelease?.Reservations.Remove(v);
+            v.ReservationToRelease = null;
         }
 
         /// <summary>Distance from the front bumper to the nearest thing the vehicle must not pass.</summary>
@@ -190,10 +205,16 @@ namespace TollRoadTycoon.Traffic
         {
             var seg = v.Segment;
             double best = double.MaxValue;
+            // Long vehicles swing sideways on the S-curves of the plaza, so keep extra room to other
+            // vehicles there (stop lines and gates are unaffected).
+            var upcoming = v.NextSegment;
+            bool nearCurve = seg.IsConnector || (upcoming != null && upcoming.IsConnector && seg.Length - v.Distance < 4);
+            // Longer bodies sweep wider on the curve, so the margin grows with both lengths.
+            double Extra(Vehicle u) => nearCurve ? CurveExtraGap + 0.5 * Math.Max(0, u.Length - 1.2) + 0.3 * Math.Max(0, v.Length - 1.2) : 0;
 
             // Leader on the same segment.
             int index = seg.Vehicles.IndexOf(v);
-            if (index > 0) best = seg.Vehicles[index - 1].Rear - v.Distance;
+            if (index > 0) best = seg.Vehicles[index - 1].Rear - v.Distance - Extra(seg.Vehicles[index - 1]);
 
             // Vehicles on diverging connectors that start where this one starts.
             if (seg.IsConnector)
@@ -202,7 +223,7 @@ namespace TollRoadTycoon.Traffic
                 {
                     foreach (var u in sibling.Vehicles)
                     {
-                        if (u.Distance > v.Distance) best = Math.Min(best, u.Rear - v.Distance);
+                        if (u.Distance > v.Distance) best = Math.Min(best, u.Rear - v.Distance - Extra(u));
                     }
                 }
             }
@@ -215,7 +236,8 @@ namespace TollRoadTycoon.Traffic
                     var last = succ.Last;
                     if (last == null) continue;
                     double rel = seg.Length + last.Rear;
-                    if (succ == v.NextSegment || rel < seg.Length) best = Math.Min(best, rel - v.Distance);
+                    // Diverging paths share their first metres, so a vehicle there still blocks us.
+                    if (succ == v.NextSegment || last.Rear < DivergeClearance) best = Math.Min(best, rel - v.Distance - Extra(last));
                 }
             }
 
@@ -241,7 +263,7 @@ namespace TollRoadTycoon.Traffic
                 var last = s.Last;
                 if (last != null)
                 {
-                    best = Math.Min(best, offset + last.Rear);
+                    best = Math.Min(best, offset + last.Rear - Extra(last));
                     break;
                 }
                 if (s.Kind == SegmentKind.BoothLane && !v.BarrierCleared)

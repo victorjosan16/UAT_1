@@ -132,6 +132,21 @@ namespace TollRoadTycoon.Save
                 if (data.Stats == null) data.Stats = new StatsSave();
                 data.Version = 2;
             }
+            if (data.Version < 3)
+            {
+                // v2 had a single road: it becomes section 1 (handled when the game is built).
+                if (data.Sections == null) data.Sections = new List<SectionSave>();
+                data.Version = 3;
+            }
+            if (data.Sections == null) data.Sections = new List<SectionSave>();
+            if (data.DailyMissions == null) data.DailyMissions = new List<MissionSave>();
+            foreach (var section in data.Sections)
+            {
+                if (section.Booths == null) section.Booths = new List<BoothSave>();
+                if (section.Workers == null) section.Workers = new List<WorkerSave>();
+                if (section.Services == null) section.Services = new List<ServiceSave>();
+                if (section.Decorations == null) section.Decorations = new List<DecorationSave>();
+            }
             if (data.Booths == null) data.Booths = new List<BoothSave>();
             if (data.Workers == null) data.Workers = new List<WorkerSave>();
             if (data.UnlockedVehicles == null) data.UnlockedVehicles = new List<string>();

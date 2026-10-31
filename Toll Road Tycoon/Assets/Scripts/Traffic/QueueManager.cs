@@ -44,6 +44,7 @@ namespace TollRoadTycoon.Traffic
             foreach (var booth in _booths)
             {
                 if (_lanes.EntryConnector(entryLane, booth.SlotIndex) == null) continue;
+                if (Math.Abs(_lanes.BoothX(booth.SlotIndex) - laneX) > _lanes.Layout.MaxLateralShift + 1e-6) continue;
                 if (!CanAccept(booth, vehicle)) continue;
                 double score = ExpectedWait(booth) + booth.CycleSeconds
                                + Math.Abs(_lanes.BoothX(booth.SlotIndex) - laneX) * 0.35

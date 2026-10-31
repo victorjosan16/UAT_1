@@ -23,6 +23,10 @@
     <Compile Include="../../Assets/Scripts/RoadExpansion/**/*.cs" />
     <Compile Include="../../Assets/Scripts/Save/**/*.cs" />
     <Compile Include="../../Assets/Scripts/Localization/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Services/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Missions/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Monetization/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Shop/**/*.cs" />
     <Compile Include="../../Assets/Tests/EditMode/**/*.cs" />
     <Compile Include="*.cs" />
   </ItemGroup>

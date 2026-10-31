@@ -34,17 +34,19 @@ namespace TollRoadTycoon.Core
         public double[] LaneX = { 0.0, 1.6, -1.6 };
         /// <summary>X of the toll booth slots in purchase order (centre outwards).</summary>
         public double[] BoothSlotX = { 0.8, -0.8, 2.4, -2.4, 4.0, -4.0 };
-        public double SpawnY = -34;
-        public double DecisionY = -18;
+        public double SpawnY = -40;
+        public double DecisionY = -24;
         public double BoothLaneStartY = -14;
         public double StopLineY = 0;
         public double BarrierY = 0.35;
         public double BoothLaneEndY = 3;
-        public double ExitStartY = 7;
-        public double DespawnY = 34;
+        public double ExitStartY = 9;
+        public double DespawnY = 36;
         public double OncomingLaneX = -6.2;
         /// <summary>A vehicle picks its booth this far before the plaza entry point.</summary>
         public double DecisionLookahead = 7;
+        /// <summary>Booths further sideways than this from a lane are not reachable from it (keeps plaza curves gentle).</summary>
+        public double MaxLateralShift = 3.2;
     }
 
     [Serializable]
@@ -123,6 +125,7 @@ namespace TollRoadTycoon.Core
         public BoothUpgradeConfig BoothUpgrades = new BoothUpgradeConfig();
         public WorkerConfig Workers = new WorkerConfig();
         public ExpansionConfig Expansion = new ExpansionConfig();
+        public ProgressionConfig Progression = ProgressionConfig.CreateDefault();
 
         public int MaxBooths => Math.Min(Layout.BoothSlotX.Length, Expansion.BoothSlotPrices.Length);
         public int MaxLanes => Math.Min(Layout.LaneX.Length, Expansion.LanePrices.Length);
@@ -135,6 +138,88 @@ namespace TollRoadTycoon.Core
             }
             return null;
         }
+
+        /// <summary>
+        /// Copy of this config adjusted for one road section: prices, tolls and demand are scaled,
+        /// vehicle types the section does not allow never spawn, and booth/lane limits are trimmed.
+        /// Shared settings (unlock prices, progression) are kept as they are.
+        /// </summary>
+        public GameConfig ForSection(RoadSectionConfig section)
+        {
+            var c = new GameConfig
+            {
+                FixedTimeStep = FixedTimeStep,
+                StartingBalanceCents = StartingBalanceCents,
+                IncomeWindowSeconds = IncomeWindowSeconds,
+                Progression = Progression,
+                Layout = Layout,
+            };
+            foreach (var type in VehicleTypes)
+            {
+                var t = type.Clone();
+                t.TollCents = (long)Math.Round(type.TollCents * section.TollMultiplier / 100.0) * 100;
+                if (!section.AllowsVehicle(type.Id)) t.SpawnWeight = 0;
+                c.VehicleTypes.Add(t);
+            }
+
+            c.Traffic = new TrafficConfig
+            {
+                BaseArrivalsPerSecond = Traffic.BaseArrivalsPerSecond * section.DemandMultiplier,
+                ArrivalsPerExtraLane = Traffic.ArrivalsPerExtraLane * section.DemandMultiplier,
+                ArrivalBonusPerUnlockedType = Traffic.ArrivalBonusPerUnlockedType,
+                OncomingArrivalsPerSecond = Traffic.OncomingArrivalsPerSecond * section.DemandMultiplier,
+                MinGap = Traffic.MinGap,
+                SpawnClearance = Traffic.SpawnClearance,
+                MaxPendingArrivals = Traffic.MaxPendingArrivals,
+            };
+
+            double p = section.PriceMultiplier;
+            var u = BoothUpgrades;
+            c.BoothUpgrades = new BoothUpgradeConfig
+            {
+                MaxSpeedLevel = u.MaxSpeedLevel,
+                SpeedBonusPerLevel = u.SpeedBonusPerLevel,
+                SpeedCost = u.SpeedCost.Scaled(p),
+                MaxTollLevel = u.MaxTollLevel,
+                TollBasisPointsPerLevel = u.TollBasisPointsPerLevel,
+                TollCost = u.TollCost.Scaled(p),
+                BaseQueueCapacity = u.BaseQueueCapacity,
+                MaxCapacityLevel = u.MaxCapacityLevel,
+                CapacityCost = u.CapacityCost.Scaled(p),
+                BaseBarrierSeconds = u.BaseBarrierSeconds,
+                MaxBarrierLevel = u.MaxBarrierLevel,
+                BarrierBonusPerLevel = u.BarrierBonusPerLevel,
+                BarrierCost = u.BarrierCost.Scaled(p),
+                AutomationCostCents = RoundDollars(u.AutomationCostCents * p * section.AutomationCostMultiplier),
+                AutomationRequiredSpeedLevel = section.AutomationRequiredSpeedLevel,
+                AutomaticProcessingSeconds = u.AutomaticProcessingSeconds,
+            };
+            c.Workers = new WorkerConfig
+            {
+                ProcessingSecondsByLevel = Workers.ProcessingSecondsByLevel,
+                HireCost = Workers.HireCost.Scaled(p),
+                UpgradeCost = Workers.UpgradeCost.Scaled(p),
+            };
+
+            int booths = Math.Min(section.MaxBooths, MaxBooths);
+            int lanes = Math.Min(section.MaxLanes, MaxLanes);
+            var e = new ExpansionConfig
+            {
+                BoothSlotPrices = new long[booths],
+                BoothSlotRequiredLanes = new int[booths],
+                LanePrices = new long[lanes],
+            };
+            for (int i = 0; i < booths; i++)
+            {
+                e.BoothSlotPrices[i] = RoundDollars(Expansion.BoothSlotPrices[i] * p);
+                e.BoothSlotRequiredLanes[i] = Math.Min(lanes, Expansion.BoothSlotRequiredLanes[i]);
+            }
+            for (int i = 0; i < lanes; i++) e.LanePrices[i] = RoundDollars(Expansion.LanePrices[i] * p);
+            c.Expansion = e;
+            return c;
+        }
+
+        private static long RoundDollars(double cents) => (long)Math.Round(cents / Money.CentsPerDollar) * Money.CentsPerDollar;
 
         public static GameConfig CreateDefault()
         {

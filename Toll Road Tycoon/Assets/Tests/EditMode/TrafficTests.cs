@@ -123,6 +123,31 @@ namespace TollRoadTycoon.Tests
             }
         }
 
+        [TestCase(1, 3, 6)]
+        [TestCase(2, 3, 5)]
+        [TestCase(3, 2, 4)]
+        public void DenseTrafficWithLongVehiclesNeverOverlaps(int seed, int lanes, int booths)
+        {
+            // Busiest road (section 5) with every vehicle type, including buses and heavy trucks.
+            var config = GameConfig.CreateDefault();
+            var sim = new GameSimulation(config.ForSection(config.Progression.Sections[4]), seed);
+            TestUtil.GiveMoney(sim, Economy.Money.FromDollars(10_000_000_000));
+            while (sim.Lanes.ActiveLaneCount < lanes) Assert.IsTrue(sim.Expansion.TryBuyLane());
+            while (sim.Booths.Count < booths)
+            {
+                var b = sim.Expansion.TryBuyBooth();
+                if (b.AssignedWorker == null && sim.Workers.TryHire(out var w)) sim.Workers.Assign(w, b);
+            }
+            foreach (var t in config.VehicleTypes) sim.Upgrades.TryUnlockVehicle(t.Id);
+            for (int i = 0; i < 30 * 300; i++)
+            {
+                sim.Step(1.0 / 30);
+                string overlap = TestUtil.FindOverlap(sim.Traffic.ActiveVehicles);
+                Assert.IsNull(overlap, $"t={sim.Time:0.00}: {overlap}");
+            }
+            Assert.Greater(sim.Stats.HeavyVehiclesProcessed, 10);
+        }
+
         [Test]
         public void ThroughputGrowsWithBooths()
         {

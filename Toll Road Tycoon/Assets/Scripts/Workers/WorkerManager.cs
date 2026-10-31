@@ -28,6 +28,7 @@ namespace TollRoadTycoon.Workers
 
         public IReadOnlyList<Worker> Workers => _workers;
         public event Action Changed;
+        public event Action<Worker> WorkerUpgraded;
 
         public WorkerManager(WorkerConfig config, EconomyManager economy)
         {
@@ -67,6 +68,7 @@ namespace TollRoadTycoon.Workers
             if (!_economy.TrySpendMoney(UpgradeCost(worker), "worker.upgrade")) return false;
             worker.Level++;
             worker.AssignedBooth?.NotifyChanged();
+            WorkerUpgraded?.Invoke(worker);
             Changed?.Invoke();
             return true;
         }

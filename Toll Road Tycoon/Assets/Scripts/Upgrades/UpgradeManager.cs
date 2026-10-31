@@ -39,6 +39,8 @@ namespace TollRoadTycoon.Upgrades
         private readonly HashSet<string> _unlockedVehicles;
 
         public event Action Changed;
+        public event Action<TollBooth, BoothUpgradeType> Upgraded;
+        public event Action<string> VehicleUnlocked;
 
         public UpgradeManager(GameConfig config, EconomyManager economy, WorkerManager workers, HashSet<string> unlockedVehicles)
         {
@@ -124,6 +126,7 @@ namespace TollRoadTycoon.Upgrades
                     break;
             }
             booth.NotifyChanged();
+            Upgraded?.Invoke(booth, type);
             Changed?.Invoke();
             return true;
         }
@@ -136,6 +139,7 @@ namespace TollRoadTycoon.Upgrades
             if (type == null || _unlockedVehicles.Contains(id)) return false;
             if (!_economy.TrySpendMoney(type.UnlockPriceCents, "vehicle." + id)) return false;
             _unlockedVehicles.Add(id);
+            VehicleUnlocked?.Invoke(id);
             Changed?.Invoke();
             return true;
         }

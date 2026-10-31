@@ -15,6 +15,8 @@ namespace TollRoadTycoon.Economy
             GrowthFactor = growthFactor;
         }
 
+        public CostCurve Scaled(double factor) => new CostCurve((long)Math.Round(BaseCostCents * factor), GrowthFactor);
+
         public long CostForLevel(int currentLevel)
         {
             double raw = BaseCostCents * Math.Pow(GrowthFactor, Math.Max(0, currentLevel));

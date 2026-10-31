@@ -18,6 +18,9 @@ namespace TollRoadTycoon.Traffic
         private readonly HashSet<string> _unlocked;
         private double _pendingTolled;
         private double _pendingOncoming;
+        // The next tolled vehicle is chosen once and kept until it fits, so a congested entry does not
+        // favour short vehicles (the traffic mix always follows the spawn weights).
+        private VehicleTypeConfig _nextTolled;
 
         /// <summary>Optional override used by stress tests and the debug menu.</summary>
         public double DemandMultiplier { get; set; } = 1.0;
@@ -41,7 +44,7 @@ namespace TollRoadTycoon.Traffic
                 int extraTypes = 0;
                 foreach (var type in _config.VehicleTypes)
                 {
-                    if (!type.UnlockedByDefault && _unlocked.Contains(type.Id)) extraTypes++;
+                    if (!type.UnlockedByDefault && type.SpawnWeight > 0 && _unlocked.Contains(type.Id)) extraTypes++;
                 }
                 double lanes = Math.Max(1, _lanes.ActiveLaneCount);
                 return (t.BaseArrivalsPerSecond + t.ArrivalsPerExtraLane * (lanes - 1))
@@ -77,7 +80,8 @@ namespace TollRoadTycoon.Traffic
 
         private bool TrySpawnTolled(double now)
         {
-            var type = PickType(allowEmergency: true);
+            if (_nextTolled == null || _nextTolled.SpawnWeight <= 0 || !_unlocked.Contains(_nextTolled.Id)) _nextTolled = PickType(allowEmergency: true);
+            var type = _nextTolled;
             if (type == null) return false;
 
             int bestLane = -1;
@@ -97,7 +101,9 @@ namespace TollRoadTycoon.Traffic
                 }
             }
             if (bestLane < 0) return false;
-            return _traffic.Spawn(type, _lanes.Approach(bestLane), true, bestLane, now) != null;
+            if (_traffic.Spawn(type, _lanes.Approach(bestLane), true, bestLane, now) == null) return false;
+            _nextTolled = null;
+            return true;
         }
 
         public VehicleTypeConfig PickType(bool allowEmergency)

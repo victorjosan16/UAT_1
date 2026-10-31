@@ -20,7 +20,7 @@ namespace TollRoadTycoon.Core
         public const int MaxStepsPerTick = 8;
 
         private readonly List<TollBooth> _booths = new List<TollBooth>();
-        private readonly HashSet<string> _unlockedVehicles = new HashSet<string>();
+        private readonly HashSet<string> _unlockedVehicles;
         private double _accumulator;
 
         public GameConfig Config { get; }
@@ -28,7 +28,7 @@ namespace TollRoadTycoon.Core
         public double Time { get; private set; }
 
         public EconomyManager Economy { get; }
-        public GameStats Stats { get; } = new GameStats();
+        public GameStats Stats { get; }
         public LaneManager Lanes { get; }
         public QueueManager Queues { get; }
         public TrafficManager Traffic { get; }
@@ -49,10 +49,21 @@ namespace TollRoadTycoon.Core
         public double InterpolationAlpha => Config.FixedTimeStep > 0 ? _accumulator / Config.FixedTimeStep : 0;
 
         public GameSimulation(GameConfig config, int seed = 12345)
+            : this(config, seed, null, null, null)
+        {
+        }
+
+        /// <summary>
+        /// Builds one road. Economy, statistics and vehicle unlocks can be shared between roads
+        /// (road sections); when null, the road owns its own (standalone game / tests).
+        /// </summary>
+        public GameSimulation(GameConfig config, int seed, EconomyManager sharedEconomy, GameStats sharedStats, HashSet<string> sharedUnlocks)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
             Random = new SimRandom(seed);
-            Economy = new EconomyManager(config.StartingBalanceCents, config.IncomeWindowSeconds);
+            Economy = sharedEconomy ?? new EconomyManager(config.StartingBalanceCents, config.IncomeWindowSeconds);
+            Stats = sharedStats ?? new GameStats();
+            _unlockedVehicles = sharedUnlocks ?? new HashSet<string>();
             Lanes = new LaneManager(config.Layout, config.MaxLanes, config.MaxBooths);
             Queues = new QueueManager(Lanes, config.Traffic, _booths, Random);
             Traffic = new TrafficManager(Lanes, Queues, config.Traffic);
@@ -68,8 +79,22 @@ namespace TollRoadTycoon.Core
             Traffic.VehicleDespawned += v => Payments.ForgetTrip(v.TripId);
             Workers.Changed += RaiseChanged;
             Upgrades.Changed += RaiseChanged;
-            Expansion.BoothBuilt += _ => RaiseChanged();
-            Expansion.LaneBuilt += _ => RaiseChanged();
+            Expansion.BoothBuilt += _ =>
+            {
+                Stats.BoothsBuilt++;
+                RaiseChanged();
+            };
+            Expansion.LaneBuilt += _ =>
+            {
+                Stats.LanesBuilt++;
+                RaiseChanged();
+            };
+            Workers.WorkerUpgraded += _ => Stats.WorkerUpgrades++;
+            Upgrades.Upgraded += (_, type) =>
+            {
+                if (type == BoothUpgradeType.Speed) Stats.SpeedUpgrades++;
+                if (type == BoothUpgradeType.Capacity) Stats.CapacityUpgrades++;
+            };
 
             SetupNewGame();
         }
@@ -145,25 +170,31 @@ namespace TollRoadTycoon.Core
                 TotalExpensesCents = Economy.TotalExpenses,
                 LaneCount = Lanes.ActiveLaneCount,
                 Settings = settings ?? new SettingsSave(),
-                Stats = new StatsSave
-                {
-                    VehiclesProcessed = Stats.VehiclesProcessed,
-                    HeavyVehiclesProcessed = Stats.HeavyVehiclesProcessed,
-                    EmergencyVehiclesPassed = Stats.EmergencyVehiclesPassed,
-                    TollCentsCollected = Stats.TollCentsCollected,
-                    VehiclesSpawned = Stats.VehiclesSpawned,
-                    TotalQueueWaitSeconds = Stats.TotalQueueWaitSeconds,
-                    QueueWaitSamples = Stats.QueueWaitSamples,
-                    PlayTimeSeconds = Stats.PlayTimeSeconds,
-                },
+                Stats = CaptureStats(Stats),
             };
+            CaptureRoad(data.Booths, data.Workers);
+            foreach (var id in _unlockedVehicles) data.UnlockedVehicles.Add(id);
+            data.UnlockedVehicles.Sort(StringComparer.Ordinal);
+            return data;
+        }
+
+        /// <summary>Road state only (lanes, booths, workers) for multi-section games.</summary>
+        public SectionSave CaptureSection(string id)
+        {
+            var data = new SectionSave { Id = id, Unlocked = true, LaneCount = Lanes.ActiveLaneCount };
+            CaptureRoad(data.Booths, data.Workers);
+            return data;
+        }
+
+        private void CaptureRoad(List<BoothSave> booths, List<WorkerSave> workers)
+        {
             foreach (var w in Workers.Workers)
             {
-                data.Workers.Add(new WorkerSave { Id = w.Id, Level = w.Level });
+                workers.Add(new WorkerSave { Id = w.Id, Level = w.Level });
             }
             foreach (var b in _booths)
             {
-                data.Booths.Add(new BoothSave
+                booths.Add(new BoothSave
                 {
                     Slot = b.SlotIndex,
                     SpeedLevel = b.SpeedLevel,
@@ -175,9 +206,13 @@ namespace TollRoadTycoon.Core
                     WorkerId = b.AssignedWorker != null && !b.PendingClose ? b.AssignedWorker.Id : 0,
                 });
             }
-            foreach (var id in _unlockedVehicles) data.UnlockedVehicles.Add(id);
-            data.UnlockedVehicles.Sort(StringComparer.Ordinal);
-            return data;
+        }
+
+        /// <summary>Restores a road from a section save (values clamped to the config).</summary>
+        public void ApplySection(SectionSave section)
+        {
+            ApplyRoad(section.LaneCount, section.Booths, section.Workers);
+            RaiseChanged();
         }
 
         /// <summary>Builds a simulation from a save, clamping every value to what the config allows.</summary>
@@ -191,22 +226,26 @@ namespace TollRoadTycoon.Core
         private void ApplySave(SaveData data)
         {
             SaveMigrations.Migrate(data);
-            var up = Config.BoothUpgrades;
-
-            int lanes = Clamp(data.LaneCount, 1, Config.MaxLanes);
-            for (int lane = 1; lane < lanes; lane++) Lanes.ActivateLane(lane);
-
             foreach (var id in data.UnlockedVehicles)
             {
                 if (Config.FindVehicleType(id) != null) _unlockedVehicles.Add(id);
             }
+            ApplyRoad(data.LaneCount, data.Booths, data.Workers);
+            ApplyGlobals(data);
+        }
+
+        private void ApplyRoad(int laneCount, List<BoothSave> boothSaves, List<WorkerSave> workerSaves)
+        {
+            var up = Config.BoothUpgrades;
+            int lanes = Clamp(laneCount, 1, Config.MaxLanes);
+            for (int lane = 1; lane < lanes; lane++) Lanes.ActivateLane(lane);
 
             // Rebuild workers from scratch.
             var starter = _booths[0];
             Workers.Unassign(Workers.Workers[0]);
             var workersById = new Dictionary<int, Worker>();
             bool first = true;
-            foreach (var ws in data.Workers)
+            foreach (var ws in workerSaves)
             {
                 if (ws.Id <= 0 || workersById.ContainsKey(ws.Id)) continue;
                 Worker worker;
@@ -224,7 +263,7 @@ namespace TollRoadTycoon.Core
             }
 
             var seenSlots = new HashSet<int>();
-            foreach (var bs in data.Booths)
+            foreach (var bs in boothSaves)
             {
                 if (bs.Slot < 0 || bs.Slot >= Config.MaxBooths || !seenSlots.Add(bs.Slot)) continue;
             }
@@ -233,7 +272,7 @@ namespace TollRoadTycoon.Core
 
             var usedWorkers = new HashSet<Worker>();
             var appliedSlots = new HashSet<int>();
-            foreach (var bs in data.Booths)
+            foreach (var bs in boothSaves)
             {
                 if (bs.Slot < 0 || bs.Slot >= _booths.Count || !appliedSlots.Add(bs.Slot)) continue;
                 var booth = _booths[bs.Slot];
@@ -247,23 +286,70 @@ namespace TollRoadTycoon.Core
                     Workers.Assign(w, booth);
                 }
             }
-            if (data.Booths.Count == 0 && Workers.Workers.Count > 0 && starter.AssignedWorker == null)
+            if (boothSaves.Count == 0 && Workers.Workers.Count > 0 && starter.AssignedWorker == null)
             {
                 Workers.Assign(Workers.Workers[0], starter);
             }
+        }
 
+        private void ApplyGlobals(SaveData data)
+        {
             Economy.RestoreTotals(data.BalanceCents, data.TotalEarningsCents, data.TotalExpensesCents);
             var s = data.Stats;
-            Stats.VehiclesProcessed = Math.Max(0, s.VehiclesProcessed);
-            Stats.HeavyVehiclesProcessed = Math.Max(0, s.HeavyVehiclesProcessed);
-            Stats.EmergencyVehiclesPassed = Math.Max(0, s.EmergencyVehiclesPassed);
-            Stats.TollCentsCollected = Math.Max(0, s.TollCentsCollected);
-            Stats.VehiclesSpawned = Math.Max(0, s.VehiclesSpawned);
-            Stats.TotalQueueWaitSeconds = Math.Max(0, s.TotalQueueWaitSeconds);
-            Stats.QueueWaitSamples = Math.Max(0, s.QueueWaitSamples);
-            Stats.PlayTimeSeconds = Math.Max(0, s.PlayTimeSeconds);
+            RestoreStats(Stats, s);
             Economy.ResetIncomeWindow(Time);
             RaiseChanged();
+        }
+
+        internal static void RestoreStats(GameStats stats, StatsSave s)
+        {
+            stats.VehiclesProcessed = Math.Max(0, s.VehiclesProcessed);
+            stats.HeavyVehiclesProcessed = Math.Max(0, s.HeavyVehiclesProcessed);
+            stats.EmergencyVehiclesPassed = Math.Max(0, s.EmergencyVehiclesPassed);
+            stats.TollCentsCollected = Math.Max(0, s.TollCentsCollected);
+            stats.VehiclesSpawned = Math.Max(0, s.VehiclesSpawned);
+            stats.TotalQueueWaitSeconds = Math.Max(0, s.TotalQueueWaitSeconds);
+            stats.QueueWaitSamples = Math.Max(0, s.QueueWaitSamples);
+            stats.PlayTimeSeconds = Math.Max(0, s.PlayTimeSeconds);
+            stats.BoothsBuilt = Math.Max(0, s.BoothsBuilt);
+            stats.LanesBuilt = Math.Max(0, s.LanesBuilt);
+            stats.SpeedUpgrades = Math.Max(0, s.SpeedUpgrades);
+            stats.CapacityUpgrades = Math.Max(0, s.CapacityUpgrades);
+            stats.WorkerUpgrades = Math.Max(0, s.WorkerUpgrades);
+            stats.ServicesBuilt = Math.Max(0, s.ServicesBuilt);
+            stats.SectionsUnlocked = Math.Max(0, s.SectionsUnlocked);
+            stats.ServiceCustomers = Math.Max(0, s.ServiceCustomers);
+            stats.ServiceIncomeCents = Math.Max(0, s.ServiceIncomeCents);
+            stats.OfflineIncomeCents = Math.Max(0, s.OfflineIncomeCents);
+            stats.PassiveIncomeCents = Math.Max(0, s.PassiveIncomeCents);
+            stats.BoostsUsed = Math.Max(0, s.BoostsUsed);
+        }
+
+        internal static StatsSave CaptureStats(GameStats st)
+        {
+            return new StatsSave
+            {
+                VehiclesProcessed = st.VehiclesProcessed,
+                HeavyVehiclesProcessed = st.HeavyVehiclesProcessed,
+                EmergencyVehiclesPassed = st.EmergencyVehiclesPassed,
+                TollCentsCollected = st.TollCentsCollected,
+                VehiclesSpawned = st.VehiclesSpawned,
+                TotalQueueWaitSeconds = st.TotalQueueWaitSeconds,
+                QueueWaitSamples = st.QueueWaitSamples,
+                PlayTimeSeconds = st.PlayTimeSeconds,
+                BoothsBuilt = st.BoothsBuilt,
+                LanesBuilt = st.LanesBuilt,
+                SpeedUpgrades = st.SpeedUpgrades,
+                CapacityUpgrades = st.CapacityUpgrades,
+                WorkerUpgrades = st.WorkerUpgrades,
+                ServicesBuilt = st.ServicesBuilt,
+                SectionsUnlocked = st.SectionsUnlocked,
+                ServiceCustomers = st.ServiceCustomers,
+                ServiceIncomeCents = st.ServiceIncomeCents,
+                OfflineIncomeCents = st.OfflineIncomeCents,
+                PassiveIncomeCents = st.PassiveIncomeCents,
+                BoostsUsed = st.BoostsUsed,
+            };
         }
 
         private static int Clamp(int v, int min, int max) => v < min ? min : v > max ? max : v;

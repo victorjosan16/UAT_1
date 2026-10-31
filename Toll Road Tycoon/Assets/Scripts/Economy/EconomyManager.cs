@@ -8,6 +8,9 @@ namespace TollRoadTycoon.Economy
         Toll,
         Reward,
         Offline,
+        Passive,
+        Service,
+        Ad,
         Debug,
     }
 

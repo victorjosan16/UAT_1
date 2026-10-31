@@ -40,6 +40,9 @@ namespace TollRoadTycoon.Traffic
         /// <summary>Set by the booth once the barrier is open for this vehicle.</summary>
         public bool BarrierCleared;
 
+        /// <summary>Connector whose reservation is kept until the vehicle's rear has left it.</summary>
+        internal PathSegment ReservationToRelease;
+
         public double SpawnTime;
         public double QueueJoinTime;
 
@@ -68,6 +71,7 @@ namespace TollRoadTycoon.Traffic
             ExitLane = -1;
             HasPaid = false;
             BarrierCleared = false;
+            ReservationToRelease = null;
             SpawnTime = 0;
             QueueJoinTime = 0;
         }

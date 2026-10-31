@@ -11,7 +11,7 @@ namespace TollRoadTycoon.Save
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
         public string GameVersion = "";
@@ -27,6 +27,55 @@ namespace TollRoadTycoon.Save
         public List<string> UnlockedVehicles = new List<string>();
         public StatsSave Stats = new StatsSave();
         public SettingsSave Settings = new SettingsSave();
+
+        // v3: road sections, services, decorations, missions, boosts, offline income.
+        public int ActiveSection;
+        public List<SectionSave> Sections = new List<SectionSave>();
+        public string DailyMissionDate = "";
+        public List<MissionSave> DailyMissions = new List<MissionSave>();
+        public int MilestoneIndex;
+        public long PendingOfflineCents;
+        public double BoostSecondsLeft;
+        public long BoostBasisPoints = 10000;
+    }
+
+    [Serializable]
+    public sealed class SectionSave
+    {
+        public string Id = "";
+        public bool Unlocked;
+        public int LaneCount = 1;
+        public List<BoothSave> Booths = new List<BoothSave>();
+        public List<WorkerSave> Workers = new List<WorkerSave>();
+        public List<ServiceSave> Services = new List<ServiceSave>();
+        public List<DecorationSave> Decorations = new List<DecorationSave>();
+    }
+
+    [Serializable]
+    public sealed class ServiceSave
+    {
+        public string Id = "";
+        public int Slot;
+        public int Level = 1;
+    }
+
+    [Serializable]
+    public sealed class DecorationSave
+    {
+        public string Id = "";
+        public int Slot;
+    }
+
+    [Serializable]
+    public sealed class MissionSave
+    {
+        public string Id = "";
+        public int Type;
+        public long Target;
+        public long Baseline;
+        public long RewardCents;
+        public string Param = "";
+        public bool Claimed;
     }
 
     [Serializable]
@@ -60,6 +109,18 @@ namespace TollRoadTycoon.Save
         public double TotalQueueWaitSeconds;
         public long QueueWaitSamples;
         public double PlayTimeSeconds;
+        public long BoothsBuilt;
+        public long LanesBuilt;
+        public long SpeedUpgrades;
+        public long CapacityUpgrades;
+        public long WorkerUpgrades;
+        public long ServicesBuilt;
+        public long SectionsUnlocked;
+        public long ServiceCustomers;
+        public long ServiceIncomeCents;
+        public long OfflineIncomeCents;
+        public long PassiveIncomeCents;
+        public long BoostsUsed;
     }
 
     [Serializable]

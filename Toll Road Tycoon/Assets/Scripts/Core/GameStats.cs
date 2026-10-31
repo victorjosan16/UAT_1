@@ -12,6 +12,20 @@ namespace TollRoadTycoon.Core
         public long QueueWaitSamples;
         public double PlayTimeSeconds;
 
+        // Progression counters (missions and statistics).
+        public long BoothsBuilt;
+        public long LanesBuilt;
+        public long SpeedUpgrades;
+        public long CapacityUpgrades;
+        public long WorkerUpgrades;
+        public long ServicesBuilt;
+        public long SectionsUnlocked;
+        public long ServiceCustomers;
+        public long ServiceIncomeCents;
+        public long OfflineIncomeCents;
+        public long PassiveIncomeCents;
+        public long BoostsUsed;
+
         public double AverageQueueWaitSeconds => QueueWaitSamples > 0 ? TotalQueueWaitSeconds / QueueWaitSamples : 0;
 
         internal void RecordPayment(VehicleTypeConfig type, long cents)
