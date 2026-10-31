@@ -4,9 +4,10 @@ Joc idle de administrare a unei autostrăzi cu taxă, pentru Android (Unity 2D, 
 Mașinile vin, stau la coadă, plătesc la cabină, bariera se ridică, iar tu investești câștigurile
 în cabine, angajați, benzi și upgrade-uri.
 
-**Stadiu: Faza 1 (prima buclă de joc jucabilă).** Citește raportul de verificare de mai jos:
-simularea e testată automat fără Unity, dar proiectul **nu** a fost încă deschis în Unity Editor
-și nici construit pentru Android.
+**Stadiu: Faza 1 și Faza 2 implementate** (bucla de bază, 5 porțiuni de drum, hartă, servicii,
+decor, misiuni, magazin, statistici, venit offline, reclame în mod test, muzică și sunete).
+Citește raportul de verificare de mai jos: logica e testată automat fără Unity, dar proiectul
+**nu** a fost încă deschis în Unity Editor și nici construit pentru Android.
 
 ## Structura proiectului
 
@@ -24,6 +25,11 @@ Toll Road Tycoon/                      rădăcina proiectului Unity (acest direc
       Upgrades/        UpgradeManager (upgrade-uri de cabină, deblocare vehicule)
       RoadExpansion/   RoadExpansionManager (cabine noi, benzi noi)
       Save/            SaveData (cu versiune), SaveManager (scriere atomică, copie de rezervă, migrare)
+      Core/TycoonGame  rădăcina jocului complet: 5 porțiuni, economie comună, estimări, offline, reclame
+      Services/        ServiceManager (clădiri de servicii cu clienți și venit pe eveniment)
+      Shop/            DecorationManager (decor cosmetic)
+      Missions/        MissionManager (misiuni zilnice + lanțul de obiective / tutorial)
+      Monetization/    IAdService (dezactivat / test), AdRewards, BoostManager
       Localization/    Loc (româna principală, engleza completă)
       Presentation/    stratul Unity (TollRoadTycoon.Presentation.asmdef)
         Core/          GameBootstrap, GameRoot, SaveService, GameConfigAsset (ScriptableObject)
@@ -92,74 +98,67 @@ Aceleași teste rulează și în Unity: **Window → General → Test Runner →
    Pentru AAB: `...BuildAndroid.Aab`. Nu e configurată nicio cheie de semnare; adaug-o pe a ta înainte
    de publicarea în magazin.
 
-## Raport de verificare (Faza 1)
+## Funcționalități (Faza 2)
+
+* **5 porțiuni de drum** (Km 0–5, 5–10, 10–20, 20–30, 30–50), fiecare cu prețuri, taxe, trafic,
+  limite de cabine/benzi, vehicule și servicii permise proprii, plus condiții de deblocare (cabine pe
+  porțiunea anterioară, venit/min, preț). Se poate trece oricând între porțiunile deblocate (HARTĂ).
+* **Doar porțiunea curentă e simulată mașină cu mașină**; celelalte porțiuni deblocate câștigă dintr-o
+  estimare analitică (debit × taxă medie × 0,85). Testele arată că estimarea brută e la ±5% din simulare.
+  Nimic nu se numără de două ori: porțiunea activă primește doar plăți reale.
+* **Servicii** (parcare, cafenea, benzinărie, zonă de odihnă, magazin, spălătorie, stație de încărcare):
+  8 locuri lângă drum, construire cu confirmare, mutare, demolare (50% înapoi), upgrade pe nivele.
+  Venitul vine doar de la clienți: o mașină care a plătit taxa poate opri la un serviciu cu loc liber și
+  plătește când termină. Clienții sunt evenimente simulate, nu mașini care se văd conducând spre clădire.
+* **Decor** cosmetic (bancă, felinar, flori, coș, con, gard) în 8 locuri, cu mutare și eliminare.
+* **Misiuni zilnice** (4 pe zi, generate pe data UTC) și **lanțul de obiective** care servește și ca
+  tutorial (banner în HUD). Recompensele se acordă o singură dată.
+* **Magazin**: vehicule, decor, clădiri, bonusuri (x2 pe 2 min prin reclamă, bani instant prin reclamă,
+  x2 pe 5 min pe bani din joc).
+* **Venit offline**: estimare pentru toate porțiunile deblocate, limită 8 ore, fereastră COLECTEAZĂ /
+  DUBLEAZĂ CU RECLAMA, acordat o singură dată; marcaje de timp invalide sau din viitor nu dau nimic.
+* **Reclame**: interfața `IAdService`. În Editor și în build-urile de dezvoltare rulează **modul TEST**
+  (un ecran clar marcat „RECLAMĂ DE TEST”, recompensă doar dacă aștepți până la final). În build-urile
+  de release reclamele sunt **dezactivate** și butoanele lor nu apar. Nu există niciun SDK sau ID de producție.
+* **Statistici**, setări (muzică, sunete, vibrații, calitate, limbă, confidențialitate, resetare),
+  muzică de fundal generată din cod.
+* **Salvare v3** cu migrare automată a salvărilor vechi (drumul unic devine porțiunea 1).
+
+## Raport de verificare
 
 Ce s-a rulat efectiv în acest mediu (container Linux, fără Unity Editor și fără Android SDK):
 
 | Verificare | Rezultat |
 |---|---|
-| Simularea și testele compilate cu .NET 8, la nivelul de limbaj C# 9 (compatibil cu Unity 2022.3) | ✅ 0 avertismente |
-| Teste NUnit (`dotnet test`) | ✅ 57/57 trecute |
-| Stratul Unity compilat cu bibliotecile de **referință** Unity (modulele UnityEngine 2021.3 + UnityEngine.UI 2020.3, de pe NuGet) | ✅ 0 erori, 0 avertismente |
+| Logica jocului + teste compilate cu .NET 8, la nivelul de limbaj C# 9 (compatibil cu Unity 2022.3) | ✅ 0 avertismente |
+| Teste NUnit (`dotnet test`) | ✅ 85/85 trecute |
+| Stratul Unity compilat cu bibliotecile de **referință** Unity (UnityEngine 2021.3 + UnityEngine.UI 2020.3, de pe NuGet) | ✅ 0 erori, 0 avertismente |
 | Scripturile de editor (`Assets/Scripts/Editor`) compilate | ❌ neverificat: nu a existat o bibliotecă de referință UnityEditor |
-| Deschis în Unity Editor / Play mode / verificarea vizuală a graficii și a interfeței | ❌ nefăcut: Unity nu e instalat aici |
+| Deschis în Unity Editor / Play mode / verificare vizuală a interfeței | ❌ nefăcut: Unity nu e instalat aici |
+| Teste PlayMode / navigare în interfață | ❌ nescrise: nu pot fi rulate fără Unity |
 | Build Android APK/AAB | ❌ nefăcut: lipsesc Unity și Android SDK |
 
-Ce acoperă testele:
+Testele noi din Faza 2 acoperă: cele 5 porțiuni cu progresie distinctă, condițiile de deblocare,
+schimbarea porțiunii fără pierderea progresului, venitul porțiunilor inactive fără dublă numărare,
+precizia estimării față de simulare, venitul offline (limită, marcaje invalide, colectare o singură
+dată, păstrare dacă nu e colectat), dublarea doar cu reclamă terminată, reclame dezactivate fără
+recompensă, bonusul x2, regulile și locurile serviciilor, venitul din servicii doar de la clienți,
+upgrade-urile serviciilor, decorul și salvarea lui, misiunile (ordinea, o singură revendicare,
+reîmprospătare zilnică), salvarea completă a jocului și migrarea din versiunea 2.
 
-* toate stările unei mașini prin plază, iar banii vin doar la plată, nu la apariția mașinii
-* verificarea exactă a suprapunerii pentru **fiecare pereche de vehicule la fiecare pas**, cu 1/2/4/6
-  cabine, pe 300 de secunde simulate (nicio suprapunere)
-* plăți exact o dată (apeluri duplicate, indicator resetat), câștigurile egale cu suma taxelor încasate,
-  vehiculele de urgență trec gratuit
-* capacitatea cozii e respectată, debitul crește cu numărul de cabine, toate benzile sunt folosite,
-  vehiculele sunt refolosite din pool
-* regulile angajaților (o singură cabină pe angajat, costuri de angajare și upgrade, coada se golește
-  înainte de închidere, traficul trece la cabina deschisă)
-* upgrade-urile (valori reale înainte/după, o cumpărare eșuată nu schimbă nimic, niveluri maxime,
-  taxa ×2 dublează venitul la același trafic, condițiile pentru automatizare)
-* extinderea (geometrie și rutare noi, condiția de benzi, plata o singură dată, benzile noi chiar au trafic)
-* salvarea și încărcarea, fără plată dublă la reîncărcare, recuperarea din copia de rezervă, migrarea
-  versiunii 0, refuzul versiunilor mai noi, limitarea valorilor modificate manual
-* traducerile: cheile din română și engleză sunt identice
+Trafic: la verificarea suplimentară cu autobuze și TIR-uri pe porțiunea cea mai aglomerată au apărut
+suprapuneri în plază. Le-am corectat (curbe mai lungi, limită de deviere laterală, rezervări ținute până
+iese tot vehiculul, distanță mai mare pe curbe pentru vehiculele lungi) și am adăugat teste permanente;
+o rulare de verificare cu 36 de combinații × 400 s nu a mai găsit nicio suprapunere.
 
-Test de încărcare (fără afișare, un pas de simulare la 30 Hz, măsurat pe procesorul acestui container):
+Echilibrul primei porțiuni (jucător simulat): cabina 2 la ~11 min, cabina 3 la ~45 min, cabina 4 la ~70 min.
+Echilibrul porțiunilor 2–5 nu a fost simulat pe durate lungi; prețurile lor trebuie ajustate după testare.
 
-| Vehicule | ms pe pas |
-|---|---|
-| ~60 | 0,02 |
-| 100 | 0,03 |
-| ~160 | 0,04 |
-| ~290 | 0,08 |
+### Limitări cunoscute
 
-Timpii sunt doar pentru simulare. Costul de afișare pe telefon nu a fost măsurat.
-
-Echilibrul economiei, verificat cu un jucător simulat (strânge bani pentru următoarea cabină sau bandă
-când costă mai puțin de ~6 minute de venit, altfel cumpără cel mai ieftin upgrade): 10 mașini servite
-la ~1 min, primul upgrade de viteză la ~0,2 min, cabina 2 la ~12 min, cabina 3 la ~45 min, cabina 4
-la ~72 min, camioanele deblocate la ~3 ore. Începutul jocului poate părea încă lent și trebuie ajustat
-după testarea pe telefon.
-
-### Limitări cunoscute și abateri (Faza 1)
-
-* **Grafica e provizorie**, generată din cod (forme rotunjite colorate), după paleta și aranjarea din
-  schiță. Nu e grafica finală. Codul încarcă însă automat grafica desenată din `Assets/Resources/Art/`;
-  lista completă de imagini și prompturile de generare sunt în [`ASSETS.md`](ASSETS.md).
-* **Textele folosesc `Text` clasic din uGUI cu fontul inclus în Unity**, nu TextMeshPro. TextMeshPro
-  cere importul *TMP Essential Resources* în editor, ceea ce nu s-a putut face sau verifica aici.
-  Trecerea la TextMeshPro rămâne pentru Faza 2.
-* Scene: o singură scenă, `Boot` (creată de `ProjectSetup`). Meniul principal și jocul sunt ecrane
-  construite la rulare, nu scene separate. Scenele RoadMap și Shop vin în Faza 2.
-* DRUMURI, MAGAZIN și MISIUNI sunt marcate vizibil **„În curând”** și deschid o explicație în loc să
-  pretindă că funcționează. Muzica e marcată „în curând”. Efectele sonore sunt tonuri simple generate din cod.
-* Neimplementat încă (Faza 2): cele cinci porțiuni de drum și harta lor, fereastra de câștiguri offline
-  (momentul ultimei vizite, în UTC, se salvează deja), serviciile de pe marginea drumului, misiunile și
-  tutorialul, magazinul, ecranul de statistici, decorațiunile, reclamele (`AdService`), testele PlayMode.
-
-## Planul pentru Faza 2
-
-Cinci porțiuni de drum cu configurație proprie, venit calculat pentru porțiunile inactive, scena RoadMap,
-câștiguri offline (limită de 8 ore, etichetă de estimare, COLECTEAZĂ / DUBLEAZĂ CU RECLAMA cu un serviciu
-de reclame în mod test), servicii (benzinărie, parcare, cafenea …) cu venit generat de clienți reali,
-misiuni și tutorial, magazin, statistici, trecerea la TextMeshPro, grafică și sunet finale, teste
-PlayMode și de navigare în interfață, măsurători de performanță pe telefon și un build Android real.
+* Grafica vine din foile de imagini primite, decupate automat; unele obiecte sunt mici în sursă și pot
+  părea neclare pe ecran (vezi `ASSETS.md`).
+* Textele folosesc `Text` clasic din uGUI, nu TextMeshPro (TMP cere importul resurselor în editor).
+* O singură scenă (`Boot`); meniul, harta, magazinul și jocul sunt ecrane/ferestre construite la rulare.
+* Nu există achiziții reale (fără „Restabilește achizițiile”) și niciun SDK de reclame real.
+* Clienții serviciilor nu sunt animați ca mașini care merg la clădire.

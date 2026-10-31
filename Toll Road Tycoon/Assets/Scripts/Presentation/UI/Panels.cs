@@ -148,7 +148,7 @@ namespace TollRoadTycoon.Presentation.UI
                 root.SaveNow();
             }
 
-            ToggleRow(ui, content, Loc.T("settings.music"), () => false, null, register, enabled: false);
+            ToggleRow(ui, content, Loc.T("settings.music"), () => s.MusicEnabled, () => { s.MusicEnabled = !s.MusicEnabled; Changed(); }, register);
             ToggleRow(ui, content, Loc.T("settings.sfx"), () => s.SfxEnabled, () => { s.SfxEnabled = !s.SfxEnabled; Changed(); }, register);
             ToggleRow(ui, content, Loc.T("settings.vibration"), () => s.VibrationEnabled, () => { s.VibrationEnabled = !s.VibrationEnabled; Changed(); }, register);
             CycleRow(content, Loc.T("settings.quality"), () => Loc.T("quality." + Mathf.Clamp(s.GraphicsQuality, 0, 2)),

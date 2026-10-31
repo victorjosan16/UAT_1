@@ -5,7 +5,9 @@
 >   rotite cu fața în sus: compacte (5), sedanuri (5, inclusiv taxi), SUV-uri (4), dube (5), camioane (4),
 >   autobuze (4), poliție / ambulanță / pompieri, TIR-uri (7: macara, cisternă, bușteni, containere,
 >   platformă, basculantă);
-> * din foaia cu fundal verde: clădirile SHOP și HOTEL (case decorative);
+> * din foaia cu fundal verde: clădirile de servicii (`Buildings/service_*`: benzinărie, cafenea, spălătorie,
+>   WC, parcare, încărcare, magazin), hotelul ca casă decorativă și decorul (`Decorations/`: bancă, felinar,
+>   coș, con, parapet; florile din prima foaie);
 > * din prima foaie: cabinele de taxare, copacii și iconițele;
 > * din imaginea cu logo: logo-ul, butonul și panoul (colorate din cod), bariera și iarba (repetabilă).
 >

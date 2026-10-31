@@ -31,7 +31,9 @@ namespace TollRoadTycoon.Presentation
         public float MinX { get; private set; }
         public float MaxX { get; private set; }
 
-        public void Bind(GameSimulation sim)
+        private RoadSectionConfig _section;
+
+        public void Bind(GameSimulation sim, RoadSectionConfig section)
         {
             if (_sim != null)
             {
@@ -39,7 +41,12 @@ namespace TollRoadTycoon.Presentation
             }
             _sim = sim;
             _sim.Lanes.GeometryChanged += MarkDirty;
-            if (_scenery == null) BuildScenery();
+            if (_scenery == null || _section != section)
+            {
+                _section = section;
+                if (_scenery != null) Destroy(_scenery.gameObject);
+                BuildScenery();
+            }
             Rebuild();
         }
 
@@ -87,8 +94,14 @@ namespace TollRoadTycoon.Presentation
                 minBooth = Mathf.Min(minBooth, (float)lanes.BoothX(s));
                 maxBooth = Mathf.Max(maxBooth, (float)lanes.BoothX(s));
             }
+            // Include the building slots beside the road so the camera can pan to them.
             MinX = Mathf.Min((float)layout.OncomingLaneX, minBooth) - 1.5f;
             MaxX = maxBooth + 1.5f;
+            foreach (var slot in _sim.Config.Progression.ServiceSlots)
+            {
+                MinX = Mathf.Min(MinX, (float)slot.X - 2f);
+                MaxX = Mathf.Max(MaxX, (float)slot.X + 2f);
+            }
 
             float half = LaneWidth * 0.5f;
             float spawnY = (float)layout.SpawnY - 4;
@@ -244,34 +257,48 @@ namespace TollRoadTycoon.Presentation
             Shapes.Rect(_road, "Door", Palette.DarkBlue, pos + new Vector2(0, -size.y * 0.38f), new Vector2(0.35f, 0.3f), Layers.Decor + 2);
         }
 
-        /// <summary>Grass, trees and houses; generated once from a fixed seed.</summary>
+        /// <summary>Grass, trees and houses; generated per section from its own seed and colours.</summary>
         private void BuildScenery()
         {
             _scenery = new GameObject("Scenery").transform;
             _scenery.SetParent(transform, false);
+            var grassColor = Palette.Grass;
+            if (_section != null && ColorUtility.TryParseHtmlString("#" + _section.GrassColor, out var parsed)) grassColor = parsed;
             var grass = ArtLibrary.Get("Environment/grass");
             if (grass != null)
             {
-                var sr = Shapes.Sprite(_scenery, "GrassArt", grass, Color.white, Vector2.zero, Vector2.one, Layers.Ground);
+                // Tint the authored grass slightly towards the section colour.
+                var tint = Color.Lerp(Color.white, grassColor, 0.25f);
+                var sr = Shapes.Sprite(_scenery, "GrassArt", grass, tint, Vector2.zero, Vector2.one, Layers.Ground);
                 sr.drawMode = SpriteDrawMode.Tiled;
                 sr.size = new Vector2(80, 140);
             }
             else
             {
-                Shapes.Rect(_scenery, "Grass", Palette.Grass, new Vector2(0, 0), new Vector2(80, 140), Layers.Ground);
+                Shapes.Rect(_scenery, "Grass", grassColor, new Vector2(0, 0), new Vector2(80, 140), Layers.Ground);
             }
-            var rng = new System.Random(1234);
+            int index = _section != null ? _section.KmFrom : 0;
+            var rng = new System.Random(1234 + index * 31);
+            int density = _section != null ? _section.SceneryDensity : 260;
+            var slots = new System.Collections.Generic.List<Vector2>();
+            foreach (var slot in _sim.Config.Progression.ServiceSlots) slots.Add(new Vector2((float)slot.X, (float)slot.Y));
+            foreach (var slot in _sim.Config.Progression.DecorationSlots) slots.Add(new Vector2((float)slot.X, (float)slot.Y));
             var layout = _sim.Config.Layout;
             float maxRoadX = 0;
             foreach (var x in layout.BoothSlotX) maxRoadX = Mathf.Max(maxRoadX, (float)x);
             float onc = (float)layout.OncomingLaneX;
-            for (int i = 0; i < 260; i++)
+            for (int i = 0; i < density; i++)
             {
                 float x = (float)(rng.NextDouble() * 34 - 17);
                 float y = (float)(rng.NextDouble() * 110 - 55);
                 bool onRoad = x > onc - 1.4f && x < maxRoadX + 1.6f;
                 bool nearOffice = x > maxRoadX + 0.6f && x < maxRoadX + 5f && y > -5 && y < 0.5f;
-                if (onRoad || nearOffice) continue;
+                bool nearSlot = false;
+                foreach (var slot in slots)
+                {
+                    if (Vector2.Distance(slot, new Vector2(x, y)) < 2.6f) nearSlot = true;
+                }
+                if (onRoad || nearOffice || nearSlot) continue;
                 float size = 0.9f + (float)rng.NextDouble() * 0.9f;
                 var p = new Vector2(x, y);
                 if (rng.NextDouble() < 0.06)

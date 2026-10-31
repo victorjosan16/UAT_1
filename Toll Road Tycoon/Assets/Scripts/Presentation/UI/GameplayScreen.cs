@@ -16,6 +16,8 @@ namespace TollRoadTycoon.Presentation.UI
         Lanes,
         Workers,
         Upgrade,
+        Services,
+        Decor,
     }
 
     /// <summary>Top HUD (balance, section, income/min) and the bottom CABINE/BENZI/ANGAJAȚI/UPGRADE panel.</summary>
@@ -64,6 +66,10 @@ namespace TollRoadTycoon.Presentation.UI
         {
             _root.Sim.StateChanged -= MarkDirty;
             _root.Sim.StateChanged += MarkDirty;
+            _root.Game.StateChanged -= MarkDirty;
+            _root.Game.StateChanged += MarkDirty;
+            _root.PlacementChanged -= MarkDirty;
+            _root.PlacementChanged += MarkDirty;
             MarkDirty();
         }
 
@@ -124,10 +130,16 @@ namespace TollRoadTycoon.Presentation.UI
             // Section card with progress (booths built out of the section's maximum).
             var section = UIFactory.Panel(transform, "Section", Palette.DarkBlue);
             UIFactory.Place(section.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(24, -140), new Vector2(520, 190));
-            var title = UIFactory.Label(section.transform, Loc.T("hud.section"), 44, Color.white, TextAnchor.UpperLeft);
+            var title = UIFactory.Label(section.transform, "", 44, Color.white, TextAnchor.UpperLeft);
             UIFactory.Stretch(title.rectTransform, 26, 20, 14, 100);
-            var km = UIFactory.Label(section.transform, Loc.T("hud.km"), 32, Palette.Cream, TextAnchor.UpperLeft, FontStyle.Normal);
+            var km = UIFactory.Label(section.transform, "", 30, Palette.Cream, TextAnchor.UpperLeft, FontStyle.Normal);
             UIFactory.Stretch(km.rectTransform, 26, 20, 66, 60);
+            Register(() =>
+            {
+                var sc = _root.Game.ActiveSection.Config;
+                title.text = Loc.F("hud.section_n", _root.Game.ActiveIndex + 1);
+                km.text = Loc.F("hud.km_range", sc.KmFrom, sc.KmTo) + " · " + Loc.T(sc.NameKey);
+            });
             var barBack = UIFactory.Panel(section.transform, "ProgressBack", new Color(1, 1, 1, 0.25f), SpriteFactory.Pill);
             UIFactory.Band(barBack.rectTransform, false, 22, 44, 26);
             var barFill = UIFactory.Panel(barBack.transform, "ProgressFill", Palette.Green, SpriteFactory.Pill);
@@ -154,6 +166,95 @@ namespace TollRoadTycoon.Presentation.UI
             UIFactory.AddOutline(incomeValue, new Color(0, 0, 0, 0.45f), 2);
             UIFactory.Stretch(incomeValue.rectTransform, 10, 10, 70, 20);
             Register(() => incomeValue.text = Money.Format(sim().Economy.GetIncomePerMinute()));
+
+            BuildQuickButtons();
+            BuildGoalBanner();
+            BuildPlacementBar();
+        }
+
+        /// <summary>Map, missions, shop, statistics and the x2 boost, stacked under the income card.</summary>
+        private void BuildQuickButtons()
+        {
+            float y = -350;
+            void Quick(string key, Color color, System.Action onClick, string icon)
+            {
+                var b = UIFactory.Button(transform, Loc.T(key), color, () =>
+                {
+                    _root.Audio.Play(Sfx.Click);
+                    onClick();
+                }, 28);
+                UIFactory.Place((RectTransform)b.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-24, y), new Vector2(230, 84));
+                var art = UIFactory.Icon(b.transform, icon);
+                if (art != null)
+                {
+                    UIFactory.Place(art.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(64, 64));
+                    UIFactory.ButtonText(b).rectTransform.offsetMin = new Vector2(70, 4);
+                }
+                y -= 96;
+            }
+            Quick("hud.map", Palette.Blue, _ui.ShowRoadMap, "Icons/menu_map");
+            Quick("hud.missions", Palette.Blue, _ui.ShowMissions, "Icons/menu_missions");
+            Quick("hud.shop", Palette.Blue, () => _ui.ShowShop(), "Icons/star");
+            Quick("hud.stats", Palette.Blue, _ui.ShowStats, "Icons/upgrade_capacity");
+
+            var boost = UIFactory.Button(transform, "", Palette.Gold, () => _ui.ShowShop(3), 34);
+            UIFactory.Place((RectTransform)boost.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-24, y), new Vector2(230, 84));
+            var boostText = UIFactory.ButtonText(boost);
+            var boostImage = boost.GetComponent<Image>();
+            Register(() =>
+            {
+                var b = _root.Game.Boost;
+                boostText.text = b.IsActive ? Loc.F("hud.boost_active", Mathf.CeilToInt((float)b.SecondsLeft)) : Loc.T("hud.boost");
+                boostImage.color = b.IsActive ? Palette.Green : Palette.Gold;
+            });
+        }
+
+        /// <summary>Current milestone (first-play tutorial): what to do next, progress, and claiming.</summary>
+        private void BuildGoalBanner()
+        {
+            var banner = UIFactory.Panel(transform, "Goal", new Color(0.02f, 0.3f, 0.52f, 0.92f));
+            UIFactory.Place(banner.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(24, -345), new Vector2(560, 120));
+            var button = banner.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            var text = UIFactory.Label(banner.transform, "", 28, Color.white, TextAnchor.MiddleLeft, FontStyle.Normal);
+            UIFactory.Stretch(text.rectTransform, 20, 16, 8, 8);
+            text.supportRichText = true;
+            button.onClick.AddListener(() =>
+            {
+                var m = _root.Game.Missions.CurrentMilestone;
+                if (m != null && _root.Game.Missions.Claim(m))
+                {
+                    _root.Audio.Play(Sfx.Purchase);
+                    _ui.Toast(Loc.F("toast.reward", Money.Format(m.RewardCents)));
+                }
+                else
+                {
+                    _ui.ShowMissions();
+                }
+            });
+            Register(() =>
+            {
+                var missions = _root.Game.Missions;
+                var m = missions.CurrentMilestone;
+                banner.gameObject.SetActive(m != null && _root.Placement == PlacementKind.None);
+                if (m == null) return;
+                bool done = missions.CanClaim(m);
+                banner.color = done ? Palette.Green : new Color(0.02f, 0.3f, 0.52f, 0.92f);
+                text.text = Loc.F("hud.goal", _ui.DescribeMission(m)) + "\n<b>" +
+                            (done ? Loc.T("hud.claim") + " " + Money.Format(m.RewardCents) : _ui.FormatProgress(m)) + "</b>";
+            });
+        }
+
+        /// <summary>Shown while choosing a spot for a building or decoration.</summary>
+        private void BuildPlacementBar()
+        {
+            var bar = UIFactory.Panel(transform, "Placement", Palette.DarkBlue);
+            UIFactory.Band(bar.rectTransform, false, BottomHeight + 16, 120, 24);
+            var text = UIFactory.Label(bar.transform, Loc.T("service.pick_slot"), 32, Color.white, TextAnchor.MiddleLeft);
+            UIFactory.Stretch(text.rectTransform, 24, 300, 0, 0);
+            var cancel = UIFactory.Button(bar.transform, Loc.T("service.cancel"), Palette.Red, () => _root.CancelPlacement(), 34);
+            UIFactory.Place((RectTransform)cancel.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-16, 0), new Vector2(260, 90));
+            Register(() => bar.gameObject.SetActive(_root.Placement != PlacementKind.None));
         }
 
         // ---- Bottom panel ---------------------------------------------------------------------
@@ -171,6 +272,8 @@ namespace TollRoadTycoon.Presentation.UI
             AddTab(tabs, GameplayTab.Lanes, "tab.lanes");
             AddTab(tabs, GameplayTab.Workers, "tab.workers");
             AddTab(tabs, GameplayTab.Upgrade, "tab.upgrade");
+            AddTab(tabs, GameplayTab.Services, "tab.services");
+            AddTab(tabs, GameplayTab.Decor, "tab.decor");
 
             var body = UIFactory.Panel(panel.transform, "Body", Palette.PanelLight);
             UIFactory.Stretch(body.rectTransform, 12, 12, 142, 12);
@@ -185,7 +288,7 @@ namespace TollRoadTycoon.Presentation.UI
                 _root.Audio.Play(Sfx.Click);
                 _tab = tab;
                 Rebuild();
-            }, 34);
+            }, 26);
             var image = button.GetComponent<Image>();
             _tabImages.Add(image);
             var icon = UIFactory.Icon(button.transform, "Icons/tab_" + tab.ToString().ToLowerInvariant());
@@ -195,7 +298,7 @@ namespace TollRoadTycoon.Presentation.UI
                 UIFactory.Place(icon.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(70, 64));
                 var label = UIFactory.ButtonText(button).rectTransform;
                 label.offsetMax = new Vector2(label.offsetMax.x, -66);
-                UIFactory.ButtonText(button).fontSize = 26;
+                UIFactory.ButtonText(button).fontSize = 22;
             }
             Register(() => image.color = _tab == tab ? Palette.Green : Palette.Blue);
         }
@@ -214,6 +317,8 @@ namespace TollRoadTycoon.Presentation.UI
                 case GameplayTab.Lanes: BuildLanes(); break;
                 case GameplayTab.Workers: BuildWorkers(); break;
                 case GameplayTab.Upgrade: BuildUpgrade(); break;
+                case GameplayTab.Services: BuildServices(); break;
+                case GameplayTab.Decor: BuildDecor(); break;
             }
         }
 
@@ -361,6 +466,40 @@ namespace TollRoadTycoon.Presentation.UI
             if (w.AssignedBooth == null) return Loc.T("worker.free");
             if (w.AssignedBooth.PendingClose) return Loc.T("worker.pending");
             return Loc.F("worker.at", w.AssignedBooth.SlotIndex + 1);
+        }
+
+        private void BuildServices()
+        {
+            var services = _root.Game.ActiveSection.Services;
+            foreach (var placed in services.Placed)
+            {
+                var p = placed;
+                Panels.Row(_content, Palette.Green, Loc.T(p.Config.NameKey).Substring(0, 1),
+                    () => Loc.T(p.Config.NameKey) + "  ·  " + Loc.F("common.level", p.Level),
+                    () => Loc.F("service.placed", p.Level, Money.Format(p.Earned)),
+                    () => Loc.T("booth.select"),
+                    () => true,
+                    () => _ui.ShowServiceDetail(p.Slot),
+                    Register, 130, Palette.Blue, 300, "Buildings/service_" + p.Config.Id);
+            }
+            _ui.BuildServiceCatalog(_content, Register, false);
+        }
+
+        private void BuildDecor()
+        {
+            var decorations = _root.Game.ActiveSection.Decorations;
+            foreach (var placed in decorations.Placed)
+            {
+                var d = placed;
+                Panels.Row(_content, Palette.Gold, Loc.T(d.Config.NameKey).Substring(0, 1),
+                    () => Loc.T(d.Config.NameKey),
+                    () => "",
+                    () => Loc.T("booth.select"),
+                    () => true,
+                    () => _ui.ShowDecorationDetail(d.Slot),
+                    Register, 110, Palette.Blue, 300, "Decorations/" + d.Config.Id);
+            }
+            _ui.BuildDecorationCatalog(_content, Register, false);
         }
 
         private void BuildUpgrade()

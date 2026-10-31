@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace TollRoadTycoon.Presentation.UI
 {
     /// <summary>Owns the canvas, screens, modal dialogs and toasts.</summary>
-    public sealed class UIManager : MonoBehaviour
+    public sealed partial class UIManager : MonoBehaviour
     {
         private GameRoot _root;
         private CanvasScaler _scaler;
@@ -19,6 +19,7 @@ namespace TollRoadTycoon.Presentation.UI
         private RectTransform _gameLayer;
         private RectTransform _modalLayer;
         private RectTransform _toastLayer;
+        private RectTransform _adLayer;
         private MainMenuScreen _menu;
         private GameplayScreen _gameplay;
         private readonly List<Action> _modalUpdaters = new List<Action>();
@@ -47,6 +48,7 @@ namespace TollRoadTycoon.Presentation.UI
             _gameLayer = UIFactory.Stretch(UIFactory.Rect(_safe, "GameLayer"));
             _modalLayer = UIFactory.Stretch(UIFactory.Rect(transform, "ModalLayer"));
             _toastLayer = UIFactory.Stretch(UIFactory.Rect(_safe, "ToastLayer"));
+            _adLayer = UIFactory.Stretch(UIFactory.Rect(transform, "AdLayer"));
 
             _menu = _menuLayer.gameObject.AddComponent<MainMenuScreen>();
             _gameplay = _gameLayer.gameObject.AddComponent<GameplayScreen>();
@@ -65,6 +67,9 @@ namespace TollRoadTycoon.Presentation.UI
             _gameplay.Build(this);
             _modalRebuild?.Invoke();
         }
+
+        /// <summary>Gameplay screen, for dialogs that change what its tabs show.</summary>
+        internal GameplayScreen Gameplay => _gameplay;
 
         private void Update()
         {

@@ -33,11 +33,11 @@ namespace TollRoadTycoon.Presentation
             return data;
         }
 
-        public bool Save(GameSimulation sim, SettingsSave settings)
+        public bool Save(TycoonGame game, SettingsSave settings)
         {
             try
             {
-                _manager.Save(sim.CaptureSave(DateTime.UtcNow, Application.version, settings));
+                _manager.Save(game.CaptureSave(DateTime.UtcNow, Application.version, settings));
                 return true;
             }
             catch (Exception e)

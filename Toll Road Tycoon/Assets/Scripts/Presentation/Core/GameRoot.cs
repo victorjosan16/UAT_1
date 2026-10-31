@@ -1,7 +1,11 @@
+using System;
 using TollRoadTycoon.Core;
+using TollRoadTycoon.Economy;
 using TollRoadTycoon.Localization;
+using TollRoadTycoon.Monetization;
 using TollRoadTycoon.Presentation.UI;
 using TollRoadTycoon.Save;
+using TollRoadTycoon.Services;
 using TollRoadTycoon.TollSystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -14,25 +18,40 @@ namespace TollRoadTycoon.Presentation
         Gameplay,
     }
 
+    public enum PlacementKind
+    {
+        None,
+        BuildService,
+        MoveService,
+        BuildDecoration,
+        MoveDecoration,
+    }
+
     /// <summary>
-    /// Composition root on the Unity side: creates the simulation, world views, camera, UI and audio,
-    /// drives the fixed-step simulation and handles saving on pause/quit.
+    /// Composition root on the Unity side: creates the game, world views, camera, UI and audio,
+    /// drives the simulation, handles placement taps and saving on pause/quit.
     /// </summary>
     public sealed class GameRoot : MonoBehaviour
     {
         private const float AutosaveSeconds = 30f;
+        private const float SlotPickRadius = 2.4f;
 
         private SaveService _saves;
         private float _autosaveTimer;
+        private float _missionTimer;
         private WorldView _world;
         private VehicleViewManager _vehicles;
         private CoinPopups _popups;
+        private BuildingsView _buildings;
         private UIManager _ui;
+        private IAdService _adService;
 
         public static GameRoot Instance { get; private set; }
 
         public GameConfig Config { get; private set; }
-        public GameSimulation Sim { get; private set; }
+        public TycoonGame Game { get; private set; }
+        /// <summary>The road currently simulated (active section).</summary>
+        public GameSimulation Sim => Game.Active;
         public SettingsSave Settings { get; private set; } = new SettingsSave();
         public AudioManager Audio { get; private set; }
         public CameraController CameraController { get; private set; }
@@ -41,8 +60,14 @@ namespace TollRoadTycoon.Presentation
         public bool Paused { get; set; }
         public TollBooth SelectedBooth { get; private set; }
 
-        public event System.Action SimulationReplaced;
-        public event System.Action SelectionChanged;
+        public PlacementKind Placement { get; private set; }
+        public string PlacementId { get; private set; }
+        public int PlacementFromSlot { get; private set; } = -1;
+
+        /// <summary>Raised when the simulated road changes (new game, load, section switch).</summary>
+        public event Action SimulationReplaced;
+        public event Action SelectionChanged;
+        public event Action PlacementChanged;
 
         private void Awake()
         {
@@ -59,6 +84,7 @@ namespace TollRoadTycoon.Presentation
             Config = GameConfigAsset.LoadOrDefault();
             _saves = new SaveService();
             Audio = gameObject.AddComponent<AudioManager>();
+            _adService = CreateAdService();
 
             CreateCamera();
             CreateEventSystem();
@@ -70,15 +96,33 @@ namespace TollRoadTycoon.Presentation
             _vehicles.transform.SetParent(worldGo.transform, false);
             _popups = new GameObject("CoinPopups").AddComponent<CoinPopups>();
             _popups.transform.SetParent(worldGo.transform, false);
-
-            LoadOrCreate();
+            _buildings = new GameObject("Buildings").AddComponent<BuildingsView>();
+            _buildings.transform.SetParent(worldGo.transform, false);
 
             _ui = new GameObject("UI").AddComponent<UIManager>();
             _ui.transform.SetParent(transform, false);
+
+            LoadOrCreate();
             _ui.Initialize(this);
             if (_saves.LoadedFromBackup) _ui.Toast(Loc.T("toast.loaded_backup"));
             CameraController.Tapped += OnWorldTapped;
             ShowMainMenu();
+            if (Game.PendingOfflineCents > 0) _ui.ShowOffline();
+        }
+
+        /// <summary>
+        /// Test ads in the Editor and development builds; no ads in release builds until a real SDK
+        /// is integrated and configured (see AdService).
+        /// </summary>
+        private IAdService CreateAdService()
+        {
+            if (Application.isEditor || Debug.isDebugBuild)
+            {
+                var test = new TestAdService();
+                test.Started += request => _ui.ShowTestAd(test, request);
+                return test;
+            }
+            return new DisabledAdService();
         }
 
         private void CreateCamera()
@@ -96,6 +140,8 @@ namespace TollRoadTycoon.Presentation
             cam.backgroundColor = Palette.Grass;
             CameraController = cam.gameObject.GetComponent<CameraController>();
             if (CameraController == null) CameraController = cam.gameObject.AddComponent<CameraController>();
+            CameraController.MinY = -34f;
+            CameraController.MaxY = 30f;
         }
 
         private static void CreateEventSystem()
@@ -111,20 +157,43 @@ namespace TollRoadTycoon.Presentation
         {
             var data = _saves.Load();
             Settings = data?.Settings ?? new SettingsSave();
-            var sim = data != null ? GameSimulation.FromSave(Config, data, System.Environment.TickCount) : new GameSimulation(Config, System.Environment.TickCount);
-            ReplaceSimulation(sim);
+            int seed = Environment.TickCount;
+            var game = data != null
+                ? TycoonGame.FromSave(Config, data, DateTime.UtcNow, _adService, seed)
+                : new TycoonGame(Config, _adService, seed);
+            ReplaceGame(game);
             ApplySettings();
         }
 
-        private void ReplaceSimulation(GameSimulation sim)
+        private void ReplaceGame(TycoonGame game)
         {
-            if (Sim != null) Sim.Payments.TollCollected -= OnTollCollected;
-            Sim = sim;
-            Sim.Payments.TollCollected += OnTollCollected;
-            Sim.BoothController.BarrierOpened += _ => Audio.Play(Sfx.Barrier);
-            _world.Bind(sim);
+            if (Game != null)
+            {
+                Game.ActiveSectionChanged -= OnActiveSectionChanged;
+                Game.ServiceIncome -= OnServiceIncome;
+            }
+            Game = game;
+            Game.ActiveSectionChanged += OnActiveSectionChanged;
+            Game.ServiceIncome += OnServiceIncome;
+            Game.Missions.RefreshDaily(DateTime.UtcNow, Game.Economy.GetIncomePerMinute());
+            BindActiveRoad();
+        }
+
+        private void OnActiveSectionChanged()
+        {
+            CancelPlacement();
+            BindActiveRoad();
+        }
+
+        private void BindActiveRoad()
+        {
+            var sim = Game.Active;
+            sim.Payments.TollCollected += OnTollCollected;
+            sim.BoothController.BarrierOpened += _ => Audio.Play(Sfx.Barrier);
+            _world.Bind(sim, Game.ActiveSection.Config);
             _vehicles.Bind(sim);
             _popups.Bind(sim, _world);
+            _buildings.Bind(Game);
             SelectBooth(sim.Booths[0]);
             SimulationReplaced?.Invoke();
         }
@@ -134,11 +203,17 @@ namespace TollRoadTycoon.Presentation
             if (cents > 0) Audio.Play(Sfx.Coin);
         }
 
+        private void OnServiceIncome(PlacedService service, long cents)
+        {
+            _buildings.ShowIncome(service, cents);
+        }
+
         public void ApplySettings()
         {
             Loc.Language = Settings.Language;
             Audio.SfxEnabled = Settings.SfxEnabled;
             Audio.SfxVolume = Settings.SfxVolume;
+            Audio.SetMusic(Settings.MusicEnabled, Settings.MusicVolume);
             int levels = QualitySettings.names.Length;
             if (levels > 0)
             {
@@ -150,8 +225,8 @@ namespace TollRoadTycoon.Presentation
 
         private void Update()
         {
-            if (Sim == null) return;
-            if (!Paused) Sim.Tick(Time.deltaTime);
+            if (Game == null) return;
+            if (!Paused) Game.Tick(Time.deltaTime);
 
             _autosaveTimer += Time.unscaledDeltaTime;
             if (_autosaveTimer >= AutosaveSeconds)
@@ -159,10 +234,16 @@ namespace TollRoadTycoon.Presentation
                 _autosaveTimer = 0;
                 SaveNow();
             }
+            _missionTimer -= Time.unscaledDeltaTime;
+            if (_missionTimer <= 0)
+            {
+                _missionTimer = 30f;
+                Game.Missions.RefreshDaily(DateTime.UtcNow, Game.Economy.GetIncomePerMinute());
+            }
             UpdateCameraBounds();
         }
 
-        /// <summary>Lets the camera pan sideways only as far as the road is wider than the view.</summary>
+        /// <summary>Lets the camera pan sideways only as far as the road and buildings extend.</summary>
         private void UpdateCameraBounds()
         {
             var cam = CameraController.Camera;
@@ -176,22 +257,25 @@ namespace TollRoadTycoon.Presentation
             }
         }
 
-        public bool SaveNow() => _saves.Save(Sim, Settings);
+        public bool SaveNow() => _saves.Save(Game, Settings);
 
         private void OnApplicationPause(bool paused)
         {
-            if (paused && Sim != null) SaveNow();
+            if (paused && Game != null) SaveNow();
         }
 
         private void OnApplicationQuit()
         {
-            if (Sim != null) SaveNow();
+            if (Game != null) SaveNow();
         }
+
+        // ---- screens ------------------------------------------------------------------------
 
         public void ShowMainMenu()
         {
             Screen = GameScreen.MainMenu;
             Paused = false;
+            CancelPlacement();
             CameraController.enabled = false;
             CameraController.transform.position = new Vector3(-0.5f, -6f, -10f);
             CameraController.Camera.orthographicSize = 11f;
@@ -218,10 +302,20 @@ namespace TollRoadTycoon.Presentation
         {
             _saves.DeleteAll();
             var settings = Settings;
-            ReplaceSimulation(new GameSimulation(Config, System.Environment.TickCount));
+            ReplaceGame(new TycoonGame(Config, _adService, Environment.TickCount));
             Settings = settings;
             SaveNow();
             ShowMainMenu();
+        }
+
+        /// <summary>Switches the simulated road and moves to gameplay.</summary>
+        public void EnterSection(int index)
+        {
+            if (Game.SwitchSection(index))
+            {
+                SaveNow();
+                StartGameplay();
+            }
         }
 
         public void SelectBooth(TollBooth booth)
@@ -231,9 +325,37 @@ namespace TollRoadTycoon.Presentation
             SelectionChanged?.Invoke();
         }
 
+        // ---- placement -------------------------------------------------------------------------
+
+        public void BeginPlacement(PlacementKind kind, string id, int fromSlot = -1)
+        {
+            Placement = kind;
+            PlacementId = id;
+            PlacementFromSlot = fromSlot;
+            if (Screen != GameScreen.Gameplay) StartGameplay();
+            CameraController.Focus(new Vector2(0.4f, -3f));
+            CameraController.Camera.orthographicSize = 14f;
+            PlacementChanged?.Invoke();
+        }
+
+        public void CancelPlacement()
+        {
+            if (Placement == PlacementKind.None) return;
+            Placement = PlacementKind.None;
+            PlacementId = null;
+            PlacementFromSlot = -1;
+            PlacementChanged?.Invoke();
+        }
+
         private void OnWorldTapped(Vector2 world)
         {
             if (Screen != GameScreen.Gameplay || Paused) return;
+            if (Placement != PlacementKind.None)
+            {
+                HandlePlacementTap(world);
+                return;
+            }
+
             var view = _world.PickBooth(world);
             if (view != null)
             {
@@ -246,7 +368,73 @@ namespace TollRoadTycoon.Presentation
             {
                 Audio.Play(Sfx.Click);
                 _ui.ConfirmBuildBooth();
+                return;
             }
+            int slot = NearestSlot(Progression.ServiceSlots, world);
+            if (slot >= 0 && Game.ActiveSection.Services.At(slot) != null)
+            {
+                Audio.Play(Sfx.Click);
+                _ui.ShowServiceDetail(slot);
+                return;
+            }
+            slot = NearestSlot(Progression.DecorationSlots, world, 1.2f);
+            if (slot >= 0 && Game.ActiveSection.Decorations.At(slot) != null)
+            {
+                Audio.Play(Sfx.Click);
+                _ui.ShowDecorationDetail(slot);
+            }
+        }
+
+        private ProgressionConfig Progression => Game.Progression;
+
+        private void HandlePlacementTap(Vector2 world)
+        {
+            bool service = Placement == PlacementKind.BuildService || Placement == PlacementKind.MoveService;
+            var slots = service ? Progression.ServiceSlots : Progression.DecorationSlots;
+            int slot = NearestSlot(slots, world, service ? SlotPickRadius : 1.3f);
+            if (slot < 0) return;
+            var section = Game.ActiveSection;
+            bool free = service ? section.Services.IsSlotFree(slot) : section.Decorations.IsSlotFree(slot);
+            if (!free)
+            {
+                Audio.Play(Sfx.Error);
+                _ui.Toast(Loc.T("toast.slot_taken"));
+                return;
+            }
+            Audio.Play(Sfx.Click);
+            switch (Placement)
+            {
+                case PlacementKind.BuildService:
+                    _ui.ConfirmBuildService(PlacementId, slot);
+                    break;
+                case PlacementKind.MoveService:
+                    if (section.Services.Move(PlacementFromSlot, slot) == PlacementResult.Ok) Audio.Play(Sfx.Purchase);
+                    CancelPlacement();
+                    break;
+                case PlacementKind.BuildDecoration:
+                    _ui.ConfirmBuyDecoration(PlacementId, slot);
+                    break;
+                case PlacementKind.MoveDecoration:
+                    if (section.Decorations.Move(PlacementFromSlot, slot) == PlacementResult.Ok) Audio.Play(Sfx.Purchase);
+                    CancelPlacement();
+                    break;
+            }
+        }
+
+        private static int NearestSlot(System.Collections.Generic.List<Vec2> slots, Vector2 world, float radius = SlotPickRadius)
+        {
+            int best = -1;
+            float bestDistance = radius;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                float d = Vector2.Distance(world, new Vector2((float)slots[i].X, (float)slots[i].Y));
+                if (d < bestDistance)
+                {
+                    bestDistance = d;
+                    best = i;
+                }
+            }
+            return best;
         }
 
         private void LateUpdate()
@@ -257,5 +445,8 @@ namespace TollRoadTycoon.Presentation
                 foreach (var view in _world.Booths) view.SetSelected(view.Booth == SelectedBooth);
             }
         }
+
+        /// <summary>Money formatting shortcut for UI code.</summary>
+        public static string Format(long cents) => Money.Format(cents);
     }
 }

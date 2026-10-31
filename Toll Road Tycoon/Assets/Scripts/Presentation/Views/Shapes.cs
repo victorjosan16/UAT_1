@@ -42,6 +42,16 @@ namespace TollRoadTycoon.Presentation
             return sr;
         }
 
+        /// <summary>Like Art, but fits the larger side of the sprite into maxSize (tall props such as lamps).</summary>
+        public static SpriteRenderer ArtFit(Transform parent, string name, string path, long seed, Vector2 pos, float maxSize, int order)
+        {
+            var sprite = ArtLibrary.Pick(path, seed);
+            if (sprite == null) return null;
+            float size = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
+            float scale = size > 0 ? maxSize / size : 1f;
+            return Sprite(parent, name, sprite, Color.white, pos, new Vector2(scale, scale), order);
+        }
+
         /// <summary>World-space label (legacy TextMesh, works without imported font assets).</summary>
         public static TextMesh Label(Transform parent, string name, string text, Color color, Vector2 pos, float size, int order, bool bold = true)
         {

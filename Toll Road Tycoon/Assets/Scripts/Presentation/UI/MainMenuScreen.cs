@@ -41,11 +41,17 @@ namespace TollRoadTycoon.Presentation.UI
             float y = -720;
             MenuButton(ui, "menu.play", "play", Palette.Green, y, 160, 64, root.StartGameplay);
             y -= 190;
-            MenuButton(ui, "menu.roads", "map", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.roads"), Loc.T("menu.soon.body")), true);
+            MenuButton(ui, "menu.roads", "map", Palette.Blue, y, 130, 48, ui.ShowRoadMap);
             y -= 155;
-            MenuButton(ui, "menu.shop", "shop", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.shop"), Loc.T("menu.soon.body")), true);
+            MenuButton(ui, "menu.shop", "shop", Palette.Blue, y, 130, 48, () => ui.ShowShop());
             y -= 155;
-            MenuButton(ui, "menu.missions", "missions", Palette.Blue, y, 130, 48, () => ui.ShowInfo(Loc.T("menu.missions"), Loc.T("menu.soon.body")), true);
+            var missions = MenuButton(ui, "menu.missions", "missions", Palette.Blue, y, 130, 48, ui.ShowMissions);
+            // Red "!" badge when a mission reward is waiting, as in the mockup.
+            var badge = UIFactory.Panel(missions.transform, "Badge", Palette.Red, SpriteFactory.Pill);
+            UIFactory.Place(badge.rectTransform, new Vector2(1, 1), new Vector2(0.5f, 0.5f), new Vector2(-14, -14), new Vector2(60, 60));
+            var mark = UIFactory.Label(badge.transform, "!", 40, Color.white);
+            UIFactory.Stretch(mark.rectTransform);
+            _missionBadge = badge.gameObject;
             y -= 155;
             MenuButton(ui, "menu.settings", "settings", Palette.Blue, y, 130, 48, ui.ShowSettings);
         }
@@ -67,7 +73,9 @@ namespace TollRoadTycoon.Presentation.UI
             UIFactory.Band(stripe.rectTransform, false, 34, 18, 120);
         }
 
-        private void MenuButton(UIManager ui, string key, string icon, Color color, float y, float height, int fontSize, System.Action onClick, bool comingSoon = false)
+        private GameObject _missionBadge;
+
+        private Button MenuButton(UIManager ui, string key, string icon, Color color, float y, float height, int fontSize, System.Action onClick, bool comingSoon = false)
         {
             var button = UIFactory.Button(transform, Loc.T(key), color, () =>
             {
@@ -80,18 +88,30 @@ namespace TollRoadTycoon.Presentation.UI
             {
                 UIFactory.Place(iconImage.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 0), new Vector2(height - 30, height - 30));
             }
-            if (!comingSoon) return;
+            if (!comingSoon) return button;
             button.GetComponent<Image>().color = Color.Lerp(color, Palette.Disabled, 0.45f);
             var badge = UIFactory.Panel(button.transform, "Soon", Palette.Gold, SpriteFactory.Pill);
             UIFactory.Place(badge.rectTransform, new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(-10, -6), new Vector2(230, 56));
             var text = UIFactory.Label(badge.transform, Loc.T("menu.soon"), 28, Palette.DarkBlue);
             UIFactory.Stretch(text.rectTransform);
+            return button;
         }
 
         private void Update()
         {
             var root = GameRoot.Instance;
-            if (_balance != null && root != null && root.Sim != null) _balance.text = Money.Format(root.Sim.Economy.Balance);
+            if (_balance != null && root != null && root.Game != null) _balance.text = Money.Format(root.Game.Economy.Balance);
+            if (_missionBadge != null && root != null && root.Game != null) _missionBadge.SetActive(HasClaimable(root.Game.Missions));
+        }
+
+        private static bool HasClaimable(Missions.MissionManager missions)
+        {
+            if (missions.CanClaim(missions.CurrentMilestone)) return true;
+            foreach (var m in missions.Daily)
+            {
+                if (missions.CanClaim(m)) return true;
+            }
+            return false;
         }
     }
 }
