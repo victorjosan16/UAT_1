@@ -25,12 +25,59 @@ namespace Veliqora.UI
             Sprite s;
             if (Cache.TryGetValue(key, out s) && s != null) return s;
             s = build();
+            if (s == null) return null;
             s.name = "proc_" + key;
             Cache[key] = s;
             return s;
         }
 
-        private static Sprite Override(string path) => Resources.Load<Sprite>("Veliqora/Art/" + path);
+        private static Sprite Override(string path) => Art(path);
+
+        /// <summary>
+        /// Authored art under Resources/Veliqora/Art/&lt;path&gt; (PNG imported as a texture by VeliqoraArtImporter),
+        /// turned into a sprite with an optional 9-slice border. Returns null when the file doesn't exist.
+        /// </summary>
+        public static Sprite Art(string path, Vector4 border = default(Vector4))
+        {
+            string key = "art_" + path + "_" + border;
+            Sprite s;
+            if (Cache.TryGetValue(key, out s)) return s;
+            s = Resources.Load<Sprite>("Veliqora/Art/" + path);
+            if (s == null)
+            {
+                var tex = Resources.Load<Texture2D>("Veliqora/Art/" + path);
+                if (tex != null)
+                {
+                    s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, border);
+                    s.name = "art_" + path;
+                }
+            }
+            Cache[key] = s; // caches misses too (null), so absent art costs one lookup
+            return s;
+        }
+
+        /// <summary>Full round button art (e.g. Buttons/Undo), used instead of circle + glyph when present.</summary>
+        public static Sprite ButtonArt(Icon icon) => Art("Buttons/" + icon);
+
+        /// <summary>Authored 9-slice pill for a button style (Primary = green, Accent = purple), or null.</summary>
+        public static Sprite Pill(UIStyle.ButtonKind kind)
+        {
+            string name = kind == UIStyle.ButtonKind.Primary ? "pill_green" : (kind == UIStyle.ButtonKind.Accent ? "pill_purple" : null);
+            if (name == null) return null;
+            var probe = Art("Buttons/" + name);
+            if (probe == null) return null;
+            float h = probe.rect.height, w = probe.rect.width;
+            return Art("Buttons/" + name, new Vector4(h * 0.5f, h * 0.45f, h * 0.5f, h * 0.45f));
+        }
+
+        /// <summary>Wooden title sign, horizontally 9-sliced.</summary>
+        public static Sprite TitleSign()
+        {
+            var probe = Art("Buttons/sign_wood");
+            if (probe == null) return null;
+            float w = probe.rect.width;
+            return Art("Buttons/sign_wood", new Vector4(w * 0.16f, 0, w * 0.16f, 0));
+        }
 
         // ---------------- panels ----------------
 
@@ -92,7 +139,11 @@ namespace Veliqora.UI
 
         public static Sprite Get(Icon icon)
         {
-            return Get("icon_" + icon, () => Override("Icons/" + icon) ?? BuildIcon(icon));
+            return Get("icon_" + icon, () =>
+            {
+                var authored = Override("Icons/" + icon);
+                return authored != null ? authored : BuildIcon(icon);
+            });
         }
 
         private static Sprite BuildIcon(Icon icon) => PaintIcon(icon).ToSprite();

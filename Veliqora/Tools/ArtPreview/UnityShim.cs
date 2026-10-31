@@ -135,9 +135,12 @@ namespace UnityEngine
         public void Apply(bool mip, bool readOnly) { }
     }
 
+    public sealed class TextAsset : Object { public string text = ""; }
+
     public sealed class Sprite : Object
     {
         public Vector4 border;
+        public Rect rect;
         public static Sprite Create(Texture2D t, Rect r, Vector2 pivot, float ppu, uint extrude, SpriteMeshType m, Vector4 border) => new Sprite { border = border };
         public static Sprite Create(Texture2D t, Rect r, Vector2 pivot, float ppu) => new Sprite();
     }

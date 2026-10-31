@@ -55,6 +55,20 @@ an APK/AAB, or on-device performance.
 - 🟡 **Editor tooling:** Validate Project, Generate Levels, Batch Validate, screenshot capture, debug APK / release AAB menus and CLI with env-var signing.
 - ⬜ **Builds:** APK/AAB **not built** (no Unity/Android toolchain here).
 
+## Authored art integration (supplied art sheets)
+- ✅ **Importer:** `Tools/ArtImport/import_art.py` (+ `extract_sheet.py`) runs and writes 40 files: 14 backgrounds, 8 icons, 11 buttons/pills/sign, 3 effects, 4 glasses + shapes JSON.
+- ✅ **Extraction details:**
+  - difference matte against the local green background keeps glass translucent;
+  - baked badges are removed by mirror inpainting;
+  - labels are cropped off the backgrounds;
+  - the green pill is derived from the blue pill, since a green-screen key destroys green art.
+- ✅ **Glass interiors:** derived from alpha and checked by overlaying the polygons on the art.
+- ✅ **Composition previews:** `Docs/ArtPreview/compose_*.png`, approximate and not Unity screenshots.
+- 🟡 **Runtime integration:** art loader (`SpriteLibrary.Art`, runtime 9-slicing with `pixelsPerUnitMultiplier`), art-face icon buttons, art pills,
+  title sign banners, screen and theme backgrounds with readability scrims, Level Complete effects, opened-chest badge, authored bottle skins,
+  Desert theme, `VeliqoraArtImporter` import settings. Compiles, but has not been seen in Unity.
+- ⬜ **Unused assets:** map art (it needs a seamless tile), the Events and Settings screens' art, obstacles and special liquids (no such mechanics yet).
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

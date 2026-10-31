@@ -62,6 +62,21 @@ UnityEditor 2021.1). It is a fast sanity check only; opening the project in Unit
 - Stars depend on the move count relative to a solver benchmark, with forgiving, published thresholds (see DESIGN_SPEC §5).
 - Coins come from levels and milestones. Everything is offline-first, and rewarded ads are optional, guarded and never block progress.
 
+## Authored art (integrated)
+
+The two art sheets supplied for the project are imported by `Tools/ArtImport/import_art.py`
+(`python3 -I Tools/ArtImport/import_art.py <backgrounds.png> <assets.png> .`). The originals are kept in `Assets/_Veliqora/Art/Source/`,
+which is not inside Resources, so they don't ship. The importer writes the following into `Resources/Veliqora/Art/`:
+- 8 screen backgrounds and 6 theme illustrations, with the baked-in labels cropped off;
+- the round booster/HUD buttons, with the red count badges removed so live counts can be drawn over them;
+- the green, blue and purple pills and the wooden title sign;
+- the coin, star, chest, crown, gem and heart icons;
+- the celebration effects;
+- 4 glass bottles, each with an interior polygon derived from the art's alpha so liquid stays inside the glass.
+
+Code picks these up automatically and falls back to procedural art for anything missing. `Docs/ArtPreview/compose_*.png` are
+approximate composition previews, **not Unity screenshots**.
+
 ## Replacing placeholder art and audio
 
 All visuals and sounds are **procedurally generated placeholders** and are labelled as such. To ship authored assets, drop files into

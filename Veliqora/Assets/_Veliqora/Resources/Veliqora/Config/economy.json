@@ -30,6 +30,8 @@
       "visual": { "skyTop": "#9FB8E8", "skyBottom": "#EEF4FF", "mountain": "#C7D3EE", "hill": "#E6EEF9", "hillDark": "#B5C6E3", "river": "#7FB3E0", "accent": "#9D7BEA", "gameTop": "#1B2747", "gameBottom": "#3F5E9A" } },
     { "id": "theme_galaxy", "kind": "theme", "title": "Galaxy Bloom", "price": 1200,
       "visual": { "skyTop": "#2A0F4C", "skyBottom": "#6B2FA3", "mountain": "#4B1F78", "hill": "#3B2A7A", "hillDark": "#28195A", "river": "#C06EF0", "accent": "#4FE3C1", "gameTop": "#140828", "gameBottom": "#3D1670" } },
+    { "id": "theme_desert", "kind": "theme", "title": "Desert Oasis", "price": 1100,
+      "visual": { "skyTop": "#F6B26B", "skyBottom": "#FFE9C2", "mountain": "#D9A066", "hill": "#E8C07D", "hillDark": "#C08A4A", "river": "#4FB3D9", "accent": "#FF8C42", "gameTop": "#3A2414", "gameBottom": "#8A5A2B" } },
     { "id": "bottle_classic", "kind": "bottle", "title": "Classic Glass", "price": 0, "defaultOwned": true,
       "visual": { "shape": "classic", "tint": "#FFFFFF", "neck": 0.22 } },
     { "id": "bottle_slim", "kind": "bottle", "title": "Slim Vial", "price": 300,
@@ -37,6 +39,14 @@
     { "id": "bottle_flask", "kind": "bottle", "title": "Round Flask", "price": 500,
       "visual": { "shape": "flask", "tint": "#F3ECFF", "neck": 0.3 } },
     { "id": "bottle_crystal", "kind": "bottle", "title": "Crystal", "price": 900,
-      "visual": { "shape": "crystal", "tint": "#E6FFF6", "neck": 0.18 } }
+      "visual": { "shape": "crystal", "tint": "#E6FFF6", "neck": 0.18 } },
+    { "id": "bottle_milk", "kind": "bottle", "title": "Milk Bottle", "price": 400,
+      "visual": { "shape": "authored", "art": "glass_milk" } },
+    { "id": "bottle_cork", "kind": "bottle", "title": "Cork Bottle", "price": 450,
+      "visual": { "shape": "authored", "art": "glass_cork" } },
+    { "id": "bottle_cone", "kind": "bottle", "title": "Cone Flask", "price": 650,
+      "visual": { "shape": "authored", "art": "glass_cone" } },
+    { "id": "bottle_cap", "kind": "bottle", "title": "Vintage Vial", "price": 750,
+      "visual": { "shape": "authored", "art": "glass_cap" } }
   ]
 }

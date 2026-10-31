@@ -41,6 +41,14 @@ namespace Veliqora.UI.Screens
         {
             var theme = S.Themes.Theme;
             bool light = S.Settings.Data.LightGameplayBackground;
+            var art = light ? null : BackgroundArt.ThemeArt(S.Themes.ThemeId);
+            if (art != null)
+            {
+                // Themed scene behind a navy veil: atmosphere without hurting liquid readability.
+                FullBackground(full, art);
+                ReadabilityScrim(full, 0.55f, 0.6f, 0.38f);
+                return;
+            }
             var raw = UIFactory.Raw(full, "Background", BackgroundArt.GameplayGradient(theme.GameTop, theme.GameBottom, light), Color.white);
             UIFactory.Stretch(raw.rectTransform);
         }

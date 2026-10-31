@@ -17,11 +17,41 @@ namespace Veliqora.UI
         public Image Icon;
         public UIStyle.ButtonKind Kind;
 
+        public Image Gloss;
+        public float Height;
+        /// <summary>True for round icon buttons drawn entirely from authored art.</summary>
+        public bool ArtFace;
+
         public void SetInteractable(bool on)
         {
             Button.interactable = on;
-            Background.color = on ? UIStyle.ButtonFill(Kind) : UIStyle.Disabled;
-            if (Edge != null) Edge.color = on ? UIStyle.ButtonEdge(Kind) : UIStyle.Darken(UIStyle.Disabled, 0.15f);
+            if (ArtFace)
+            {
+                Background.color = on ? Color.white : new Color(0.62f, 0.62f, 0.62f, 0.85f);
+                return;
+            }
+            var pill = SpriteLibrary.Pill(Kind);
+            if (pill != null)
+            {
+                // Authored pill: the art carries fill, edge and gloss; disabled = desaturated tint.
+                Background.sprite = pill;
+                Background.type = Image.Type.Sliced;
+                Background.pixelsPerUnitMultiplier = pill.rect.height / Mathf.Max(1f, Height);
+                Background.rectTransform.offsetMin = Vector2.zero;
+                Background.color = on ? Color.white : new Color(0.62f, 0.62f, 0.62f, 0.9f);
+                if (Edge != null) Edge.enabled = false;
+                if (Gloss != null) Gloss.enabled = false;
+            }
+            else
+            {
+                Background.sprite = SpriteLibrary.Rounded(Height * 0.45f);
+                Background.type = Image.Type.Sliced;
+                Background.pixelsPerUnitMultiplier = 1f;
+                Background.rectTransform.offsetMin = new Vector2(0, 8);
+                Background.color = on ? UIStyle.ButtonFill(Kind) : UIStyle.Disabled;
+                if (Edge != null) { Edge.enabled = true; Edge.color = on ? UIStyle.ButtonEdge(Kind) : UIStyle.Darken(UIStyle.Disabled, 0.15f); }
+                if (Gloss != null) Gloss.enabled = Kind != UIStyle.ButtonKind.Ghost;
+            }
             if (Label != null) Label.color = on ? UIStyle.ButtonText(Kind) : UIStyle.WithAlpha(UIStyle.White, 0.9f);
         }
 
@@ -225,6 +255,8 @@ namespace Veliqora.UI
             gloss.rectTransform.anchorMin = new Vector2(0, 0.55f);
             gloss.rectTransform.offsetMin = new Vector2(14, 0);
             gloss.rectTransform.offsetMax = new Vector2(-14, -8);
+            h.Gloss = gloss;
+            h.Height = size.y;
 
             float iconSize = size.y * 0.5f;
             if (icon.HasValue)
@@ -250,6 +282,7 @@ namespace Veliqora.UI
             var fx = h.Background.gameObject.AddComponent<ButtonFx>();
             fx.Target = face;
             if (onClick != null) h.Button.onClick.AddListener(() => onClick());
+            h.SetInteractable(true); // applies authored pill art when available
             return h;
         }
 
@@ -273,6 +306,21 @@ namespace Veliqora.UI
             h.Icon = Image(face, "Icon", SpriteLibrary.Get(icon), iconColor ?? Color.white);
             Stretch(h.Icon.rectTransform, size * 0.24f);
             h.Icon.rectTransform.anchoredPosition = new Vector2(0, 3);
+            var art = SpriteLibrary.ButtonArt(icon);
+            if (art != null)
+            {
+                // Authored round button: one image replaces circle, edge, gloss and glyph.
+                h.Edge.enabled = false;
+                gloss.enabled = false;
+                h.Icon.enabled = false;
+                h.Background.sprite = art;
+                h.Background.type = UnityEngine.UI.Image.Type.Simple;
+                h.Background.preserveAspect = true;
+                h.Background.color = Color.white;
+                h.Background.rectTransform.offsetMin = Vector2.zero;
+                h.Icon = h.Background;
+                h.ArtFace = true;
+            }
             h.Button = h.Background.gameObject.AddComponent<Button>();
             h.Button.transition = Selectable.Transition.None;
             var fx = h.Background.gameObject.AddComponent<ButtonFx>();
@@ -289,6 +337,32 @@ namespace Veliqora.UI
                 hb.onClick.AddListener(() => h.Button.onClick.Invoke());
             }
             return h;
+        }
+
+        /// <summary>
+        /// Title banner: the authored wooden sign when present (horizontally 9-sliced), otherwise a colored ribbon.
+        /// Returns the label.
+        /// </summary>
+        public static Text TitleBanner(Transform parent, string text, Vector2 size, Color fallback)
+        {
+            var sign = SpriteLibrary.TitleSign();
+            Image bg;
+            if (sign != null)
+            {
+                bg = Image(parent, "TitleSign", sign, Color.white);
+                bg.type = UnityEngine.UI.Image.Type.Sliced;
+                bg.pixelsPerUnitMultiplier = sign.rect.height / Mathf.Max(1f, size.y);
+            }
+            else
+            {
+                bg = Image(parent, "Ribbon", SpriteLibrary.Rounded(UIStyle.RadiusMedium), fallback);
+            }
+            bg.rectTransform.sizeDelta = size;
+            AddShadow(bg, UIStyle.Shadow, new Vector2(0, -8));
+            var t = Text(bg.transform, text, UIStyle.FontHeading, Color.white);
+            if (sign != null) AddOutline(t, UIStyle.Hex("#5A2E10"), 4f);
+            AddShadow(t, new Color(0, 0, 0, 0.25f), new Vector2(0, -4));
+            return t;
         }
 
         /// <summary>Simple horizontal layout of children with fixed spacing, centered.</summary>

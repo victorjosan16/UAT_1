@@ -63,12 +63,22 @@ namespace Veliqora.UI.Screens
 
         protected Text Ribbon(RectTransform parent, string text, float y, float width = 640f, Color? color = null)
         {
-            var ribbon = UIFactory.Image(parent, "Ribbon", SpriteLibrary.Rounded(UIStyle.RadiusMedium), color ?? UIStyle.Coral);
-            UIFactory.Place(ribbon.rectTransform, new Vector2(0.5f, 1f), new Vector2(width, 130), new Vector2(0, y), new Vector2(0.5f, 1f));
-            UIFactory.AddShadow(ribbon, UIStyle.Shadow, new Vector2(0, -8));
-            var t = UIFactory.Text(ribbon.transform, text, UIStyle.FontHeading, Color.white);
-            UIFactory.AddShadow(t, new Color(0, 0, 0, 0.22f), new Vector2(0, -4));
+            var t = UIFactory.TitleBanner(parent, text, new Vector2(width, 130), color ?? UIStyle.Coral);
+            var rt = (RectTransform)t.transform.parent;
+            UIFactory.Place(rt, new Vector2(0.5f, 1f), new Vector2(width, 130), new Vector2(0, y), new Vector2(0.5f, 1f));
             return t;
+        }
+
+        /// <summary>Soft dark gradients at the top and bottom so HUD text stays readable over busy illustrations.</summary>
+        protected void ReadabilityScrim(RectTransform full, float top, float bottom, float overall = 0f)
+        {
+            if (overall > 0f)
+            {
+                var all = UIFactory.Image(full, "Scrim", SpriteLibrary.Pixel, new Color(0.06f, 0.08f, 0.2f, overall));
+                UIFactory.Stretch(all.rectTransform);
+            }
+            var g = UIFactory.Raw(full, "ScrimGradient", Presentation.BackgroundArt.ScrimGradient(top, bottom), new Color(0.04f, 0.05f, 0.15f, 1f));
+            UIFactory.Stretch(g.rectTransform);
         }
 
         protected RawImage FullBackground(RectTransform full, Texture tex)

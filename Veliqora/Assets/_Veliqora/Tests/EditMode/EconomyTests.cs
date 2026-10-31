@@ -22,7 +22,7 @@ namespace Veliqora.Tests.EditMode
             Assert.IsNotNull(c.FindOffer(BoosterType.Hint));
             Assert.Greater(c.FindOffer("offer_extra_bottle").Price, 0);
             Assert.IsTrue(c.FindCosmetic("theme_valley").DefaultOwned);
-            Assert.AreEqual(10, c.Cosmetics.Count);
+            Assert.AreEqual(15, c.Cosmetics.Count);
         }
 
         [Test]

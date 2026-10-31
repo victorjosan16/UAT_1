@@ -17,12 +17,14 @@ namespace Veliqora.UI.Screens
         private RectTransform _preview;
         private ButtonHandle _tabThemes, _tabBottles, _action;
         private RawImage _bg;
+        private bool _bgFollowsTheme;
 
         protected override void BuildBackground(RectTransform full)
         {
-            _bg = FullBackground(full, BackgroundArt.Valley(S.Themes.Theme));
-            var dim = UIFactory.Image(full, "Dim", SpriteLibrary.Pixel, new Color(0.06f, 0.08f, 0.2f, 0.35f));
-            UIFactory.Stretch(dim.rectTransform);
+            var screenArt = BackgroundArt.ScreenArt("themes");
+            _bg = FullBackground(full, screenArt != null ? (Texture)screenArt : BackgroundArt.Valley(S.Themes.Theme));
+            _bgFollowsTheme = screenArt == null;
+            ReadabilityScrim(full, 0.4f, 0.3f, 0.15f);
         }
 
         protected override void Build(object args)
@@ -85,17 +87,20 @@ namespace Veliqora.UI.Screens
             var items = Items();
             Canvas.ForceUpdateCanvases();
             float w = _grid.rect.width;
-            float cellW = (w - 40) / 3f;
-            float cellH = cellW * 1.12f;
+            const int cols = 4;
+            const float gap = 18f;
+            float cellW = (w - gap * (cols - 1)) / cols;
+            int rows = (items.Count + cols - 1) / cols;
+            float cellH = Mathf.Min(cellW * 1.15f, (_grid.rect.height - gap * (rows - 1)) / Mathf.Max(1, rows));
             for (int i = 0; i < items.Count; i++)
             {
-                int col = i % 3, row = i / 3;
+                int col = i % cols, row = i / cols;
                 var item = items[i];
                 var cell = UIFactory.Rect("Cell_" + item.Id, _grid);
                 cell.anchorMin = cell.anchorMax = new Vector2(0, 1);
                 cell.pivot = new Vector2(0, 1);
                 cell.sizeDelta = new Vector2(cellW, cellH);
-                cell.anchoredPosition = new Vector2(col * (cellW + 20), -row * (cellH + 20));
+                cell.anchoredPosition = new Vector2(col * (cellW + gap), -row * (cellH + gap));
                 BuildCell(cell, item);
             }
         }
@@ -121,9 +126,13 @@ namespace Veliqora.UI.Screens
                 var b = new GameObject("Bottle", typeof(RectTransform));
                 b.transform.SetParent(inner, false);
                 var v = b.AddComponent<BottleView>();
-                v.Init(0, S.Themes.BottleFor(item.Id, 4), 4, 70, false);
+                var shape = S.Themes.BottleFor(item.Id, 4);
+                Canvas.ForceUpdateCanvases();
+                float innerH = Mathf.Max(60f, inner.rect.height);
+                float bw = Mathf.Min(inner.rect.width * 0.45f, innerH * 0.9f / shape.Aspect);
+                v.Init(0, shape, 4, bw, false);
                 v.ShowState(new BottleState(4, 1, 5, 2, 4));
-                v.Rect.anchoredPosition = new Vector2(0, -110);
+                v.Rect.anchoredPosition = new Vector2(0, -bw * shape.Aspect * 0.5f);
                 foreach (var g in b.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
             }
             var label = UIFactory.Text(frame.transform, item.Title, UIStyle.FontCaption - 4, UIStyle.Ink);
@@ -223,7 +232,7 @@ namespace Veliqora.UI.Screens
         {
             if (!S.Themes.Apply(item.Id)) return;
             S.SaveNow();
-            if (item.Kind == CosmeticKind.Theme && _bg != null)
+            if (item.Kind == CosmeticKind.Theme && _bg != null && _bgFollowsTheme)
             {
                 var tex = BackgroundArt.Valley(S.Themes.Theme);
                 _bg.texture = tex;

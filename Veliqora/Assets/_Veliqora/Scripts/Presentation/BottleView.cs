@@ -25,6 +25,7 @@ namespace Veliqora.Presentation
 
         private LiquidGraphic _liquid;
         private Image _glass;
+        private Image _glassBack;
         private Image _glow;
         private Image _hintRing;
         private RectTransform _symbolRoot;
@@ -61,6 +62,13 @@ namespace Veliqora.Presentation
             _hintRing = UIFactory.Image(transform, "Hint", SpriteLibrary.SoftRounded(Width * 0.4f, 16), new Color(0.35f, 1f, 0.75f, 0f));
             UIFactory.Stretch(_hintRing.rectTransform, -Width * 0.12f);
 
+            if (shape.IsAuthored)
+            {
+                // Authored glass: full art behind the liquid, a faint copy in front for reflections, so liquid
+                // colors stay vivid while the glass still reads as glass.
+                _glassBack = UIFactory.Image(transform, "GlassBack", shape.GlassSprite(), glassColor ?? Color.white);
+            }
+
             var liquidRt = UIFactory.Rect("Liquid", transform);
             _liquid = liquidRt.gameObject.AddComponent<LiquidGraphic>();
             _liquid.Configure(shape.InteriorPolygon(), capacity);
@@ -70,6 +78,7 @@ namespace Veliqora.Presentation
             _glass = UIFactory.Image(transform, "Glass", shape.GlassSprite(), Color.white);
             _glass.type = Image.Type.Simple;
             if (glassColor.HasValue) _glass.color = glassColor.Value;
+            if (shape.IsAuthored) _glass.color = UIStyle.WithAlpha(_glass.color, 0.38f);
             _glass.preserveAspect = false;
         }
 

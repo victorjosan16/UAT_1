@@ -14,9 +14,10 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
-            FullBackground(full, BackgroundArt.Valley(S.Themes.Theme));
-            var dim = UIFactory.Image(full, "Dim", SpriteLibrary.Pixel, new Color(0.06f, 0.08f, 0.2f, 0.35f));
-            UIFactory.Stretch(dim.rectTransform);
+            Texture tex = BackgroundArt.ScreenArt("shop");
+            if (tex == null) tex = BackgroundArt.Valley(S.Themes.Theme);
+            FullBackground(full, tex);
+            ReadabilityScrim(full, 0.4f, 0.4f, 0.15f);
         }
 
         protected override void Build(object args)

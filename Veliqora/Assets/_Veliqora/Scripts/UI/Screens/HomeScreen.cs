@@ -16,7 +16,11 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
-            FullBackground(full, BackgroundArt.Valley(S.Themes.Theme));
+            // Classic theme uses the dedicated home illustration; other themes show their own artwork.
+            Texture tex = S.Themes.ThemeId == "theme_valley" ? BackgroundArt.ScreenArt("home") : null;
+            if (tex == null) tex = BackgroundArt.Valley(S.Themes.Theme);
+            FullBackground(full, tex);
+            ReadabilityScrim(full, 0.35f, 0.5f);
         }
 
         protected override void Build(object args)

@@ -68,11 +68,9 @@ namespace Veliqora.UI
                 UIFactory.Stretch(h.Content, UIStyle.Space3);
                 if (!string.IsNullOrEmpty(title))
                 {
-                    var ribbon = UIFactory.Image(holder, "Ribbon", SpriteLibrary.Rounded(UIStyle.RadiusMedium), UIStyle.Coral);
-                    UIFactory.Place(ribbon.rectTransform, new Vector2(0.5f, 1f), new Vector2(Mathf.Min(panelSize.x - 80, 640), 120), new Vector2(0, 30), new Vector2(0.5f, 0.5f));
-                    UIFactory.AddShadow(ribbon, UIStyle.Shadow, new Vector2(0, -6));
-                    var t = UIFactory.Text(ribbon.transform, title, UIStyle.FontHeading, Color.white);
-                    UIFactory.AddShadow(t, new Color(0, 0, 0, 0.2f), new Vector2(0, -3));
+                    var bannerSize = new Vector2(Mathf.Min(panelSize.x - 80, 640), 120);
+                    var t = UIFactory.TitleBanner(holder, title, bannerSize, UIStyle.Coral);
+                    UIFactory.Place((RectTransform)t.transform.parent, new Vector2(0.5f, 1f), bannerSize, new Vector2(0, 30), new Vector2(0.5f, 0.5f));
                     h.Content.offsetMax = new Vector2(-UIStyle.Space3, -110);
                 }
                 if (dismissable)

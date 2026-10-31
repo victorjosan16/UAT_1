@@ -18,6 +18,13 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
+            var art = BackgroundArt.ScreenArt("complete");
+            if (art != null)
+            {
+                FullBackground(full, art);
+                ReadabilityScrim(full, 0.25f, 0.55f, 0.18f);
+                return;
+            }
             var theme = S.Themes.Theme;
             var raw = UIFactory.Raw(full, "Background", BackgroundArt.GameplayGradient(theme.GameTop, theme.GameBottom, false), Color.white);
             UIFactory.Stretch(raw.rectTransform);
@@ -28,6 +35,16 @@ namespace Veliqora.UI.Screens
         protected override void Build(object args)
         {
             _result = args as LevelResult ?? new LevelResult { Level = S.Save.Progress.CurrentLevel, Stars = 1 };
+
+            // Celebration art behind the stars (authored effects, when present)
+            var burst = SpriteLibrary.Art(_result.Stars >= 3 ? "Effects/fx_crown_burst" : "Effects/fx_star_burst");
+            if (burst != null)
+            {
+                var fx = UIFactory.Image(Safe, "Burst", burst, Color.white);
+                fx.preserveAspect = true;
+                UIFactory.Place(fx.rectTransform, new Vector2(0.5f, 0.82f), _result.Stars >= 3 ? new Vector2(420, 320) : new Vector2(560, 420), new Vector2(0, _result.Stars >= 3 ? 160 : 0));
+                if (!MotionPrefs.Reduced) Tween.Pulse(this, fx.rectTransform, 0.03f, 1.6f);
+            }
 
             // Stars
             var starRow = UIFactory.Rect("Stars", Safe);

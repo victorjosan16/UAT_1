@@ -215,6 +215,33 @@ namespace Veliqora.Presentation
             return p;
         }
 
+        /// <summary>White texture whose alpha fades from <paramref name="top"/> (top edge) and <paramref name="bottom"/> (bottom edge) to 0 mid-screen; tint it with RawImage.color.</summary>
+        public static Texture2D ScrimGradient(float top, float bottom)
+        {
+            string key = "scrim_" + top.ToString("0.00") + "_" + bottom.ToString("0.00");
+            Texture2D cached;
+            if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
+            const int h = 128;
+            var p = new PixelPainter(2, h);
+            for (int y = 0; y < h; y++)
+            {
+                float v = y / (float)(h - 1);                       // 0 bottom .. 1 top
+                float a = Mathf.Max(bottom * Mathf.Pow(Mathf.Clamp01(1f - v / 0.32f), 1.6f),
+                                    top * Mathf.Pow(Mathf.Clamp01((v - 0.72f) / 0.28f), 1.6f));
+                for (int x = 0; x < 2; x++) p.Pixels[y * 2 + x] = new Color(1, 1, 1, a);
+            }
+            var tex = p.ToTexture();
+            tex.name = key;
+            Cache[key] = tex;
+            return tex;
+        }
+
+        /// <summary>Authored screen background (Resources/Veliqora/Art/Backgrounds/screen_&lt;name&gt;), or null.</summary>
+        public static Texture2D ScreenArt(string name) => Resources.Load<Texture2D>("Veliqora/Art/Backgrounds/screen_" + name);
+
+        /// <summary>Authored theme illustration (Resources/Veliqora/Art/Backgrounds/&lt;themeId&gt;), or null.</summary>
+        public static Texture2D ThemeArt(string themeId) => Resources.Load<Texture2D>("Veliqora/Art/Backgrounds/" + themeId);
+
         // ---------------- gameplay ----------------
 
         public static Texture2D GameplayGradient(Color top, Color bottom, bool light)

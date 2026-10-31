@@ -158,6 +158,12 @@ namespace Veliqora.UI.Screens
                 float side = pos.x > 0 ? -1 : 1;
                 var chest = UIFactory.Image(node, "Chest", SpriteLibrary.Get(open ? Icon.ChestOpen : Icon.Chest), Color.white, true);
                 UIFactory.Place(chest.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(130, 130), new Vector2(side * 175, 20));
+                if (open)
+                {
+                    var check = UIFactory.Image(chest.transform, "Opened", SpriteLibrary.Get(Icon.Check), UIStyle.ButtonFill(UIStyle.ButtonKind.Primary));
+                    UIFactory.Place(check.rectTransform, new Vector2(1, 1), new Vector2(54, 54), Vector2.zero, new Vector2(1, 1));
+                    UIFactory.AddOutline(check, Color.white, 3f);
+                }
                 var cb = chest.gameObject.AddComponent<Button>();
                 cb.transition = Selectable.Transition.None;
                 int level = n;

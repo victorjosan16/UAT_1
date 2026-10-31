@@ -164,6 +164,27 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
   - mixer → `Resources/Veliqora/Audio/VeliqoraMixer` with groups `Music/UI/Pour/Reward`.
   
   Bottle glass is code-defined, to keep it consistent with the liquid polygon.
+- **Authored art (from the supplied sheets; see `Tools/ArtImport/`):**
+
+  | Asset | Used for |
+  |---|---|
+  | `screen_home` | Home background, Classic theme (other themes show their own illustration) |
+  | `screen_shop` | Shop background |
+  | `screen_themes` | Customization background |
+  | `screen_complete` | Level Complete background |
+  | `theme_valley`, `theme_sunset`, `theme_night`, `theme_garden`, `theme_winter`, `theme_desert` | Gameplay backgrounds (navy veil 38% + edge gradients for readability), theme thumbnails and previews |
+  | `Buttons/{Back,Pause,Restart,Undo,Bulb,BottlePlus,Shuffle}` | Replace circle + glyph icon buttons |
+  | `pill_green` (derived from the blue pill), `pill_purple` | Primary and Accent buttons (9-slice) |
+  | `sign_wood` | Every title banner |
+  | `Effects/fx_crown_burst`, `Effects/fx_star_burst` | Level Complete (3 stars / fewer stars) |
+  | `Bottles/glass_{milk,cork,cone,cap}` | New skins *Milk Bottle, Cork Bottle, Cone Flask, Vintage Vial*. Glass is drawn behind the liquid plus a 38% copy in front; the convex interior comes from `bottle_shapes.json`. |
+
+  - New theme: **Desert Oasis** (1100 coins).
+  - **Imported but not used yet:**
+    - `screen_map`: the scrolling map needs a seamless vertical tile, so it keeps the procedural tile;
+    - `screen_settings` and `screen_events`: there is no Events feature yet;
+    - heart and gem icons, the obstacle blocks (ice, wood, stone, metal, chained), special liquids (galaxy, gold), pour/splash illustrations, leaves, flowers and bubbles.
+  - **Not imported:** non-convex bottles (heart, star, hourglass, amphora), because the liquid renderer needs a convex interior, and the filled bottle showcases.
 - **TextMeshPro:** not required. The legacy uGUI `Text` with the built-in font is used to avoid an Essentials import step. A move to TMP would be confined to `UIFactory.Text`.
 
 ## 10. Accessibility

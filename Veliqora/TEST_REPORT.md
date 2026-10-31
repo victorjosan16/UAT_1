@@ -59,6 +59,23 @@ $ dotnet run -c Release --project Tools/ArtPreview -- Docs/ArtPreview
   - low glass contrast on the light background.
 - **Caveat:** these previews approximate composition. They are **not** Unity screenshots.
 
+### 1.5 Authored art import (supplied sheets)
+```
+$ python3 -I Tools/ArtImport/import_art.py <backgrounds.png> <assets.png> .
+$ python3 -I Tools/ArtImport/compose_preview.py . Docs/ArtPreview
+```
+I inspected the results visually:
+- contact sheets of every extracted sprite on dark and light backgrounds;
+- badge removal on the Hint, Add-bottle and Shuffle buttons;
+- the interior polygons overlaid on each glass;
+- composition previews of gameplay (Night theme with cork bottles, Garden theme with milk bottles, levels 45 and 120) and Home.
+
+Two problems found this way were fixed:
+- the first badge mask also caught the button's orange outline;
+- the derived green pill was too neon.
+
+After the change, the 95 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
+
 ## 2. Not executed (requires Unity Editor / device)
 
 | Item | Status | How to run |
