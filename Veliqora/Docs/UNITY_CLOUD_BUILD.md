@@ -37,5 +37,11 @@ Unity construiește APK-ul pe serverele lui, direct din GitHub. Nu ai nevoie de 
 - La final: **Download** → APK. Îl copiezi pe telefon și îl deschizi (permite „instalare din surse necunoscute”).
 - Poți activa **Auto-build**, ca să construiască la fiecare push pe branch.
 
+## Important: target separat
+Creează un **build target nou** pentru Veliqora (de exemplu `veliqora-android`). Nu refolosi target-ul altui joc
+(ex. `room-road-tycoon`): Unity Cloud păstrează cache-ul `Library/` per target, iar cache-ul altui proiect poate strica
+build-ul Android („failed to write ... unity-classes.jar”). Dacă totuși refolosești un target, pornește build-ul cu
+**Clean build** bifat. Metoda de pre-export șterge oricum proiectul Gradle vechi din cache.
+
 ## Dacă pică
 Deschide build-ul → **Logs → Full log** și trimite-mi primele erori (liniile cu `error CS` sau `Exception`).

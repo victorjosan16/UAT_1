@@ -32,9 +32,30 @@ namespace Veliqora.EditorTools
         /// </summary>
         public static void CloudPreExport()
         {
+            // A Library cache restored from another project/target can contain a stale Android Gradle export that the
+            // build cannot overwrite ("failed to write ... unity-classes.jar"). It is regenerated on every build.
+            DeleteStaleAndroidExport();
             VeliqoraSetup.EnsureScenes();
             VeliqoraSetup.ConfigurePlayer();
             Debug.Log("[Veliqora] Cloud pre-export: player settings applied, scenes: " + string.Join(", ", Scenes()));
+        }
+
+        private static void DeleteStaleAndroidExport()
+        {
+            foreach (var dir in new[] { "Library/Bee/Android", "Library/Bee/artifacts/Android" })
+            {
+                try
+                {
+                    if (!Directory.Exists(dir)) continue;
+                    foreach (var f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories)) File.SetAttributes(f, FileAttributes.Normal);
+                    Directory.Delete(dir, true);
+                    Debug.Log("[Veliqora] Removed stale " + dir);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[Veliqora] Could not remove " + dir + ": " + e.Message);
+                }
+            }
         }
 
         public static void BuildDebugApkCli() { if (!BuildDebugApk()) EditorApplication.Exit(1); }
