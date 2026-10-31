@@ -17,6 +17,8 @@ namespace Veliqora.Core.Ads
     {
         public const string DoubleCoins = "rewarded_double_coins";
         public const string BonusBooster = "rewarded_bonus_booster";
+        /// <summary>Rewarded ad that adds an empty bottle to the board immediately.</summary>
+        public const string EmptyBottle = "rewarded_empty_bottle";
         public const string Banner = "banner_menus";
     }
 

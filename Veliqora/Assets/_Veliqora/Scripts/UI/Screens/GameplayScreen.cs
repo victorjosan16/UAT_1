@@ -176,7 +176,7 @@ namespace Veliqora.UI.Screens
             var sess = _ctl.Session;
             _movesText.text = "Moves: " + sess.MoveCount + (sess.ShuffleCount > 0 ? "  ·  shuffled" : "");
             int three = StarRating.ThreeStarLimit(sess.ParMoves);
-            _goalText.text = "★★★ in " + three + " moves or fewer" + (_level.EmptyBottleCount == 1 ? "  ·  one spare bottle" : "") + (_level.Capacity == 5 ? "  ·  tall bottles" : "");
+            _goalText.text = "No move limit  ·  ★★★ in " + three + " moves or fewer" + (_level.EmptyBottleCount == 1 ? "  ·  one spare bottle" : "") + (_level.Capacity == 5 ? "  ·  tall bottles" : "");
             foreach (var kv in _boosters)
             {
                 int c = S.Economy.Count(kv.Key);
@@ -229,7 +229,7 @@ namespace Veliqora.UI.Screens
             var offer = S.EconomyConfig.FindOffer(type);
             if (offer == null) return;
             bool canAfford = S.Economy.Coins >= offer.Price;
-            bool adReady = S.AdGate.CanRequest(AdPlacements.BonusBooster);
+            bool adReady = type == BoosterType.ExtraBottle ? _ctl.CanAddBottleFromAd : S.AdGate.CanRequest(AdPlacements.BonusBooster);
             Overlays.Open("BuyBooster", new Vector2(900, 900), h =>
             {
                 var body = UIFactory.Text(h.Content, offer.Description + "\n\nYou have none left.", UIStyle.FontBody, UIStyle.Ink, TextAnchor.UpperCenter, FontStyle.Normal);
@@ -256,6 +256,12 @@ namespace Veliqora.UI.Screens
 
         private void RequestBonusBooster(BoosterType type)
         {
+            if (type == BoosterType.ExtraBottle)
+            {
+                // Rewarded ad gives the empty bottle directly on the board.
+                _ctl.AddBottleFromAd(ok => { Overlays.Toast(ok ? "Empty bottle added!" : "No bottle this time: the ad wasn't completed."); Refresh(); });
+                return;
+            }
             string tx = "ad-booster:" + _ctl.Session.AttemptId + ":" + type + ":" + System.Guid.NewGuid().ToString("N");
             _ctl.Paused = true;
             S.AdGate.Request(AdPlacements.BonusBooster, () =>
@@ -303,23 +309,62 @@ namespace Veliqora.UI.Screens
 
         // ---------------- stuck ----------------
 
+        /// <summary>
+        /// "Colors are blocked": no useful move remains. Offers exactly three helps (Undo, Shuffle, Empty bottle),
+        /// plus a free empty bottle from a rewarded ad when ads are available, and Restart as a last resort.
+        /// There is never a move limit or a fail state; the player can also close the panel and keep looking.
+        /// </summary>
         private void ShowStuck()
         {
             if (_stuckPanel != null) return;
             var bg = UIFactory.Panel(Safe, "Stuck", UIStyle.Ivory, UIStyle.RadiusLarge);
             var holder = (RectTransform)bg.transform.parent;
             _stuckPanel = holder.gameObject;
-            UIFactory.Place(holder, new Vector2(0.5f, 0f), new Vector2(960, 330), new Vector2(0, 360), new Vector2(0.5f, 0f));
-            var t = UIFactory.Text(holder, "No useful moves left!", UIStyle.FontBody, UIStyle.Ink);
-            UIFactory.Band(t.rectTransform, 1f, 90, -24, 20, 1f);
-            var undo = UIFactory.Button(holder, "Undo", UIStyle.ButtonKind.Accent, () => { HideStuck(); OnBooster(BoosterType.Undo); }, new Vector2(280, 130), Icon.Undo, UIStyle.FontLabel);
-            UIFactory.Place(undo.Rect, new Vector2(0.18f, 0f), undo.Rect.sizeDelta, new Vector2(0, 40), new Vector2(0.5f, 0f));
-            var extra = UIFactory.Button(holder, "Bottle", UIStyle.ButtonKind.Primary, () => { HideStuck(); OnBooster(BoosterType.ExtraBottle); }, new Vector2(280, 130), Icon.BottlePlus, UIStyle.FontLabel);
-            UIFactory.Place(extra.Rect, new Vector2(0.5f, 0f), extra.Rect.sizeDelta, new Vector2(0, 40), new Vector2(0.5f, 0f));
-            extra.SetInteractable(_ctl.Session.CanAddExtraBottle);
-            var restart = UIFactory.Button(holder, "Restart", UIStyle.ButtonKind.Gold, () => { HideStuck(); _ctl.Restart(); }, new Vector2(280, 130), Icon.Restart, UIStyle.FontLabel);
-            UIFactory.Place(restart.Rect, new Vector2(0.82f, 0f), restart.Rect.sizeDelta, new Vector2(0, 40), new Vector2(0.5f, 0f));
+            bool adReady = _ctl.CanAddBottleFromAd;
+            float height = adReady ? 640 : 500;
+            UIFactory.Place(holder, new Vector2(0.5f, 0f), new Vector2(980, height), new Vector2(0, 330), new Vector2(0.5f, 0f));
+
+            var title = UIFactory.Text(holder, "Colors are blocked!", UIStyle.FontHeading, UIStyle.Ink);
+            UIFactory.Band(title.rectTransform, 1f, 80, -22, 30, 1f);
+            var sub = UIFactory.Text(holder, "Choose one of 3 helps (no move limit, take your time):", UIStyle.FontCaption, UIStyle.InkSoft, TextAnchor.MiddleCenter, FontStyle.Normal);
+            UIFactory.Band(sub.rectTransform, 1f, 50, -96, 30, 1f);
+
+            HelpTile(holder, BoosterType.Undo, Icon.Undo, "Undo", UIStyle.Hex("#3D8BFF"), 0.2f);
+            HelpTile(holder, BoosterType.Shuffle, Icon.Shuffle, "Shuffle", UIStyle.Hex("#8E5CF7"), 0.5f);
+            HelpTile(holder, BoosterType.ExtraBottle, Icon.BottlePlus, "Empty bottle", UIStyle.Hex("#36B0C9"), 0.8f);
+
+            if (adReady)
+            {
+                var ad = UIFactory.Button(holder, S.Ads.IsMock ? "Free empty bottle (mock ad)" : "Free empty bottle (watch ad)", UIStyle.ButtonKind.Primary, () =>
+                {
+                    HideStuck();
+                    _ctl.AddBottleFromAd(ok => Overlays.Toast(ok ? "Empty bottle added!" : "No bottle this time: the ad wasn't completed."));
+                }, new Vector2(820, 120), Icon.Ad, UIStyle.FontLabel);
+                UIFactory.Place(ad.Rect, new Vector2(0.5f, 0f), ad.Rect.sizeDelta, new Vector2(0, 110), new Vector2(0.5f, 0f));
+            }
+            var restart = UIFactory.Button(holder, "Restart level", UIStyle.ButtonKind.Secondary, () => { HideStuck(); _ctl.Restart(); }, new Vector2(400, 84), Icon.Restart, UIStyle.FontCaption);
+            UIFactory.Place(restart.Rect, new Vector2(0.5f, 0f), restart.Rect.sizeDelta, new Vector2(0, 18), new Vector2(0.5f, 0f));
+            var close = UIFactory.IconButton(holder, Icon.Close, UIStyle.Coral, 84, HideStuck);
+            UIFactory.Place(close.Rect, new Vector2(1, 1), close.Rect.sizeDelta, new Vector2(-12, -12), new Vector2(1, 1));
             S.Audio.PlayInvalid();
+            if (!MotionPrefs.Reduced) Tween.Scale(this, holder, new Vector3(0.9f, 0.9f, 1), Vector3.one, 0.25f, Ease.OutBack);
+        }
+
+        private void HelpTile(RectTransform parent, BoosterType type, Icon icon, string label, Color color, float x)
+        {
+            var tile = UIFactory.Rect("Help_" + type, parent);
+            UIFactory.Place(tile, new Vector2(x, 1f), new Vector2(260, 220), new Vector2(0, -160), new Vector2(0.5f, 1f));
+            bool usable = _ctl.CanUse(type) || (type == BoosterType.Undo && _ctl.Session.CanUndo);
+            var b = UIFactory.IconButton(tile, icon, color, 140, () => { HideStuck(); OnBooster(type); });
+            UIFactory.Place(b.Rect, new Vector2(0.5f, 1f), b.Rect.sizeDelta, Vector2.zero, new Vector2(0.5f, 1f));
+            if (!usable) b.SetInteractable(false);
+            int count = S.Economy.Count(type);
+            var badge = UIFactory.Image(b.Rect, "Badge", SpriteLibrary.Circle, count > 0 ? UIStyle.Coral : UIStyle.ButtonFill(UIStyle.ButtonKind.Primary));
+            UIFactory.Place(badge.rectTransform, new Vector2(1, 1), new Vector2(56, 56), new Vector2(6, 6), new Vector2(1, 1));
+            UIFactory.AddOutline(badge, Color.white, 3);
+            UIFactory.Text(badge.transform, count > 0 ? count.ToString() : "+", UIStyle.FontCaption - 4, Color.white);
+            var t = UIFactory.Text(tile, label, UIStyle.FontCaption, UIStyle.Ink);
+            UIFactory.Band(t.rectTransform, 0f, 56, 0, 0, 0f);
         }
 
         private void HideStuck()

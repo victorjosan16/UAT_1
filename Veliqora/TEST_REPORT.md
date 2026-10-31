@@ -4,10 +4,10 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **104 / 104 passed**
+### 1.1 EditMode suite against the pure core: **106 / 106 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 104, Skipped: 0, Total: 104, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 106, Skipped: 0, Total: 106, Duration: 1 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
@@ -76,14 +76,14 @@ Two problems found this way were fixed:
 - the first badge mask also caught the button's orange outline;
 - the derived green pill was too neon.
 
-After the change, the 104 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
+After the change, the 106 EditMode tests still pass (the economy test now expects 15 cosmetics) and the Unity compile check still succeeds.
 
 ## 2. Not executed (requires Unity Editor / device)
 
 | Item | Status | How to run |
 |---|---|---|
 | EditMode suite inside Unity | pending | Window → General → Test Runner → EditMode → Run All |
-| 13 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
+| 14 PlayMode tests (home→map→level→win→next, restart, pause/resume, rapid tapping, boosters, shop, theme apply + persistence, save/reload, offline ad fallback, mock rewarded success/cancel, safe area, back button) | **written, never run** | Test Runner → PlayMode → Run All (uses an isolated temp save directory via `AppRoot.Reboot`) |
 | Unity 6 compilation | pending | open project; check Console |
 | Visual QA / automated screenshots | pending | Play Mode + **Veliqora → Capture Screenshot**; checklist below |
 | Performance (60 FPS target, GC, startup) | **not measured** | Unity Profiler on a midrange Android device (development build) |

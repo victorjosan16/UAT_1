@@ -51,7 +51,7 @@ an APK/AAB, or on-device performance.
 
 ## Phase G: tests, validators, Android config, release docs
 - ✅ **EditMode tests:** 95, executed via `dotnet test` (same sources as Unity's EditMode suite).
-- 🟡 **PlayMode tests:** 13 written (flows, restart, pause/resume, rapid taps, boosters, shop, themes, save/reload, ads offline/mock, safe area, back button). **Not executed.**
+- 🟡 **PlayMode tests:** 14 written (flows, restart, pause/resume, rapid taps, boosters, shop, themes, save/reload, ads offline/mock, safe area, back button). **Not executed.**
 - 🟡 **Editor tooling:** Validate Project, Generate Levels, Batch Validate, screenshot capture, debug APK / release AAB menus and CLI with env-var signing.
 - ⬜ **Builds:** APK/AAB **not built** (no Unity/Android toolchain here).
 
@@ -87,6 +87,11 @@ an APK/AAB, or on-device performance.
 - ✅ **Economy:** the hard/boss coin bonus is covered by tests.
 - 🟡 **UI (compiles, not run):** map stage banners and HARD/BOSS nodes, HUD badge + toast, Home stage label, Level Complete bonus line.
 - ℹ️ **Save impact:** the content-version bump drops an in-progress puzzle on update; progress, stars and coins are kept.
+
+## Blocked colors / 3 helps / rewarded empty bottle
+- ✅ **Core:** up to 2 extra bottles per attempt. Tests cover: a stuck board becomes playable after adding a bottle, and long games never hit a move cap.
+- 🟡 **UI (compiles, not run):** "Colors are blocked!" panel with 3 helps + ad bottle + restart + close; rewarded empty bottle (mock ads now,
+  real SDK later); "No move limit" HUD text. The PlayMode test checks that a cancelled ad gives nothing and a completed ad adds exactly one bottle.
 
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.

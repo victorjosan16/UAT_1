@@ -281,6 +281,34 @@ namespace Veliqora.Tests.PlayMode
             Assert.IsNotNull(Gameplay.Board.Fx, "particle layer exists on the board");
         }
 
+        [UnityTest]
+        public IEnumerator RewardedAd_AddsEmptyBottle_OnlyWhenCompleted()
+        {
+            if (!S.Ads.IsMock) Assert.Ignore("Mock ads not active in this configuration.");
+            if (Application.internetReachability == NetworkReachability.NotReachable) Assert.Ignore("Mock ads mimic offline as unavailable.");
+            yield return Go(ScreenId.Gameplay, 14);
+            var c = Gameplay.Controller;
+            int bottles = c.Session.Current.BottleCount;
+
+            bool? result = null;
+            c.AddBottleFromAd(ok => result = ok);
+            yield return null;
+            ClickButtonContaining("Close early");
+            yield return WaitFor(() => result.HasValue);
+            Assert.IsFalse(result.Value);
+            Assert.AreEqual(bottles, c.Session.Current.BottleCount, "cancelled ad gives nothing");
+
+            result = null;
+            c.AddBottleFromAd(ok => result = ok);
+            yield return null;
+            ClickButtonContaining("Finish");
+            yield return WaitFor(() => result.HasValue);
+            Assert.IsTrue(result.Value);
+            Assert.AreEqual(bottles + 1, c.Session.Current.BottleCount);
+            Assert.AreEqual(bottles + 1, Gameplay.Board.Views.Count);
+            Assert.IsTrue(c.Session.Current[bottles].IsEmpty);
+        }
+
         private static void ClickButtonContaining(string text)
         {
             foreach (var t in Overlays.Layer.GetComponentsInChildren<Text>(true))

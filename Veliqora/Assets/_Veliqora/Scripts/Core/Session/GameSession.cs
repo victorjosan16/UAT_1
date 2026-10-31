@@ -43,7 +43,8 @@ namespace Veliqora.Core.Session
     public sealed class GameSession
     {
         public const int MaxUndoHistory = 200;
-        public const int MaxExtraBottles = 1;
+        /// <summary>Empty bottles that can be added per attempt (Add-bottle booster and/or rewarded ad).</summary>
+        public const int MaxExtraBottles = 2;
 
         private readonly List<GameState> _history = new List<GameState>();   // states BEFORE each committed move
         private readonly List<Move> _moves = new List<Move>();

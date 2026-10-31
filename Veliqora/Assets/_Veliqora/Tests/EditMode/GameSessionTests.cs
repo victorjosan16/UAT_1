@@ -109,18 +109,50 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void ExtraBottle_AddsOneEmptyBottle_SurvivesUndoAndRestart()
+        public void ExtraBottles_UpToTwo_SurviveUndoAndRestart()
         {
             var s = NewSession();
             s.Tap(0); s.Tap(3);
             Assert.IsTrue(s.AddExtraBottle());
             Assert.AreEqual(5, s.Current.BottleCount);
-            Assert.IsFalse(s.AddExtraBottle(), "only one extra bottle per attempt");
+            Assert.IsTrue(s.AddExtraBottle(), "a second empty bottle (e.g. from a rewarded ad) is allowed");
+            Assert.AreEqual(6, s.Current.BottleCount);
+            Assert.IsFalse(s.AddExtraBottle(), "at most two extra bottles per attempt");
             s.Undo();
-            Assert.AreEqual(5, s.Current.BottleCount);
+            Assert.AreEqual(6, s.Current.BottleCount);
             s.Restart();
-            Assert.AreEqual(5, s.Current.BottleCount);
-            Assert.IsTrue(s.Current[4].IsEmpty);
+            Assert.AreEqual(6, s.Current.BottleCount);
+            Assert.IsTrue(s.Current[4].IsEmpty && s.Current[5].IsEmpty);
+        }
+
+        [Test]
+        public void StuckBoard_BecomesPlayable_AfterAddingAnEmptyBottle()
+        {
+            // No useful move without a spare bottle: the "colors are blocked" situation.
+            var level = new LevelDefinition { Number = 80, Capacity = 4, ColorCount = 2, Bottles = new[] { B(1, 2, 1, 2), B(2, 1, 2, 1) } };
+            var s = new GameSession(level, "stuck");
+            Assert.IsTrue(PuzzleRules.IsStuck(s.Current));
+            Assert.IsTrue(s.AddExtraBottle());
+            Assert.IsFalse(PuzzleRules.IsStuck(s.Current), "an empty bottle always gives a useful move");
+        }
+
+        [Test]
+        public void NoMoveLimit_LongGamesNeverFailOrLock()
+        {
+            var level = Catalog.Levels[40];
+            var s = new GameSession(level, "long");
+            // 500 legal back-and-forth pours: the session never ends by itself or refuses moves.
+            int made = 0;
+            for (int i = 0; i < 2000 && made < 500; i++)
+            {
+                var moves = PuzzleRules.LegalMoves(s.Current, false);
+                if (moves.Count == 0) break;
+                var m = moves[i % moves.Count];
+                if (s.TryMove(m.From, m.To).IsLegal) made++;
+                if (s.IsComplete) break;
+            }
+            Assert.IsTrue(made >= 100 || s.IsComplete, "players can keep pouring without a move cap");
+            Assert.AreEqual(made, s.TotalPours, "every pour counted; nothing ends the level except winning");
         }
 
         [Test]

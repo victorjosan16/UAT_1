@@ -166,7 +166,7 @@ namespace Veliqora.Gameplay
 
         public void UseExtraBottle()
         {
-            if (!CanUse(BoosterType.ExtraBottle)) { Notice?.Invoke("You already added an extra bottle on this level."); return; }
+            if (!CanUse(BoosterType.ExtraBottle)) { Notice?.Invoke("You already added " + GameSession.MaxExtraBottles + " extra bottles on this level."); return; }
             string tx = Tx("extra");
             if (!_s.Economy.ConsumeBooster(BoosterType.ExtraBottle, tx).Success) return;
             if (!Session.AddExtraBottle()) { _s.Economy.RefundBooster(BoosterType.ExtraBottle, tx); return; }
@@ -176,6 +176,35 @@ namespace Veliqora.Gameplay
             _s.Audio.PlayComplete();
             PersistSession();
             StateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Rewarded ad → an empty bottle is added to the board right away (no inventory involved).
+        /// The reward is applied only on a completed ad, at most once per request (RewardedAdGate).
+        /// </summary>
+        public bool CanAddBottleFromAd => !InputLocked && Session.CanAddExtraBottle && _s.AdGate.CanRequest(Core.Ads.AdPlacements.EmptyBottle);
+
+        public void AddBottleFromAd(Action<bool> finished)
+        {
+            if (!CanAddBottleFromAd) { finished?.Invoke(false); return; }
+            bool rewarded = false;
+            Paused = true;
+            _s.AdGate.Request(Core.Ads.AdPlacements.EmptyBottle, () =>
+            {
+                if (!Session.AddExtraBottle()) return;
+                rewarded = true;
+                _board.Build(Session.Current, false);
+                var added = _board.Views[_board.Views.Count - 1];
+                if (!MotionPrefs.Reduced) Tween.Scale(_host, added.Rect, new Vector3(0.2f, 0.2f, 1), Vector3.one, 0.35f, Ease.OutBack);
+                if (_board.Fx != null) _board.Fx.Sparkle(added.HomePosition + new Vector2(0, added.Height * 0.6f), Color.white, 12, added.Width / 100f);
+                _s.Audio.PlayComplete();
+                PersistSession();
+                StateChanged?.Invoke();
+            }, outcome =>
+            {
+                Paused = false;
+                finished?.Invoke(rewarded);
+            });
         }
 
         /// <summary>Generates a verified-solvable layout off the main thread; refunds if none found.</summary>

@@ -131,6 +131,16 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
     If not, it shows a truthful message ("No solution from here…" or "Couldn't find a hint quickly…").
 - No real-money purchases are implemented.
 
+## 6b. No move limit, blocked colors, 3 helps, rewarded empty bottle
+- **No move limit and no fail state:** a level ends only when it is won. Moves affect stars only; the HUD reads "No move limit · ★★★ in N moves".
+- **Blocked colors:** when no useful move remains, a panel titled "Colors are blocked!" offers exactly **3 helps**: Undo, Shuffle and Empty bottle.
+  Each help shows its inventory count and can be bought when empty.
+  - If ads are available, the panel also offers **"Free empty bottle (watch ad)"**.
+  - Restart is offered as a last resort, and the panel can be closed to keep looking.
+- **Rewarded empty bottle** (placement `rewarded_empty_bottle`): a completed ad adds an empty bottle to the board immediately.
+  Cancel, failure or offline gives nothing and never blocks play. It is also offered from the Add-bottle "none left" dialog.
+- **Extra bottle limit:** up to **2 extra empty bottles** per attempt, from the booster and/or ads.
+
 ## 7. Save system
 - **Location:** `persistentDataPath/veliqora_save.json`, plus `veliqora_save.bak.json`.
 - **Envelope:** `{format, schemaVersion, checksum (FNV-1a 64 of canonical payload), payload}`.
