@@ -29,7 +29,7 @@ namespace Veliqora.Presentation
         private Image _aura;
 
         /// <summary>Neon aura behind bottles, tinted by the top liquid (enabled on dark themes).</summary>
-        public static bool NeonAura = true;
+        public static bool NeonAura = false; // clean look: no neon glow around bottles by default
         private Image _glow;
         private Image _hintRing;
         private RectTransform _symbolRoot;

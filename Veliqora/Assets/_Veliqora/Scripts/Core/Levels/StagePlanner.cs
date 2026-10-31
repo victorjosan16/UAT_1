@@ -24,7 +24,8 @@ namespace Veliqora.Core.Levels
     /// - the game is split into stages of 10 levels; the last level of every stage (20, 30, …) is a BOSS level;
     /// - from level 12 on, about 18% of the other levels are randomly HARD (never two hard levels in a row);
     /// - normal levels randomly vary by ±1 color and pick a random (easy-to-medium) candidate.
-    /// Levels 1–10 are the handcrafted tutorial stage. The same seed always yields the same plan.
+    /// Stage 1 (levels 1–10) has no Hard/Boss levels. Every level is a complete generated puzzle (no tutorial levels).
+    /// Color counts are clamped to the published progression (see <see cref="ColorRange"/>). The same seed always yields the same plan.
     /// </summary>
     public static class StagePlanner
     {
@@ -39,7 +40,14 @@ namespace Veliqora.Core.Levels
         public static LevelPlan Plan(ulong baseSeed, int number)
         {
             var plan = new LevelPlan { Number = number, Stage = StageOf(number), Kind = LevelKind.Normal, PickQuantile = 0.5 };
-            if (number <= HandcraftedLevels.All.Length) return plan;
+            if (number <= StageSize)
+            {
+                // First stage: complete puzzles from level 1, gentle ±1 color wobble inside the 3–4 color range.
+                var r1 = new DeterministicRandom(DeterministicRandom.Combine(baseSeed, number, 0x57A6E));
+                plan.ColorDelta = number == 1 ? 0 : (r1.NextDouble() < 0.3 ? 1 : 0);
+                plan.PickQuantile = number == 1 ? 0.5 : r1.NextDouble() * 0.7;
+                return plan;
+            }
 
             var rng = new DeterministicRandom(DeterministicRandom.Combine(baseSeed, number, 0x57A6E));
             if (IsBossNumber(number))
@@ -80,12 +88,29 @@ namespace Veliqora.Core.Levels
             return RawHard(baseSeed, number) && !RawHardOrBoss(baseSeed, number - 1);
         }
 
-        /// <summary>Applies the plan to a curve segment, respecting color caps (9 before Master, 12 in Master).</summary>
+        /// <summary>Largest number of distinct liquid colors used by any level (the clean 8-color palette).</summary>
+        public const int MaxColors = 8;
+
+        /// <summary>
+        /// Published color progression: 1–10 → 3–4 colors, 11–25 → 4–5, 26–50 → 5–6, 51–100 → 6–8,
+        /// 101–200 → 6–8, 201+ → 7–8 (later difficulty comes from mechanics, sizes and tighter boards).
+        /// </summary>
+        public static void ColorRange(int number, out int min, out int max)
+        {
+            if (number <= 10) { min = 3; max = 4; }
+            else if (number <= 25) { min = 4; max = 5; }
+            else if (number <= 50) { min = 5; max = 6; }
+            else if (number <= 200) { min = 6; max = MaxColors; }
+            else { min = 7; max = MaxColors; }
+        }
+
+        /// <summary>Applies the plan to a curve segment, clamped to the level's color range.</summary>
         public static int ColorsFor(LevelPlan plan, int baseColors, int number)
         {
-            int cap = DifficultyTiers.ForLevel(number) == DifficultyTier.Master ? 12 : 9;
+            int min, max;
+            ColorRange(number, out min, out max);
             int colors = baseColors + plan.ColorDelta + plan.HardBonusColors;
-            return Math.Max(3, Math.Min(cap, colors));
+            return Math.Max(min, Math.Min(max, colors));
         }
     }
 }

@@ -66,6 +66,26 @@
   ],
   "cosmetics": [
     {
+      "id": "theme_clean",
+      "kind": "theme",
+      "title": "Clean Midnight",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "style": "clean",
+        "particles": "none",
+        "skyTop": "#101827",
+        "skyBottom": "#101827",
+        "mountain": "#101827",
+        "hill": "#162033",
+        "hillDark": "#0C1220",
+        "river": "#3995F6",
+        "accent": "#3995F6",
+        "gameTop": "#101827",
+        "gameBottom": "#101827"
+      }
+    },
+    {
       "id": "dark_midnight_forest",
       "kind": "theme",
       "title": "Midnight Forest",

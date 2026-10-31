@@ -23,7 +23,7 @@ namespace Veliqora.Tests.EditMode
             Assert.IsNotNull(c.FindOffer(BoosterType.Hint));
             Assert.Greater(c.FindOffer("offer_extra_bottle").Price, 0);
             Assert.IsTrue(c.FindCosmetic("theme_valley").DefaultOwned);
-            Assert.AreEqual(27, c.Cosmetics.Count);
+            Assert.AreEqual(28, c.Cosmetics.Count); // 1 clean (default) + 12 dark + 7 illustrated themes + 8 bottle skins
             Assert.AreEqual(12, c.Cosmetics.FindAll(x => x.Id.StartsWith("dark_") && x.Kind == CosmeticKind.Theme).Count, "twelve dark backgrounds");
         }
 

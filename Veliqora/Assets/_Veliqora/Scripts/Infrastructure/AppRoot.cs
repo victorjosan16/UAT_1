@@ -199,11 +199,25 @@ namespace Veliqora.Infrastructure
             // If a specific screen's scene was opened directly in the Editor, build that screen in place.
             var entry = FindEntryInActiveScene();
             var target = entry != null ? entry.Screen : ScreenId.Bootstrap;
-            if (target == ScreenId.Bootstrap) Services.Navigator.Go(ScreenId.MainMenu);
+            if (target == ScreenId.Bootstrap) GoToStartScreen();
             else Services.Navigator.BuildInCurrentScene(target, null);
 
             if (!string.IsNullOrEmpty(StartupMessage))
                 Tween.Delay(this, 0.6f, () => Overlays.Message("Heads up", StartupMessage));
+        }
+
+        /// <summary>True for a brand-new player: nothing completed, no puzzle in progress.</summary>
+        public bool IsFirstLaunch =>
+            Booted && Services.Save.Progress.BestStars.Count == 0 && Services.Save.Progress.HighestUnlocked <= 1 && Services.Save.Session == null;
+
+        /// <summary>
+        /// First launch opens Level 1 directly, ready to play (no intro, no tutorial). Returning players land on the
+        /// main menu.
+        /// </summary>
+        public void GoToStartScreen()
+        {
+            if (IsFirstLaunch) Services.Navigator.Go(ScreenId.Gameplay, 1);
+            else Services.Navigator.Go(ScreenId.MainMenu);
         }
 
         private static SceneEntry FindEntryInActiveScene()

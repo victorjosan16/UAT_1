@@ -275,6 +275,12 @@
     "tall bottles": "sticle înalte",
     "{0} applied!": "{0} aplicat!",
     "{0} moves (benchmark {1})": "{0} mutări (reper {1})",
-    "{0} ×{1} added!": "{0} ×{1} adăugat!"
+    "{0} ×{1} added!": "{0} ×{1} adăugat!",
+    "Coral": "Coral",
+    "Mint": "Mentă",
+    "Turquoise": "Turcoaz",
+    "Sand": "Nisip",
+    "Slate": "Ardezie",
+    "Clean Midnight": "Miezul Nopții Clar"
   }
 }

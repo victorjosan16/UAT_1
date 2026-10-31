@@ -26,7 +26,7 @@ internal static class Program
             var catalog = LevelCatalogBuilder.Build(seed, count, report, (n, total) =>
             {
                 var r = report[report.Count - 1];
-                Console.WriteLine($"L{n:000} {r.Tier,-12} colors={r.Colors} bottles={r.Bottles} len={r.SolutionLength,3} nodes={r.Nodes,7} ms={r.Ms,5} br={r.Branching:0.0} {r.Note}");
+                Console.WriteLine($"L{n:000} {r.Tier,-12} colors={r.Colors} bottles={r.Bottles} len={r.SolutionLength,3} min={(r.MinimumMoves >= 0 ? r.MinimumMoves.ToString() : "-"),3} nodes={r.Nodes,7} ms={r.Ms,5} br={r.Branching:0.0} {r.Note}");
             });
             Directory.CreateDirectory(Path.GetDirectoryName(levelsPath));
             File.WriteAllText(levelsPath, catalog.ToJson());

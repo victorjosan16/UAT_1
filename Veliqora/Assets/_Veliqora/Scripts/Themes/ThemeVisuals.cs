@@ -25,7 +25,11 @@ namespace Veliqora.Presentation
         /// <summary>Ambient particle style: stars, fireflies, sparks, crystals, mist, embers, bubbles.</summary>
         public string Particles = "stars";
         public bool IsDark => !string.IsNullOrEmpty(Scene);
-        public bool IsDarkSky => IsDark || SkyTop.grayscale < 0.35f;
+        /// <summary>Clean premium style ("style": "clean"): flat dark background, no illustration, no ambient particles.</summary>
+        public bool Flat;
+        /// <summary>Theme paints its own backgrounds on every screen (dark scenes or the flat clean style).</summary>
+        public bool OwnBackgrounds => IsDark || Flat;
+        public bool IsDarkSky => IsDark || Flat || SkyTop.grayscale < 0.35f;
 
         public static ThemeVisuals From(CosmeticItem item)
         {
@@ -44,6 +48,7 @@ namespace Veliqora.Presentation
             t.GameBottom = Col(v, "gameBottom", t.GameBottom);
             t.Scene = MiniJson.GetString(v, "scene", "");
             t.Particles = MiniJson.GetString(v, "particles", "stars");
+            t.Flat = MiniJson.GetString(v, "style", "") == "clean";
             return t;
         }
 

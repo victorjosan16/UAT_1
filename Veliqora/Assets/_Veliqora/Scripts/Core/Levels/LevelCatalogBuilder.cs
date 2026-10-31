@@ -22,6 +22,8 @@ namespace Veliqora.Core.Levels
         public int Mystery;          // mystery depth (0 = none)
         public int Locks;            // corked bottles
         public int RewardBottles;    // ad-locked helper bottles
+        /// <summary>Exact minimum pours (breadth-first search) a level must need; 0 = not enforced.</summary>
+        public int MinOptimal;
         /// <summary>Optional variant used on even level numbers (introduces constraints gradually).</summary>
         public CurveSegment AlternateOnEven;
 
@@ -42,6 +44,7 @@ namespace Veliqora.Core.Levels
         public double Branching;
         public double StuckRate;
         public bool Handcrafted;
+        public int MinimumMoves = -1;
         public bool Passed;
         public string Note;
     }
@@ -59,36 +62,41 @@ namespace Veliqora.Core.Levels
         // Measured with Tools/LevelGen: 1-spare-bottle deals are often provably unsolvable (rejected) and leave far
         // less room for error; capacity-5 "tall" bottles lengthen solutions. Both are introduced late and gradually.
         private static CurveSegment Seg(int a, int b, int colors, int minSol, int cand, int empties = 2, int cap = 4, int pairs = 3, CurveSegment alt = null,
-            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0) =>
+            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0, int minOpt = 0) =>
             new CurveSegment
             {
                 FirstLevel = a, LastLevel = b, Colors = colors, MinSolution = minSol, Candidates = cand, EmptyBottles = empties, Capacity = cap,
                 MaxAdjacentPairs = pairs, AlternateOnEven = alt, CapMode = caps, Mystery = mystery, Locks = locks, RewardBottles = reward,
+                MinOptimal = minOpt,
             };
 
-        // Curve follows the design brief:
-        //   11–30 more colors · 31–70 reduced empty space · 71–120 mystery layers, size variations and corked bottles
-        //   (plus optional ad bottles) · 121–200 combinations · 201–300 Master combinations with 9–12 colors.
-        // StagePlanner adds random Hard levels and stage-finale Boss levels on top of this curve.
+        // Every level is a complete, solver-verified puzzle from level 1 (no tutorial levels). Color progression
+        // (clamped by StagePlanner.ColorRange): 1–10 → 3–4 · 11–25 → 4–5 · 26–50 → 5–6 · 51–100 → 6–8 · 101+ → 6–8 with
+        // mechanics: 71–85 mystery · 86–100 mixed sizes · 101–120 corks (+ optional ad bottle) · 121–200 combinations ·
+        // 201–300 Master combinations. Levels 1–10 must need at least 6 (level 1) / 7 pours, proven by exact search.
+        // StagePlanner adds random Hard levels and stage-finale Boss levels from stage 2 on.
         public static readonly CurveSegment[] DefaultCurve =
         {
-            Seg(11, 20, 4, 7, 2),
-            Seg(21, 30, 5, 9, 3),
-            Seg(31, 45, 5, 10, 3, alt: Seg(31, 45, 4, 8, 3, empties: 1)),
-            Seg(46, 60, 6, 12, 3, alt: Seg(46, 60, 5, 10, 3, empties: 1)),
-            Seg(61, 70, 7, 14, 3, alt: Seg(61, 70, 5, 11, 3, empties: 1)),
-            Seg(71, 85, 6, 12, 3, mystery: 2, alt: Seg(71, 85, 6, 12, 3, mystery: 3)),
-            Seg(86, 100, 6, 12, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 12, 3, caps: CapacityMode.SmallLarge, mystery: 2)),
-            Seg(101, 110, 6, 12, 3, locks: 1, alt: Seg(101, 110, 6, 12, 3, locks: 1, mystery: 2)),
-            Seg(111, 120, 7, 14, 3, locks: 1, reward: 1, alt: Seg(111, 120, 7, 14, 3, caps: CapacityMode.SmallLarge, locks: 1)),
+            Seg(1, 10, 3, 6, 4, pairs: 2, minOpt: 6, alt: Seg(1, 10, 4, 8, 4, pairs: 2, minOpt: 7)),
+            Seg(11, 25, 4, 9, 3, alt: Seg(11, 25, 5, 11, 3)),
+            Seg(26, 35, 5, 11, 3, alt: Seg(26, 35, 6, 13, 3)),
+            Seg(36, 50, 6, 13, 3, alt: Seg(36, 50, 5, 11, 3, empties: 1)),
+            Seg(51, 70, 7, 15, 3, alt: Seg(51, 70, 6, 13, 3, empties: 1)),
+            Seg(71, 85, 6, 13, 3, mystery: 2, alt: Seg(71, 85, 7, 15, 3, mystery: 3)),
+            Seg(86, 100, 7, 15, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 13, 3, caps: CapacityMode.SmallLarge, mystery: 2)),
+            Seg(101, 110, 7, 15, 3, locks: 1, alt: Seg(101, 110, 7, 15, 3, locks: 1, mystery: 2)),
+            Seg(111, 120, 7, 15, 3, locks: 1, reward: 1, alt: Seg(111, 120, 7, 15, 3, caps: CapacityMode.SmallLarge, locks: 1)),
             Seg(121, 150, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, alt: Seg(121, 150, 7, 16, 3, mystery: 3, locks: 2)),
             Seg(151, 175, 8, 18, 3, mystery: 3, locks: 1, reward: 1, alt: Seg(151, 175, 7, 16, 3, caps: CapacityMode.Wide, locks: 2)),
-            Seg(176, 200, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 20, 3, caps: CapacityMode.Wide, mystery: 2, reward: 1)),
-            Seg(201, 225, 9, 24, 3, mystery: 2, alt: Seg(201, 225, 9, 24, 3, locks: 2)),
-            Seg(226, 250, 10, 26, 3, caps: CapacityMode.SmallLarge, locks: 1, alt: Seg(226, 250, 10, 26, 3, mystery: 3)),
-            Seg(251, 275, 11, 30, 3, mystery: 3, locks: 1, alt: Seg(251, 275, 11, 30, 3, empties: 3, caps: CapacityMode.Wide)),
-            Seg(276, 300, 12, 34, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2, reward: 1, alt: Seg(276, 300, 12, 34, 3, mystery: 3, locks: 1)),
+            Seg(176, 200, 8, 19, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 19, 3, caps: CapacityMode.Wide, mystery: 2, reward: 1)),
+            Seg(201, 225, 8, 20, 3, mystery: 3, locks: 2, alt: Seg(201, 225, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2)),
+            Seg(226, 250, 8, 21, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 1, alt: Seg(226, 250, 8, 21, 3, caps: CapacityMode.Wide, mystery: 3, locks: 1)),
+            Seg(251, 275, 8, 22, 3, mystery: 3, locks: 2, reward: 1, alt: Seg(251, 275, 8, 22, 3, caps: CapacityMode.Wide, mystery: 2, locks: 2)),
+            Seg(276, 300, 8, 23, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, reward: 1, alt: Seg(276, 300, 8, 23, 3, caps: CapacityMode.Wide, mystery: 3, locks: 2)),
         };
+
+        /// <summary>Exact minimum-move search budget for the report (levels up to this number).</summary>
+        public const int ExactMinimumUpToLevel = 100;
 
         public static LevelCatalog Build(ulong baseSeed, int levelCount, List<BuildReportRow> report, Action<int, int> progress = null,
             CurveSegment[] curve = null)
@@ -96,22 +104,12 @@ namespace Veliqora.Core.Levels
             curve = curve ?? DefaultCurve;
             var catalog = new LevelCatalog { BaseSeed = baseSeed, GeneratedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") };
 
+            var seenLayouts = new HashSet<string>();
             for (int n = 1; n <= levelCount; n++)
             {
-                LevelDefinition def;
-                if (n <= HandcraftedLevels.All.Length) def = BuildHandcrafted(n, report);
-                else def = BuildGenerated(n, baseSeed, FindSegment(curve, n).ForLevel(n), report, StagePlanner.Plan(baseSeed, n));
+                var def = BuildGenerated(n, baseSeed, FindSegment(curve, n).ForLevel(n), report, StagePlanner.Plan(baseSeed, n), seenLayouts);
                 if (def == null) throw new InvalidOperationException("Failed to build level " + n + " — see report");
-                // Contextual tip the first time a new constraint / mechanic appears.
-                if (def.TutorialKey == null && def.HasMystery && !catalog.Levels.Exists(l => l.HasMystery)) def.TutorialKey = "mystery_intro";
-                if (def.TutorialKey == null && def.HasMixedCapacities && !catalog.Levels.Exists(l => l.HasMixedCapacities)) def.TutorialKey = "sizes_intro";
-                if (def.TutorialKey == null && def.HasLocks && !catalog.Levels.Exists(l => l.HasLocks)) def.TutorialKey = "cork_intro";
-                if (def.TutorialKey == null && def.RewardBottles.Length > 0 && !catalog.Levels.Exists(l => l.RewardBottles.Length > 0)) def.TutorialKey = "reward_bottle_intro";
-                if (def.TutorialKey == null && def.Objectives.Count > 0 && !catalog.Levels.Exists(l => l.Objectives.Count > 0)) def.TutorialKey = "objectives_intro";
-                if (def.TutorialKey == null && def.EmptyBottleCount == 1 && !catalog.Levels.Exists(l => l.EmptyBottleCount == 1))
-                    def.TutorialKey = "one_spare_bottle";
-                if (def.TutorialKey == null && def.Capacity == 5 && !catalog.Levels.Exists(l => l.Capacity == 5))
-                    def.TutorialKey = "tall_bottles";
+                seenLayouts.Add(def.CreateInitialState().CanonicalKey());
                 catalog.Levels.Add(def);
                 progress?.Invoke(n, levelCount);
             }
@@ -125,38 +123,31 @@ namespace Veliqora.Core.Levels
             return curve[curve.Length - 1];
         }
 
-        public static LevelDefinition BuildHandcrafted(int n, List<BuildReportRow> report)
-        {
-            var entry = HandcraftedLevels.All[n - 1];
-            int capacity = BottleState.DefaultCapacity;
-            var state = GameState.FromArrays(capacity, entry.Bottles);
-            var solve = PuzzleSolver.Solve(state, new SolverOptions { MaxNodes = 400_000, TimeoutMs = 10_000, HeuristicWeight = 1.0 });
-            bool ok = solve.Status == SolveStatus.Solved && PuzzleSolver.VerifySolution(state, solve.Moves, out _);
-            report?.Add(Row(n, 0, entry.Bottles, capacity, solve, true, ok, ok ? "handcrafted" : "handcrafted level failed validation"));
-            if (!ok) return null;
-            return new LevelDefinition
-            {
-                Number = n,
-                Seed = 0,
-                Capacity = capacity,
-                ColorCount = LevelGenerator.CountColors(entry.Bottles),
-                Bottles = entry.Bottles,
-                Tier = DifficultyTiers.ForLevel(n),
-                Handcrafted = true,
-                ParMoves = solve.Length,
-                Solution = LevelDefinition.EncodeMoves(solve.Moves),
-                TutorialKey = entry.TutorialKey,
-                Validation = ToValidation(solve, 1),
-                Difficulty = Math.Max(1, Math.Min(3, 1 + solve.Length / 6)),
-                RewardCoins = 20,
-                DisabledBoosters = n <= 4 ? new List<string> { "Shuffle", "RemoveColor" } : new List<string>(),
-            };
-        }
-
         public static LevelDefinition BuildGenerated(int n, ulong baseSeed, CurveSegment seg, List<BuildReportRow> report)
             => BuildGenerated(n, baseSeed, seg, report, new LevelPlan { Number = n, Stage = StagePlanner.StageOf(n), PickQuantile = 0.5 });
 
-        public static LevelDefinition BuildGenerated(int n, ulong baseSeed, CurveSegment seg, List<BuildReportRow> report, LevelPlan plan)
+        /// <summary>
+        /// Quality gate for a candidate start: no bottle starts monochrome, every color is spread over at least two
+        /// bottles, and the layout isn't a duplicate of an earlier level.
+        /// </summary>
+        public static bool IsWellMixed(GameState s)
+        {
+            var bottlesWith = new Dictionary<int, int>();
+            for (int i = 0; i < s.BottleCount; i++)
+            {
+                var b = s[i];
+                if (b.IsEmpty) continue;
+                var here = new HashSet<int>();
+                for (int u = 0; u < b.Count; u++) here.Add(b[u]);
+                if (here.Count < 2) return false;
+                foreach (var c in here) bottlesWith[c] = bottlesWith.TryGetValue(c, out int k) ? k + 1 : 1;
+            }
+            foreach (var kv in bottlesWith) if (kv.Value < 2) return false;
+            return true;
+        }
+
+        public static LevelDefinition BuildGenerated(int n, ulong baseSeed, CurveSegment seg, List<BuildReportRow> report, LevelPlan plan,
+            HashSet<string> seenLayouts = null)
         {
             // Hard/Boss levels add colors; if that layout family is (near) unsolvable within budget, step the bonus down.
             List<GeneratedLevel> candidates = null;
@@ -182,10 +173,17 @@ namespace Veliqora.Core.Levels
                     MaxAttempts = seg.Locks > 0 || seg.Mystery > 0 ? 250 : 400,
                 };
                 candidates = new List<GeneratedLevel>();
-                for (int c = 0; c < candidateCount; c++)
+                for (int c = 0; c < candidateCount * 6 && candidates.Count < candidateCount; c++)
                 {
                     var g = LevelGenerator.Generate(spec, DeterministicRandom.Combine(baseSeed, n, c + 100 * bonus));
                     if (g == null) continue;
+                    if (!IsWellMixed(g.State)) continue;
+                    if (seenLayouts != null && seenLayouts.Contains(g.State.CanonicalKey())) continue;
+                    if (seg.MinOptimal > 0)
+                    {
+                        g.MinimumMoves = Solver.MinimumMoves.Compute(g.State, 400_000);
+                        if (g.MinimumMoves < seg.MinOptimal) continue; // too short (or not provable): reject
+                    }
                     g.StuckRate = DifficultyAnalyzer.StuckRate(g.State, DeterministicRandom.Combine(g.Seed, 1));
                     candidates.Add(g);
                 }
@@ -209,8 +207,17 @@ namespace Veliqora.Core.Levels
             if (tight.Status == SolveStatus.Solved && tight.Length < chosen.Solve.Length && PuzzleSolver.VerifySolution(start, tight.Moves, out _))
                 chosen.Solve = tight;
 
+            if (chosen.MinimumMoves < 0 && n <= ExactMinimumUpToLevel) chosen.MinimumMoves = Solver.MinimumMoves.Compute(start, 300_000);
+            if (chosen.MinimumMoves > 0 && chosen.MinimumMoves < chosen.Solve.Length)
+            {
+                // Exact optimum is shorter than the A* benchmark: use it as the 3-star benchmark only if we can
+                // reproduce a solution of that length (A* weight 1 with a larger budget), otherwise keep the benchmark.
+                var exact = PuzzleSolver.Solve(start, new SolverOptions { MaxNodes = 800_000, TimeoutMs = 15_000, HeuristicWeight = 1.0 });
+                if (exact.IsSolved && exact.Length < chosen.Solve.Length && PuzzleSolver.VerifySolution(start, exact.Moves, out _)) chosen.Solve = exact;
+            }
             var row = Row(n, chosen.Seed, chosen.Bottles, seg.Capacity, chosen.Solve, false, true, plan.Kind.ToString().ToLowerInvariant() + " stage=" + plan.Stage + " candidates=" + candidates.Count);
             row.StuckRate = chosen.StuckRate;
+            row.MinimumMoves = chosen.MinimumMoves;
             report?.Add(row);
             int attempts = 0;
             foreach (var cnd in candidates) attempts += cnd.Attempts;
@@ -228,6 +235,7 @@ namespace Veliqora.Core.Levels
                 Solution = LevelDefinition.EncodeMoves(chosen.Solve.Moves),
                 Validation = ToValidation(chosen.Solve, attempts, chosen.StuckRate),
             };
+            generated.Validation.MinimumMoves = chosen.MinimumMoves;
             generated.ApplyLayout(chosen.State);
             Decorate(generated, baseSeed, chosen);
             return generated;
@@ -302,13 +310,14 @@ namespace Veliqora.Core.Levels
         public static List<BuildReportRow> Validate(LevelCatalog catalog, bool rerunSolver, SolverOptions options = null)
         {
             var rows = new List<BuildReportRow>();
+            var layouts = new HashSet<string>();
             foreach (var l in catalog.Levels)
             {
                 var state = l.CreateInitialState();
                 var row = new BuildReportRow
                 {
                     Number = l.Number, Tier = l.Tier.ToString(), Seed = l.Seed, Colors = l.ColorCount,
-                    Bottles = l.Bottles.Length, Capacity = l.Capacity, Handcrafted = l.Handcrafted, StuckRate = l.Validation.StuckRate,
+                    Bottles = l.Bottles.Length, Capacity = l.Capacity, Handcrafted = l.Handcrafted, StuckRate = l.Validation.StuckRate, MinimumMoves = l.Validation.MinimumMoves,
                 };
                 string err;
                 bool structural = PuzzleRules.HasValidColorDistribution(state, out err);
@@ -321,8 +330,27 @@ namespace Veliqora.Core.Levels
                     foreach (var m in l.SolutionMoves()) end = PuzzleRules.Evaluate(end, m.From, m.To).After;
                     objectives = Objectives.ObjectiveTracker.AllAchievableAtWin(l.Objectives, state, end, out err);
                 }
+                // Progression / quality rules: color range, well mixed start, no duplicate layouts, minimum pours.
+                int cmin, cmax;
+                StagePlanner.ColorRange(l.Number, out cmin, out cmax);
+                int distinct = DistinctColors(state);
+                bool inRange = distinct >= cmin && distinct <= cmax && distinct == l.ColorCount;
+                if (!inRange) err = err ?? ("colors " + distinct + " outside " + cmin + "–" + cmax);
+                bool mixed = IsWellMixed(state);
+                if (!mixed) err = err ?? "a bottle starts monochrome or a color sits in one bottle";
+                bool unique = layouts.Add(state.CanonicalKey());
+                if (!unique) err = err ?? "duplicate layout";
+                bool minimum = true;
+                if (rerunSolver && l.Number <= ExactMinimumUpToLevel)
+                {
+                    int exact = Solver.MinimumMoves.Compute(state, 300_000);
+                    row.MinimumMoves = exact;
+                    if (exact >= 0 && exact > l.Solution.Length) { minimum = false; err = err ?? "stored solution shorter than proven minimum"; }
+                    int required = l.Number == 1 ? 6 : (l.Number <= 10 ? 7 : 0);
+                    if (required > 0 && exact < required) { minimum = false; err = err ?? ("needs only " + exact + " pours (min " + required + ")"); }
+                }
                 row.SolutionLength = l.Solution.Length;
-                row.Passed = structural && replay && notTrivial && objectives;
+                row.Passed = structural && replay && notTrivial && objectives && inRange && mixed && unique && minimum;
                 row.Note = row.Passed ? "replay ok" : ("FAIL: " + (err ?? "already solved"));
                 if (rerunSolver && row.Passed)
                 {
@@ -338,17 +366,24 @@ namespace Veliqora.Core.Levels
             return rows;
         }
 
+        public static int DistinctColors(GameState s)
+        {
+            var set = new HashSet<int>();
+            for (int i = 0; i < s.BottleCount; i++) for (int u = 0; u < s[i].Count; u++) set.Add(s[i][u]);
+            return set.Count;
+        }
+
         public static string ToCsv(List<BuildReportRow> rows)
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append("level,tier,seed,colors,bottles,capacity,solution_length,nodes,ms,branching,stuck_rate,handcrafted,passed,note\n");
+            sb.Append("level,tier,seed,colors,bottles,capacity,solution_length,min_moves,nodes,ms,branching,stuck_rate,passed,note\n");
             foreach (var r in rows)
             {
                 sb.Append(r.Number).Append(',').Append(r.Tier).Append(',').Append(r.Seed).Append(',').Append(r.Colors).Append(',')
-                  .Append(r.Bottles).Append(',').Append(r.Capacity).Append(',').Append(r.SolutionLength).Append(',').Append(r.Nodes).Append(',')
+                  .Append(r.Bottles).Append(',').Append(r.Capacity).Append(',').Append(r.SolutionLength).Append(',').Append(r.MinimumMoves >= 0 ? r.MinimumMoves.ToString() : "").Append(',').Append(r.Nodes).Append(',')
                   .Append(r.Ms).Append(',').Append(r.Branching.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)).Append(',')
                   .Append(r.StuckRate.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)).Append(',')
-                  .Append(r.Handcrafted ? "yes" : "no").Append(',').Append(r.Passed ? "PASS" : "FAIL").Append(',')
+                  .Append(r.Passed ? "PASS" : "FAIL").Append(',')
                   .Append('"').Append((r.Note ?? "").Replace("\"", "'")).Append('"').Append('\n');
             }
             return sb.ToString();

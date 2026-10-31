@@ -5,29 +5,31 @@ using Veliqora.UI;
 namespace Veliqora.Presentation
 {
     /// <summary>
-    /// Liquid colors (chosen for hue separation on both dark and light gameplay backgrounds) plus
+    /// Liquid colors (clean premium palette, separated hues on the #101827 background) plus
     /// colorblind-assist symbols, one distinct shape per ColorId.
     /// </summary>
     public static class LiquidPalette
     {
-        // Vibrant neon set tuned for dark backgrounds; ordered so early levels (few colors) get the most distinct hues.
+        // Clean premium palette (exact brand values). Levels use at most 8 colors (StagePlanner.MaxColors), ordered
+        // so that early levels with few colors get the most distinct hues. Entries 9–12 are calm extras kept only
+        // as a safety net for custom content; generated levels never use them.
         private static readonly Color[] Colors =
         {
-            UIStyle.Hex("#2F7BFF"), // 1 electric blue
-            UIStyle.Hex("#FF3FA4"), // 2 hot pink
-            UIStyle.Hex("#2EF07A"), // 3 neon green
-            UIStyle.Hex("#FFE135"), // 4 neon yellow
-            UIStyle.Hex("#A24DFF"), // 5 violet
-            UIStyle.Hex("#FF8A1F"), // 6 neon orange
-            UIStyle.Hex("#1FE8FF"), // 7 cyan
-            UIStyle.Hex("#FF2E4D"), // 8 red
-            UIStyle.Hex("#C6FF3A"), // 9 lime
-            UIStyle.Hex("#B07A45"), // 10 amber brown
-            UIStyle.Hex("#F4F1FF"), // 11 pearl white
-            UIStyle.Hex("#8C93B8"), // 12 moonstone grey
+            UIStyle.Hex("#FF6473"), // 1 coral
+            UIStyle.Hex("#3995F6"), // 2 blue
+            UIStyle.Hex("#31D6A0"), // 3 mint
+            UIStyle.Hex("#FFD35A"), // 4 yellow
+            UIStyle.Hex("#A58BFA"), // 5 violet
+            UIStyle.Hex("#FF9B54"), // 6 orange
+            UIStyle.Hex("#32C9DA"), // 7 turquoise
+            UIStyle.Hex("#F47FC2"), // 8 pink
+            UIStyle.Hex("#9BD45B"), // 9 lime (extra)
+            UIStyle.Hex("#C9A27A"), // 10 sand (extra)
+            UIStyle.Hex("#E8ECF4"), // 11 pearl (extra)
+            UIStyle.Hex("#8C96AE"), // 12 slate (extra)
         };
 
-        public static readonly string[] Names = { "Blue", "Pink", "Green", "Yellow", "Violet", "Orange", "Cyan", "Red", "Lime", "Amber", "Pearl", "Moonstone" };
+        public static readonly string[] Names = { "Coral", "Blue", "Mint", "Yellow", "Violet", "Orange", "Turquoise", "Pink", "Lime", "Sand", "Pearl", "Slate" };
 
         public static Color Get(int colorId)
         {

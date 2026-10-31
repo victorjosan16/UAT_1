@@ -312,6 +312,27 @@ namespace Veliqora.Tests.PlayMode
             Assert.IsTrue(c.Session.Current[bottles].IsEmpty);
         }
 
+        [UnityTest]
+        public IEnumerator FirstLaunch_OpensLevel1_ReadyToPlay_WithoutTutorial()
+        {
+            // Fresh save directory = brand-new player.
+            var fresh = Path.Combine(Path.GetTempPath(), "veliqora_first_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(fresh);
+            AppRoot.Instance.Reboot(fresh, goHome: false);
+            Assert.IsTrue(AppRoot.Instance.IsFirstLaunch);
+            AppRoot.Instance.GoToStartScreen();
+            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Gameplay && !S.Navigator.IsTransitioning);
+            Assert.AreEqual(1, Gameplay.Controller.Level.Number);
+            Assert.AreEqual(5, Gameplay.Controller.Session.Current.BottleCount, "3 mixed bottles + 2 empty");
+            Assert.IsFalse(Overlays.AnyOpen, "no intro / instruction overlay");
+            foreach (var t in UnityEngine.Object.FindObjectsByType<Text>(FindObjectsSortMode.None))
+                Assert.IsFalse(t.gameObject.activeInHierarchy && t.text.Contains("Tap a bottle"), "no tutorial text");
+            // The first tap selects a bottle immediately (input is not blocked by explanations).
+            var r = Gameplay.Controller.Session.Tap(0);
+            Assert.AreEqual(Core.Session.TapKind.Selected, r.Kind);
+            try { Directory.Delete(fresh, true); } catch (IOException) { }
+        }
+
         private int FindLevel(Func<Core.Levels.LevelDefinition, bool> pred)
         {
             for (int i = 1; i <= S.Levels.Count; i++) if (pred(S.Levels.Get(i))) return i;

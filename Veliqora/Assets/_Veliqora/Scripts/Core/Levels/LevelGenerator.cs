@@ -53,6 +53,8 @@ namespace Veliqora.Core.Levels
         public int Attempts;
         /// <summary>Fraction of naive random playouts that got stuck (see DifficultyAnalyzer). Filled by the builder.</summary>
         public double StuckRate;
+        /// <summary>Exact minimum pours (BFS), -1 = not computed / above budget.</summary>
+        public int MinimumMoves = -1;
 
         /// <summary>Difficulty score from measured solution length, branching, search effort and trap density.</summary>
         public double DifficultyScore => Solve.Length + 1.5 * Solve.AverageBranching + Math.Log(1 + Solve.NodesExpanded, 2) + 25.0 * StuckRate;

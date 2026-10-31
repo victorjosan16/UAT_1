@@ -6,14 +6,14 @@ using Veliqora.Core.Puzzle;
 
 namespace Veliqora.Core.Levels
 {
-    public enum DifficultyTier { Tutorial = 0, Beginner = 1, Intermediate = 2, Advanced = 3, Expert = 4, Master = 5 }
+    public enum DifficultyTier { Starter = 0, Beginner = 1, Intermediate = 2, Advanced = 3, Expert = 4, Master = 5 }
 
     public static class DifficultyTiers
     {
-        /// <summary>Tutorial 1–5, Beginner 6–25, Intermediate 26–75, Advanced 76–150, Expert 151–200, Master 201+.</summary>
+        /// <summary>Starter 1–5, Beginner 6–25, Intermediate 26–75, Advanced 76–150, Expert 151–200, Master 201+.</summary>
         public static DifficultyTier ForLevel(int number)
         {
-            if (number <= 5) return DifficultyTier.Tutorial;
+            if (number <= 5) return DifficultyTier.Starter;
             if (number <= 25) return DifficultyTier.Beginner;
             if (number <= 75) return DifficultyTier.Intermediate;
             if (number <= 150) return DifficultyTier.Advanced;
@@ -32,6 +32,8 @@ namespace Veliqora.Core.Levels
         public double AverageBranching;
         public int Attempts;           // generator attempts consumed
         public double StuckRate;       // naive-playout stuck fraction (0..1)
+        /// <summary>Exact minimum pours (breadth-first search); -1 = state space above the search budget.</summary>
+        public int MinimumMoves = -1;
     }
 
     /// <summary>Immutable-by-convention level data. Bottles are bottom-to-top ColorIds; empty arrays are empty bottles.</summary>
@@ -180,6 +182,7 @@ namespace Veliqora.Core.Levels
                     ["branching"] = Math.Round(Validation.AverageBranching, 2),
                     ["attempts"] = (long)Validation.Attempts,
                     ["stuck"] = Math.Round(Validation.StuckRate, 3),
+                    ["min"] = (long)Validation.MinimumMoves,
                 },
             };
             if (!string.IsNullOrEmpty(TutorialKey)) d["tutorial"] = TutorialKey;
@@ -253,6 +256,7 @@ namespace Veliqora.Core.Levels
                 AverageBranching = MiniJson.GetDouble(v, "branching"),
                 Attempts = MiniJson.GetInt(v, "attempts"),
                 StuckRate = MiniJson.GetDouble(v, "stuck"),
+                MinimumMoves = v != null && v.ContainsKey("min") ? MiniJson.GetInt(v, "min") : -1,
             };
             return def;
         }

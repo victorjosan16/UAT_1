@@ -22,7 +22,7 @@ namespace Veliqora.UI.Screens
 
         protected override void BuildBackground(RectTransform full)
         {
-            var screenArt = S.Themes.Theme.IsDark ? null : BackgroundArt.ScreenArt("themes");
+            var screenArt = S.Themes.Theme.OwnBackgrounds ? null : BackgroundArt.ScreenArt("themes");
             _bg = FullBackground(full, screenArt != null ? (Texture)screenArt : BackgroundArt.Valley(S.Themes.Theme));
             _bgFollowsTheme = screenArt == null;
             ReadabilityScrim(full, 0.4f, 0.3f, 0.15f);
@@ -251,7 +251,7 @@ namespace Veliqora.UI.Screens
         {
             if (!S.Themes.Apply(item.Id)) return;
             S.SaveNow();
-            if (item.Kind == CosmeticKind.Theme && _bg != null && (_bgFollowsTheme || S.Themes.Theme.IsDark))
+            if (item.Kind == CosmeticKind.Theme && _bg != null && (_bgFollowsTheme || S.Themes.Theme.OwnBackgrounds))
             {
                 var tex = BackgroundArt.Valley(S.Themes.Theme);
                 _bg.texture = tex;

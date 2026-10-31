@@ -22,7 +22,7 @@ namespace Veliqora.UI.Screens
         protected override void BuildBackground(RectTransform full)
         {
             var current = S.Themes.Theme;
-            if (current.IsDark)
+            if (current.OwnBackgrounds)
             {
                 FullBackground(full, BackgroundArt.Valley(current));
                 ReadabilityScrim(full, 0.3f, 0.5f, 0.12f);

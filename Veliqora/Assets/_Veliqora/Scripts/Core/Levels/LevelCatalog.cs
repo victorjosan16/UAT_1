@@ -9,7 +9,7 @@ namespace Veliqora.Core.Levels
     {
         public const int CurrentGeneratorVersion = 1;
 
-        public int ContentVersion = 3; // 3: special bottles (mystery, corks, sizes, ad bottles), objectives
+        public int ContentVersion = 4; // 4: no tutorial levels, complete puzzles from level 1, 8-color progression
         public int GeneratorVersion = CurrentGeneratorVersion;
         public ulong BaseSeed;
         public string GeneratedAtUtc = "";

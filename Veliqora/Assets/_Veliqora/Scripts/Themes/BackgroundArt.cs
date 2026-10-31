@@ -54,10 +54,28 @@ namespace Veliqora.Presentation
             if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
             var authored = Resources.Load<Texture2D>("Veliqora/Art/Backgrounds/" + t.Id);
             if (authored != null) return Cache[key] = authored;
-            var tex = (t.IsDark ? DarkScenes.Paint(t.Scene, w, h) : PaintValley(t, w, h)).ToTexture();
+            var tex = (t.Flat ? PaintClean(t, w, h) : t.IsDark ? DarkScenes.Paint(t.Scene, w, h) : PaintValley(t, w, h)).ToTexture();
             tex.name = key;
             Cache[key] = tex;
             return tex;
+        }
+
+        /// <summary>
+        /// Clean premium background: the flat base color (#101827) with a very soft top light and vignette, so the
+        /// transparent bottles and liquids stay the focus.
+        /// </summary>
+        public static PixelPainter PaintClean(ThemeVisuals t, int w, int h)
+        {
+            var p = new PixelPainter(w, h);
+            p.VerticalGradient(t.SkyBottom, t.SkyTop);
+            var c = new Vector2(w * 0.5f, h * 0.78f);
+            float r = w * 0.9f;
+            p.Fill(q => PixelPainter.Circle(q, c, r), Color.clear, q =>
+            {
+                float d = (q - c).magnitude / r;
+                return UIStyle.WithAlpha(t.Accent, Mathf.Pow(Mathf.Clamp01(1 - d), 2.4f) * 0.07f);
+            });
+            return p;
         }
 
         /// <summary>Rasterizes the valley illustration (pure managed; also used by the art preview tool).</summary>

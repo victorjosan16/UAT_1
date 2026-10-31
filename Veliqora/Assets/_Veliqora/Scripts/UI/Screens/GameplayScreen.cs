@@ -12,16 +12,13 @@ using Veliqora.UI.Widgets;
 
 namespace Veliqora.UI.Screens
 {
-    /// <summary>Gameplay: HUD, responsive board, booster bar, contextual tutorial, stuck + win flow.</summary>
+    /// <summary>Gameplay: HUD, responsive board, booster bar, objectives, stuck + win flow (no tutorials: level 1 is a full puzzle).</summary>
     public sealed class GameplayScreen : ScreenBase
     {
         private GameplayController _ctl;
         private BoardView _board;
         private Text _levelText, _movesText, _goalText;
         private readonly Dictionary<BoosterType, BoosterButton> _boosters = new Dictionary<BoosterType, BoosterButton>();
-        private CoachMark _coach;
-        private string _activeTutorial;
-        private int _tutorialStep;
         private OverlayHandle _pause;
         private GameObject _stuckPanel;
         private LevelDefinition _level;
@@ -110,7 +107,7 @@ namespace Veliqora.UI.Screens
             }
 
             AmbientMotes(3f);
-            BottleView.NeonAura = !light;
+            BottleView.NeonAura = !light && S.Themes.Theme.IsDark && !S.Themes.Theme.Flat; // only the neon dark-fantasy themes glow
 
             // Board (between HUD and booster bar)
             var boardRt = UIFactory.Rect("Board", Safe);
@@ -129,7 +126,6 @@ namespace Veliqora.UI.Screens
             AddBooster(boosterBar, BoosterType.RemoveColor, Icon.Droplet, Loc.T("Remove color"), UIStyle.Hex("#E2557A"), 0.7f);
             AddBooster(boosterBar, BoosterType.Hint, Icon.Bulb, Loc.T("Hint"), UIStyle.Hex("#F5A623"), 0.9f);
 
-            _coach = CoachMark.Create(Safe);
 
             Canvas.ForceUpdateCanvases();
             _ctl = new GameplayController(S, _level, _board, this);
@@ -147,7 +143,6 @@ namespace Veliqora.UI.Screens
             S.Settings.Changed += OnSettingsChanged;
             Refresh();
             RefreshObjectives();
-            StartTutorial();
             if (_level.IsHard && _ctl.Session.MoveCount == 0)
             {
                 int bonus = _level.Kind == LevelKind.Boss ? S.EconomyConfig.BossLevelBonus : S.EconomyConfig.HardLevelBonus;
@@ -215,9 +210,6 @@ namespace Veliqora.UI.Screens
             if (_ctl.InputLocked) return;
             if (_removeMode) { SetRemoveMode(false); if (type == BoosterType.RemoveColor) return; }
             if (_ctl.IsDisabledHere(type)) { Overlays.Toast(Loc.T("Booster not available on this level.")); return; }
-            HideTutorialIf("undo_intro", type == BoosterType.Undo);
-            HideTutorialIf("boosters_intro", type == BoosterType.ExtraBottle || type == BoosterType.Shuffle);
-            HideTutorialIf("hint_intro", type == BoosterType.Hint);
             if (!_ctl.CanUse(type))
             {
                 Overlays.Toast(Loc.T(type == BoosterType.Undo ? "Nothing to undo yet." :
@@ -321,7 +313,6 @@ namespace Veliqora.UI.Screens
             if (_ctl.Session.IsRewardBottle(index))
             {
                 if (!_ctl.CanUnlockRewardBottle(index)) { _board.Shake(index); Overlays.Toast(Loc.T("Ad unavailable right now. Try again later.")); return true; }
-                HideTutorialIf("reward_bottle_intro", true);
                 Overlays.Confirm(Loc.T("Bonus bottle"), Loc.T("Unlock this bottle with a short ad?"), Loc.T(S.Ads.IsMock ? "Unlock (mock ad)" : "Watch ad"),
                     () => _ctl.UnlockRewardBottle(index, ok => Overlays.Toast(Loc.T(ok ? "Bottle unlocked!" : "No reward — the ad wasn't completed."))), Loc.T("Cancel"));
                 return true;
@@ -437,59 +428,6 @@ namespace Veliqora.UI.Screens
             _stuckPanel = null;
         }
 
-        // ---------------- tutorial ----------------
-
-        private static string TutorialText(string key, int threeStars)
-        {
-            switch (key)
-            {
-                case "tap_to_pour": return Loc.T("Tap a bottle to pick up its top color.");
-                case "same_color_stacks": return Loc.T("You can pour only onto the same color — or into an empty bottle.");
-                case "empty_accepts_any": return Loc.T("Empty bottles accept any color. Use them to untangle layers!");
-                case "plan_ahead": return Loc.T("Goal: make every bottle a single color.");
-                case "undo_intro": return Loc.T("Made a mistake? Undo takes back your last pour.");
-                case "partial_pour": return Loc.T("If there isn't room for all of it, only what fits is poured.");
-                case "boosters_intro": return Loc.T("Stuck? Add bottle or Shuffle can help.");
-                case "hint_intro": return Loc.T("Hint shows a recommended move from the solver.");
-                case "five_colors": return Loc.T("Five colors now — take your time.");
-                case "stars_intro": return Loc.F("Fewer moves = more stars. ★★★ in {0} moves!", threeStars);
-                case "one_spare_bottle": return Loc.T("Only ONE empty bottle here — plan every pour!");
-                case "tall_bottles": return Loc.T("Tall bottles hold 5 layers. Same rules, bigger puzzles!");
-                case "mystery_intro": return Loc.T("Mystery layers (?) stay hidden until they reach the top of the bottle.");
-                case "sizes_intro": return Loc.T("Bottles now come in different sizes. A color is done when one bottle holds all of it.");
-                case "cork_intro": return Loc.T("Corked bottles can't be used until their condition is met. Tap one to see it.");
-                case "reward_bottle_intro": return Loc.T("This bonus bottle is optional: unlock it with a short ad if you want extra room.");
-                case "objectives_intro": return Loc.T("Complete the objectives at the top for bonus coins.");
-                default: return null;
-            }
-        }
-
-        private void StartTutorial()
-        {
-            var key = _level.TutorialKey;
-            if (string.IsNullOrEmpty(key) || S.Save.TutorialsSeen.Contains(key)) return;
-            string text = TutorialText(key, StarRating.ThreeStarLimit(_ctl.Session.ParMoves));
-            if (text == null) return;
-            _activeTutorial = key;
-            _tutorialStep = 0;
-            RectTransform target = null;
-            if (key == "tap_to_pour" && _board.Views.Count > 0) target = _board.Views[0].Rect;
-            if (key == "undo_intro") target = _boosters[BoosterType.Undo].Button.Rect;
-            if (key == "boosters_intro") target = _boosters[BoosterType.ExtraBottle].Button.Rect;
-            if (key == "hint_intro") target = _boosters[BoosterType.Hint].Button.Rect;
-            if (key == "objectives_intro" && _objectives != null) target = _objectives.Rect;
-            if (key == "cork_intro" || key == "reward_bottle_intro" || key == "mystery_intro")
-            {
-                var st = _ctl.Session.Current;
-                for (int i = 0; i < st.BottleCount && i < _board.Views.Count; i++)
-                {
-                    bool match = key == "cork_intro" ? st[i].IsCorked : key == "reward_bottle_intro" ? st[i].RewardLocked : st[i].Hidden > 0;
-                    if (match) { target = _board.Views[i].Rect; break; }
-                }
-            }
-            _coach.Show(text, target, 0.86f);
-        }
-
         private void OnTapped(TapResult r)
         {
             if (r.Kind == TapKind.Invalid && r.Move != null && r.Move.Rejection == Core.Puzzle.MoveRejection.Locked)
@@ -498,48 +436,14 @@ namespace Veliqora.UI.Screens
                 int idx = _ctl.Session.Current[r.Index].IsLocked ? r.Index : r.PreviousSelection;
                 string cond = idx >= 0 ? BoardView.LockLabel(_ctl.Session.Current, idx, out c) : null;
                 Overlays.Toast(cond != null ? Loc.F("Corked bottle — opens when: {0}", cond) : Loc.T("This bottle is locked."), 2.2f);
-                HideTutorialIf("cork_intro", true);
             }
             if (r.Kind == TapKind.Moved) RefreshObjectives();
-            if (_activeTutorial == null) return;
-            if (_activeTutorial == "tap_to_pour")
-            {
-                if (r.Kind == TapKind.Selected && _tutorialStep == 0)
-                {
-                    _tutorialStep = 1;
-                    int other = r.Index == 0 ? 1 : 0;
-                    _coach.Show("Now tap the other bottle to pour.", other < _board.Views.Count ? _board.Views[other].Rect : null, 0.86f);
-                    return;
-                }
-                if (r.Kind == TapKind.Moved) CompleteTutorial();
-                return;
-            }
-            bool boosterLesson = _activeTutorial == "undo_intro" || _activeTutorial == "hint_intro" || _activeTutorial == "boosters_intro";
-            // Booster lessons stay up a little longer (until used, or after a few pours) so the player can try them.
-            if (_activeTutorial == "tap_to_pour" || _activeTutorial == null) return;
-            if (r.Kind == TapKind.Moved && (!boosterLesson || _ctl.Session.MoveCount >= 3))
-                CompleteTutorial();
-        }
-
-        private void HideTutorialIf(string key, bool condition)
-        {
-            if (condition && _activeTutorial == key) CompleteTutorial();
-        }
-
-        private void CompleteTutorial()
-        {
-            if (_activeTutorial == null) return;
-            S.Save.TutorialsSeen.Add(_activeTutorial);
-            S.MarkDirty();
-            _activeTutorial = null;
-            _coach.Hide();
         }
 
         // ---------------- win ----------------
 
         private void OnWon(LevelResult result)
         {
-            CompleteTutorial();
             HideStuck();
             Confetti.Burst(Full, new Vector2(0, -200), 36);
             Tween.Delay(this, MotionPrefs.Reduced ? 0.3f : 1.0f, () => S.Navigator.Go(ScreenId.LevelComplete, result));

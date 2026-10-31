@@ -10,11 +10,12 @@ namespace Veliqora.UI
     {
         // ---------- palette ----------
         public static readonly Color SkyBlue = Hex("#7EC8F2");
-        // Dark-fantasy surfaces (names kept for API stability: "Ivory" = primary panel surface).
-        public static readonly Color Ivory = Hex("#1D1940");
-        public static readonly Color IvoryDark = Hex("#3A3270");
+        // Clean premium surfaces on the #101827 background (names kept for API stability: "Ivory" = panel surface).
+        public static readonly Color Background = Hex("#101827");
+        public static readonly Color Ivory = Hex("#182235");
+        public static readonly Color IvoryDark = Hex("#2B3852");
         /// <summary>Card surface inside panels.</summary>
-        public static readonly Color Card = Hex("#2A2456");
+        public static readonly Color Card = Hex("#1F2B42");
         public static readonly Color Mint = Hex("#4FD1A5");
         public static readonly Color MintDark = Hex("#2FA67F");
         public static readonly Color Coral = Hex("#FF7A6B");
@@ -22,8 +23,8 @@ namespace Veliqora.UI
         public static readonly Color Sunshine = Hex("#FFC93C");
         public static readonly Color SunshineDark = Hex("#E59E1A");
         public static readonly Color Navy = Hex("#1D2A55");
-        public static readonly Color Ink = Hex("#F1ECFF");
-        public static readonly Color InkSoft = Hex("#A9A2CC");
+        public static readonly Color Ink = Hex("#F2F5FA");
+        public static readonly Color InkSoft = Hex("#A3AEC4");
         /// <summary>Text color for the optional light gameplay background (accessibility setting).</summary>
         public static readonly Color InkOnLight = Hex("#2E2440");
         public static readonly Color Brown = Hex("#8A4B22");
@@ -33,7 +34,7 @@ namespace Veliqora.UI
         public static readonly Color Disabled = Hex("#4A4566");
         public static readonly Color Danger = Hex("#E5484D");
         /// <summary>Accent of the active visual theme (set by ThemeService); used for highlights and glows.</summary>
-        public static Color ThemeAccent = Hex("#8C6CF0");
+        public static Color ThemeAccent = Hex("#3995F6");
 
         // ---------- button variants ----------
         public enum ButtonKind { Primary, Secondary, Accent, Danger, Ghost, Gold }

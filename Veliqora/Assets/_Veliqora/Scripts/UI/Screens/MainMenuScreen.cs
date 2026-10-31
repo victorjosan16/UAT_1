@@ -6,7 +6,7 @@ using Veliqora.UI.Widgets;
 
 namespace Veliqora.UI.Screens
 {
-    /// <summary>Home: logo, Play/Continue, progress, currency, Settings, Shop, Themes, Map; first-time coach mark.</summary>
+    /// <summary>Home: logo, Play/Continue, progress, currency, Settings, Shop, Themes, Map, daily reward and achievements.</summary>
     public sealed class MainMenuScreen : ScreenBase
     {
         public override bool AllowsBanner => true;
@@ -90,16 +90,10 @@ namespace Veliqora.UI.Screens
             NavButton(nav, Icon.Palette, Loc.T("Themes"), UIStyle.Violet, 0.83f, () => S.Navigator.Go(ScreenId.Themes));
 
             // First-time onboarding
-            if (!S.Save.TutorialsSeen.Contains("home_play"))
-            {
-                var coach = CoachMark.Create(Safe);
-                coach.Show(Loc.T("Welcome to Veliqora! Tap Play to begin your color-sorting adventure."), _play, 0.6f);
-            }
-
             RefreshDots();
             ProgressionOverlays.CheckAchievementNotices(S);
-            // Auto-open the daily reward once it's claimable (not during first-time onboarding).
-            if (AutoOpenDaily && S.Save.TutorialsSeen.Contains("home_play") && S.Daily.CanClaim(ProgressionOverlays.Today) && !Overlays.AnyOpen)
+            // Auto-open the daily reward once it's claimable (after the player has finished at least one level).
+            if (AutoOpenDaily && S.Save.Progress.BestStars.Count > 0 && S.Daily.CanClaim(ProgressionOverlays.Today) && !Overlays.AnyOpen)
                 Tween.Delay(this, MotionPrefs.Reduced ? 0.1f : 0.6f, () => { if (!Overlays.AnyOpen) ProgressionOverlays.ShowDaily(S, RefreshDots); });
         }
 
@@ -148,7 +142,6 @@ namespace Veliqora.UI.Screens
 
         private void OnPlay()
         {
-            S.Save.TutorialsSeen.Add("home_play");
             S.MarkDirty();
             int level = Mathf.Clamp(S.Save.Progress.CurrentLevel, 1, S.Levels.Count);
             S.Navigator.Go(ScreenId.Gameplay, level);

@@ -16,7 +16,7 @@ namespace Veliqora.UI.Screens
         {
             // Dark-fantasy themes carry the whole UI; illustrated themes use the authored shop scene.
             var theme = S.Themes.Theme;
-            Texture tex = theme.IsDark ? null : BackgroundArt.ScreenArt("shop");
+            Texture tex = theme.OwnBackgrounds ? null : BackgroundArt.ScreenArt("shop");
             if (tex == null) tex = BackgroundArt.Valley(theme);
             FullBackground(full, tex);
             ReadabilityScrim(full, 0.4f, 0.4f, 0.15f);

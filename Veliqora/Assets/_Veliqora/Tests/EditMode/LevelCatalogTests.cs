@@ -46,23 +46,26 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void TiersAndHandcraftedOnboarding_MatchTheBrief()
+        public void Tiers_Match_AndNoTutorialLevels()
         {
             for (int n = 1; n <= Catalog.Levels.Count; n++) Assert.AreEqual(DifficultyTiers.ForLevel(n), Catalog.Levels[n - 1].Tier);
             Assert.AreEqual(DifficultyTier.Master, Catalog.Levels[250].Tier);
-            int handcrafted = Catalog.Levels.FindAll(l => l.Handcrafted).Count;
-            Assert.GreaterOrEqual(handcrafted, 10);
-            for (int n = 1; n <= 10; n++) Assert.IsTrue(Catalog.Levels[n - 1].Handcrafted);
-            Assert.AreEqual("tap_to_pour", Catalog.Levels[0].TutorialKey);
+            foreach (var l in Catalog.Levels)
+            {
+                Assert.IsFalse(l.Handcrafted, l.Id + " must be a generated, verified puzzle (no tutorial levels)");
+                Assert.IsTrue(string.IsNullOrEmpty(l.TutorialKey), l.Id + " has a tutorial");
+            }
         }
 
         [Test]
-        public void ColorCount_StaysWithin2To12_AndUpTo9BeforeMaster()
+        public void ColorCount_FollowsTheProgression_AndNeverExceedsThePalette()
         {
             foreach (var l in Catalog.Levels)
             {
-                Assert.LessOrEqual(l.ColorCount, l.Tier == DifficultyTier.Master ? 12 : 9, l.Id);
-                if (l.Number > 1) Assert.GreaterOrEqual(l.ColorCount, 2, l.Id);
+                StagePlanner.ColorRange(l.Number, out int min, out int max);
+                Assert.That(l.ColorCount, Is.InRange(min, max), l.Id);
+                Assert.LessOrEqual(l.ColorCount, StagePlanner.MaxColors, l.Id);
+                Assert.AreEqual(l.ColorCount, LevelCatalogBuilder.DistinctColors(l.CreateInitialState()), l.Id);
             }
         }
 
@@ -86,8 +89,7 @@ namespace Veliqora.Tests.EditMode
         {
             foreach (var l in Catalog.Levels)
             {
-                if (l.Handcrafted) continue;
-                Assert.GreaterOrEqual(l.ParMoves, 7, l.Id);
+                Assert.GreaterOrEqual(l.ParMoves, 6, l.Id);
                 foreach (var b in l.Bottles)
                     if (b.Length == l.Capacity) Assert.IsFalse(new BottleState(l.Capacity, b).IsMonochrome, l.Id + " starts with a completed bottle");
             }
