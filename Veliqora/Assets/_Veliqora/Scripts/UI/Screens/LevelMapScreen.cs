@@ -75,7 +75,7 @@ namespace Veliqora.UI.Screens
 
             // Header
             var bar = TopBar();
-            AddBack(bar, () => S.Navigator.Go(ScreenId.Home));
+            AddBack(bar, () => S.Navigator.Go(ScreenId.MainMenu));
             AddCoins(bar);
             Ribbon(Safe, "Valley Map", -UIStyle.TopBarHeight - UIStyle.Space3, 520, UIStyle.Mint);
             var gear = UIFactory.IconButton(Safe, Icon.Gear, UIStyle.Violet, 110, () => CommonOverlays.ShowSettings(S));

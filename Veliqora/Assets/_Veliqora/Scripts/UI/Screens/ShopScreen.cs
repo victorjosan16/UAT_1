@@ -46,7 +46,7 @@ namespace Veliqora.UI.Screens
             }
             BuildAdCard(list, y, cardH);
 
-            var themes = UIFactory.Button(Safe, "Themes & bottles", UIStyle.ButtonKind.Accent, () => S.Navigator.Go(ScreenId.Customization), new Vector2(640, 140), Icon.Palette);
+            var themes = UIFactory.Button(Safe, "Themes & bottles", UIStyle.ButtonKind.Accent, () => S.Navigator.Go(ScreenId.Themes), new Vector2(640, 140), Icon.Palette);
             UIFactory.Place(themes.Rect, new Vector2(0.5f, 0f), themes.Rect.sizeDelta, new Vector2(0, 50), new Vector2(0.5f, 0f));
         }
 

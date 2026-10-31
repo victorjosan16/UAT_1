@@ -28,8 +28,8 @@ internal static class Program
         Png(Path.Combine(outDir, "board_level_" + 170 + "_flask_light.png"), Board(eco, levels.Levels[169], "bottle_flask", -1, 0, light: true));
         Png(Path.Combine(outDir, "bottle_skins.png"), Skins(eco));
         Png(Path.Combine(outDir, "dark_gameplay_crystal_cave_L45.png"), Board(eco, levels.Levels[44], "bottle_classic", 2, 75f, false, "crystal_cave"));
-        Png(Path.Combine(outDir, "dark_gameplay_aurora_L276_master.png"), Board(eco, levels.Levels[275], "bottle_classic", -1, 0, false, "aurora"));
-        Png(Path.Combine(outDir, "dark_gameplay_neon_falls_L120.png"), Board(eco, levels.Levels[119], "bottle_slim", -1, 0, false, "neon_falls"));
+        Png(Path.Combine(outDir, "dark_gameplay_aurora_L276_master.png"), Board(eco, levels.Levels[275], "bottle_classic", -1, 0, false, "aurora_night"));
+        Png(Path.Combine(outDir, "dark_gameplay_neon_falls_L120.png"), Board(eco, levels.Levels[119], "bottle_slim", -1, 0, false, "moonlight_falls"));
         Png(Path.Combine(outDir, "tilt_sequence.png"), TiltSequence(eco));
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var sheet = new PixelPainter(6 * 270, 2 * 480);

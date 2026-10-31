@@ -9,7 +9,7 @@ using Veliqora.Presentation;
 namespace Veliqora.UI.Screens
 {
     /// <summary>Themes and bottle skins: tabs, live preview, locked/owned/applied states, purchase + apply.</summary>
-    public sealed class CustomizationScreen : ScreenBase
+    public sealed class ThemesScreen : ScreenBase
     {
         private CosmeticKind _tab = CosmeticKind.Theme;
         private string _previewId;

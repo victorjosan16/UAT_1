@@ -30,6 +30,7 @@ namespace Veliqora.UI.Widgets
         private float _ambientRate;
         private float _ambientAcc;
         private Color _ambientA = Color.white, _ambientB = Color.white;
+        private string _style = "stars";
 
         public static UiParticles Create(RectTransform parent, int max = 96)
         {
@@ -105,12 +106,51 @@ namespace Veliqora.UI.Widgets
         }
 
         /// <summary>Continuous slow motes drifting upward (ambient life on dark backgrounds).</summary>
-        public void SetAmbient(bool on, Color a, Color b, float perSecond = 5f)
+        public void SetAmbient(bool on, Color a, Color b, float perSecond = 5f, string style = "stars")
         {
             _ambient = on && !MotionPrefs.Reduced;
             _ambientA = a;
             _ambientB = b;
             _ambientRate = perSecond;
+            _style = string.IsNullOrEmpty(style) ? "stars" : style;
+        }
+
+        /// <summary>Per-theme ambient behaviour (velocity, size, life, gravity, twinkle).</summary>
+        private void EmitAmbient(Vector2 size)
+        {
+            var c = Color.Lerp(_ambientA, _ambientB, Random.value);
+            float x = (Random.value - 0.5f) * size.x;
+            switch (_style)
+            {
+                case "sparks":
+                    c.a = 0.8f;
+                    Emit(new Vector2(x, -size.y * 0.5f + Random.value * size.y * 0.4f), new Vector2((Random.value - 0.5f) * 40f, 120f + Random.value * 120f), 1.6f, 6f + Random.value * 6f, c, -30f, 0.2f, 9f);
+                    break;
+                case "embers":
+                    c.a = 0.75f;
+                    Emit(new Vector2(x, -size.y * 0.5f), new Vector2((Random.value - 0.5f) * 30f, 50f + Random.value * 60f), 6f, 8f + Random.value * 10f, c, 0f, 0f, 4f);
+                    break;
+                case "bubbles":
+                    c = Color.Lerp(c, Color.white, 0.5f); c.a = 0.45f;
+                    Emit(new Vector2(x, -size.y * 0.5f), new Vector2((Random.value - 0.5f) * 10f, 40f + Random.value * 50f), 9f, 12f + Random.value * 22f, c, 0f, 0f, 1.5f);
+                    break;
+                case "crystals":
+                    c.a = 0.6f;
+                    Emit(new Vector2(x, size.y * 0.5f), new Vector2((Random.value - 0.5f) * 12f, -(20f + Random.value * 25f)), 9f, 7f + Random.value * 9f, c, 0f, 0f, 6f);
+                    break;
+                case "mist":
+                    c.a = 0.18f;
+                    Emit(new Vector2(x, -size.y * 0.5f + Random.value * size.y * 0.3f), new Vector2((Random.value - 0.5f) * 20f, 12f + Random.value * 14f), 9f, 80f + Random.value * 120f, c, 0f, 0f, 0f);
+                    break;
+                case "fireflies":
+                    c.a = 0.85f;
+                    Emit(new Vector2(x, -size.y * 0.5f + Random.value * size.y), new Vector2((Random.value - 0.5f) * 50f, (Random.value - 0.5f) * 50f), 5f + Random.value * 3f, 9f + Random.value * 8f, c, 0f, 0f, 5f);
+                    break;
+                default: // stars
+                    c.a = 0.55f;
+                    Emit(new Vector2(x, -size.y * 0.5f + Random.value * size.y * 0.7f), new Vector2((Random.value - 0.5f) * 14f, 18f + Random.value * 30f), 5f + Random.value * 4f, 8f + Random.value * 16f, c, 0f, 0f, 2.5f);
+                    break;
+            }
         }
 
         private void Update()
@@ -123,10 +163,7 @@ namespace Veliqora.UI.Widgets
                 while (_ambientAcc >= 1f)
                 {
                     _ambientAcc -= 1f;
-                    var pos = new Vector2((Random.value - 0.5f) * size.x, -size.y * 0.5f + Random.value * size.y * 0.7f);
-                    var c = Color.Lerp(_ambientA, _ambientB, Random.value);
-                    c.a = 0.55f;
-                    Emit(pos, new Vector2((Random.value - 0.5f) * 14f, 18f + Random.value * 30f), 5f + Random.value * 4f, 8f + Random.value * 16f, c, 0f, 0f, 2.5f);
+                    EmitAmbient(size);
                 }
             }
 

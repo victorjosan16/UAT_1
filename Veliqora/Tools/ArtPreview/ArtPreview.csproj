@@ -16,11 +16,11 @@
     <Compile Include="../../Assets/_Veliqora/Scripts/UI/PixelPainter.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/UI/UIStyle.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/UI/SpriteLibrary.cs" />
-    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/BackgroundArt.cs" />
-    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/ThemeVisuals.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Themes/BackgroundArt.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Themes/ThemeVisuals.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidGeometry.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidPalette.cs" />
-    <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/DarkScenes.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Themes/DarkScenes.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Veliqora.Core/Veliqora.Core.csproj" />

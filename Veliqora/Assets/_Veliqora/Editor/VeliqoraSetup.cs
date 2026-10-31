@@ -25,8 +25,8 @@ namespace Veliqora.EditorTools
 
         public static readonly ScreenId[] SceneOrder =
         {
-            ScreenId.Bootstrap, ScreenId.Home, ScreenId.LevelMap, ScreenId.Gameplay,
-            ScreenId.LevelComplete, ScreenId.Shop, ScreenId.Customization,
+            ScreenId.Bootstrap, ScreenId.MainMenu, ScreenId.LevelMap, ScreenId.Gameplay,
+            ScreenId.LevelComplete, ScreenId.Shop, ScreenId.Themes, ScreenId.Settings,
         };
 
         [MenuItem("Veliqora/Setup Project", priority = 0)]

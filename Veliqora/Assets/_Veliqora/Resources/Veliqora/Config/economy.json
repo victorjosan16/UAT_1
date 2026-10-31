@@ -66,70 +66,14 @@
   ],
   "cosmetics": [
     {
-      "id": "dark_aurora",
+      "id": "dark_midnight_forest",
       "kind": "theme",
-      "title": "Aurora Night",
+      "title": "Midnight Forest",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "aurora",
-        "skyTop": "#0B1B3A",
-        "skyBottom": "#03050F",
-        "mountain": "#0B1B3A",
-        "hill": "#1A1636",
-        "hillDark": "#0C0A1E",
-        "river": "#FF3FD8",
-        "accent": "#2BFFB0",
-        "gameTop": "#03050F",
-        "gameBottom": "#0B1B3A"
-      }
-    },
-    {
-      "id": "dark_crystal_cave",
-      "kind": "theme",
-      "title": "Crystal Cavern",
-      "price": 0,
-      "defaultOwned": true,
-      "visual": {
-        "scene": "crystal_cave",
-        "skyTop": "#130A2A",
-        "skyBottom": "#07030F",
-        "mountain": "#130A2A",
-        "hill": "#1A1636",
-        "hillDark": "#0C0A1E",
-        "river": "#C77DFF",
-        "accent": "#5CE8FF",
-        "gameTop": "#07030F",
-        "gameBottom": "#130A2A"
-      }
-    },
-    {
-      "id": "dark_alchemy_lab",
-      "kind": "theme",
-      "title": "Alchemist's Lab",
-      "price": 0,
-      "defaultOwned": true,
-      "visual": {
-        "scene": "alchemy_lab",
-        "skyTop": "#1A0B30",
-        "skyBottom": "#0A0516",
-        "mountain": "#1A0B30",
-        "hill": "#1A1636",
-        "hillDark": "#0C0A1E",
-        "river": "#C040FF",
-        "accent": "#FF7BF0",
-        "gameTop": "#0A0516",
-        "gameBottom": "#1A0B30"
-      }
-    },
-    {
-      "id": "dark_glow_forest",
-      "kind": "theme",
-      "title": "Glowing Forest",
-      "price": 0,
-      "defaultOwned": true,
-      "visual": {
-        "scene": "glow_forest",
+        "scene": "midnight_forest",
+        "particles": "fireflies",
         "skyTop": "#0B2626",
         "skyBottom": "#030B0B",
         "mountain": "#0B2626",
@@ -142,13 +86,54 @@
       }
     },
     {
-      "id": "dark_neon_falls",
+      "id": "dark_neon_lab",
       "kind": "theme",
-      "title": "Neon Falls",
+      "title": "Neon Laboratory",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "neon_falls",
+        "scene": "neon_lab",
+        "particles": "sparks",
+        "skyTop": "#1A0B30",
+        "skyBottom": "#0A0516",
+        "mountain": "#1A0B30",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#8FE9FF",
+        "accent": "#FF7BF0",
+        "gameTop": "#0A0516",
+        "gameBottom": "#1A0B30"
+      }
+    },
+    {
+      "id": "dark_crystal_cave",
+      "kind": "theme",
+      "title": "Crystal Cave",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "crystal_cave",
+        "particles": "crystals",
+        "skyTop": "#130A2A",
+        "skyBottom": "#07030F",
+        "mountain": "#130A2A",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#C77DFF",
+        "accent": "#5CE8FF",
+        "gameTop": "#07030F",
+        "gameBottom": "#130A2A"
+      }
+    },
+    {
+      "id": "dark_moonlight_falls",
+      "kind": "theme",
+      "title": "Moonlight Waterfall",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "moonlight_falls",
+        "particles": "mist",
         "skyTop": "#0A1A5C",
         "skyBottom": "#03082A",
         "mountain": "#0A1A5C",
@@ -161,32 +146,54 @@
       }
     },
     {
-      "id": "dark_nebula",
+      "id": "dark_dark_royal",
       "kind": "theme",
-      "title": "Nebula Drift",
+      "title": "Dark Royal",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "nebula",
-        "skyTop": "#0A0620",
-        "skyBottom": "#04030C",
-        "mountain": "#0A0620",
+        "scene": "dark_royal",
+        "particles": "embers",
+        "skyTop": "#2A0B2E",
+        "skyBottom": "#0A0410",
+        "mountain": "#2A0B2E",
         "hill": "#1A1636",
         "hillDark": "#0C0A1E",
-        "river": "#5F8BFF",
-        "accent": "#B48CFF",
-        "gameTop": "#04030C",
-        "gameBottom": "#0A0620"
+        "river": "#B0306A",
+        "accent": "#FFD27A",
+        "gameTop": "#0A0410",
+        "gameBottom": "#2A0B2E"
       }
     },
     {
-      "id": "dark_abyss",
+      "id": "dark_mystic_garden",
       "kind": "theme",
-      "title": "Abyssal Deep",
+      "title": "Mystic Garden",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "abyss",
+        "scene": "mystic_garden",
+        "particles": "fireflies",
+        "skyTop": "#0E1E3A",
+        "skyBottom": "#040A10",
+        "mountain": "#0E1E3A",
+        "hill": "#1A1636",
+        "hillDark": "#0C0A1E",
+        "river": "#7BD9FF",
+        "accent": "#FF7BD5",
+        "gameTop": "#040A10",
+        "gameBottom": "#0E1E3A"
+      }
+    },
+    {
+      "id": "dark_deep_ocean",
+      "kind": "theme",
+      "title": "Deep Ocean",
+      "price": 0,
+      "defaultOwned": true,
+      "visual": {
+        "scene": "deep_ocean",
+        "particles": "bubbles",
         "skyTop": "#0A3E66",
         "skyBottom": "#010510",
         "mountain": "#0A3E66",
@@ -199,32 +206,34 @@
       }
     },
     {
-      "id": "dark_ember_peaks",
+      "id": "dark_galaxy_flow",
       "kind": "theme",
-      "title": "Ember Peaks",
+      "title": "Galaxy Flow",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "ember_peaks",
-        "skyTop": "#3A0E06",
-        "skyBottom": "#080303",
-        "mountain": "#3A0E06",
+        "scene": "galaxy_flow",
+        "particles": "stars",
+        "skyTop": "#0A0620",
+        "skyBottom": "#04030C",
+        "mountain": "#0A0620",
         "hill": "#1A1636",
         "hillDark": "#0C0A1E",
-        "river": "#FF4A12",
-        "accent": "#FFA040",
-        "gameTop": "#080303",
-        "gameBottom": "#3A0E06"
+        "river": "#5F8BFF",
+        "accent": "#B48CFF",
+        "gameTop": "#04030C",
+        "gameBottom": "#0A0620"
       }
     },
     {
-      "id": "dark_moon_citadel",
+      "id": "dark_enchanted_castle",
       "kind": "theme",
-      "title": "Moonlit Citadel",
+      "title": "Enchanted Castle",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "moon_citadel",
+        "scene": "enchanted_castle",
+        "particles": "stars",
         "skyTop": "#14103A",
         "skyBottom": "#05050F",
         "mountain": "#14103A",
@@ -237,60 +246,63 @@
       }
     },
     {
-      "id": "dark_frost_aurora",
+      "id": "dark_volcanic_glow",
       "kind": "theme",
-      "title": "Frost Aurora",
+      "title": "Volcanic Glow",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "frost_aurora",
-        "skyTop": "#0A2546",
-        "skyBottom": "#020812",
-        "mountain": "#0A2546",
+        "scene": "volcanic_glow",
+        "particles": "embers",
+        "skyTop": "#3A0E06",
+        "skyBottom": "#080303",
+        "mountain": "#3A0E06",
         "hill": "#1A1636",
         "hillDark": "#0C0A1E",
-        "river": "#9B6BFF",
-        "accent": "#59C7FF",
-        "gameTop": "#020812",
-        "gameBottom": "#0A2546"
+        "river": "#FF4A12",
+        "accent": "#FFA040",
+        "gameTop": "#080303",
+        "gameBottom": "#3A0E06"
       }
     },
     {
-      "id": "dark_sunken_ruins",
+      "id": "dark_cyber_neon",
       "kind": "theme",
-      "title": "Sunken Ruins",
+      "title": "Cyber Neon",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "sunken_ruins",
-        "skyTop": "#0B4A45",
-        "skyBottom": "#010B0A",
-        "mountain": "#0B4A45",
+        "scene": "cyber_neon",
+        "particles": "sparks",
+        "skyTop": "#3A0A55",
+        "skyBottom": "#05010E",
+        "mountain": "#3A0A55",
         "hill": "#1A1636",
         "hillDark": "#0C0A1E",
-        "river": "#9FFFF0",
-        "accent": "#5FFFE0",
-        "gameTop": "#010B0A",
-        "gameBottom": "#0B4A45"
+        "river": "#FF4FD8",
+        "accent": "#3FF0FF",
+        "gameTop": "#05010E",
+        "gameBottom": "#3A0A55"
       }
     },
     {
-      "id": "dark_starlit_void",
+      "id": "dark_aurora_night",
       "kind": "theme",
-      "title": "Starlit Void",
+      "title": "Aurora Night",
       "price": 0,
       "defaultOwned": true,
       "visual": {
-        "scene": "starlit_void",
-        "skyTop": "#120838",
-        "skyBottom": "#06031A",
-        "mountain": "#120838",
+        "scene": "aurora_night",
+        "particles": "stars",
+        "skyTop": "#0B1B3A",
+        "skyBottom": "#03050F",
+        "mountain": "#0B1B3A",
         "hill": "#1A1636",
         "hillDark": "#0C0A1E",
-        "river": "#8C6BFF",
-        "accent": "#DCD2FF",
-        "gameTop": "#06031A",
-        "gameBottom": "#120838"
+        "river": "#FF3FD8",
+        "accent": "#2BFFB0",
+        "gameTop": "#03050F",
+        "gameBottom": "#0B1B3A"
       }
     },
     {

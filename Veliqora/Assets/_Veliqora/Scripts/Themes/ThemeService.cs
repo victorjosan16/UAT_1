@@ -1,6 +1,7 @@
 using System;
 using Veliqora.Core.Economy;
 using Veliqora.Core.Save;
+using Veliqora.UI;
 
 namespace Veliqora.Presentation
 {
@@ -23,6 +24,7 @@ namespace Veliqora.Presentation
             // Repair selections that point to unknown or unowned items (content changes, tampered saves).
             if (!IsValid(_selection.Theme, CosmeticKind.Theme)) _selection.Theme = FirstOwned(CosmeticKind.Theme);
             if (!IsValid(_selection.Bottle, CosmeticKind.BottleSkin)) _selection.Bottle = FirstOwned(CosmeticKind.BottleSkin);
+            UIStyle.ThemeAccent = Theme.Accent;
         }
 
         private bool IsValid(string id, CosmeticKind kind)
@@ -49,7 +51,8 @@ namespace Veliqora.Presentation
         {
             var item = _config.FindCosmetic(id);
             if (item == null || !_economy.Owns(id)) return false;
-            if (item.Kind == CosmeticKind.Theme) _selection.Theme = id; else _selection.Bottle = id;
+            if (item.Kind == CosmeticKind.Theme) { _selection.Theme = id; UIStyle.ThemeAccent = Theme.Accent; }
+            else _selection.Bottle = id;
             _onChanged?.Invoke();
             Changed?.Invoke();
             return true;

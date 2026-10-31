@@ -12,10 +12,11 @@ namespace Veliqora.Presentation
     /// </summary>
     public static class DarkScenes
     {
+        /// <summary>The 12 selectable themes of the design brief, in menu order.</summary>
         public static readonly string[] Ids =
         {
-            "aurora", "crystal_cave", "alchemy_lab", "glow_forest", "neon_falls", "nebula",
-            "abyss", "ember_peaks", "moon_citadel", "frost_aurora", "sunken_ruins", "starlit_void",
+            "midnight_forest", "neon_lab", "crystal_cave", "moonlight_falls", "dark_royal", "mystic_garden",
+            "deep_ocean", "galaxy_flow", "enchanted_castle", "volcanic_glow", "cyber_neon", "aurora_night",
         };
 
         public static PixelPainter Paint(string scene, int w = 540, int h = 960)
@@ -24,17 +25,18 @@ namespace Veliqora.Presentation
             var rng = new System.Random(Hash(scene));
             switch (scene)
             {
-                case "aurora": Aurora(p, rng, C("#2BFFB0"), C("#FF3FD8"), C("#0B1B3A"), C("#03050F")); break;
+                case "aurora_night": Aurora(p, rng, C("#2BFFB0"), C("#FF3FD8"), C("#0B1B3A"), C("#03050F")); break;
                 case "crystal_cave": CrystalCave(p, rng); break;
-                case "alchemy_lab": AlchemyLab(p, rng); break;
-                case "glow_forest": GlowForest(p, rng); break;
-                case "neon_falls": NeonFalls(p, rng); break;
-                case "nebula": Nebula(p, rng); break;
-                case "abyss": Abyss(p, rng); break;
-                case "ember_peaks": EmberPeaks(p, rng); break;
-                case "moon_citadel": MoonCitadel(p, rng); break;
-                case "frost_aurora": Aurora(p, rng, C("#59C7FF"), C("#9B6BFF"), C("#0A2546"), C("#020812"), frost: true); break;
-                case "sunken_ruins": SunkenRuins(p, rng); break;
+                case "neon_lab": AlchemyLab(p, rng); break;
+                case "midnight_forest": GlowForest(p, rng); break;
+                case "moonlight_falls": NeonFalls(p, rng); break;
+                case "galaxy_flow": Nebula(p, rng); break;
+                case "deep_ocean": Abyss(p, rng); break;
+                case "volcanic_glow": EmberPeaks(p, rng); break;
+                case "enchanted_castle": MoonCitadel(p, rng); break;
+                case "dark_royal": DarkRoyal(p, rng); break;
+                case "mystic_garden": MysticGarden(p, rng); break;
+                case "cyber_neon": CyberNeon(p, rng); break;
                 default: StarlitVoid(p, rng); break;
             }
             Vignette(p, 0.55f);
@@ -507,34 +509,118 @@ namespace Veliqora.Presentation
             Silhouette(p, x => h * 0.18f + Fbm1(x * 0.015f, 52) * h * 0.08f, C("#030310"));
         }
 
-        private static void SunkenRuins(PixelPainter p, System.Random r)
+        private static void DarkRoyal(PixelPainter p, System.Random r)
         {
             int w = p.Width, h = p.Height;
-            p.Gradient((0f, C("#010B0A")), (0.55f, C("#06302D")), (1f, C("#0B4A45")));
+            p.Gradient((0f, C("#0A0410")), (0.5f, C("#2A0B2E")), (1f, C("#12051A")));
+            // velvet banners
             for (int i = 0; i < 4; i++)
             {
-                float x = w * (0.1f + i * 0.25f);
-                Poly(p, new[] { new Vector2(x, h), new Vector2(x + 40, h), new Vector2(x + 150, h * 0.3f), new Vector2(x + 90, h * 0.3f) }, A(C("#7FFFE8"), 0.05f));
+                float x = i < 2 ? w * (0.06f + i * 0.14f) : w * (0.8f + (i - 2) * 0.14f);
+                Poly(p, new[] { new Vector2(x - 26, h * 0.42f), new Vector2(x + 26, h * 0.42f), new Vector2(x + 26, h * 0.95f), new Vector2(x - 26, h * 0.95f) }, C("#4A0E2A"));
+                Poly(p, new[] { new Vector2(x - 26, h * 0.42f), new Vector2(x + 26, h * 0.42f), new Vector2(x, h * 0.38f) }, C("#4A0E2A"));
+                p.Fill(q => PixelPainter.Segment(q, new Vector2(x, h * 0.46f), new Vector2(x, h * 0.93f), 3), A(C("#D9A441"), 0.6f), null, new RectInt((int)x - 5, (int)(h * 0.45f), 10, (int)(h * 0.5f)));
             }
-            // columns (some broken)
-            var stone = C("#041816");
-            for (int i = 0; i < 6; i++)
+            // golden arches
+            var gold = C("#E8B54A");
+            for (int k = 0; k < 2; k++)
             {
-                float cx = w * (0.08f + i * 0.17f), cw = 22 + R(r) * 10;
-                float top = h * (0.35f + R(r) * 0.4f);
-                Poly(p, new[] { new Vector2(cx - cw, h * 0.15f), new Vector2(cx + cw, h * 0.15f), new Vector2(cx + cw, top), new Vector2(cx - cw, top) }, stone);
-                if (R(r) < 0.6f) Poly(p, new[] { new Vector2(cx - cw - 8, top), new Vector2(cx + cw + 8, top), new Vector2(cx + cw + 8, top + 14), new Vector2(cx - cw - 8, top + 14) }, stone);
-                else Poly(p, new[] { new Vector2(cx - cw, top), new Vector2(cx + cw, top), new Vector2(cx + cw * 0.2f, top + 18) }, stone);
-                // glowing runes
-                for (int k = 0; k < 3; k++)
-                {
-                    var rc = new Vector2(cx + (R(r) - 0.5f) * cw, h * 0.2f + R(r) * (top - h * 0.2f));
-                    p.Fill(q => Mathf.Abs(PixelPainter.Circle(q, rc, 5)) - 1.2f, C("#5FFFE0"), null, new RectInt((int)rc.x - 8, (int)rc.y - 8, 16, 16));
-                    p.Glow(rc, 18, A(C("#2FFFD0"), 0.35f));
-                }
+                float rad = w * (0.34f - k * 0.08f);
+                var c = new Vector2(w * 0.5f, h * 0.6f);
+                p.Fill(q => q.y < c.y ? 1f : PixelPainter.Arc(q, c, rad, 0f, Mathf.PI, 4f - k), A(gold, 0.85f - k * 0.3f), null, new RectInt((int)(c.x - rad - 6), (int)c.y - 2, (int)(rad * 2) + 12, (int)rad + 8));
+                p.Fill(q => PixelPainter.Segment(q, new Vector2(c.x - rad, c.y), new Vector2(c.x - rad, h * 0.3f), 4f - k), A(gold, 0.85f - k * 0.3f), null, new RectInt((int)(c.x - rad) - 6, (int)(h * 0.3f), 12, (int)(c.y - h * 0.3f) + 2));
+                p.Fill(q => PixelPainter.Segment(q, new Vector2(c.x + rad, c.y), new Vector2(c.x + rad, h * 0.3f), 4f - k), A(gold, 0.85f - k * 0.3f), null, new RectInt((int)(c.x + rad) - 6, (int)(h * 0.3f), 12, (int)(c.y - h * 0.3f) + 2));
             }
-            Silhouette(p, x => h * 0.15f + Fbm1(x * 0.02f, 61) * h * 0.05f, C("#020D0C"));
-            for (int i = 0; i < 80; i++) p.Glow(new Vector2(R(r) * w, h * (0.15f + R(r) * 0.8f)), 1.5f + R(r) * 2.5f, A(C("#9FFFF0"), 0.5f));
+            // chandelier glow + throne silhouette far back
+            p.Glow(new Vector2(w * 0.5f, h * 0.86f), 200, A(C("#FFC56B"), 0.35f));
+            for (int i = 0; i < 7; i++) p.Glow(new Vector2(w * (0.36f + i * 0.047f), h * 0.84f + (i % 2) * 8), 9, A(C("#FFE2A0"), 0.9f));
+            Poly(p, new[] { new Vector2(w * 0.44f, h * 0.36f), new Vector2(w * 0.56f, h * 0.36f), new Vector2(w * 0.56f, h * 0.5f), new Vector2(w * 0.5f, h * 0.55f), new Vector2(w * 0.44f, h * 0.5f) }, C("#1A0618"));
+            p.Glow(new Vector2(w * 0.5f, h * 0.45f), 90, A(C("#B0306A"), 0.25f));
+            // perspective floor tiles
+            Poly(p, new[] { new Vector2(0, 0), new Vector2(w, 0), new Vector2(w * 0.62f, h * 0.34f), new Vector2(w * 0.38f, h * 0.34f) }, C("#1C0820"));
+            for (int i = -6; i <= 6; i++)
+            {
+                var a = new Vector2(w * 0.5f + i * w * 0.02f, h * 0.34f); var b = new Vector2(w * 0.5f + i * w * 0.16f, 0);
+                p.Fill(q => PixelPainter.Segment(q, a, b, 0.8f), A(gold, 0.18f), null, new RectInt((int)Mathf.Min(a.x, b.x) - 2, 0, (int)Mathf.Abs(a.x - b.x) + 4, (int)(h * 0.35f)));
+            }
+            for (int i = 0; i < 70; i++) p.Glow(new Vector2(R(r) * w, h * (0.2f + R(r) * 0.75f)), 1.5f + R(r) * 2.5f, A(C("#FFD27A"), 0.55f));
+        }
+
+        private static void MysticGarden(PixelPainter p, System.Random r)
+        {
+            int w = p.Width, h = p.Height;
+            p.Gradient((0f, C("#040A10")), (0.55f, C("#0E1E3A")), (1f, C("#060B1E")));
+            Stars(p, r, 140, h * 0.6f);
+            var moon = new Vector2(w * 0.74f, h * 0.86f);
+            p.Glow(moon, 120, A(C("#B6C8FF"), 0.35f));
+            p.Fill(q => PixelPainter.Circle(q, moon, 30), C("#E6ECFF"), null, new RectInt((int)moon.x - 32, (int)moon.y - 32, 64, 64));
+            // hedges
+            Silhouette(p, x => h * 0.42f + Fbm1(x * 0.02f, 71) * h * 0.06f, C("#071512"));
+            // stone archway with glowing vines
+            var c = new Vector2(w * 0.5f, h * 0.55f);
+            float rad = w * 0.26f;
+            p.Fill(q => q.y < c.y ? 1f : PixelPainter.Arc(q, c, rad, 0f, Mathf.PI, 9f), C("#1A2433"), null, new RectInt((int)(c.x - rad - 12), (int)c.y - 2, (int)(rad * 2) + 24, (int)rad + 14));
+            Poly(p, new[] { new Vector2(c.x - rad - 9, h * 0.3f), new Vector2(c.x - rad + 9, h * 0.3f), new Vector2(c.x - rad + 9, c.y), new Vector2(c.x - rad - 9, c.y) }, C("#1A2433"));
+            Poly(p, new[] { new Vector2(c.x + rad - 9, h * 0.3f), new Vector2(c.x + rad + 9, h * 0.3f), new Vector2(c.x + rad + 9, c.y), new Vector2(c.x + rad - 9, c.y) }, C("#1A2433"));
+            for (int i = 0; i < 40; i++)
+            {
+                float a = R(r) * Mathf.PI;
+                var pt = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * rad;
+                p.Glow(pt, 6 + R(r) * 8, A(i % 2 == 0 ? C("#FF7BD5") : C("#7BD9FF"), 0.7f));
+            }
+            // glowing flower beds
+            for (int i = 0; i < 90; i++)
+            {
+                var pt = new Vector2(R(r) * w, h * R(r) * 0.32f);
+                var col = i % 3 == 0 ? C("#FF7BD5") : (i % 3 == 1 ? C("#7BD9FF") : C("#C9A2FF"));
+                p.Glow(pt, 4 + R(r) * 7, A(col, 0.6f));
+            }
+            // fountain glow
+            p.Glow(new Vector2(w * 0.5f, h * 0.2f), 110, A(C("#5FE0FF"), 0.3f));
+            Silhouette(p, x => h * 0.1f + Fbm1(x * 0.03f, 72) * h * 0.04f, C("#030807"));
+        }
+
+        private static void CyberNeon(PixelPainter p, System.Random r)
+        {
+            int w = p.Width, h = p.Height;
+            p.Gradient((0f, C("#05010E")), (0.4f, C("#1A0636")), (0.62f, C("#3A0A55")), (1f, C("#08021A")));
+            // striped synth sun
+            var sun = new Vector2(w * 0.5f, h * 0.55f);
+            p.Glow(sun, 260, A(C("#FF3FB5"), 0.35f));
+            p.Fill(q => PixelPainter.Circle(q, sun, 110), C("#FF5FA8"), q =>
+            {
+                float t = Mathf.Clamp01((q.y - sun.y + 110) / 220f);
+                bool gap = q.y < sun.y && Mathf.Repeat(q.y, 18f) < 6f * (1 - t * 1.6f);
+                return gap ? new Color(0, 0, 0, 0) : Color.Lerp(C("#FF3F7F"), C("#FFC23F"), t);
+            }, new RectInt((int)sun.x - 112, (int)sun.y - 112, 224, 224));
+            // city skyline with neon windows
+            float x = 0;
+            while (x < w)
+            {
+                float bw = 30 + R(r) * 50, bh = h * (0.1f + R(r) * 0.22f);
+                float bx = x;
+                Poly(p, new[] { new Vector2(bx, h * 0.38f), new Vector2(bx + bw, h * 0.38f), new Vector2(bx + bw, h * 0.38f + bh), new Vector2(bx, h * 0.38f + bh) }, C("#0B0418"));
+                for (int k = 0; k < (int)(bw * bh / 900); k++)
+                {
+                    var wp = new Vector2(bx + 5 + R(r) * (bw - 10), h * 0.38f + 6 + R(r) * (bh - 12));
+                    p.Glow(wp, 2.5f, A(R(r) < 0.5f ? C("#3FF0FF") : C("#FF4FD8"), 0.9f));
+                }
+                x += bw + 4;
+            }
+            // perspective grid floor
+            Poly(p, new[] { new Vector2(0, 0), new Vector2(w, 0), new Vector2(w, h * 0.38f), new Vector2(0, h * 0.38f) }, C("#0A0216"));
+            var vp = new Vector2(w * 0.5f, h * 0.38f);
+            for (int i = -10; i <= 10; i++)
+            {
+                var b = new Vector2(w * 0.5f + i * w * 0.18f, 0);
+                p.Fill(q => PixelPainter.Segment(q, vp, b, 1f), A(C("#3FF0FF"), 0.35f), null, new RectInt((int)Mathf.Min(vp.x, b.x) - 2, 0, (int)Mathf.Abs(vp.x - b.x) + 4, (int)vp.y + 2));
+            }
+            for (int k = 1; k < 12; k++)
+            {
+                float yy = vp.y * Mathf.Pow(k / 12f, 2.2f);
+                for (int xx = 0; xx < w; xx++) p.Add(xx, (int)yy, A(C("#FF4FD8"), 0.35f));
+            }
+            for (int i = 0; i < 40; i++) p.Glow(new Vector2(R(r) * w, h * (0.6f + R(r) * 0.4f)), 1.5f, A(Color.white, 0.6f));
         }
 
         private static void StarlitVoid(PixelPainter p, System.Random r)

@@ -13,7 +13,7 @@ using Veliqora.UI;
 
 namespace Veliqora.Infrastructure
 {
-    public enum ScreenId { Bootstrap, Home, LevelMap, Gameplay, LevelComplete, Shop, Customization }
+    public enum ScreenId { Bootstrap, MainMenu, LevelMap, Gameplay, LevelComplete, Shop, Themes, Settings }
 
     /// <summary>All long-lived services, created once by the composition root and handed to screens.</summary>
     public sealed class AppServices
@@ -30,6 +30,32 @@ namespace Veliqora.Infrastructure
         public IAdsService Ads;
         public AdsConfig AdsConfig;
         public RewardedAdGate AdGate;
+        public Veliqora.Monetization.IPurchaseService Purchases;
+        public Veliqora.Monetization.IConsentService Consent;
+        public Veliqora.Core.Progression.ProgressionConfig ProgressionConfig;
+        public Veliqora.Core.Progression.DailyRewardService Daily;
+        public Veliqora.Core.Progression.AchievementService Achievements;
+
+        /// <summary>Value of an achievement metric from progress, stats and owned cosmetics.</summary>
+        public int Metric(string metric)
+        {
+            var p = Save.Progress;
+            switch (metric)
+            {
+                case "levels": { int n = 0; foreach (var kv in p.BestStars) if (kv.Value > 0) n++; return n; }
+                case "stars": return p.TotalStars;
+                case "threeStars": { int n = 0; foreach (var kv in p.BestStars) if (kv.Value >= 3) n++; return n; }
+                case "hard": return Save.Stats.HardCompleted;
+                case "boss": return Save.Stats.BossCompleted;
+                case "boosters": return Save.Stats.BoostersUsed;
+                case "daily": return Save.Stats.DailyClaims;
+                case "objectives": return Save.Stats.ObjectivesCompleted;
+                case "mystery": return Save.Stats.MysteryRevealed;
+                case "corks": return Save.Stats.CorksOpened;
+                case "themes": return Save.Economy.OwnedCosmetics.Count;
+                default: return 0;
+            }
+        }
         public SceneNavigator Navigator;
         public AppRoot Root;
 
@@ -123,6 +149,17 @@ namespace Veliqora.Infrastructure
                 s.AdsConfig = AdsConfig.Load();
                 s.Ads = AdsFactory.Create(s.AdsConfig, s.Save.Settings);
                 s.AdGate = new RewardedAdGate(s.Ads, () => _activeClock, s.AdsConfig.RewardedTimeoutSeconds);
+                s.Purchases = new Veliqora.Monetization.NoPurchaseService();
+                s.Consent = new Veliqora.Monetization.PlaceholderConsentService();
+
+                // 6b) Progression (daily rewards, achievements) + language
+                var progText = Resources.Load<TextAsset>("Veliqora/Config/progression");
+                if (progText == null) throw new InvalidOperationException("progression.json missing (Resources/Veliqora/Config).");
+                s.ProgressionConfig = Veliqora.Core.Progression.ProgressionConfig.FromJson(progText.text);
+                s.Daily = new Veliqora.Core.Progression.DailyRewardService(s.Save.Daily, s.ProgressionConfig, s.Economy);
+                var services = s;
+                s.Achievements = new Veliqora.Core.Progression.AchievementService(s.ProgressionConfig, s.Save.ClaimedAchievements, s.Economy, m => services.Metric(m));
+                Loc.Load(s.Save.Settings.Language);
 
                 // 7) Navigation
                 s.Navigator = new SceneNavigator(this, s);
@@ -162,7 +199,7 @@ namespace Veliqora.Infrastructure
             // If a specific screen's scene was opened directly in the Editor, build that screen in place.
             var entry = FindEntryInActiveScene();
             var target = entry != null ? entry.Screen : ScreenId.Bootstrap;
-            if (target == ScreenId.Bootstrap) Services.Navigator.Go(ScreenId.Home);
+            if (target == ScreenId.Bootstrap) Services.Navigator.Go(ScreenId.MainMenu);
             else Services.Navigator.BuildInCurrentScene(target, null);
 
             if (!string.IsNullOrEmpty(StartupMessage))
@@ -213,7 +250,7 @@ namespace Veliqora.Infrastructure
             Services = null;
             Boot();
             if (!Booted) { ShowFatal(); return; }
-            if (goHome) Services.Navigator.Go(ScreenId.Home);
+            if (goHome) Services.Navigator.Go(ScreenId.MainMenu);
         }
 
         // ---------------- autosave ----------------

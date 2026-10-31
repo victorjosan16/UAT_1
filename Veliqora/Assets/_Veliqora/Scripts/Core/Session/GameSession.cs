@@ -85,6 +85,15 @@ namespace Veliqora.Core.Session
             var r = new TapResult { Index = index, PreviousSelection = Selected };
             if (IsBusy || IsComplete || index < 0 || index >= Current.BottleCount) { r.Kind = TapKind.Ignored; return r; }
 
+            if (Current[index].IsLocked)
+            {
+                // Corked / ad-locked bottles can't be selected or poured into: subtle feedback, state unchanged.
+                r.Kind = TapKind.Invalid;
+                r.Move = MoveResult.Illegal(MoveRejection.Locked, Selected >= 0 ? Selected : index, index, Current);
+                Selected = -1;
+                return r;
+            }
+
             if (Selected < 0)
             {
                 if (Current[index].IsEmpty)

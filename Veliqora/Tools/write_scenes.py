@@ -5,7 +5,7 @@ Usage: python3 -I Tools/write_scenes.py"""
 import hashlib, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def guid(key): return hashlib.md5(('veliqora:' + key).encode()).hexdigest()
-SCENES = ['Bootstrap', 'Home', 'LevelMap', 'Gameplay', 'LevelComplete', 'Shop', 'Customization']  # == ScreenId order
+SCENES = ['Bootstrap', 'MainMenu', 'LevelMap', 'Gameplay', 'LevelComplete', 'Shop', 'Themes', 'Settings']  # == ScreenId order
 ENTRY_GUID = guid('SceneEntry.cs')
 
 script_meta = os.path.join(ROOT, 'Assets/_Veliqora/Scripts/Infrastructure/SceneEntry.cs.meta')

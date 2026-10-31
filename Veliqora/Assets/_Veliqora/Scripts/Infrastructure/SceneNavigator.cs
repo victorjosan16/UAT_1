@@ -24,7 +24,7 @@ namespace Veliqora.Infrastructure
         public ScreenBase Current { get; private set; }
         public ScreenId CurrentId { get; private set; } = ScreenId.Bootstrap;
         public object CurrentArgs { get; private set; }
-        public ScreenId PreviousId { get; private set; } = ScreenId.Home;
+        public ScreenId PreviousId { get; private set; } = ScreenId.MainMenu;
         public object PreviousArgs { get; private set; }
         public bool IsTransitioning { get; private set; }
 
@@ -68,21 +68,22 @@ namespace Veliqora.Infrastructure
         {
             switch (CurrentId)
             {
-                case ScreenId.Home:
+                case ScreenId.MainMenu:
                     Overlays.Confirm("Leave Veliqora?", "Your progress is saved.", "Quit", Application.Quit, "Stay", UIStyle.ButtonKind.Danger);
                     break;
                 case ScreenId.LevelMap:
-                    Go(ScreenId.Home);
+                    Go(ScreenId.MainMenu);
                     break;
                 case ScreenId.LevelComplete:
                     Go(ScreenId.LevelMap);
                     break;
                 case ScreenId.Shop:
-                case ScreenId.Customization:
+                case ScreenId.Themes:
+                case ScreenId.Settings:
                     GoBackToPrevious();
                     break;
                 default:
-                    Go(ScreenId.Home);
+                    Go(ScreenId.MainMenu);
                     break;
             }
         }
@@ -91,7 +92,7 @@ namespace Veliqora.Infrastructure
         public void GoBackToPrevious()
         {
             var target = PreviousId;
-            if (target == CurrentId || target == ScreenId.Bootstrap || target == ScreenId.LevelComplete) target = ScreenId.Home;
+            if (target == CurrentId || target == ScreenId.Bootstrap || target == ScreenId.LevelComplete) target = ScreenId.MainMenu;
             Go(target, PreviousArgs);
         }
 
@@ -106,9 +107,9 @@ namespace Veliqora.Infrastructure
             Overlays.CloseAll();
             _services.SaveNow();
             // Remember where Shop/Customization should return to.
-            if (id == ScreenId.Shop || id == ScreenId.Customization)
+            if (id == ScreenId.Shop || id == ScreenId.Themes || id == ScreenId.Settings)
             {
-                if (CurrentId != ScreenId.Shop && CurrentId != ScreenId.Customization)
+                if (CurrentId != ScreenId.Shop && CurrentId != ScreenId.Themes && CurrentId != ScreenId.Settings)
                 {
                     PreviousId = CurrentId;
                     PreviousArgs = CurrentArgs;
@@ -165,8 +166,9 @@ namespace Veliqora.Infrastructure
                 case ScreenId.Gameplay: screen = go.AddComponent<GameplayScreen>(); break;
                 case ScreenId.LevelComplete: screen = go.AddComponent<LevelCompleteScreen>(); break;
                 case ScreenId.Shop: screen = go.AddComponent<ShopScreen>(); break;
-                case ScreenId.Customization: screen = go.AddComponent<CustomizationScreen>(); break;
-                default: screen = go.AddComponent<HomeScreen>(); id = ScreenId.Home; break;
+                case ScreenId.Themes: screen = go.AddComponent<ThemesScreen>(); break;
+                case ScreenId.Settings: screen = go.AddComponent<SettingsScreen>(); break;
+                default: screen = go.AddComponent<MainMenuScreen>(); id = ScreenId.MainMenu; break;
             }
             Current = screen;
             CurrentId = id;

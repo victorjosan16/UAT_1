@@ -27,6 +27,7 @@ namespace Veliqora.Settings
         public void SetColorblind(bool on) { _data.ColorblindSymbols = on; Commit(); }
         public void SetLightGameplay(bool on) { _data.LightGameplayBackground = on; Commit(); }
         public void SetSimulateAdFailure(bool on) { _data.DebugSimulateAdFailure = on; Commit(); }
+        public void SetLanguage(string code) { _data.Language = code ?? ""; Commit(); }
 
         /// <summary>Cycles animation speed Relaxed (0.75) → Normal (1) → Fast (1.5).</summary>
         public void CycleAnimationSpeed()

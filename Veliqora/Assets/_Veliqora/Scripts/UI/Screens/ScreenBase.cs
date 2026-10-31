@@ -88,7 +88,7 @@ namespace Veliqora.UI.Screens
             if (!theme.IsDark) return null;
             var fx = UiParticles.Create(Full, 48);
             fx.transform.SetSiblingIndex(Safe.GetSiblingIndex()); // behind the safe-area UI
-            fx.SetAmbient(true, theme.Accent, Color.Lerp(theme.River, Color.white, 0.2f), perSecond);
+            fx.SetAmbient(true, theme.Accent, Color.Lerp(theme.River, Color.white, 0.2f), perSecond, theme.Particles);
             return fx;
         }
 

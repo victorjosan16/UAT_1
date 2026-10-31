@@ -149,13 +149,13 @@ namespace Veliqora.Core.Economy
         /// Computes the reward for finishing a level. First clear: base + per-star coins (+ milestone every N levels).
         /// Replays: small base + coins only for newly earned stars, so replaying can't farm large amounts.
         /// </summary>
-        public LevelReward ComputeLevelReward(int levelNumber, int stars, int previousBestStars, Levels.LevelKind kind = Levels.LevelKind.Normal)
+        public LevelReward ComputeLevelReward(int levelNumber, int stars, int previousBestStars, Levels.LevelKind kind = Levels.LevelKind.Normal, int baseCoinsOverride = 0)
         {
             var r = new LevelReward { FirstClear = previousBestStars <= 0 };
             stars = Math.Max(1, Math.Min(3, stars));
             if (r.FirstClear)
             {
-                r.BaseCoins = _config.LevelBaseReward;
+                r.BaseCoins = baseCoinsOverride > 0 ? baseCoinsOverride : _config.LevelBaseReward;
                 r.StarCoins = stars * _config.PerStarReward;
                 if (kind == Levels.LevelKind.Hard) r.DifficultyBonus = _config.HardLevelBonus;
                 else if (kind == Levels.LevelKind.Boss) r.DifficultyBonus = _config.BossLevelBonus;
@@ -174,9 +174,9 @@ namespace Veliqora.Core.Economy
         }
 
         /// <summary>Grants the level reward exactly once per attempt id.</summary>
-        public LevelReward GrantLevelReward(int levelNumber, int stars, int previousBestStars, string attemptId, Levels.LevelKind kind = Levels.LevelKind.Normal)
+        public LevelReward GrantLevelReward(int levelNumber, int stars, int previousBestStars, string attemptId, Levels.LevelKind kind = Levels.LevelKind.Normal, int baseCoinsOverride = 0)
         {
-            var r = ComputeLevelReward(levelNumber, stars, previousBestStars, kind);
+            var r = ComputeLevelReward(levelNumber, stars, previousBestStars, kind, baseCoinsOverride);
             string tx = "level:" + levelNumber + ":" + attemptId;
             if (IsProcessed(tx)) { r.Status = TxStatus.Duplicate; return r; }
             _state.Coins += r.Total;

@@ -31,7 +31,7 @@ namespace Veliqora.Tests.PlayMode
             yield return null; // AppRoot auto-creates before the first scene
             Assert.IsNotNull(AppRoot.Instance, "AppRoot should auto-create");
             AppRoot.Instance.Reboot(_dir);
-            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Home && !S.Navigator.IsTransitioning);
+            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.MainMenu && !S.Navigator.IsTransitioning);
         }
 
         [TearDown]
@@ -175,14 +175,14 @@ namespace Veliqora.Tests.PlayMode
         [UnityTest]
         public IEnumerator Theme_Unlock_Apply_PersistsAcrossReboot()
         {
-            yield return Go(ScreenId.Customization);
+            yield return Go(ScreenId.Themes);
             var item = S.EconomyConfig.FindCosmetic("theme_night");
             S.Economy.GrantCoins(item.Price, "test-theme-coins");
             Assert.IsTrue(S.Economy.BuyCosmetic(item.Id, "test-theme").Success);
             Assert.IsTrue(S.Themes.Apply(item.Id));
             S.SaveNow();
             AppRoot.Instance.Reboot(_dir);
-            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Home && !S.Navigator.IsTransitioning);
+            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.MainMenu && !S.Navigator.IsTransitioning);
             Assert.AreEqual("theme_night", S.Themes.ThemeId);
         }
 
@@ -197,7 +197,7 @@ namespace Veliqora.Tests.PlayMode
             var expected = c.Session.Current;
             S.SaveNow();
             AppRoot.Instance.Reboot(_dir);
-            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Home && !S.Navigator.IsTransitioning);
+            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.MainMenu && !S.Navigator.IsTransitioning);
             yield return Go(ScreenId.Gameplay, 15);
             Assert.AreEqual(expected, Gameplay.Controller.Session.Current);
             Assert.AreEqual(1, Gameplay.Controller.Session.MoveCount);
@@ -241,7 +241,7 @@ namespace Veliqora.Tests.PlayMode
         [UnityTest]
         public IEnumerator Screens_UseSafeArea()
         {
-            foreach (var id in new[] { ScreenId.Home, ScreenId.LevelMap, ScreenId.Shop, ScreenId.Customization })
+            foreach (var id in new[] { ScreenId.MainMenu, ScreenId.LevelMap, ScreenId.Shop, ScreenId.Themes })
             {
                 yield return Go(id);
                 Assert.IsNotNull(S.Navigator.Current.GetComponentInChildren<SafeAreaFitter>(), id + " lacks a SafeAreaFitter");
@@ -259,7 +259,7 @@ namespace Veliqora.Tests.PlayMode
             Assert.IsFalse(Overlays.AnyOpen, "Back again closes the overlay");
             yield return Go(ScreenId.LevelMap);
             AppRoot.Instance.HandleBack();
-            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.Home && !S.Navigator.IsTransitioning);
+            yield return WaitFor(() => S.Navigator.CurrentId == ScreenId.MainMenu && !S.Navigator.IsTransitioning);
         }
 
         [UnityTest]

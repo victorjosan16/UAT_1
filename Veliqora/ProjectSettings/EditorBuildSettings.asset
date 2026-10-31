@@ -9,8 +9,8 @@ EditorBuildSettings:
     path: Assets/_Veliqora/Scenes/Bootstrap.unity
     guid: 046a5b15b5afaee32299e65584383c78
   - enabled: 1
-    path: Assets/_Veliqora/Scenes/Home.unity
-    guid: 616e58efd050d376afdcf26ab73ccd63
+    path: Assets/_Veliqora/Scenes/MainMenu.unity
+    guid: e0cfb67f0292352151f4327e4a6b58ef
   - enabled: 1
     path: Assets/_Veliqora/Scenes/LevelMap.unity
     guid: 07436122e1da96c33cc00cbe32d78f60
@@ -24,6 +24,9 @@ EditorBuildSettings:
     path: Assets/_Veliqora/Scenes/Shop.unity
     guid: bb158b8c3baa11177de800f090b10383
   - enabled: 1
-    path: Assets/_Veliqora/Scenes/Customization.unity
-    guid: 52b7d2be79c3bbd89a88109bf3332a91
+    path: Assets/_Veliqora/Scenes/Themes.unity
+    guid: a607fa6c196d8537f92d522c4fad755f
+  - enabled: 1
+    path: Assets/_Veliqora/Scenes/Settings.unity
+    guid: 3a1071e070a42594f2c3cca1ee688b74
   m_configObjectReferences: {}

@@ -7,7 +7,7 @@ using Veliqora.UI.Widgets;
 namespace Veliqora.UI.Screens
 {
     /// <summary>Home: logo, Play/Continue, progress, currency, Settings, Shop, Themes, Map; first-time coach mark.</summary>
-    public sealed class HomeScreen : ScreenBase
+    public sealed class MainMenuScreen : ScreenBase
     {
         public override bool AllowsBanner => true;
 
@@ -63,7 +63,7 @@ namespace Veliqora.UI.Screens
             UIFactory.Band(nav, 0f, 230, 60, 60, 0f);
             NavButton(nav, Icon.Map, "Map", UIStyle.Mint, 0.17f, () => S.Navigator.Go(ScreenId.LevelMap));
             NavButton(nav, Icon.Bag, "Shop", UIStyle.Coral, 0.5f, () => S.Navigator.Go(ScreenId.Shop));
-            NavButton(nav, Icon.Palette, "Themes", UIStyle.Violet, 0.83f, () => S.Navigator.Go(ScreenId.Customization));
+            NavButton(nav, Icon.Palette, "Themes", UIStyle.Violet, 0.83f, () => S.Navigator.Go(ScreenId.Themes));
 
             // First-time onboarding
             if (!S.Save.TutorialsSeen.Contains("home_play"))

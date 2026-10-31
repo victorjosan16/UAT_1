@@ -22,6 +22,8 @@ namespace Veliqora.Presentation
 
         /// <summary>Procedural dark-fantasy scene id (DarkScenes), empty for illustrated/bright themes.</summary>
         public string Scene = "";
+        /// <summary>Ambient particle style: stars, fireflies, sparks, crystals, mist, embers, bubbles.</summary>
+        public string Particles = "stars";
         public bool IsDark => !string.IsNullOrEmpty(Scene);
         public bool IsDarkSky => IsDark || SkyTop.grayscale < 0.35f;
 
@@ -41,6 +43,7 @@ namespace Veliqora.Presentation
             t.GameTop = Col(v, "gameTop", t.GameTop);
             t.GameBottom = Col(v, "gameBottom", t.GameBottom);
             t.Scene = MiniJson.GetString(v, "scene", "");
+            t.Particles = MiniJson.GetString(v, "particles", "stars");
             return t;
         }
 

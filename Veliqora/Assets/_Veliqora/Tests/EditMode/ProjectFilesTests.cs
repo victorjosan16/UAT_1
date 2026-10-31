@@ -7,7 +7,7 @@ namespace Veliqora.Tests.EditMode
     /// <summary>Guards the committed Unity scenes / build settings against drift (GUIDs, order, markers).</summary>
     public class ProjectFilesTests
     {
-        private static readonly string[] Scenes = { "Bootstrap", "Home", "LevelMap", "Gameplay", "LevelComplete", "Shop", "Customization" };
+        private static readonly string[] Scenes = { "Bootstrap", "MainMenu", "LevelMap", "Gameplay", "LevelComplete", "Shop", "Themes", "Settings" };
 
         private static string Guid(string metaPath)
         {

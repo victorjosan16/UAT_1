@@ -32,6 +32,8 @@ namespace Veliqora.UI
         public static readonly Color Scrim = new Color(0.05f, 0.06f, 0.16f, 0.62f);
         public static readonly Color Disabled = Hex("#4A4566");
         public static readonly Color Danger = Hex("#E5484D");
+        /// <summary>Accent of the active visual theme (set by ThemeService); used for highlights and glows.</summary>
+        public static Color ThemeAccent = Hex("#8C6CF0");
 
         // ---------- button variants ----------
         public enum ButtonKind { Primary, Secondary, Accent, Danger, Ghost, Gold }
