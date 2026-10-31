@@ -24,6 +24,19 @@ namespace Veliqora.EditorTools
         [MenuItem("Veliqora/Build/Android Release AAB", priority = 31)]
         public static void BuildReleaseAabMenu() => BuildReleaseAab(fromCli: false);
 
+        /// <summary>
+        /// Unity Build Automation (Unity Cloud) → Advanced settings → Pre-export method:
+        /// <c>Veliqora.EditorTools.VeliqoraBuild.CloudPreExport</c>. The repo does not commit ProjectSettings.asset,
+        /// so this applies the player settings (package, portrait, IL2CPP, ARM64, min SDK 26) and makes sure the
+        /// 8 scenes are in Build Settings before the cloud build exports the player.
+        /// </summary>
+        public static void CloudPreExport()
+        {
+            VeliqoraSetup.EnsureScenes();
+            VeliqoraSetup.ConfigurePlayer();
+            Debug.Log("[Veliqora] Cloud pre-export: player settings applied, scenes: " + string.Join(", ", Scenes()));
+        }
+
         public static void BuildDebugApkCli() { if (!BuildDebugApk()) EditorApplication.Exit(1); }
         public static void BuildReleaseAabCli() { if (!BuildReleaseAab(fromCli: true)) EditorApplication.Exit(1); }
 

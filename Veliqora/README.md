@@ -28,7 +28,7 @@ The working title for the store is *Veliqora: Color Sort Puzzle*. This repo make
 3. The 8 scenes and Build Settings are **committed** (`Assets/_Veliqora/Scenes`, `ProjectSettings/EditorBuildSettings.asset`). Optionally run **Veliqora → Setup Project**. It is idempotent and does the following:
    - creates the scenes `Bootstrap, MainMenu, LevelMap, Gameplay, LevelComplete, Shop, Themes, Settings` (each with a `SceneEntry` marker)
      and adds them to Build Settings in that order;
-   - sets the Android player settings: package placeholder `com.animatix.veliqora`, portrait, IL2CPP, ARM64, min SDK 24, target SDK *auto*;
+   - sets the Android player settings: package placeholder `com.animatix.veliqora`, portrait, IL2CPP, ARM64, min SDK 26, target SDK *auto*;
    - generates the PLACEHOLDER app icons and the feature graphic in `Assets/_Veliqora/Art/Icons/`.
 4. Open `Assets/_Veliqora/Scenes/Bootstrap.unity`, set the Game view to a portrait resolution (e.g. 1080×1920) and press **Play**.
 5. Commit the `.meta` files Unity generates on first import, so asset GUIDs stay stable for everyone.

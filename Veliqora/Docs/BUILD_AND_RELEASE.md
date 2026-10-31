@@ -12,7 +12,7 @@
 | Package | `com.animatix.veliqora` (**placeholder**: verify it is available and owned before release) |
 | Orientation | Portrait only |
 | Scripting backend | IL2CPP, ARM64 |
-| Min SDK | 24 |
+| Min SDK | 26 (Android 8.0) |
 | Target SDK | *Automatic (highest installed)*. Make sure the installed SDK meets the Google Play target-API requirement in force on your release date. |
 | Version | `bundleVersion` 0.1.0, `bundleVersionCode` 1 (bump `bundleVersionCode` for every upload) |
 | Icon | `Art/Icons/AppIcon_PLACEHOLDER.png` (replace with final adaptive icon layers in Player Settings → Icon) |

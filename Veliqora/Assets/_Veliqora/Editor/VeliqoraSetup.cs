@@ -110,7 +110,8 @@ namespace Veliqora.EditorTools
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.SplashScreen.backgroundColor = UIStyle.Navy;
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            // API 26 (Android 8.0): accepted by every Unity 6 release (newer 6.x builds reject lower values).
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto; // highest installed; must satisfy current Play policy
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             if (PlayerSettings.Android.bundleVersionCode < 1) PlayerSettings.Android.bundleVersionCode = 1;
