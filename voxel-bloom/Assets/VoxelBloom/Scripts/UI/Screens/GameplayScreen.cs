@@ -110,6 +110,8 @@ namespace VoxelBloom
         public readonly RectTransform[] LauncherSlots = new RectTransform[GameSession.Launchers];
         public readonly Image[] LauncherGlow = new Image[GameSession.Launchers];
         public readonly Image[] LauncherOrb = new Image[GameSession.Launchers];
+        public readonly RectTransform[] LauncherBarrel = new RectTransform[GameSession.Launchers];
+        public readonly Image[] LauncherBarrelImg = new Image[GameSession.Launchers];
         public readonly VText[] BoosterCounts = new VText[4];
         public readonly UIButton[] BoosterButtons = new UIButton[4];
         public VText LevelText, CoinsText, ProgressText, RemainingText, HintText;
@@ -241,6 +243,14 @@ namespace VoxelBloom
                 var lb = BlockView.Create(slot, new Vector2(w - 24, 108), "Loaded" + i);
                 lb.Root.Place(new Vector2(0.5f, 0.5f), new Vector2(0, -6), new Vector2(w - 24, 108));
                 // glossy ball on top of the launcher (tinted with the loaded colour)
+                // cannon barrel: pivots at the orb centre and aims at the cube being shot
+                var barrel = UI.Image(slot, "Barrel", SpriteFactory.Glossy(14), new Color(0.6f, 0.62f, 0.72f, 1f));
+                barrel.rectTransform.anchorMin = barrel.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                barrel.rectTransform.pivot = new Vector2(0.5f, 0f);
+                barrel.rectTransform.anchoredPosition = new Vector2(0, 16);
+                barrel.rectTransform.sizeDelta = new Vector2(30, 78);
+                LauncherBarrel[i] = barrel.rectTransform;
+                LauncherBarrelImg[i] = barrel;
                 var orb = UI.Image(slot, "Orb", SpriteFactory.Orb(), new Color(0.75f, 0.75f, 0.82f, 1f), false);
                 orb.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, 16), new Vector2(74, 74));
                 LauncherOrb[i] = orb;

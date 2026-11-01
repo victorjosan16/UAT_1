@@ -29,6 +29,7 @@ namespace VoxelBloom
         int shownCoins = -1;
         float lastComboFx;
         bool targetsDirty;
+        readonly int[] aimVoxel = { -1, -1, -1, -1 };
         readonly List<(float at, int voxel, Color32 color)> pendingPops = new List<(float, int, Color32)>();
 
         public LevelDefinition Level => level;
@@ -180,7 +181,8 @@ namespace VoxelBloom
             foreach (var (li, voxel) in r.Shots)
             {
                 var c = palette[level.Grid.Get(voxel)];
-                // 1) a UI ball rises from the launcher orb to the bottom edge of the 3D view ...
+                aimVoxel[li] = voxel;
+                // 1) a UI ball leaves the barrel tip towards the bottom edge of the 3D view ...
                 float rise = LaunchUiBall(li, c);
                 // 2) ... where the 3D ball takes over and flies to its cube
                 view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, model.VoxelSize * 1.1f, Flight, rise);
@@ -225,6 +227,35 @@ namespace VoxelBloom
         readonly List<UiBall> uiBalls = new List<UiBall>();
         readonly Stack<UiBall> uiBallPool = new Stack<UiBall>();
 
+        /// <summary>UI (canvas world) position of a voxel as seen in the 3D view.</summary>
+        Vector3 VoxelToUi(int voxel)
+        {
+            var vp = view.Stage.Camera.WorldToViewportPoint(view.Stage.Model.VoxelWorldPosition(voxel));
+            var c = new Vector3[4];
+            ((RectTransform)view.ModelInput.transform).GetWorldCorners(c); // 0 BL, 1 TL, 2 TR, 3 BR
+            return Vector3.Lerp(Vector3.Lerp(c[0], c[3], vp.x), Vector3.Lerp(c[1], c[2], vp.x), vp.y);
+        }
+
+        /// <summary>Barrels turn towards the cube their launcher is shooting; idle/waiting barrels point up.</summary>
+        void UpdateBarrels()
+        {
+            for (int li = 0; li < GameSession.Launchers; li++)
+            {
+                var barrel = view.LauncherBarrel[li];
+                var l = session.LauncherAt(li);
+                float target = 0f;
+                if (l.HasValue && !session.IsWaiting(li) && aimVoxel[li] >= 0)
+                {
+                    var to = VoxelToUi(aimVoxel[li]) - barrel.position;
+                    target = Mathf.Clamp(Mathf.Atan2(to.y, to.x) * Mathf.Rad2Deg - 90f, -70f, 70f);
+                }
+                float cur = barrel.localEulerAngles.z; if (cur > 180f) cur -= 360f;
+                barrel.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(cur, target, 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime)));
+                view.LauncherBarrelImg[li].color = l.HasValue ? Theme.Darker(palette[l.Value.Color], 0.8f) : new Color(0.6f, 0.62f, 0.72f, 1f);
+                if (!l.HasValue) aimVoxel[li] = -1;
+            }
+        }
+
         /// <summary>Starts a ball at the launcher orb towards the point where the 3D ball appears; returns its travel time.</summary>
         float LaunchUiBall(int li, Color32 c)
         {
@@ -243,7 +274,14 @@ namespace VoxelBloom
             b.Img.gameObject.SetActive(true);
             b.Rt.SetAsLastSibling();
             b.Img.color = Color.Lerp(c, Color.white, 0.2f);
-            b.From = view.LauncherOrb[li].rectTransform.position;
+            var barrelRt = view.LauncherBarrel[li];
+            b.From = barrelRt.TransformPoint(new Vector3(0, barrelRt.rect.height, 0)); // barrel tip
+            // same apparent size as the 3D ball at the hand-over point (no visible jump)
+            var cam = view.Stage.Camera;
+            float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position) * 0.8f;
+            float worldBall = view.Stage.Model.VoxelSize * 1.1f * 1.5f;
+            float px = worldBall / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
+            b.Rt.sizeDelta = Vector2.one * Mathf.Clamp(px, 16f, 80f);
             b.To = Vector3.Lerp(corners[0], corners[3], vx);
             b.T = 0f; b.Dur = dur;
             b.Rt.position = b.From;
@@ -273,6 +311,7 @@ namespace VoxelBloom
         void Update()
         {
             UpdateUiBalls();
+            if (session != null && view != null) UpdateBarrels();
             // voxels pop when their projectile arrives
             for (int i = pendingPops.Count - 1; i >= 0; i--)
             {
@@ -547,6 +586,7 @@ namespace VoxelBloom
         public void OnScreenHidden()
         {
             ClearUiBalls();
+            for (int i = 0; i < aimVoxel.Length; i++) aimVoxel[i] = -1;
             StopAllCoroutines();
             fireRoutine = null;
             Time.timeScale = 1f;
