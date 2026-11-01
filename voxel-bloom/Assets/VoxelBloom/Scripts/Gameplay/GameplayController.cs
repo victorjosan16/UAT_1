@@ -165,6 +165,7 @@ namespace VoxelBloom
             }
             fireRoutine = null;
             yield return new WaitForSeconds(Flight + 0.05f);
+            ShowTargets();
             Settle();
         }
 
@@ -198,6 +199,22 @@ namespace VoxelBloom
             RefreshLaunchers();
             if (r.Freed.Count > 0 || r.Dropped.Count > 0) RefreshBoard();
             RefreshHud();
+            ShowTargets();
+        }
+
+        /// <summary>The voxels the launchers will hit next glow and pulse, so the player sees what is being eliminated.</summary>
+        void ShowTargets()
+        {
+            if (targeting != null) return;
+            var list = new List<int>();
+            for (int li = 0; li < GameSession.Launchers; li++)
+            {
+                var l = session.LauncherAt(li);
+                if (!l.HasValue || session.IsWaiting(li)) continue;
+                list.AddRange(session.PreviewTargets(l.Value.Color, Mathf.Min(l.Value.Power, 14)));
+            }
+            if (list.Count > 0) view.Stage.Model.SetHighlight(list, Color.white);
+            else view.Stage.Model.ClearHighlight();
         }
 
         void Update()
@@ -219,8 +236,22 @@ namespace VoxelBloom
                 for (int li = 0; li < GameSession.Launchers; li++)
                 {
                     var g = view.LauncherGlow[li];
-                    if (session.IsWaiting(li)) g.color = new Color(1f, 0.3f, 0.35f, 0.35f + 0.3f * Mathf.Sin(Time.unscaledTime * 6f));
-                    else g.color = new Color(g.color.r, g.color.g, g.color.b, Mathf.MoveTowards(g.color.a, 0f, Time.deltaTime * 2.5f));
+                    var orb = view.LauncherOrb[li];
+                    var l = session.LauncherAt(li);
+                    if (session.IsWaiting(li))
+                    {
+                        float w = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
+                        g.color = new Color(1f, 0.3f, 0.35f, 0.25f + 0.3f * w);
+                        orb.color = Color.Lerp(new Color(1f, 0.35f, 0.4f), Color.white, w * 0.3f);
+                        orb.rectTransform.localScale = Vector3.one;
+                    }
+                    else
+                    {
+                        g.color = new Color(g.color.r, g.color.g, g.color.b, Mathf.MoveTowards(g.color.a, 0f, Time.deltaTime * 2.5f));
+                        orb.color = l.HasValue ? (Color)palette[l.Value.Color] : new Color(0.72f, 0.72f, 0.8f, 1f);
+                        float pulse = l.HasValue ? 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 18f)) : 1f;
+                        orb.rectTransform.localScale = Vector3.one * pulse;
+                    }
                 }
                 int c = Services.Wallet.Coins;
                 if (c != shownCoins) { shownCoins = c; view.CoinsText.text = c.ToString("N0"); RefreshHud(); }

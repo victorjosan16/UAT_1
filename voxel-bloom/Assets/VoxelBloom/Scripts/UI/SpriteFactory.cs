@@ -101,6 +101,18 @@ namespace VoxelBloom
             return ToSprite(p, "Rays");
         });
 
+        /// <summary>Glossy white sphere (tint with Image.color) - launcher "cannon balls".</summary>
+        public static Sprite Orb() => Cached("orb", () =>
+        {
+            const int S = 128;
+            var p = new IconPainter(S, S);
+            p.Circle(64, 60, 58, new Color(0, 0, 0, 0.25f));
+            p.Circle(64, 64, 56, Color.white, IconPainter.Vertical(Color.white, new Color(0.62f, 0.62f, 0.7f, 1f), 8, 120));
+            p.Circle(48, 84, 18, new Color(1, 1, 1, 0.85f));
+            p.Circle(44, 90, 7, Color.white);
+            return ToSprite(p, "Orb");
+        });
+
         /// <summary>Soft round blob (glow, clouds).</summary>
         public static Sprite Glow() => Cached("glow", () =>
         {

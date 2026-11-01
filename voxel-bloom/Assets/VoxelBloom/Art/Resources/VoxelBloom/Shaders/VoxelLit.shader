@@ -85,9 +85,9 @@ Shader "VoxelBloom/VoxelLit"
                 half shade = lerp(0.72, 1.0, edge) * lerp(1.0 - _SubLine * 0.35, 1.0, sub);
                 half lip = (1 - edge) * saturate(dot(n, float3(0, 1, 0))) * 0.12; // light catching the top bevel
 
-                fixed3 c = base * (amb * 0.6 + diff * 0.55) * shade + lip;
+                fixed3 c = base * (amb * 0.48 + diff * 0.72) * shade + lip;
                 half rim = pow(1 - saturate(dot(n, v)), 3) * _Rim;
-                half spec = pow(saturate(dot(reflect(-l, n), v)), 28) * 0.22 * edge;
+                half spec = pow(saturate(dot(reflect(-l, n), v)), 36) * 0.32 * edge + pow(saturate(dot(reflect(-l, n), v)), 6) * 0.05;
                 half bounce = saturate(-n.y) * 0.08; // warm light bouncing off the ground/pedestal
                 c = (c + rim * _RimColor.rgb + spec + bounce * fixed3(1, 0.9, 0.75)) * _Tint.rgb;
                 c = lerp(c, _Highlight.rgb, _Highlight.a);

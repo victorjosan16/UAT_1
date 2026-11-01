@@ -25,8 +25,10 @@ namespace VoxelBloom
         readonly float[] shotT = new float[MaxShots], shotDur = new float[MaxShots], shotSize = new float[MaxShots];
         readonly Vector4[] shotColor = new Vector4[MaxShots];
         int shots;
-        Mesh cube;
-        MaterialPropertyBlock block;
+        Mesh cube, ball;
+        MaterialPropertyBlock block, shotBlock;
+        readonly Matrix4x4[] shotMatrices = new Matrix4x4[1023];
+        readonly Vector4[] shotBatchColors = new Vector4[1023]; // same array length as the fragment batch (Unity fixes it per property)
         static readonly int ColorId = Shader.PropertyToID("_InstanceColor");
 
         public int MaxPerBurst => Services.ReducedEffects ? 6 : (Services.Initialized && Services.Save.Settings.Quality == 1 ? 18 : 40);
@@ -34,7 +36,9 @@ namespace VoxelBloom
         void Awake()
         {
             cube = BuildCube();
+            ball = BuildBall();
             block = new MaterialPropertyBlock();
+            shotBlock = new MaterialPropertyBlock();
         }
 
         public void Burst(Vector3 worldPos, Color32 c, float voxelSize, int n = 1)
@@ -71,7 +75,8 @@ namespace VoxelBloom
                 if (shotT[i] >= shotDur[i])
                 {
                     var col = shotColor[i];
-                    Burst(shotTo[i], new Color(col.x, col.y, col.z, 1f), shotSize[i], 1);
+                    Burst(shotTo[i], new Color(col.x, col.y, col.z, 1f), shotSize[i] * 0.8f, 2);
+                    Burst(shotTo[i], Color.white, shotSize[i] * 0.5f, 1); // impact flash
                     shots--;
                     shotFrom[i] = shotFrom[shots]; shotTo[i] = shotTo[shots]; shotT[i] = shotT[shots]; shotDur[i] = shotDur[shots];
                     shotSize[i] = shotSize[shots]; shotColor[i] = shotColor[shots];
@@ -102,28 +107,59 @@ namespace VoxelBloom
                 matrices[i] = Matrix4x4.TRS(pos[i], rot[i], new Vector3(s, s, s));
                 batchColors[i] = color[i];
             }
-            for (int i = 0; i < shots && n < matrices.Length; i++)
+            int ns = 0;
+            for (int i = 0; i < shots; i++)
             {
                 if (shotT[i] < 0f) continue;
                 float k = shotT[i] / shotDur[i];
-                Vector3 mid = (shotFrom[i] + shotTo[i]) * 0.5f + Vector3.up * Vector3.Distance(shotFrom[i], shotTo[i]) * 0.35f;
+                Vector3 mid = (shotFrom[i] + shotTo[i]) * 0.5f + Vector3.up * Vector3.Distance(shotFrom[i], shotTo[i]) * 0.3f;
                 Vector3 p = Vector3.Lerp(Vector3.Lerp(shotFrom[i], mid, k), Vector3.Lerp(mid, shotTo[i], k), k);
-                float s = shotSize[i] * 0.8f;
-                // glowing trail: tiny bright sparks left behind the projectile
-                if (!Services.ReducedEffects && Random.value < 0.35f && count < Capacity)
+                float s = shotSize[i] * 1.5f;
+                // glowing trail: bright sparks left behind the ball
+                if (!Services.ReducedEffects && count < Capacity)
                 {
                     int t = count++;
-                    pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 2f; rot[t] = Random.rotation; spin[t] = Vector3.zero;
-                    life[t] = 0.25f; size[t] = shotSize[i] * 0.35f;
-                    color[t] = Vector4.Lerp(shotColor[i], Vector4.one, 0.6f);
+                    pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 1.5f; rot[t] = Random.rotation; spin[t] = Vector3.zero;
+                    life[t] = 0.22f; size[t] = shotSize[i] * 0.45f;
+                    color[t] = Vector4.Lerp(shotColor[i], Vector4.one, 0.55f);
                 }
-                matrices[n] = Matrix4x4.TRS(p, Quaternion.Euler(k * 360f, k * 540f, 0), new Vector3(s, s, s));
-                batchColors[n] = shotColor[i];
-                n++;
+                shotMatrices[ns] = Matrix4x4.TRS(p, Quaternion.identity, new Vector3(s, s, s));
+                shotBatchColors[ns] = Vector4.Lerp(shotColor[i], Vector4.one, 0.25f); // brighter = glowing
+                ns++;
+            }
+            if (ns > 0)
+            {
+                shotBlock.SetVectorArray(ColorId, shotBatchColors);
+                Graphics.DrawMeshInstanced(ball, 0, VoxelMaterials.Fragment, shotMatrices, ns, shotBlock, UnityEngine.Rendering.ShadowCastingMode.Off, false, gameObject.layer);
             }
             if (n == 0) return;
             block.SetVectorArray(ColorId, batchColors);
             Graphics.DrawMeshInstanced(cube, 0, VoxelMaterials.Fragment, matrices, n, block, UnityEngine.Rendering.ShadowCastingMode.Off, false, gameObject.layer);
+        }
+
+        /// <summary>Low-poly UV sphere (unit diameter) for projectile balls.</summary>
+        static Mesh BuildBall()
+        {
+            const int lat = 10, lon = 14;
+            var v = new System.Collections.Generic.List<Vector3>(); var nrm = new System.Collections.Generic.List<Vector3>(); var uv = new System.Collections.Generic.List<Vector2>(); var t = new System.Collections.Generic.List<int>();
+            for (int a = 0; a <= lat; a++)
+                for (int b = 0; b <= lon; b++)
+                {
+                    float th = Mathf.PI * a / lat, ph = 2 * Mathf.PI * b / lon;
+                    var p = new Vector3(Mathf.Sin(th) * Mathf.Cos(ph), Mathf.Cos(th), Mathf.Sin(th) * Mathf.Sin(ph));
+                    v.Add(p * 0.5f); nrm.Add(p); uv.Add(new Vector2(0.5f, 0.5f));
+                }
+            for (int a = 0; a < lat; a++)
+                for (int b = 0; b < lon; b++)
+                {
+                    int i0 = a * (lon + 1) + b, i1 = i0 + lon + 1;
+                    t.Add(i0); t.Add(i0 + 1); t.Add(i1); t.Add(i1); t.Add(i0 + 1); t.Add(i1 + 1);
+                }
+            var m = new Mesh { name = "ProjectileBall" };
+            m.SetVertices(v); m.SetNormals(nrm); m.SetUVs(0, uv); m.SetTriangles(t, 0);
+            var cols = new Color32[v.Count]; for (int i = 0; i < cols.Length; i++) cols[i] = new Color32(255, 255, 255, 255);
+            m.colors32 = cols;
+            return m;
         }
 
         static Mesh BuildCube()

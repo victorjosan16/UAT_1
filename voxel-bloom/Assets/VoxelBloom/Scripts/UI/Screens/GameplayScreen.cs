@@ -107,6 +107,7 @@ namespace VoxelBloom
         public readonly BlockView[] LauncherBlocks = new BlockView[GameSession.Launchers];
         public readonly RectTransform[] LauncherSlots = new RectTransform[GameSession.Launchers];
         public readonly Image[] LauncherGlow = new Image[GameSession.Launchers];
+        public readonly Image[] LauncherOrb = new Image[GameSession.Launchers];
         public readonly VText[] BoosterCounts = new VText[4];
         public readonly UIButton[] BoosterButtons = new UIButton[4];
         public VText LevelText, CoinsText, MovesText, ProgressText, RemainingText, HintText;
@@ -153,7 +154,7 @@ namespace VoxelBloom
                 Stars[i].rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 66, i == 1 ? 6 : 0), new Vector2(64, 64));
             }
             MovesText = UI.Pill(hud, Icon.Lightning, "0", out var mr, 200, 76);
-            mr.Place(new Vector2(1, 0.5f), new Vector2(-300 - 110, 0), new Vector2(200, 76));
+            mr.gameObject.SetActive(false); // block count is shown under the progress bar (avoids overlapping the stars)
             CoinsText = UI.Pill(hud, Icon.Coin, "0", out var cr, 260, 76);
             cr.Place(new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(260, 76));
         }
@@ -167,6 +168,11 @@ namespace VoxelBloom
             panel.sprite = SpriteFactory.Rounded(56);
             var sky = UI.Image(panel.transform, "Sky", SpriteFactory.VerticalGradient(Theme.Hex("#6FC2FF"), Theme.Hex("#CFEFFF")), Color.white, false);
             sky.rectTransform.Stretch(10, 10, 10, 10);
+            for (int c = 0; c < 4; c++)
+            {
+                var cloud = UI.Image(sky.transform, "Cloud", SpriteFactory.Glow(), new Color(1, 1, 1, 0.55f), false);
+                cloud.rectTransform.Place(new Vector2(c % 2 == 0 ? 0.2f : 0.8f, c < 2 ? 0.82f : 0.62f), new Vector2(c * 40 - 60, 0), new Vector2(360 - c * 40, 150 - c * 15));
+            }
             var mask = UI.Image(panel.transform, "Mask", SpriteFactory.Rounded(48), Color.white);
             mask.rectTransform.Stretch(10, 10, 10, 10);
             mask.gameObject.AddComponent<Mask>().showMaskGraphic = false;
@@ -182,6 +188,9 @@ namespace VoxelBloom
             ModelInput = raw.gameObject.AddComponent<ModelInput>();
             ModelInput.Stage = Stage;
 
+            // soft vignette framing the model (premium depth)
+            var vig = UI.Image(mask.transform, "Vignette", SpriteFactory.Shadow(48), new Color(0.15f, 0.25f, 0.45f, 0.18f));
+            vig.rectTransform.Stretch(-40, -40, -40, -40);
             var left = UI.IconButton(ModelPanel, Icon.ArrowLeft, 100, ButtonStyle.White);
             ((RectTransform)left.transform).Place(new Vector2(0, 0.5f), new Vector2(80, 0), new Vector2(100, 100));
             left.OnClick = () => { Stage.TargetYaw += 45f; Stage.NotifyInteraction(); };
@@ -223,8 +232,12 @@ namespace VoxelBloom
                 var glow = UI.Image(slot, "Glow", SpriteFactory.Glow(), new Color(1, 1, 1, 0f), false);
                 glow.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(220, 160));
                 LauncherGlow[i] = glow;
-                var lb = BlockView.Create(slot, new Vector2(w - 24, 120), "Loaded" + i);
-                lb.Root.Place(new Vector2(0.5f, 0.5f), new Vector2(0, 8), new Vector2(w - 24, 120));
+                var lb = BlockView.Create(slot, new Vector2(w - 24, 108), "Loaded" + i);
+                lb.Root.Place(new Vector2(0.5f, 0.5f), new Vector2(0, -6), new Vector2(w - 24, 108));
+                // glossy ball on top of the launcher (tinted with the loaded colour)
+                var orb = UI.Image(slot, "Orb", SpriteFactory.Orb(), new Color(0.75f, 0.75f, 0.82f, 1f), false);
+                orb.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, 16), new Vector2(74, 74));
+                LauncherOrb[i] = orb;
                 int li = i;
                 lb.Button.Sound = Sfx.Button;
                 lb.Button.OnClick = () => controller.OnLauncherTapped(li);
