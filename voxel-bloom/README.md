@@ -10,7 +10,7 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
 > compile fixes in the Editor. See "Verification" below.
 
 ## Quick start
-1. Open this folder (`voxel-bloom/`) with **Unity 6 LTS** (6000.0.x). Packages: URP 17, uGUI 2 (TextMeshPro), Test Framework.
+1. Open this folder (`voxel-bloom/`) with **Unity 6.6** (6000.6.7f1, the version used by Unity Build Automation). Packages: URP 17.6, uGUI 2.6 (TextMeshPro), Test Framework 1.8.
 2. Menu **Voxel Bloom → Setup Project (URP + Android + Scene)**. This imports TMP Essentials, creates and
    assigns a URP asset, configures Android (`com.animatix.voxelbloom3d`, IL2CPP, ARM64, portrait, AAB,
    min API 24; **signing is never touched**) and creates `Scenes/Bootstrap/Bootstrap.unity`.

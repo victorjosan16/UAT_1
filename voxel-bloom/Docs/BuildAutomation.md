@@ -54,7 +54,7 @@ Creare keystore (o singură dată, păstrează-l în siguranță, nu în git):
 4. `build-android` (Ubuntu): AAB semnat (artifact `android-aab`). Cu „upload” bifat, urcă pe Google Play internal.
 
 ## Versiunea de Unity
-`ProjectSettings/ProjectVersion.txt` fixează **6000.0.32f1**, iar game-ci alege imaginea Docker după ea. Dacă
+`ProjectSettings/ProjectVersion.txt` fixează **6000.6.7f1** (versiunea folosită de Unity Build Automation), iar game-ci alege imaginea Docker după ea. Dacă
 folosești altă versiune de Unity 6, deschide proiectul o dată cu ea; Unity rescrie fișierul, iar tu îi faci commit.
 
 ## Status
@@ -66,7 +66,7 @@ confirma dacă mai e nevoie de ajustări.
 Alternativă la GitHub Actions, configurată din browser:
 - **Repository / branch:** `victorjosan16/UAT_1`, ramura `ccr-1b2ddcf1-u2muz2` (sau `main`, după merge)
 - **Project subfolder / Project path:** `voxel-bloom` (proiectul Unity nu e în rădăcina repo-ului)
-- **Unity version:** 6000.0.x (aceeași cu `ProjectSettings/ProjectVersion.txt`)
+- **Unity version:** 6000.6.x (aceeași cu `ProjectSettings/ProjectVersion.txt`)
 - **Bundle ID:** `com.animatix.voxelbloom3d`
 - **Credentials:** „Auto-generated debug keystore” pentru test, sau keystore-ul tău de upload pentru Google Play
 - **Advanced → Pre-Export Method:** `VoxelBloom.EditorTools.BuildScript.CloudBuildPreExport` (**obligatoriu**:

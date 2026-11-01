@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local headless build.  Usage:
-#   UNITY=/Applications/Unity/Hub/Editor/6000.0.32f1/Unity.app/Contents/MacOS/Unity tools/build.sh ios
-#   UNITY=~/Unity/Hub/Editor/6000.0.32f1/Editor/Unity tools/build.sh android
+#   UNITY=/Applications/Unity/Hub/Editor/6000.6.7f1/Unity.app/Contents/MacOS/Unity tools/build.sh ios
+#   UNITY=~/Unity/Hub/Editor/6000.6.7f1/Editor/Unity tools/build.sh android
 # Optional env: VB_VERSION (1.0.0), VB_BUILD_NUMBER (1), APPLE_TEAM_ID,
 #   ANDROID_KEYSTORE_NAME / ANDROID_KEYSTORE_PASS / ANDROID_KEYALIAS_NAME / ANDROID_KEYALIAS_PASS, VB_ANDROID_FORMAT=apk
 set -euo pipefail

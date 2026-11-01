@@ -95,7 +95,7 @@ namespace VoxelBloom
             t.color = color;
             t.alignment = align;
             t.raycastTarget = false;
-            t.enableWordWrapping = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Overflow;
             if (outline > 0f)
             {

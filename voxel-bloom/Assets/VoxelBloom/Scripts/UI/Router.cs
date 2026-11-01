@@ -102,7 +102,7 @@ namespace VoxelBloom
             root.Place(new Vector2(0.5f, 0f), new Vector2(0, 300), new Vector2(860, 120));
             var t = UI.Text(root, message, 44, Color.white);
             t.rectTransform.Stretch(icon.HasValue ? 120 : 30, 30, 0, 0);
-            t.enableWordWrapping = true;
+            t.textWrappingMode = TextWrappingModes.Normal;
             if (icon.HasValue) UI.Icon(root, icon.Value, 90).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(70, 0), new Vector2(90, 90));
             var cg = root.gameObject.AddComponent<CanvasGroup>();
             cg.blocksRaycasts = false;

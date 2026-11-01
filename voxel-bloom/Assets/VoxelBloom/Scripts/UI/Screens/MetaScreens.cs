@@ -112,7 +112,7 @@ namespace VoxelBloom
     /// <summary>Rotatable / zoomable 3D preview of an unlocked model.</summary>
     public sealed class ModelPreviewDialog : DialogBase
     {
-        public CollectionEntry Entry;
+        [System.NonSerialized] public CollectionEntry Entry;
         static VoxelStage stage;
         protected override string Title => Entry != null ? Entry.Name : "Model";
         protected override Vector2 Size => new Vector2(940, 1240);
@@ -177,7 +177,7 @@ namespace VoxelBloom
             tr.Place(new Vector2(0.5f, 1), new Vector2(0, -980), new Vector2(900, 300));
             UI.Icon(tr, Icon.Lightning, 150).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(110, 0), new Vector2(150, 150));
             var t = UI.Text(tr, "Every 5th level is a HARD level.\nWin it for x2.5 coins and spend them\non Eliminare to clear a jammed queue!", 38, Theme.Ink, TextAlignmentOptions.Left);
-            t.enableWordWrapping = true;
+            t.textWrappingMode = TextWrappingModes.Normal;
             t.rectTransform.Stretch(210, 30, 20, 20);
         }
 

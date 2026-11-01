@@ -47,7 +47,7 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             var t = UI.Text(Body, Message, 50, Theme.Ink);
-            t.enableWordWrapping = true;
+            t.textWrappingMode = TextWrappingModes.Normal;
             t.rectTransform.Stretch(10, 10, 40, 220);
             var yes = UI.Button(Body, YesLabel, ButtonStyle.Green, new Vector2(320, 130), null, 56);
             ((RectTransform)yes.transform).Place(new Vector2(0.5f, 0), new Vector2(175, 90), new Vector2(320, 130));
@@ -60,8 +60,8 @@ namespace VoxelBloom
 
     public sealed class LevelCompleteDialog : DialogBase
     {
-        public CompletionReceipt Receipt;
-        public LevelDefinition Level;
+        [NonSerialized] public CompletionReceipt Receipt;
+        [NonSerialized] public LevelDefinition Level;
         TextMeshProUGUI coinsText;
         UIButton doubleBtn;
         protected override string Title => "Level Complete!";
@@ -162,7 +162,7 @@ namespace VoxelBloom
             string msg = Reason == FailReason.QueueFull ? "The attack queue is jammed:\nno queued colour can reach the model."
                 : Reason == FailReason.OutOfMoves ? "You ran out of moves." : "No blocks left on the board.";
             var t = UI.Text(Body, msg, 46, Theme.Ink);
-            t.enableWordWrapping = true;
+            t.textWrappingMode = TextWrappingModes.Normal;
             t.rectTransform.TopBand(80, 200, 10);
             UI.Icon(Body, Icon.Heart, 120).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(-70, -350), new Vector2(120, 120));
             UI.Text(Body, "-1", 70, Theme.Red).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(60, -350), new Vector2(160, 100));
@@ -210,7 +210,7 @@ namespace VoxelBloom
     /// <summary>BOOSTERS: icon, description, price, confirmation, purchase into persistent inventory.</summary>
     public sealed class BoostersDialog : DialogBase
     {
-        public BoosterType? Focus;
+        [NonSerialized] public BoosterType? Focus;
         protected override string Title => "Boosters";
         protected override Vector2 Size => new Vector2(940, 1420);
 
@@ -239,7 +239,7 @@ namespace VoxelBloom
             var n = UI.Text(rt, it.name, 50, Theme.Ink, TextAlignmentOptions.Left);
             n.rectTransform.Place(new Vector2(0, 1), new Vector2(200, -60), new Vector2(400, 60), new Vector2(0, 0.5f));
             var d = UI.Text(rt, it.desc, 32, Theme.InkSoft, TextAlignmentOptions.TopLeft);
-            d.enableWordWrapping = true;
+            d.textWrappingMode = TextWrappingModes.Normal;
             d.rectTransform.Place(new Vector2(0, 1), new Vector2(200, -100), new Vector2(380, 110), new Vector2(0, 1));
             var owned = UI.Text(rt, "Owned: " + Services.Boosters.Count(it.t), 32, Theme.Purple, TextAlignmentOptions.Left);
             owned.rectTransform.Place(new Vector2(0, 0), new Vector2(200, 34), new Vector2(300, 44), new Vector2(0, 0.5f));
@@ -314,7 +314,6 @@ namespace VoxelBloom
             UI.Icon(rt, icon, 100).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(80, 0), new Vector2(100, 100));
             UI.Text(rt, label, 46, Theme.Ink, TextAlignmentOptions.Left).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(160, 0), new Vector2(400, 60), new Vector2(0, 0.5f));
             UIButton b = null;
-            Action refresh = null;
             b = UI.Button(rt, get() ? "ON" : "OFF", get() ? ButtonStyle.Green : ButtonStyle.White, new Vector2(190, 100), null, 44);
             ((RectTransform)b.transform).Place(new Vector2(1, 0.5f), new Vector2(-120, 0), new Vector2(190, 100));
             b.OnClick = () =>

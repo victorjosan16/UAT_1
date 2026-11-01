@@ -32,7 +32,7 @@ namespace VoxelBloom
             Services.ApplyQuality(Services.Save.Settings.Quality);
             Services.Audio = gameObject.AddComponent<AudioService>();
 
-            if (FindFirstObjectByType<EventSystem>() == null)
+            if (FindAnyObjectByType<EventSystem>() == null)
             {
                 var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
                 DontDestroyOnLoad(es);
