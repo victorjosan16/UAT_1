@@ -22,6 +22,14 @@ namespace Veliqora.UI.Screens
         protected override void BuildBackground(RectTransform full)
         {
             var current = S.Themes.Theme;
+            if (current.Flat && Args is Gameplay.LevelResult lr)
+            {
+                FullBackground(full, BackgroundArt.Chapter(Core.Progression.Chapters.IndexOf(lr.Level)));
+                ReadabilityScrim(full, 0.3f, 0.5f, 0.2f);
+                var halo = UIFactory.Image(full, "Rays", SpriteLibrary.RadialGlow, UIStyle.WithAlpha(current.Accent, 0.22f));
+                UIFactory.Place(halo.rectTransform, new Vector2(0.5f, 0.72f), new Vector2(1500, 1500), Vector2.zero);
+                return;
+            }
             if (current.OwnBackgrounds)
             {
                 FullBackground(full, BackgroundArt.Valley(current));

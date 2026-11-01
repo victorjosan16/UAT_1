@@ -10,7 +10,7 @@ namespace Veliqora.Presentation
     /// sunken ruins, starlit void. Kept low-contrast in the board area so neon liquids stay readable.
     /// Pure managed code (runs in the offline art preview too).
     /// </summary>
-    public static class DarkScenes
+    public static partial class DarkScenes
     {
         /// <summary>The 12 selectable themes of the design brief, in menu order.</summary>
         public static readonly string[] Ids =
@@ -37,9 +37,14 @@ namespace Veliqora.Presentation
                 case "dark_royal": DarkRoyal(p, rng); break;
                 case "mystic_garden": MysticGarden(p, rng); break;
                 case "cyber_neon": CyberNeon(p, rng); break;
+                case "chapter_quiet_forest": QuietForest(p, rng); break;
+                case "chapter_crystal_lake": CrystalLake(p, rng); break;
+                case "chapter_colorful_canyon": ColorfulCanyon(p, rng); break;
+                case "chapter_magic_cave": MagicCave(p, rng); break;
+                case "chapter_temple_colors": TempleOfColors(p, rng); break;
                 default: StarlitVoid(p, rng); break;
             }
-            Vignette(p, 0.55f);
+            if (scene.StartsWith("chapter_")) CalmCenter(p); else Vignette(p, 0.55f);
             return p;
         }
 

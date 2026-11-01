@@ -13,6 +13,8 @@ namespace Veliqora.UI.Screens
         protected Canvas Canvas;
         protected RectTransform Full;
         protected RectTransform Safe;
+        /// <summary>Navigation arguments (available to BuildBackground as well as Build).</summary>
+        protected object Args;
 
         /// <summary>Banners are only ever allowed on menu screens (never gameplay).</summary>
         public virtual bool AllowsBanner => false;
@@ -20,6 +22,7 @@ namespace Veliqora.UI.Screens
         public void Setup(AppServices services, object args)
         {
             S = services;
+            Args = args;
             Canvas = UIFactory.CreateCanvas(GetType().Name + "Canvas", 0, transform);
             Full = (RectTransform)Canvas.transform;
             BuildBackground(Full);

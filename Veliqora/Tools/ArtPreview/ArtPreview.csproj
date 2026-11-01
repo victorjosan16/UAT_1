@@ -21,6 +21,8 @@
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidGeometry.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Presentation/LiquidPalette.cs" />
     <Compile Include="../../Assets/_Veliqora/Scripts/Themes/DarkScenes.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Themes/DarkScenes.Chapters.cs" />
+    <Compile Include="../../Assets/_Veliqora/Scripts/Core/Layout/BoardLayout.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Veliqora.Core/Veliqora.Core.csproj" />

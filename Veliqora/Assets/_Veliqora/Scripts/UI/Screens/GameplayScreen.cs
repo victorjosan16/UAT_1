@@ -40,6 +40,14 @@ namespace Veliqora.UI.Screens
         {
             var theme = S.Themes.Theme;
             bool light = S.Settings.Data.LightGameplayBackground;
+            if (!light && theme.Flat)
+            {
+                // Default look: the background of the level's chapter, with a soft veil so liquids stay dominant.
+                int number = Mathf.Clamp(Args is int a ? a : S.Save.Progress.CurrentLevel, 1, S.Levels.Count);
+                FullBackground(full, BackgroundArt.Chapter(Core.Progression.Chapters.IndexOf(number)));
+                ReadabilityScrim(full, 0.4f, 0.45f, 0.1f);
+                return;
+            }
             if (!light && theme.IsDark)
             {
                 // Dark scenes are designed low-contrast already; a light veil keeps the neon liquids dominant.

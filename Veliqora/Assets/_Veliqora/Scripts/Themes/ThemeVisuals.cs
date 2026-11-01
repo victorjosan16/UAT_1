@@ -75,7 +75,7 @@ namespace Veliqora.Presentation
         public float BodyWidth = 0.92f;
         public float NeckWidth = 0.62f;
         public float BottomRadius = 0.36f;
-        public float Glass = 0.06f;      // wall thickness
+        public float Glass = 0.04f;      // wall thickness (thin, clear glass)
         public float Aspect;             // height / width
         public float BodyTop;            // y where shoulders start (normalized)
         public float FillTop;            // max liquid height (capacity line)
@@ -190,7 +190,7 @@ namespace Veliqora.Presentation
 
         private static readonly Dictionary<string, Sprite> GlassCache = new Dictionary<string, Sprite>();
 
-        /// <summary>Procedural glass sprite (PLACEHOLDER ART): faint body, bright rim, highlights.</summary>
+        /// <summary>Procedural clear-glass sprite: near-invisible body, thin rim, tapered reflections (256 px wide).</summary>
         public Sprite GlassSprite()
         {
             if (IsAuthored) return SpriteLibrary.Art("Bottles/" + ArtName);
@@ -198,9 +198,9 @@ namespace Veliqora.Presentation
             Sprite cached;
             if (GlassCache.TryGetValue(key, out cached) && cached != null) return cached;
 
-            var p = PaintGlass(160);
+            var p = PaintGlass(256); // high resolution, crisp on 1080p+ phones
             var tex = p.ToTexture();
-            var sprite = Sprite.Create(tex, new Rect(0, 0, p.Width, p.Height), new Vector2(0.5f, 0f), 100f);
+            var sprite = Sprite.Create(tex, new Rect(0, 0, p.Width, p.Height), new Vector2(0.5f, 0f), 160f);
             sprite.name = "proc_glass_" + key;
             GlassCache[key] = sprite;
             return sprite;
@@ -236,17 +236,35 @@ namespace Veliqora.Presentation
             System.Func<Vector2, float> inner = q => outer(q) + t;
 
             var tint = Tint;
-            // body glass
-            p.Fill(outer, new Color(tint.r, tint.g, tint.b, 0.16f));
-            // wall stroke
-            p.Fill(q => PixelPainter.Subtract(outer(q), inner(q)), new Color(tint.r, tint.g, tint.b, 0.85f));
-            // lip ring
-            p.Fill(q => PixelPainter.RoundedRect(q, new Rect(cx - neckHalf - t * 0.6f, top - t * 2.2f, neckHalf * 2 + t * 1.2f, t * 2.2f), t), new Color(1, 1, 1, 0.95f));
-            // left highlight streak
-            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx - bodyHalf + t * 2.6f, rad * 0.9f), new Vector2(cx - bodyHalf + t * 2.6f, bodyTop - rad * 0.2f), t * 0.75f), new Color(1, 1, 1, 0.55f));
-            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx - neckHalf + t * 2.2f, bodyTop + t), new Vector2(cx - neckHalf + t * 2.2f, top - t * 3.5f), t * 0.45f), new Color(1, 1, 1, 0.4f));
-            // right soft reflection
-            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx + bodyHalf - t * 2.2f, bodyTop * 0.45f), new Vector2(cx + bodyHalf - t * 2.2f, bodyTop * 0.75f), t * 0.4f), new Color(1, 1, 1, 0.28f));
+            // Clear glass: almost invisible body, slightly denser near the walls (edge thickness), thin rim with a
+            // brighter left side, and soft, tapered reflections. No opaque grey fill, no heavy white outline.
+            float edgeBand = t * 2.6f;
+            p.Fill(outer, new Color(tint.r, tint.g, tint.b, 0.035f), q =>
+            {
+                float d = -outer(q);                                   // distance inside the glass
+                float edge = Mathf.Clamp01(1f - d / edgeBand);
+                float a = 0.035f + 0.11f * edge * edge;
+                return new Color(Mathf.Lerp(tint.r, 0.86f, 0.4f), Mathf.Lerp(tint.g, 0.94f, 0.4f), 1f, a);
+            });
+            p.Fill(q => PixelPainter.Subtract(outer(q), inner(q)), new Color(tint.r, tint.g, tint.b, 0.5f), q =>
+            {
+                float side = Mathf.Clamp01((q.x - (cx - bodyHalf)) / (bodyHalf * 2f)); // 0 left .. 1 right
+                return new Color(tint.r, tint.g, tint.b, Mathf.Lerp(0.62f, 0.32f, side));
+            });
+            // lip ring (thin, glassy)
+            p.Fill(q => PixelPainter.RoundedRect(q, new Rect(cx - neckHalf - t * 0.5f, top - t * 1.8f, neckHalf * 2 + t, t * 1.8f), t * 0.9f),
+                new Color(1, 1, 1, 0.55f));
+            // long tapered highlight on the left (fades at both ends)
+            float hx = cx - bodyHalf + t * 2.4f, h0 = rad * 0.9f, h1 = bodyTop - rad * 0.25f;
+            p.Fill(q => PixelPainter.Segment(q, new Vector2(hx, h0), new Vector2(hx, h1), t * 0.7f), new Color(1, 1, 1, 0.38f), q =>
+            {
+                float v = Mathf.Clamp01((q.y - h0) / Mathf.Max(1f, h1 - h0));
+                return new Color(1, 1, 1, 0.38f * Mathf.Sin(v * Mathf.PI));
+            });
+            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx - neckHalf + t * 1.8f, bodyTop + t), new Vector2(cx - neckHalf + t * 1.8f, top - t * 3f), t * 0.4f), new Color(1, 1, 1, 0.22f));
+            // short right reflection + soft bottom reflection
+            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx + bodyHalf - t * 2f, bodyTop * 0.5f), new Vector2(cx + bodyHalf - t * 2f, bodyTop * 0.7f), t * 0.35f), new Color(1, 1, 1, 0.16f));
+            p.Fill(q => PixelPainter.Segment(q, new Vector2(cx - bodyHalf * 0.45f, t * 2.2f), new Vector2(cx + bodyHalf * 0.2f, t * 2.2f), t * 0.35f), new Color(1, 1, 1, 0.12f));
             if (Kind == BottleShapeKind.Crystal)
             {
                 p.Fill(q => PixelPainter.Segment(q, new Vector2(cx, 4 + t), new Vector2(cx, bodyTop - t), 1.2f), new Color(1, 1, 1, 0.22f));

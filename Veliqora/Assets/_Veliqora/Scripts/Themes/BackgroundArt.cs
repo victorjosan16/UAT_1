@@ -60,6 +60,21 @@ namespace Veliqora.Presentation
             return tex;
         }
 
+        /// <summary>Chapter background (Quiet Forest, Crystal Lake, Colorful Canyon, Magic Cave, Temple of Colors), 720×1280, cached.</summary>
+        public static Texture2D Chapter(int chapterIndex)
+        {
+            string scene = DarkScenes.ChapterScene(chapterIndex);
+            string key = "chapter_" + scene;
+            Texture2D cached;
+            if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
+            var authored = Resources.Load<Texture2D>("Veliqora/Art/Backgrounds/" + scene);
+            if (authored != null) return Cache[key] = authored;
+            var tex = DarkScenes.Paint(scene, 720, 1280).ToTexture();
+            tex.name = key;
+            Cache[key] = tex;
+            return tex;
+        }
+
         /// <summary>
         /// Clean premium background: the flat base color (#101827) with a very soft top light and vignette, so the
         /// transparent bottles and liquids stay the focus.

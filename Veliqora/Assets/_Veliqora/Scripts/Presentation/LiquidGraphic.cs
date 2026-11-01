@@ -31,7 +31,7 @@ namespace Veliqora.Presentation
         private readonly List<Vector2> _scaled = new List<Vector2>(32);
         private readonly List<float> _levels = new List<float>(8);
 
-        public float SurfaceThickness = 0.045f; // fraction of bottle width
+        public float SurfaceThickness = 0.05f; // fraction of bottle width
 
         public void Configure(List<Vector2> normalizedInterior, int capacity)
         {
@@ -101,23 +101,36 @@ namespace Veliqora.Presentation
                 _levels.Add(LevelForArea(up, frac * totalArea, minC, maxC));
             }
 
+            // Pure colors with a very light vertical gradient, a hairline seam between layers (clear delimitation) and a
+            // natural meniscus on the top surface (light band + thin bright edge). No neon glow.
             float lower = minC - 1f;
             float surfaceBand = SurfaceThickness * k;
+            float seam = Mathf.Max(1f, 0.014f * k);
             for (int i = 0; i < _layers.Count; i++)
             {
                 float upper = _levels[i];
                 if (upper <= lower + 0.01f) continue;
                 var col = _layers[i].Color;
+                var bottom = Color.Lerp(col, Color.black, 0.07f);
+                var top = Color.Lerp(col, Color.white, 0.06f);
                 bool topLayer = i == _layers.Count - 1;
                 if (topLayer && upper - lower > surfaceBand * 1.5f)
                 {
-                    EmitBand(vh, up, lower, upper - surfaceBand, col, UIColor(col, 0.0f), UIColor(col, 0.12f));
-                    var surf = Color.Lerp(col, Color.white, 0.35f);
-                    EmitBand(vh, up, upper - surfaceBand, upper, surf, surf, surf);
+                    EmitBand(vh, up, lower, upper - surfaceBand, col, bottom, top);
+                    var surf = Color.Lerp(col, Color.white, 0.22f);
+                    EmitBand(vh, up, upper - surfaceBand, upper - seam, surf, surf, surf);
+                    var rim = Color.Lerp(col, Color.white, 0.55f);
+                    EmitBand(vh, up, upper - seam, upper, rim, rim, rim);
+                }
+                else if (!topLayer && upper - lower > seam * 3f)
+                {
+                    EmitBand(vh, up, lower, upper - seam, col, bottom, top);
+                    var line = Color.Lerp(col, Color.black, 0.22f);
+                    EmitBand(vh, up, upper - seam, upper, line, line, line);
                 }
                 else
                 {
-                    EmitBand(vh, up, lower, upper, col, UIColor(col, 0.0f), UIColor(col, 0.12f));
+                    EmitBand(vh, up, lower, upper, col, bottom, top);
                 }
                 lower = upper;
             }

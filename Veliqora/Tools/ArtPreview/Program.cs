@@ -50,6 +50,22 @@ internal static class Program
         }
         Console.WriteLine("12 scenes: " + sw.ElapsedMilliseconds + " ms");
         Png(Path.Combine(outDir, "dark_backgrounds_12.png"), sheet);
+
+        // chapter backgrounds (painted at the in-game 720x1280, shown at 1/2)
+        var chapters = new PixelPainter(360 * 5, 640);
+        for (int i = 0; i < DarkScenes.ChapterScenes.Length; i++)
+        {
+            var sw2 = System.Diagnostics.Stopwatch.StartNew();
+            var scene = DarkScenes.Paint(DarkScenes.ChapterScenes[i], 720, 1280);
+            Console.WriteLine(DarkScenes.ChapterScenes[i] + ": " + sw2.ElapsedMilliseconds + " ms");
+            for (int y = 0; y < 640; y++)
+                for (int x = 0; x < 360; x++)
+                {
+                    var c = scene.Get(x * 2, y * 2);
+                    chapters.Pixels[y * chapters.Width + i * 360 + x] = new Color(c.r, c.g, c.b, 1);
+                }
+        }
+        Png(Path.Combine(outDir, "chapter_backgrounds_5.png"), chapters);
         Console.WriteLine("Wrote previews to " + Path.GetFullPath(outDir));
     }
 
@@ -177,15 +193,42 @@ internal static class Program
             while (i < units.Length && units[i] == col) { run++; i++; }
             cum += run;
             float upper = LiquidGeometry.LevelForArea(interior, up, cum / capacity * total, minC, maxC, scratch);
-            LiquidGeometry.Clip(interior, up, upper, true, a);
-            LiquidGeometry.Clip(a, up, lower, false, b);
-            if (b.Count >= 3)
+            var color = LiquidPalette.Get(col);
+            bool topLayer = i >= units.Length;
+            float seam = Mathf.Max(1f, 0.014f * width), surfaceBand = 0.05f * width;
+            // same shading as LiquidGraphic: light vertical gradient, hairline seam, meniscus on the top surface
+            void Band(float lo, float hi, Color c0, Color c1)
             {
+                LiquidGeometry.Clip(interior, up, hi, true, a);
+                LiquidGeometry.Clip(a, up, lo, false, b);
+                if (b.Count < 3) return;
                 var world = new Vector2[b.Count];
                 for (int k = 0; k < b.Count; k++) world[k] = pivot + Rot(b[k]);
-                var color = LiquidPalette.Get(col);
-                p.Fill(q => PixelPainter.Polygon(q, world), color, q => Color.Lerp(color, Color.white, 0.12f * Mathf.Clamp01((Vector2.Dot(q - pivot, new Vector2(0, 1)) - lower) / Mathf.Max(1, upper - lower))));
+                p.Fill(q => PixelPainter.Polygon(q, world), c0, q =>
+                {
+                    var local = q - pivot;
+                    var bl = new Vector2(Mathf.Cos(-th) * local.x - Mathf.Sin(-th) * local.y, Mathf.Sin(-th) * local.x + Mathf.Cos(-th) * local.y);
+                    float t = Mathf.Clamp01((Vector2.Dot(bl, up) - lo) / Mathf.Max(1f, hi - lo));
+                    return Color.Lerp(c0, c1, t);
+                });
             }
+            var bottomC = Color.Lerp(color, Color.black, 0.07f);
+            var topC = Color.Lerp(color, Color.white, 0.06f);
+            if (topLayer && upper - lower > surfaceBand * 1.5f)
+            {
+                Band(lower, upper - surfaceBand, bottomC, topC);
+                var surf = Color.Lerp(color, Color.white, 0.22f);
+                Band(upper - surfaceBand, upper - seam, surf, surf);
+                var rim = Color.Lerp(color, Color.white, 0.55f);
+                Band(upper - seam, upper, rim, rim);
+            }
+            else if (!topLayer && upper - lower > seam * 3f)
+            {
+                Band(lower, upper - seam, bottomC, topC);
+                var line = Color.Lerp(color, Color.black, 0.22f);
+                Band(upper - seam, upper, line, line);
+            }
+            else Band(lower, upper, bottomC, topC);
             lower = upper;
         }
         // glass: rasterize at bottle resolution, then inverse-map into the rotated frame (bilinear-free nearest)
