@@ -16,9 +16,23 @@ def mech(l):
     if l.get("hidden"): m.append("mystery")
     if l.get("locks"): m.append("cork×%d" % len(l["locks"]))
     if l.get("rewardBottles"): m.append("ad bottle")
-    caps = l.get("capacities")
-    if caps and len(set(caps)) > 1: m.append("sizes " + "/".join(str(c) for c in sorted(set(caps))))
+    caps = l.get("capacities") or [l.get("capacity", 4)] * len(l["bottles"])
+    filled = sorted(set(c for b, c in zip(l["bottles"], caps) if len(b) > 0))
+    if len(filled) > 1: m.append("sizes " + "/".join(str(c) for c in filled))
     return ", ".join(m) or "—"
+
+def space(l):
+    caps = l.get("capacities") or [l.get("capacity", 4)] * len(l["bottles"])
+    ads = set(l.get("rewardBottles") or [])
+    partial = sum(1 for i, (b, c) in enumerate(zip(l["bottles"], caps)) if 0 < len(b) < c)
+    empties = [c for i, (b, c) in enumerate(zip(l["bottles"], caps)) if len(b) == 0 and i not in ads]
+    free = sum(c - len(b) for i, (b, c) in enumerate(zip(l["bottles"], caps)) if i not in ads)
+    parts = []
+    if partial: parts.append(f"{partial} partly filled")
+    big = sum(1 for c in empties if c >= 3); small = sum(1 for c in empties if c < 3)
+    if big: parts.append(f"{big} empty")
+    if small: parts.append(f"{small} small empty")
+    return f"{free} slots: " + ", ".join(parts)
 
 out = []
 total_pass = sum(1 for n in range(1, count + 1) if rows.get(n, {}).get("passed") == "PASS")
@@ -36,10 +50,13 @@ out.append("""For every level the validator executed:
 7. levels 1–100: exact minimum number of pours by exhaustive breadth-first search
    (level 1 must need ≥ 6, levels 2–10 ≥ 7). "—" = state space above the 300 000-state search budget; the benchmark is then an upper bound.
 
+**Free space** = empty slots on the board (ad-locked bonus bottles excluded): room is often spread over partly filled
+bottles and small 2-slot helper bottles instead of two big empty bottles.
+
 Columns: **par** = verified benchmark solution length used for stars; **min** = proven minimum pours;
 **solver** = pours found by the independent solver run.
 """)
-out.append("| Level | Kind | Colors | Bottles (empty) | Capacity | Mechanics | Par | Min | Solver | Result |")
+out.append("| Level | Kind | Colors | Bottles | Free space | Mechanics | Par | Min | Solver | Result |")
 out.append("|---|---|---|---|---|---|---|---|---|---|")
 for n in range(1, count + 1):
     l = levels[n - 1]
@@ -53,6 +70,6 @@ for n in range(1, count + 1):
     if "solver " in note and " moves" in note:
         solver = note.split("solver ")[1].split(" moves")[0]
     out.append(f"| {n} | {l.get('kind', 'normal') if isinstance(l.get('kind'), str) else ['normal','hard','boss'][l.get('kind', 0)]} | {l['colors'] if 'colors' in l else ''} | "
-               f"{len(bottles)} ({empties}) | {cap} | {mech(l)} | {l['par']} | {r['min_moves'] or '—' if r else '—'} | {solver} | {r['passed'] if r else 'not run'} |")
+               f"{len(bottles)} | {space(l)} | {mech(l)} | {l['par']} | {r['min_moves'] or '—' if r else '—'} | {solver} | {r['passed'] if r else 'not run'} |")
 open(os.path.join(root, "Docs/LEVELS_VERIFICATION.md"), "w").write("\n".join(out) + "\n")
 print(f"levels 1-{count}: {total_pass}/{count} PASS; catalog {all_pass}/{len(rows)} PASS")

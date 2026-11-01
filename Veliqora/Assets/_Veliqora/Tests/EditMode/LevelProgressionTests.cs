@@ -18,6 +18,49 @@ namespace Veliqora.Tests.EditMode
         private static LevelCatalog Catalog => TestUtil.Catalog;
 
         [Test]
+        public void FreeSpace_IsOftenSpread_NotAlwaysTwoBigEmptyBottles()
+        {
+            int spread = 0, checkedLevels = 0;
+            for (int n = 11; n <= 100; n++)
+            {
+                var s = Catalog.Levels[n - 1].CreateInitialState();
+                int bigEmpty = 0, partial = 0;
+                for (int i = 0; i < s.BottleCount; i++)
+                {
+                    if (s[i].RewardLocked) continue;
+                    if (s[i].IsEmpty && s[i].Capacity >= 3) bigEmpty++;
+                    if (!s[i].IsEmpty && s[i].Count < s[i].Capacity) partial++;
+                }
+                checkedLevels++;
+                if (bigEmpty < 2 && partial > 0) spread++;
+                Assert.LessOrEqual(LevelCatalogBuilder.FreeSlots(s), 2 * 6, Catalog.Levels[n - 1].Id + " has too much room");
+            }
+            Assert.GreaterOrEqual(spread, checkedLevels * 6 / 10, "most levels 11–100 spread the free room over partly filled / small bottles");
+        }
+
+        [Test]
+        public void SpreadDeal_KeepsColorTotals_AndPartlyFillsBottles()
+        {
+            var spec = new GenerationSpec { Colors = 5, EmptyBottles = 0, SpreadBottles = 1, SmallEmpties = 2, MaxAttempts = 200 };
+            var g = LevelGenerator.Generate(spec, 12345);
+            Assert.IsNotNull(g);
+            var s = g.State;
+            Assert.AreEqual(5 + 1 + 2, s.BottleCount);
+            for (int c = 1; c <= 5; c++) Assert.AreEqual(4, s.ColorTotal(c));
+            int partial = 0, small = 0;
+            for (int i = 0; i < s.BottleCount; i++)
+            {
+                if (!s[i].IsEmpty && s[i].Count < s[i].Capacity) partial++;
+                if (s[i].IsEmpty) { Assert.AreEqual(2, s[i].Capacity); small++; }
+                if (!s[i].IsEmpty) Assert.GreaterOrEqual(s[i].Count, 2, "every filled bottle at least half full");
+            }
+            Assert.Greater(partial, 0);
+            Assert.AreEqual(2, small);
+            Assert.AreEqual(8, LevelCatalogBuilder.FreeSlots(s));
+            Assert.IsTrue(PuzzleSolver.VerifySolution(s, g.Solve.Moves, out string err), err);
+        }
+
+        [Test]
         public void Level1_IsACompletePuzzle_ReadyToPlay()
         {
             var l = Catalog.Levels[0];

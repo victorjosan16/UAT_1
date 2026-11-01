@@ -24,6 +24,9 @@ namespace Veliqora.Core.Levels
         public int RewardBottles;    // ad-locked helper bottles
         /// <summary>Exact minimum pours (breadth-first search) a level must need; 0 = not enforced.</summary>
         public int MinOptimal;
+        /// <summary>Distributed free space (see GenerationSpec.SpreadBottles) and small empty helper bottles.</summary>
+        public int Spread;
+        public int SmallEmpties;
         /// <summary>Optional variant used on even level numbers (introduces constraints gradually).</summary>
         public CurveSegment AlternateOnEven;
 
@@ -62,37 +65,41 @@ namespace Veliqora.Core.Levels
         // Measured with Tools/LevelGen: 1-spare-bottle deals are often provably unsolvable (rejected) and leave far
         // less room for error; capacity-5 "tall" bottles lengthen solutions. Both are introduced late and gradually.
         private static CurveSegment Seg(int a, int b, int colors, int minSol, int cand, int empties = 2, int cap = 4, int pairs = 3, CurveSegment alt = null,
-            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0, int minOpt = 0) =>
+            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0, int minOpt = 0, int spread = 0, int small = 0) =>
             new CurveSegment
             {
                 FirstLevel = a, LastLevel = b, Colors = colors, MinSolution = minSol, Candidates = cand, EmptyBottles = empties, Capacity = cap,
                 MaxAdjacentPairs = pairs, AlternateOnEven = alt, CapMode = caps, Mystery = mystery, Locks = locks, RewardBottles = reward,
-                MinOptimal = minOpt,
+                MinOptimal = minOpt, Spread = spread, SmallEmpties = small,
             };
 
         // Every level is a complete, solver-verified puzzle from level 1 (no tutorial levels). Color progression
-        // (clamped by StagePlanner.ColorRange): 1–10 → 3–4 · 11–25 → 4–5 · 26–50 → 5–6 · 51–100 → 6–8 · 101+ → 6–8 with
-        // mechanics: 71–85 mystery · 86–100 mixed sizes · 101–120 corks (+ optional ad bottle) · 121–200 combinations ·
-        // 201–300 Master combinations. Levels 1–10 must need at least 6 (level 1) / 7 pours, proven by exact search.
-        // StagePlanner adds random Hard levels and stage-finale Boss levels from stage 2 on.
+        // (clamped by StagePlanner.ColorRange): 1–10 → 3–4 · 11–25 → 4–5 · 26–50 → 5–6 · 51–100 → 6–8 · 101+ → 6–8.
+        // Free space is NOT always two big empty bottles: most levels from 6 on spread the room over partly filled
+        // bottles ("S" = spread: one extra bottle's room distributed) plus small 2-slot helper bottles ("h"), or give
+        // a single empty bottle. Board room per level type (capacity 4):
+        //   classic 2 empty = 8 free · S + 2h = 8 free, no big empty · S + 1h = 6 free · 1 empty = 4 free.
+        // Mechanics: 71–85 mystery · 86–100 mixed sizes · 101–120 corks (+ optional ad bottle) · 121–300 combinations.
+        // Levels 1–10 must need at least 6 (level 1) / 7 pours, proven by exact search.
         public static readonly CurveSegment[] DefaultCurve =
         {
-            Seg(1, 10, 3, 6, 4, pairs: 2, minOpt: 6, alt: Seg(1, 10, 4, 8, 4, pairs: 2, minOpt: 7)),
-            Seg(11, 25, 4, 9, 3, alt: Seg(11, 25, 5, 11, 3)),
-            Seg(26, 35, 5, 11, 3, alt: Seg(26, 35, 6, 13, 3)),
-            Seg(36, 50, 6, 13, 3, alt: Seg(36, 50, 5, 11, 3, empties: 1)),
-            Seg(51, 70, 7, 15, 3, alt: Seg(51, 70, 6, 13, 3, empties: 1)),
-            Seg(71, 85, 6, 13, 3, mystery: 2, alt: Seg(71, 85, 7, 15, 3, mystery: 3)),
-            Seg(86, 100, 7, 15, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 13, 3, caps: CapacityMode.SmallLarge, mystery: 2)),
-            Seg(101, 110, 7, 15, 3, locks: 1, alt: Seg(101, 110, 7, 15, 3, locks: 1, mystery: 2)),
-            Seg(111, 120, 7, 15, 3, locks: 1, reward: 1, alt: Seg(111, 120, 7, 15, 3, caps: CapacityMode.SmallLarge, locks: 1)),
-            Seg(121, 150, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, alt: Seg(121, 150, 7, 16, 3, mystery: 3, locks: 2)),
-            Seg(151, 175, 8, 18, 3, mystery: 3, locks: 1, reward: 1, alt: Seg(151, 175, 7, 16, 3, caps: CapacityMode.Wide, locks: 2)),
-            Seg(176, 200, 8, 19, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 19, 3, caps: CapacityMode.Wide, mystery: 2, reward: 1)),
-            Seg(201, 225, 8, 20, 3, mystery: 3, locks: 2, alt: Seg(201, 225, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2)),
-            Seg(226, 250, 8, 21, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 1, alt: Seg(226, 250, 8, 21, 3, caps: CapacityMode.Wide, mystery: 3, locks: 1)),
-            Seg(251, 275, 8, 22, 3, mystery: 3, locks: 2, reward: 1, alt: Seg(251, 275, 8, 22, 3, caps: CapacityMode.Wide, mystery: 2, locks: 2)),
-            Seg(276, 300, 8, 23, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, reward: 1, alt: Seg(276, 300, 8, 23, 3, caps: CapacityMode.Wide, mystery: 3, locks: 2)),
+            Seg(1, 5, 3, 6, 4, pairs: 2, minOpt: 6, alt: Seg(1, 5, 4, 8, 4, pairs: 2, minOpt: 7)),
+            Seg(6, 10, 3, 8, 4, pairs: 2, minOpt: 7, alt: Seg(6, 10, 4, 9, 4, pairs: 2, minOpt: 7, empties: 0, spread: 1, small: 2)),
+            Seg(11, 25, 4, 10, 3, empties: 0, spread: 1, small: 2, alt: Seg(11, 25, 5, 12, 3, empties: 0, spread: 1, small: 2)),
+            Seg(26, 35, 5, 12, 3, empties: 0, spread: 1, small: 2, alt: Seg(26, 35, 6, 14, 3, empties: 1, spread: 1)),
+            Seg(36, 50, 6, 14, 3, empties: 0, spread: 1, small: 2, alt: Seg(36, 50, 5, 12, 3, empties: 0, spread: 1, small: 1)),
+            Seg(51, 70, 7, 16, 3, empties: 0, spread: 1, small: 2, alt: Seg(51, 70, 6, 14, 3, empties: 0, spread: 1, small: 1)),
+            Seg(71, 85, 6, 14, 3, mystery: 2, empties: 0, spread: 1, small: 2, alt: Seg(71, 85, 7, 15, 3, mystery: 3)),
+            Seg(86, 100, 7, 15, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 14, 3, caps: CapacityMode.SmallLarge, mystery: 2, empties: 1, spread: 1)),
+            Seg(101, 110, 7, 15, 3, locks: 1, empties: 0, spread: 1, small: 2, alt: Seg(101, 110, 7, 15, 3, locks: 1, mystery: 2)),
+            Seg(111, 120, 7, 15, 3, locks: 1, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(111, 120, 7, 15, 3, caps: CapacityMode.SmallLarge, locks: 1)),
+            Seg(121, 150, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, alt: Seg(121, 150, 7, 16, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2)),
+            Seg(151, 175, 8, 18, 3, mystery: 3, locks: 1, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(151, 175, 7, 16, 3, caps: CapacityMode.Wide, locks: 2)),
+            Seg(176, 200, 8, 19, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 19, 3, mystery: 2, reward: 1, empties: 0, spread: 1, small: 2)),
+            Seg(201, 225, 8, 20, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2, alt: Seg(201, 225, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2)),
+            Seg(226, 250, 8, 21, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 1, alt: Seg(226, 250, 8, 21, 3, mystery: 3, locks: 1, empties: 0, spread: 1, small: 2)),
+            Seg(251, 275, 8, 22, 3, mystery: 3, locks: 2, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(251, 275, 8, 22, 3, caps: CapacityMode.Wide, mystery: 2, locks: 2)),
+            Seg(276, 300, 8, 23, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, reward: 1, alt: Seg(276, 300, 8, 23, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2)),
         };
 
         /// <summary>Exact minimum-move search budget for the report (levels up to this number).</summary>
@@ -170,6 +177,8 @@ namespace Veliqora.Core.Levels
                     MysteryDepth = seg.Mystery,
                     Locks = seg.Locks,
                     RewardBottles = seg.RewardBottles,
+                    SpreadBottles = seg.Spread,
+                    SmallEmpties = seg.SmallEmpties,
                     MaxAttempts = seg.Locks > 0 || seg.Mystery > 0 ? 250 : 400,
                 };
                 candidates = new List<GeneratedLevel>();
@@ -188,6 +197,17 @@ namespace Veliqora.Core.Levels
                     candidates.Add(g);
                 }
                 if (candidates.Count > 0) break;
+            }
+            if ((candidates == null || candidates.Count == 0) && (seg.Spread > 0 || seg.SmallEmpties > 0 || seg.EmptyBottles < 2))
+            {
+                // Tight room made this layout family unsolvable within budget: fall back to two empty bottles.
+                var classic = new CurveSegment
+                {
+                    FirstLevel = seg.FirstLevel, LastLevel = seg.LastLevel, Colors = seg.Colors, EmptyBottles = 2, Capacity = seg.Capacity,
+                    MinSolution = seg.MinSolution, Candidates = seg.Candidates, MaxAdjacentPairs = seg.MaxAdjacentPairs, CapMode = seg.CapMode,
+                    Mystery = seg.Mystery, Locks = seg.Locks, RewardBottles = seg.RewardBottles, MinOptimal = seg.MinOptimal,
+                };
+                return BuildGenerated(n, baseSeed, classic, report, plan, seenLayouts);
             }
             if (candidates == null || candidates.Count == 0)
             {
@@ -215,7 +235,8 @@ namespace Veliqora.Core.Levels
                 var exact = PuzzleSolver.Solve(start, new SolverOptions { MaxNodes = 800_000, TimeoutMs = 15_000, HeuristicWeight = 1.0 });
                 if (exact.IsSolved && exact.Length < chosen.Solve.Length && PuzzleSolver.VerifySolution(start, exact.Moves, out _)) chosen.Solve = exact;
             }
-            var row = Row(n, chosen.Seed, chosen.Bottles, seg.Capacity, chosen.Solve, false, true, plan.Kind.ToString().ToLowerInvariant() + " stage=" + plan.Stage + " candidates=" + candidates.Count);
+            var row = Row(n, chosen.Seed, chosen.Bottles, seg.Capacity, chosen.Solve, false, true, plan.Kind.ToString().ToLowerInvariant() + " stage=" + plan.Stage + " candidates=" + candidates.Count
+                + " free=" + FreeSlots(start) + (seg.Spread > 0 ? " spread" : "") + (seg.SmallEmpties > 0 ? " small=" + seg.SmallEmpties : ""));
             row.StuckRate = chosen.StuckRate;
             row.MinimumMoves = chosen.MinimumMoves;
             report?.Add(row);
@@ -364,6 +385,14 @@ namespace Veliqora.Core.Levels
                 rows.Add(row);
             }
             return rows;
+        }
+
+        /// <summary>Empty slots on the board, excluding ad-locked bonus bottles.</summary>
+        public static int FreeSlots(GameState s)
+        {
+            int free = 0;
+            for (int i = 0; i < s.BottleCount; i++) if (!s[i].RewardLocked) free += s[i].Capacity - s[i].Count;
+            return free;
         }
 
         public static int DistinctColors(GameState s)

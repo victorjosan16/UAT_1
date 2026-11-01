@@ -117,6 +117,11 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
 - Every level, including level 1, is a generated, solver-verified, complete puzzle. No tutorial levels or coach marks.
 - Level 1: 3 colors × 4 layers, 3 full mixed bottles + 2 empty, exact minimum ≥ 6 pours (actual: 10). Levels 2–10: ≥ 7.
 - Colors: 1–10 → 3–4, 11–25 → 4–5, 26–50 → 5–6, 51–100 → 6–8, 101+ → 6–8 (201+ → 7–8) with mechanics for extra difficulty.
+- **Free space is distributed** (from level 6, most levels): instead of two big empty bottles, one extra bottle's room is
+  spread over the filled bottles (each starts at least half full) plus small 2-slot helper bottles (`SpreadBottles`,
+  `SmallEmpties`). Room per level type with capacity 4: classic 2 empty = 8 slots; spread + 2 small = 8 slots, no big empty;
+  spread + 1 small = 6 slots; spread + 1 empty = 8 slots. If a tight layout family is unsolvable within budget the
+  builder falls back to two empty bottles (never ships an unverified level).
 - Candidate gates: well mixed (no monochrome bottle, each color in ≥ 2 bottles), not a duplicate, minimum pours where required.
 - Exact minimum (`MinimumMoves`): breadth-first search over canonical states with full information (mystery treated as known),
   budget 300 000 states; stored in `validation.min`.

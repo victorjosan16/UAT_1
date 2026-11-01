@@ -39,8 +39,18 @@ namespace Veliqora.Core.Levels
         public int Locks;
         /// <summary>Extra ad-locked empty bottles appended (never needed for the solution).</summary>
         public int RewardBottles;
+        /// <summary>
+        /// Distributed free space: this many extra full-size bottles are added, but their room is spread over all
+        /// filled bottles (each starts partly filled) instead of being handed out as empty bottles.
+        /// </summary>
+        public int SpreadBottles;
+        /// <summary>Small empty helper bottles (capacity <see cref="SmallCapacity"/>) added in addition to EmptyBottles.</summary>
+        public int SmallEmpties;
+        public int SmallCapacity = 2;
 
-        public bool HasSpecials => CapacityMode != CapacityMode.Uniform || MysteryDepth > 0 || Locks > 0 || RewardBottles > 0;
+        public bool HasSpecials => CapacityMode != CapacityMode.Uniform || MysteryDepth > 0 || Locks > 0 || RewardBottles > 0 || SpreadBottles > 0 || SmallEmpties > 0;
+        /// <summary>Free slots on the starting board (difficulty indicator: less room = harder).</summary>
+        public int FreeSlots(int capacity) => (EmptyBottles + SpreadBottles) * capacity + SmallEmpties * SmallCapacity;
     }
 
     public sealed class GeneratedLevel
@@ -146,12 +156,42 @@ namespace Veliqora.Core.Levels
 
             var bottles = new List<BottleState>();
             k = 0;
-            for (int b = 0; b < n; b++)
+            if (spec.SpreadBottles <= 0)
             {
-                var units = new int[caps[b]];
-                Array.Copy(pool, k, units, 0, caps[b]);
-                k += caps[b];
-                bottles.Add(new BottleState(caps[b], units));
+                for (int b = 0; b < n; b++)
+                {
+                    var units = new int[caps[b]];
+                    Array.Copy(pool, k, units, 0, caps[b]);
+                    k += caps[b];
+                    bottles.Add(new BottleState(caps[b], units));
+                }
+            }
+            else
+            {
+                // Distributed space: n + SpreadBottles bottles share the units; every bottle starts partly filled
+                // (at least half full), so there is free room everywhere but no big empty bottle.
+                int m = n + spec.SpreadBottles;
+                var bcaps = new int[m];
+                for (int i = 0; i < m; i++) bcaps[i] = i < n ? caps[i] : caps[rng.Range(0, n)];
+                var fill = (int[])bcaps.Clone();
+                int free = -total;
+                foreach (var c in bcaps) free += c;
+                int guard = 0;
+                while (free > 0 && guard++ < 10_000)
+                {
+                    int b = rng.Range(0, m);
+                    if (fill[b] - 1 < Math.Max(2, (bcaps[b] + 1) / 2)) continue;
+                    fill[b]--; free--;
+                }
+                if (free > 0) return null;
+                for (int b = 0; b < m; b++)
+                {
+                    var units = new int[fill[b]];
+                    Array.Copy(pool, k, units, 0, fill[b]);
+                    k += fill[b];
+                    bottles.Add(new BottleState(bcaps[b], units));
+                }
+                n = m; // mystery / corks below may use every filled bottle
             }
             int maxCap = 0;
             foreach (var c in caps) maxCap = Math.Max(maxCap, c);
@@ -161,6 +201,8 @@ namespace Veliqora.Core.Levels
                 int cap = spec.CapacityMode == CapacityMode.Uniform ? spec.Capacity : (e == 0 ? Math.Max(maxCap, spec.Capacity) : spec.Capacity);
                 bottles.Add(BottleState.Empty(cap));
             }
+
+            for (int e = 0; e < spec.SmallEmpties; e++) bottles.Add(BottleState.Empty(spec.SmallCapacity));
 
             // Mystery layers.
             if (spec.MysteryDepth > 0)
@@ -192,7 +234,7 @@ namespace Veliqora.Core.Levels
                         {
                             // A color that has no units inside any corked bottle (otherwise it could never be completed).
                             var candidates = new List<int>();
-                            for (int c = 1; c <= n; c++)
+                            for (int c = 1; c <= spec.Colors; c++)
                             {
                                 bool inside = bottles[b].CountOf(c) > 0;
                                 foreach (var lb in locked) if (bottles[lb].CountOf(c) > 0) inside = true;
