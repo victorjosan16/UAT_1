@@ -39,14 +39,16 @@ namespace Veliqora.Core.Layout
             if (count <= 0) count = 1;
             int preferred = Math.Min(MaxRows, PreferredRows(count));
             var pick = Evaluate(count, preferred, areaWidth, areaHeight, aspect);
-            if (pick.BottleWidth < ComfortWidth)
+            // "according to the available space": another row count wins only if bottles get clearly bigger
+            // (≥ 25 %), or if the preferred one would make them uncomfortably small.
+            var preferredPick = pick;
+            for (int rows = 1; rows <= MaxRows; rows++)
             {
-                // "according to the available space": on unusual aspect ratios fall back to the row count with the largest bottles
-                for (int rows = 1; rows <= MaxRows; rows++)
-                {
-                    var alt = Evaluate(count, rows, areaWidth, areaHeight, aspect);
-                    if (alt.BottleWidth > pick.BottleWidth + 0.5f) pick = alt;
-                }
+                if (rows == preferred) continue;
+                var alt = Evaluate(count, rows, areaWidth, areaHeight, aspect);
+                bool clearlyBigger = alt.BottleWidth >= preferredPick.BottleWidth * 1.25f;
+                bool rescue = preferredPick.BottleWidth < ComfortWidth;
+                if ((clearlyBigger || rescue) && alt.BottleWidth > pick.BottleWidth + 0.5f) pick = alt;
             }
             pick.BottleWidth = Math.Max(MinWidth, pick.BottleWidth);
             pick.BottleHeight = pick.BottleWidth * aspect;

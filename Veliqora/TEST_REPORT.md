@@ -4,10 +4,10 @@ Date: 2026-10-31. Environment: Linux container, .NET SDK 8.0.133 (Ubuntu package
 
 ## 1. Executed
 
-### 1.1 EditMode suite against the pure core: **155 / 155 passed**
+### 1.1 EditMode suite against the pure core: **162 / 162 passed**
 ```
 $ cd Veliqora && dotnet test Tools/Veliqora.Core.Tests -c Release
-Passed!  - Failed: 0, Passed: 155, Skipped: 0, Total: 155, Duration: 3 m 3 s - Veliqora.Core.Tests.dll (net8.0)
+Passed!  - Failed: 0, Passed: 162, Skipped: 0, Total: 162, Duration: 3 m 8 s - Veliqora.Core.Tests.dll (net8.0)
 ```
 These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Tests/EditMode`, NUnit 3 attributes only).
 
@@ -23,7 +23,7 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 | MiniJsonTests | 6 | round trip, malformed input |
 | StagePacingTests | 6 | deterministic planner, boss at every stage finale, random hard levels appear early (≤ L20) at ~10–30% and never back-to-back, hard/boss harder than normal (par + stuck rate) in every tier, non-linear difficulty, hard/boss first-clear bonus |
 | ObstacleTests | 10 | frozen/locked mapping, ice blocks pours and thaws after N pours, frozen source blocked, padlock opens on key color, lock chains, undo restores ice, generator styles, 20-bottle doubled-color board, every catalog obstacle cleared in the stored solution |
-| BoardLayoutTests | 4 | 5–20 bottles fit the board with no overlap (bottles + tags) and balanced rows (2 aspects), rows grow with board size, desktop timing proxy for a hint on a 20-bottle board |
+| BoardLayoutTests | 11 | row rules (1 / 2 / 3 rows, compact grid 16–20), centering, other resolutions, | 5–20 bottles fit the board with no overlap (bottles + tags) and balanced rows (2 aspects), rows grow with board size, desktop timing proxy for a hint on a 20-bottle board |
 | ChapterTests | 2 | 30-level / 90-star chapters, chapter chest granted exactly once |
 | LevelProgressionTests | 5 | level 1 spec (3 colors × 4, 3 mixed + 2 empty, ≥ 6 pours by exhaustive search), levels 2–10 ≥ 7 pours, first 100 complete/distinct/solvable, no duplicates in 300, level 1 undo/restart/hint + win unlocks level 2 + save round trip |
 | SpecialBottlesTests | 18 | mystery reveal/undo/hidden units never move, corks (all 4 conditions, chained unlocks), bonus bottles never required, mixed capacities win rule, objectives, Remove Color, JSON round trip |
@@ -34,7 +34,7 @@ These are the same source files Unity's Test Runner uses (`Assets/_Veliqora/Test
 ### 1.2 Batch level validation: **300 / 300 PASS**
 ```
 $ dotnet run -c Release --project Tools/LevelGen -- validate
-Validated 300 levels: 300 PASS, 0 FAIL in 94.4s -> Docs/level_validation_report.csv
+Validated 300 levels: 300 PASS, 0 FAIL in 100.0s -> Docs/level_validation_report.csv
 ```
 For each level the validator:
 - checks the color distribution;

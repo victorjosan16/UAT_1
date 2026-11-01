@@ -50,7 +50,15 @@ namespace Veliqora.Tests.EditMode
         {
             for (int n = 1; n <= 5; n++) Assert.AreEqual(1, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
             for (int n = 6; n <= 10; n++) Assert.AreEqual(2, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
-            for (int n = 11; n <= 15; n++) Assert.AreEqual(3, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
+            for (int n = 11; n <= 15; n++)
+            {
+                // three rows, unless two rows give clearly bigger bottles on this screen ("after the available space")
+                var l = BoardLayout.Choose(n, AreaW, AreaH, 3.2f);
+                Assert.That(l.Rows, Is.InRange(2, 3), "n=" + n);
+                if (l.Rows == 2)
+                    Assert.GreaterOrEqual(l.BottleWidth, BoardLayout.Choose(n, AreaW, AreaH * 0.66f, 3.2f).BottleWidth, "2 rows only when it pays off");
+            }
+            Assert.AreEqual(3, BoardLayout.Choose(15, AreaW, AreaH, 3.2f).Rows, "15 bottles use three rows");
             for (int n = 16; n <= 20; n++)
             {
                 // compact grid: 4 rows when bottles stay comfortable, otherwise the denser 3-row grid gives bigger bottles

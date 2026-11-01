@@ -61,9 +61,8 @@ namespace Veliqora.Presentation
         {
             int w = p.Width, h = p.Height;
             p.Gradient((0f, C("#08151A")), (0.45f, C("#0E2430")), (1f, C("#132A45")));
-            p.Glow(new Vector2(w * 0.72f, h * 0.86f), w * 0.5f, A(C("#9CC8E8"), 0.16f), 1.6f);
-            p.Fill(q => PixelPainter.Circle(q, new Vector2(w * 0.72f, h * 0.86f), w * 0.055f), A(C("#E8F2FA"), 0.85f), null,
-                new RectInt((int)(w * 0.65f), (int)(h * 0.86f - w * 0.08f), (int)(w * 0.15f), (int)(w * 0.16f)));
+            // soft moonlight glow only (a moon disc would sit under the HUD)
+            p.Glow(new Vector2(w * 0.5f, h * 0.95f), w * 0.75f, A(C("#9CC8E8"), 0.14f), 1.6f);
             Stars(p, r, 90, h * 0.62f, 0.6f);
             Color[] layers = { C("#1B3A44"), C("#14303A"), C("#0D232B"), C("#081A20") };
             for (int l = 0; l < layers.Length; l++)

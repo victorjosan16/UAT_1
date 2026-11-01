@@ -136,6 +136,16 @@ an APK/AAB, or on-device performance.
 - ⬜ Not done: "special bottle with a unique ability" from the chart, weekly challenges/events, Android performance measurement
   (needs a device + Unity Profiler).
 
+## Gameplay visual redesign
+- 🟡 Clear glass (thin rim, near-transparent body, tapered reflections, 256 px sprites), pure liquids with hairline seams and a
+  natural meniscus, five original chapter backgrounds (Quiet Forest, Crystal Lake, Colorful Canyon, Magic Cave, Temple of
+  Colors) in gameplay, victory and map, modern UI (squircle buttons, glass panels, pill header/moves, booster tray).
+  Compiles; seen only in offline renders (`Docs/ArtPreview/qa_level_*.png`, `chapter_backgrounds_5.png`), not in Unity.
+- ✅ Layout rule 1 / 2 / 3 rows and compact grid for 16–20 with "available space" fallback, centered; tested for 5–20 bottles,
+  several board heights, no overlaps.
+- 🟡 Real screenshots: menu **Veliqora → Capture QA Level Screenshots (Play Mode)** writes `Docs/Screenshots/real_level_NNN.png`
+  for levels 1, 5, 11, 25, 50, 100; PlayMode test `QaLevels_Open_LayoutWithoutOverlaps_AndRespondToTaps` written. Neither run yet.
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

@@ -333,6 +333,43 @@ namespace Veliqora.Tests.PlayMode
             try { Directory.Delete(fresh, true); } catch (IOException) { }
         }
 
+        [UnityTest]
+        public IEnumerator QaLevels_Open_LayoutWithoutOverlaps_AndRespondToTaps()
+        {
+            foreach (int n in Infrastructure.QaScreenshotRunner.Levels)
+            {
+                UnlockUpTo(n);
+                yield return Go(ScreenId.Gameplay, n);
+                var c = Gameplay.Controller;
+                var views = Gameplay.Board.Views;
+                Assert.AreEqual(S.Levels.Get(n).Bottles.Length, views.Count, "level " + n + " bottle count");
+                var board = (RectTransform)Gameplay.Board.transform;
+                for (int i = 0; i < views.Count; i++)
+                {
+                    var ri = WorldRect(views[i].Rect);
+                    Assert.IsTrue(WorldRect(board).Overlaps(ri), "level " + n + " bottle " + i + " inside the board");
+                    for (int j = i + 1; j < views.Count; j++)
+                        Assert.IsFalse(ri.Overlaps(WorldRect(views[j].Rect)), "level " + n + ": bottles " + i + " and " + j + " overlap");
+                }
+                // first tap on a usable, non-empty bottle selects it
+                for (int i = 0; i < c.Session.Current.BottleCount; i++)
+                {
+                    var b = c.Session.Current[i];
+                    if (b.IsEmpty || b.IsLocked) continue;
+                    Assert.AreEqual(Core.Session.TapKind.Selected, c.Session.Tap(i).Kind, "level " + n);
+                    c.Session.ClearSelection();
+                    break;
+                }
+            }
+        }
+
+        private static Rect WorldRect(RectTransform rt)
+        {
+            var corners = new Vector3[4];
+            rt.GetWorldCorners(corners);
+            return new Rect(corners[0].x, corners[0].y, corners[2].x - corners[0].x, corners[2].y - corners[0].y);
+        }
+
         private int FindLevel(Func<Core.Levels.LevelDefinition, bool> pred)
         {
             for (int i = 1; i <= S.Levels.Count; i++) if (pred(S.Levels.Get(i))) return i;
