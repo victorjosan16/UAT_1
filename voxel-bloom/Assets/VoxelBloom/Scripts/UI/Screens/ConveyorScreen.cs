@@ -217,6 +217,7 @@ namespace VoxelBloom
 
             // cubes on the belt (one image per slot), flights and effects above
             CubeLayer = UI.Rect(Space, "Cubes"); CubeLayer.anchorMin = CubeLayer.anchorMax = new Vector2(0.5f, 0.5f);
+            Isolate(CubeLayer);
             SlotCubes = new Image[level.Slots];
             for (int k = 0; k < level.Slots; k++)
             {
@@ -227,7 +228,9 @@ namespace VoxelBloom
                 SlotCubes[k] = c;
             }
             FlyLayer = UI.Rect(Space, "Flying"); FlyLayer.anchorMin = FlyLayer.anchorMax = new Vector2(0.5f, 0.5f);
+            Isolate(FlyLayer);
             FxLayer = UI.Rect(Space, "Fx"); FxLayer.anchorMin = FxLayer.anchorMax = new Vector2(0.5f, 0.5f);
+            Isolate(FxLayer);
 
             HintText = UI.Text(Space, "", 40, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Hex("#1A1450"));
             HintText.Wrap = true;
@@ -236,6 +239,16 @@ namespace VoxelBloom
             HintText.rectTransform.sizeDelta = new Vector2((W - 7f) * K, 4f * K);
 
             BuildQueue(level);
+        }
+
+        /// <summary>
+        /// Performance: a nested Canvas so elements that change every frame (moving cubes, flights, effects, tray cells)
+        /// only rebuild their own small batch instead of the whole screen canvas.
+        /// </summary>
+        static void Isolate(RectTransform rt)
+        {
+            var c = rt.gameObject.AddComponent<Canvas>();
+            c.pixelPerfect = false;
         }
 
         StationView BuildStation(ConveyorStationDef st)
@@ -249,6 +262,7 @@ namespace VoxelBloom
             var root = UI.Rect(Space, "Station"); root.anchorMin = root.anchorMax = new Vector2(0.5f, 0.5f);
             v.Root = root;
             v.Group = root.gameObject.AddComponent<CanvasGroup>();
+            Isolate(root); // compartment colours change often: rebuild only this tray
             v.Rim = RoundRect(root, "Rim", centre, size, 0.3f, TrayRim);
             v.Inner = RoundRect(root, "Inner", centre, size - new Vector2(0.2f, 0.2f), 0.24f, TrayInner);
             v.Tray = v.Rim.rectTransform;

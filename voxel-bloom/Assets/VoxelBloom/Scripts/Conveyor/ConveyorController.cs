@@ -20,6 +20,7 @@ namespace VoxelBloom
         float acc;
         bool paused, finished, failShown;
         int shownCoins = -1;
+        int hintTray = -2;
 
         sealed class Flight { public Image Img; public Vector2 From; public int Station, Compartment; public float T, Dur; }
         readonly List<Flight> flights = new List<Flight>();
@@ -54,7 +55,7 @@ namespace VoxelBloom
             session = (snapshot != null ? ConveyorSession.FromSnapshot(def, snapshot) : null) ?? new ConveyorSession(def, true, true);
             colors = new Color[def.Colors.Length];
             for (int i = 0; i < colors.Length; i++) colors[i] = Theme.Hex(def.Colors[i]);
-            acc = 0; paused = finished = failShown = false;
+            acc = 0; paused = finished = failShown = false; hintTray = -2;
             foreach (var f in flights) if (f.Img != null) Destroy(f.Img.gameObject);
             flights.Clear(); flightPool.Clear(); feedPop.Clear();
             Time.timeScale = 1f;
@@ -79,6 +80,7 @@ namespace VoxelBloom
             var tray = session.Queue[qi];
             var from = view.CardInSpace(qi);
             int st = session.Place(qi);
+            hintTray = -2;
             session.ClearEvents();
             if (st < 0) return;
             Services.Audio.Play(Sfx.Whoosh, 1f + st * 0.03f);
@@ -310,7 +312,9 @@ namespace VoxelBloom
         {
             // tutorial (level 1): point at the best tray until two trays are placed
             bool show = level.Tutorial && !finished && session.Placed < 2;
-            int best = show ? ConveyorSolver.Hint(session) : -1;
+            if (!show) { if (view.HintArrow.gameObject.activeSelf) view.HintArrow.gameObject.SetActive(false); view.HintText.text = ""; return; }
+            if (Time.frameCount % 15 == 0 || hintTray < -1) hintTray = ConveyorSolver.Hint(session); // the solver allocates: not every frame
+            int best = hintTray < session.VisibleCount ? hintTray : -1;
             view.HintArrow.gameObject.SetActive(best >= 0);
             view.HintText.text = show ? (session.Placed == 0 ? "Atinge o tavă de jos.\nCuburile de aceeași culoare\no umplu de pe bandă." : "Bravo! Mai trimite una.") : "";
             if (best >= 0)
