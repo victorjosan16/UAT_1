@@ -77,7 +77,11 @@ namespace Veliqora.UI.Screens
             var bar = TopBar();
             AddBack(bar, () => S.Navigator.Go(ScreenId.MainMenu));
             AddCoins(bar);
-            Ribbon(Safe, Loc.T("Valley Map"), -UIStyle.TopBarHeight - UIStyle.Space3, 520, UIStyle.Mint);
+            var chapter = Core.Progression.Chapters.Get(Core.Progression.Chapters.IndexOf(prog.CurrentLevel), S.Levels.Count);
+            Ribbon(Safe, Loc.F("Chapter {0}: {1}", chapter.Index, Loc.T(chapter.Name)), -UIStyle.TopBarHeight - UIStyle.Space3, 760, UIStyle.Mint);
+            var chStars = UIFactory.Text(Safe, "★ " + Core.Progression.Chapters.Stars(prog, chapter) + " / " + chapter.MaxStars, UIStyle.FontLabel, Color.white);
+            UIFactory.Place(chStars.rectTransform, new Vector2(0.5f, 1f), new Vector2(500, 60), new Vector2(0, -UIStyle.TopBarHeight - UIStyle.Space3 - 140), new Vector2(0.5f, 1f));
+            UIFactory.AddShadow(chStars, new Color(0, 0, 0, 0.45f), new Vector2(0, -3));
             var gear = UIFactory.IconButton(Safe, Icon.Gear, UIStyle.Violet, 110, () => CommonOverlays.ShowSettings(S));
             UIFactory.Place(gear.Rect, new Vector2(1, 0), gear.Rect.sizeDelta, new Vector2(-UIStyle.Space3, UIStyle.Space3), new Vector2(1, 0));
 
@@ -157,7 +161,12 @@ namespace Veliqora.UI.Screens
                 var banner = UIFactory.Image(node, "Stage", SpriteLibrary.Rounded(28), new Color(0.08f, 0.06f, 0.2f, 0.82f));
                 UIFactory.Place(banner.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(230, 70), new Vector2(side * 220, 0));
                 UIFactory.AddOutline(banner, UIStyle.WithAlpha(S.Themes.Theme.Accent, 0.8f), 2f);
-                var bt = UIFactory.Text(banner.transform, "STAGE " + def.Stage, UIStyle.FontLabel, Color.white);
+                bool chapterStart = (n - 1) % Core.Progression.Chapters.LevelsPerChapter == 0;
+                string label = chapterStart
+                    ? Loc.T(Core.Progression.Chapters.Get(Core.Progression.Chapters.IndexOf(n), S.Levels.Count).Name)
+                    : Loc.F("STAGE {0}", def.Stage);
+                if (chapterStart) banner.rectTransform.sizeDelta = new Vector2(300, 70);
+                var bt = UIFactory.Text(banner.transform, label, chapterStart ? UIStyle.FontCaption : UIStyle.FontLabel, Color.white);
                 UIFactory.AddShadow(bt, new Color(0, 0, 0, 0.4f), new Vector2(0, -2));
             }
 

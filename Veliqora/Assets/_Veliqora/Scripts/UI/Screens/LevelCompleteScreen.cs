@@ -113,12 +113,17 @@ namespace Veliqora.UI.Screens
             _coinsText = UIFactory.Text(coinRow, "+0", UIStyle.FontTitle, Color.white, TextAnchor.MiddleLeft);
             UIFactory.Place(_coinsText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(360, 140), new Vector2(110, 0));
             UIFactory.AddShadow(_coinsText, new Color(0, 0, 0, 0.3f), new Vector2(0, -4));
-            _shownCoins = total + _result.ObjectiveCoins;
+            _shownCoins = total + _result.ObjectiveCoins + _result.ChapterCoins;
             Tween.Run(this, MotionPrefs.Dur(0.8f), k => _coinsText.text = "+" + Mathf.RoundToInt(_shownCoins * k), null, Ease.OutCubic);
             var extras = new System.Collections.Generic.List<string>();
             if (_result.Reward != null && _result.Reward.DifficultyBonus > 0)
                 extras.Add(Loc.F(_result.Kind == Core.Levels.LevelKind.Boss ? "Boss level bonus +{0}" : "Hard level bonus +{0}", _result.Reward.DifficultyBonus));
             if (_result.ObjectiveCoins > 0) extras.Add(Loc.F("Objectives +{0}", _result.ObjectiveCoins));
+            if (_result.ChapterCoins > 0)
+            {
+                extras.Add(Loc.F("Chapter chest +{0}", _result.ChapterCoins));
+                Tween.Delay(this, 1.2f, () => UnlockNotifications.Show(Loc.T("Chapter complete!"), Loc.T(_result.ChapterName) + "  ·  +" + _result.ChapterCoins, Icon.Chest));
+            }
             bool milestone = _result.Reward != null && _result.Reward.MilestoneCoins > 0;
             if (extras.Count > 0)
             {

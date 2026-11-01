@@ -26,6 +26,9 @@ namespace Veliqora.Gameplay
         public LevelReward Reward;
         /// <summary>Coins granted for completed (non-rewarded) objectives.</summary>
         public int ObjectiveCoins;
+        /// <summary>Chapter chest coins granted with this win (0 = none) and the chapter's English name.</summary>
+        public int ChapterCoins;
+        public string ChapterName;
         /// <summary>Completed rewarded objectives whose bonus can be claimed via an ad on the victory screen.</summary>
         public List<Core.Objectives.ObjectiveDef> RewardedObjectives = new List<Core.Objectives.ObjectiveDef>();
         public string AttemptId;
@@ -397,6 +400,8 @@ namespace Veliqora.Gameplay
             ProgressRules.RecordCompletion(prog, Level.Number, stars, _s.Levels.Count);
             if (prev <= 0 && Level.Kind == Core.Levels.LevelKind.Hard) _s.Save.Stats.HardCompleted++;
             if (prev <= 0 && Level.Kind == Core.Levels.LevelKind.Boss) _s.Save.Stats.BossCompleted++;
+            var chapter = Core.Progression.Chapters.Get(Core.Progression.Chapters.IndexOf(Level.Number), _s.Levels.Count);
+            int chapterCoins = Core.Progression.Chapters.TryGrantReward(prog, chapter, _s.Economy, _s.Save.ClaimedAchievements);
 
             // Objective rewards: granted once per attempt (ledger keys); rewarded objectives wait for an ad on the victory screen.
             int objectiveCoins = 0;
@@ -425,6 +430,8 @@ namespace Veliqora.Gameplay
                 Kind = Level.Kind,
                 Reward = reward,
                 ObjectiveCoins = objectiveCoins,
+                ChapterCoins = chapterCoins,
+                ChapterName = chapterCoins > 0 ? chapter.Name : null,
                 RewardedObjectives = rewardedObjectives,
                 AttemptId = Session.AttemptId,
                 IsLastLevel = Level.Number >= _s.Levels.Count,
