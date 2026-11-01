@@ -148,20 +148,4 @@ namespace VoxelBloom
             return b.Spawn(parent, "Bush", pos, size);
         }
     }
-
-    /// <summary>Gentle sway for flowers/trees in dioramas (one component, no per-object Update).</summary>
-    public sealed class DioramaAnimator : MonoBehaviour
-    {
-        readonly List<Transform> sway = new List<Transform>();
-        readonly List<float> phase = new List<float>();
-        public void Add(Component c, float ph) { sway.Add(c.transform); phase.Add(ph); }
-
-        void Update()
-        {
-            if (Services.ReducedEffects) return;
-            float t = Time.unscaledTime;
-            for (int i = 0; i < sway.Count; i++)
-                if (sway[i] != null) sway[i].localRotation = Quaternion.Euler(Mathf.Sin(t * 1.6f + phase[i]) * 4f, 0, Mathf.Sin(t * 1.2f + phase[i] * 1.7f) * 5f);
-        }
-    }
 }

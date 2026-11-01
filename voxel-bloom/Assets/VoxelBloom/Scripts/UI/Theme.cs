@@ -7,8 +7,6 @@ namespace VoxelBloom
     {
         public static readonly Color SkyTop = Hex("#7CC8FF");
         public static readonly Color SkyBottom = Hex("#EAF7FF");
-        public static readonly Color GameSkyTop = Hex("#9AD8FF");
-        public static readonly Color GameSkyBottom = Hex("#DDF2FF");
         public static readonly Color Panel = Color.white;
         public static readonly Color PanelSoft = Hex("#F4F1FF");
         public static readonly Color PanelLine = Hex("#E3DCFA");

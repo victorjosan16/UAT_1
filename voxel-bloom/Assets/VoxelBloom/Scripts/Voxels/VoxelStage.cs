@@ -163,12 +163,6 @@ namespace VoxelBloom
         /// <summary>Call when the player drags/taps the model: the turntable waits before resuming.</summary>
         public void NotifyInteraction(float pauseSeconds = 2.5f) => turntablePausedUntil = Time.unscaledTime + pauseSeconds;
 
-        public void ScalePedestal(float k)
-        {
-            PedestalRoot.localScale *= k;
-            PedestalRoot.localPosition = new Vector3(0, -PedestalRoot.localScale.y * 3f, 0);
-        }
-
         public void Shake(float strength) { if (!Services.ReducedEffects) shake = Mathf.Max(shake, strength); }
 
         void Update()

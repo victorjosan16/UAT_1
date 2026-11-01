@@ -38,7 +38,10 @@ namespace VoxelBloom
             BuildCarousel();
             BuildPlay();
             BuildNav();
+            foreach (var b in GetComponentsInChildren<UIButton>(true)) b.Squash = false; // static page
         }
+
+        public override bool FadeIn => false;
 
         // ------------------------------------------------------------------ 3D landscape + pedestal (static)
         void BuildDiorama()

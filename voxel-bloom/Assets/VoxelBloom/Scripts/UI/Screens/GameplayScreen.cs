@@ -112,7 +112,7 @@ namespace VoxelBloom
         public readonly Image[] LauncherOrb = new Image[GameSession.Launchers];
         public readonly VText[] BoosterCounts = new VText[4];
         public readonly UIButton[] BoosterButtons = new UIButton[4];
-        public VText LevelText, CoinsText, MovesText, ProgressText, RemainingText, HintText;
+        public VText LevelText, CoinsText, ProgressText, RemainingText, HintText;
         public Image[] Stars = new Image[3];
         public ProgressBar Progress;
         public RectTransform ModelPanel, ComboLayer, HardBadge, BoardRoot;
@@ -155,8 +155,6 @@ namespace VoxelBloom
                 Stars[i] = UI.Icon(sr, Icon.Star, 64);
                 Stars[i].rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 66, i == 1 ? 6 : 0), new Vector2(64, 64));
             }
-            MovesText = UI.Pill(hud, Icon.Lightning, "0", out var mr, 200, 76);
-            mr.gameObject.SetActive(false); // block count is shown under the progress bar (avoids overlapping the stars)
             CoinsText = UI.Pill(hud, Icon.Coin, "0", out var cr, 260, 76);
             cr.Place(new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(260, 76));
             var addCoins = UI.IconButton(cr, Icon.Plus, 64, ButtonStyle.Green);

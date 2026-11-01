@@ -14,6 +14,8 @@ namespace VoxelBloom
         public Sfx Sound = Sfx.Button;
         public float Cooldown = 0.25f;
         public RectTransform Face;
+        /// <summary>Press squash animation (disabled on the static Home page).</summary>
+        public bool Squash = true;
         float lastClick = -10f;
         bool pressed;
 
@@ -22,7 +24,7 @@ namespace VoxelBloom
             if (!Interactable) return;
             pressed = true;
             OnPress?.Invoke();
-            transform.localScale = new Vector3(0.94f, 0.92f, 1f);
+            if (Squash) transform.localScale = new Vector3(0.94f, 0.92f, 1f);
         }
 
         public void OnPointerUp(PointerEventData e) => Release();
@@ -33,7 +35,7 @@ namespace VoxelBloom
             if (!pressed) return;
             pressed = false;
             OnRelease?.Invoke();
-            Tween.Scale(transform, transform.localScale, Vector3.one, 0.18f, Ease.OutBack);
+            if (Squash) Tween.Scale(transform, transform.localScale, Vector3.one, 0.18f, Ease.OutBack);
         }
 
         public void OnPointerClick(PointerEventData e)

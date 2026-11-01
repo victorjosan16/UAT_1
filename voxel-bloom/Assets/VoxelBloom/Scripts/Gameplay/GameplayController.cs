@@ -523,7 +523,6 @@ namespace VoxelBloom
 
         void RefreshHud()
         {
-            view.MovesText.text = session.BlocksLeft.ToString();
             view.ProgressText.text = Mathf.FloorToInt(session.Progress * 100f) + "%";
             view.RemainingText.text = session.TotalRemaining + " voxels left  ·  " + session.BlocksLeft + " blocks";
             int projected = level.StarsForScore(session.Score);

@@ -87,20 +87,6 @@ namespace VoxelBloom
             return ToSprite(p, "Ribbon", new Vector4(60, 30, 60, 30));
         });
 
-        /// <summary>Soft sun rays (behind the logo).</summary>
-        public static Sprite Rays() => Cached("rays", () =>
-        {
-            const int S = 256;
-            var p = new IconPainter(S, S);
-            for (int i = 0; i < 14; i++)
-            {
-                float a0 = i * Mathf.PI * 2 / 14, a1 = a0 + Mathf.PI / 22;
-                p.Polygon(new Color(1, 1, 1, 0.28f), new float[] { S / 2, S / 2, S / 2 + Mathf.Cos(a0) * S, S / 2 + Mathf.Sin(a0) * S, S / 2 + Mathf.Cos(a1) * S, S / 2 + Mathf.Sin(a1) * S });
-            }
-            p.SoftRect(S * 0.3f, S * 0.3f, S * 0.7f, S * 0.7f, S * 0.2f, S * 0.12f, new Color(1, 1, 1, 0.55f));
-            return ToSprite(p, "Rays");
-        });
-
         /// <summary>Glossy white sphere (tint with Image.color) - launcher "cannon balls".</summary>
         public static Sprite Orb() => Cached("orb", () =>
         {

@@ -67,7 +67,7 @@ namespace VoxelBloom
             s.OnShow();
             var cg = s.GetComponent<CanvasGroup>();
             if (cg == null) cg = s.gameObject.AddComponent<CanvasGroup>();
-            Tween.Fade(cg, 0f, 1f, 0.22f);
+            if (s.FadeIn) Tween.Fade(cg, 0f, 1f, 0.22f); else cg.alpha = 1f;
             return (T)s;
         }
 
@@ -129,6 +129,8 @@ namespace VoxelBloom
         public virtual void OnShow() { }
         public virtual void OnHide() { }
         public virtual void OnBack() { }
+        /// <summary>Short fade when the screen is shown (Home is fully static and opts out).</summary>
+        public virtual bool FadeIn => true;
     }
 
     /// <summary>Modal dialog: dark backdrop, white rounded panel, purple ribbon title and close button.</summary>
