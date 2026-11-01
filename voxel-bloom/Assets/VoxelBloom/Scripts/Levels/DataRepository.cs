@@ -58,6 +58,32 @@ namespace VoxelBloom
             return m;
         }
 
+        readonly Dictionary<int, ConveyorLevel> conveyor = new Dictionary<int, ConveyorLevel>();
+        int conveyorCount = -1;
+
+        /// <summary>Number of shipped conveyor levels (Resources/VoxelBloom/Conveyor/level_NNN.json, contiguous from 1).</summary>
+        public int ConveyorLevelCount
+        {
+            get
+            {
+                if (conveyorCount >= 0) return conveyorCount;
+                int n = 0;
+                while (Resources.Load<TextAsset>(Root + "Conveyor/level_" + (n + 1).ToString("000")) != null) n++;
+                return conveyorCount = n;
+            }
+        }
+
+        public ConveyorLevel GetConveyorLevel(int id)
+        {
+            if (conveyor.TryGetValue(id, out var l)) return l;
+            var ta = Resources.Load<TextAsset>(Root + "Conveyor/level_" + id.ToString("000"));
+            if (ta == null) { Debug.LogError("[VoxelBloom] Conveyor level " + id + " missing"); return null; }
+            try { l = ConveyorLevel.FromJson(MiniJson.Obj(MiniJson.Parse(ta.text))); }
+            catch (System.Exception e) { Debug.LogError("[VoxelBloom] Conveyor level " + id + " invalid: " + e.Message); return null; }
+            conveyor[id] = l;
+            return l;
+        }
+
         /// <summary>Idle animation profile of a model (null when the model has none).</summary>
         public AnimProfile GetAnim(string id)
         {

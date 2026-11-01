@@ -153,7 +153,7 @@ namespace VoxelBloom
             b.OnClick = () =>
             {
                 if (!unlocked) { Router.Toast("Complete level " + (level - 1) + " first", Icon.Lock); return; }
-                GameplayController.StartLevel(level);
+                ConveyorController.StartLevel(level);
             };
         }
 

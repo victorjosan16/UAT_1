@@ -137,7 +137,7 @@ namespace VoxelBloom
         {
             Close();
             int next = Level.Id + 1;
-            if (next <= Services.Config.TotalLevels && Services.Progress.IsLevelUnlocked(next)) GameplayController.StartLevel(next);
+            if (next <= ConveyorController.TotalLevels && Services.Progress.IsConveyorUnlocked(next, ConveyorController.TotalLevels)) ConveyorController.StartLevel(next);
             else
             {
                 var ch = Services.Config.ChapterOf(Math.Min(next, Services.Config.TotalLevels));

@@ -1,0 +1,100 @@
+# VOXEL BLOOM 3D — COMPLETE GAMEPLAY REBUILD
+# Claude Code master prompt — Unity Android
+
+ROLE
+You are a senior Unity 6 gameplay engineer, mobile game designer, technical artist, and QA engineer. Work on my EXISTING Unity Android project. Keep the game's exact public name: VOXEL BLOOM 3D. Do not rename it to Cube Conveyor or Car Loop. Preserve the existing Android package identifier, signing configuration, and compatible integrations unless changes are essential and documented.
+
+REFERENCES
+- Attached gameplay video 13224.mp4 and screenshot 13225.jpg: primary reference for the conveyor sorting mechanics and board arrangement.
+- Attached latest six-panel premium mockup: primary reference for the updated visual language, layout, menu, victory, level map, boosters, and shop. The text 'Cube Conveyor' on that mockup must be replaced everywhere with 'Voxel Bloom 3D'.
+- Do not assume every gameplay rule can be established from a static screenshot. Audit the video frame by frame and explicitly document any uncertain rules; implement the rules specified below as the project baseline.
+
+MISSION
+Replace the old voxel-shooter gameplay entirely with a polished airport-inspired COLOR-CUBE CONVEYOR SORT puzzle. Keep the original game title and preserve useful systems. The result must be a fully playable Unity Android game, not a static mockup or demo.
+
+1. AUDIT BEFORE EDITING
+Inspect repository, Unity version, scene list, scripts, save keys, services, assets, dependencies, build settings and tests. Create a backup branch / commit before destructive changes. List which old systems will be removed (projectile launchers, numbered ammo blocks, voxel destruction, old board), which systems will be reused (save, ads, currency, audio), and which will be replaced. Do not delete existing assets before checking references. Report architecture and migration plan.
+
+2. CORE BOARD
+Portrait orientation. One continuous CLOSED ROUNDED-RECTANGLE conveyor LOOP surrounds a central play area. Colored small cubes travel around this same perimeter in one direction, including all four rounded corners. There are NO vehicles, NO wheels, NO cars. Inner stationary trays contain colored compartments and are oriented vertically or horizontally around the loop. Additional tray queue at the bottom. The loop itself stays fixed in position; cubes travel along it.
+
+3. COLOR-CUBE CONVEYOR MECHANIC
+Represent every cube as a logical item with stable unique ID, color ID, path-distance coordinate, state and reservation. Drive all cubes around a closed path using arc-length parametrization, constant world-space speed and deltaTime; smooth corner interpolation; stable spacing without overtaking or overlap. Cubes wrap around continuously until matched. Rendering can use pooled meshes/sprites but gameplay must be deterministic.
+
+4. TRAYS / MATCHING
+Each tray has a sequence of colored compartments (example: magenta, peach, green, magenta). A tray is stationary at its assigned station while active. When a passing cube matches the next available required compartment at that station, reserve it and animate a clear transfer from conveyor to tray. Remove that cube from the circulating set ONLY on successful arrival. A mismatched cube stays on the conveyor and continues circulating. Trays complete when every required compartment is filled; play a completion animation, update level objective, clear the station, and allow a replacement tray. If the reference video clearly shows an alternative transfer direction or ordering, document that observation and adjust the rule consistently, with tests.
+
+5. PLAYER INTERACTION
+Bottom queue contains trays awaiting placement. Tap an eligible tray to send it smoothly to a compatible empty station, with clear preview/selection feedback. Do not allow selecting covered or locked trays if reference rules restrict them. Reserve station and tray atomically to prevent double-tap duplication. If no station is free, do not consume the tray. Completed trays leave their station and free it. Empty trays or trays with no required cargo must follow an explicit and tested lifecycle; never silently disappear. Include a clear loss/deadlock policy with an optional retry, not a softlock.
+
+6. SPECIAL SLOTS / BLOCKERS
+Implement the numbered grey tiles and green plus slots from the screenshot as configurable level elements. Numbered blockers unlock according to LevelData rules (do not invent universal meaning); green plus slots unlock or add station capacity according to explicit configuration. Show their requirements in UI. Make each mechanic optional per level and testable.
+
+7. LEVEL DATA AND SOLVABILITY
+Use ScriptableObject LevelData or equivalent serialized data: board geometry, color palette, circulating cube counts and order, station positions, tray contents and queue, blockers, unlock conditions, objectives, available boosters, move/failure rules. Ship 20 HAND-VALIDATED levels first, with tutorial integrated into level 1 gameplay (not a long intro), then scalable generation/authoring for 100+ levels. Ensure every required tray compartment has a matching cube and every level is solvable under queue and station constraints. Include a validator and reproducible simulation tests. Do not claim 100 complete levels if only generated placeholders exist.
+
+8. WIN / LOSS / PROGRESS
+Progress bar example '3/8' counts completed trays or the level's explicitly configured objective, NOT random collected cubes. Win only when the actual target is reached and pending transfers have resolved. Prevent double counting. Loss only for a documented rule (such as exhausted valid actions and proven deadlock). Provide pause, restart, resume, win rewards and next level. Save level index, earned stars, currency, booster inventory and applicable in-progress state safely.
+
+9. VISUAL DESIGN — PREMIUM MOCKUP
+Use the latest six-panel visual reference as a style/layout guide, but ALWAYS display 'Voxel Bloom 3D' as the logo and title. Screens: Home, Gameplay, Win, Level Map, Boosters, Shop, plus Pause/Settings. Style: polished modern casual 3D, clean glossy cubes, luminous cyan edge around conveyor, violet/navy panels, bright green primary actions, subtle warm airport interior details, coherent typography and restrained glow. Do not use the reference screenshot as a fake noninteractive UI. Build real buttons, panels and data-bound labels. No wheels on trays. Create independent reusable art assets/prefabs and avoid excessive neon/bloom.
+
+10. PHYSICS AND ANIMATIONS
+The conveyor is kinematic, not a collection of rigidbodies. Animate cube motion smoothly along the loop and transfer with short easing and visible directional travel. Cubes must never teleport between stations. Add subtle bounce, highlight and particle effects at successful transfer, satisfying sound and optional haptics. Trays slide into stations and exit naturally. Avoid one Rigidbody per cube; use pooling and deterministic path movement. Support pause and different frame rates.
+
+11. BOOSTERS
+Implement three meaningful, balanced boosters as shown: Undo (revert last valid tray placement or transaction using a reversible state snapshot), Shuffle (reorder eligible queued trays without violating solvability), and Extra Tray/Station (add a temporary valid placement capacity when allowed). All costs, inventory, rewards and restrictions must be explicit and testable. Never deduct booster currency on failed action.
+
+12. UI AND MONETIZATION
+Portrait responsive UI with Screen.safeArea and CanvasScaler; support common Android aspect ratios. HUD: level, progress, pause/settings. Home: logo Voxel Bloom 3D, Play, collection/level map, rewards, shop, daily. Win: stars, rewards, Next, Replay. Shop uses game currency and optional rewarded ads only where already configured. Keep ad integrations functional; no mandatory ads or fake purchase buttons. Separate monetization from game rules.
+
+13. TECHNICAL ARCHITECTURE
+Recommended modules:
+Core/GameStateMachine.cs
+Core/SaveService.cs
+Core/EventBus.cs
+Conveyor/ClosedLoopPath.cs
+Conveyor/ConveyorItem.cs
+Conveyor/ConveyorController.cs
+Sorting/ColorId.cs
+Sorting/TrayData.cs
+Sorting/TrayController.cs
+Sorting/StationController.cs
+Sorting/MatchResolver.cs
+Sorting/TransferAnimator.cs
+Sorting/TrayQueueController.cs
+Levels/LevelData.cs
+Levels/LevelLoader.cs
+Levels/LevelValidator.cs
+Levels/LevelProgress.cs
+Boosters/BoosterService.cs
+UI/HomePresenter.cs
+UI/GameplayPresenter.cs
+UI/WinPresenter.cs
+UI/ShopPresenter.cs
+Art/EffectsPool.cs
+Use clean interfaces and explicit ownership of state; keep visuals separate from rules. Avoid per-frame LINQ allocations and repeated scene searches.
+
+14. QA / ACCEPTANCE
+Automated tests: loop continuity, corner motion, constant speed, cube spacing, matching/nonmatching transfers, unique reservations, double taps, simultaneous arrival, tray completion, queue advancement, blocker unlocking, booster rollback, pause/resume, save/load, level win, deadlock, restart, no cube duplication/loss, and all level validation. Manual Android tests on portrait aspect ratios, mid-range performance and touch responsiveness. Target 60 FPS where feasible; offer lower-quality preset. Compile and run tests, then capture real Unity screenshots of Home, Gameplay and Win and compare with references. State clearly any tests/builds not actually executed.
+
+15. EXECUTION ORDER
+Phase A: audit + migration plan + playable one-level prototype.
+Phase B: complete deterministic conveyor, trays, matching, queue and level logic.
+Phase C: 20 validated levels and boosters.
+Phase D: premium visual overhaul for all screens.
+Phase E: audio, polish, Android optimization, test/build, screenshots and final report.
+After each phase, report files changed, mechanics verified, issues and next steps. Do not stop at pseudocode; implement actual working C# scripts, prefabs and scene hookups.
+
+FINAL NON-NEGOTIABLE REQUIREMENTS
+- Public name remains VOXEL BLOOM 3D everywhere.
+- Completely replace old shooter gameplay.
+- Exactly one closed circular/rounded-rectangle conveyor loop; cubes circulate continuously around it.
+- Stationary colored compartment trays; NO WHEELS or vehicles.
+- Automatic color matching and visible transfer animations.
+- Bottom tray queue, progress, boosters, 20 validated playable levels initially.
+- Premium design based on the provided mockup with functional Unity UI.
+- Preserve Android build identity and compatible user progress where possible, with migration or explicit reset policy.
+- Deliver a tested playable game, not screenshots alone.
+
+Start by auditing the existing repository and inspecting the supplied reference video, screenshot, and premium mockup.

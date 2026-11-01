@@ -90,6 +90,36 @@ namespace VoxelBloom.Core
             return true;
         }
 
+        // ------------------------------------------------------------------ conveyor sort (rules v3)
+        public int ConveyorStarsFor(int level) => save.ConveyorStars.TryGetValue(level, out var s) ? s : 0;
+        public bool IsConveyorUnlocked(int level, int total) => level >= 1 && level <= total && level <= save.ConveyorUnlocked;
+        public int LatestConveyorLevel(int total) => Math.Max(1, Math.Min(save.ConveyorUnlocked, Math.Max(1, total)));
+        public int ConveyorTotalStars { get { int t = 0; foreach (var v in save.ConveyorStars.Values) t += v; return t; } }
+
+        /// <summary>Stars: 3 without boosters, 2 with one or two, 1 otherwise.</summary>
+        public static int ConveyorStarsForBoosters(int boostersUsed) => boostersUsed == 0 ? 3 : boostersUsed <= 2 ? 2 : 1;
+
+        /// <summary>Records a conveyor win exactly once per call: stars, unlock, coins (replays pay 25%), gems every 5th level.</summary>
+        public CompletionReceipt CompleteConveyor(ConveyorLevel level, int boostersUsed, int total)
+        {
+            int stars = ConveyorStarsForBoosters(boostersUsed);
+            int prev = ConveyorStarsFor(level.Id);
+            bool first = prev == 0;
+            if (stars > prev) save.ConveyorStars[level.Id] = stars;
+            if (level.Id + 1 > save.ConveyorUnlocked && level.Id < total) save.ConveyorUnlocked = level.Id + 1;
+            int coins = level.RewardCoins + (stars - 1) * 10;
+            if (!first) coins = Math.Max(5, coins / 4);
+            wallet.Add(coins);
+            save.Coins = wallet.Coins;
+            bool gemLevel = level.Id % 5 == 0;
+            if (first && gemLevel) save.Gems += 10;
+            save.ConveyorActive = null;
+            save.ReceiptCounter++;
+            save.LastReceiptId = save.ReceiptCounter;
+            save.LastReceiptDoubled = false;
+            return new CompletionReceipt { Id = save.LastReceiptId, LevelId = level.Id, Stars = stars, Coins = coins, FirstClear = first, Hard = first && gemLevel, NewBest = stars > prev };
+        }
+
         public bool IsModelUnlocked(string modelId) => save.CollectionUnlocked.Contains(modelId);
 
         public int CollectedIn(string category, out int total)

@@ -327,7 +327,7 @@ namespace VoxelBloom
                            : UI.Button(Root, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110);
             ((RectTransform)play.transform).Place(new Vector2(0.5f, 0), new Vector2(0, art ? 540 : 508), art ? new Vector2(680, 244) : new Vector2(700, 176));
             if (art) UIArt.Skin(play, "Buttons/play"); // the reference button (label "Joacă" is part of the artwork)
-            play.OnClick = () => GameplayController.StartLevel(Services.Progress.LatestPlayableLevel());
+            play.OnClick = () => ConveyorController.StartLevel(Services.Progress.LatestConveyorLevel(ConveyorController.TotalLevels));
             play.Sound = Sfx.Whoosh;
 
             if (UIArt.Has("Buttons/level_badge_blank"))
@@ -341,12 +341,12 @@ namespace VoxelBloom
                 var lr = levelLabel.rectTransform;
                 lr.anchorMin = new Vector2(0.35f, 0.22f); lr.anchorMax = new Vector2(0.84f, 0.8f);
                 lr.offsetMin = lr.offsetMax = Vector2.zero;
-                lv.OnClick = () => Router.Show<LevelSelectScreen>();
+                lv.OnClick = () => Router.Show<ConveyorLevelsScreen>();
                 return;
             }
             var lvb = UI.Button(Root, "Nivel 1", ButtonStyle.Purple, new Vector2(380, 92), Icon.Star, 50);
             ((RectTransform)lvb.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 372), new Vector2(380, 92));
-            lvb.OnClick = () => Router.Show<LevelSelectScreen>();
+            lvb.OnClick = () => Router.Show<ConveyorLevelsScreen>();
             levelLabel = lvb.Face.Find("Label").GetComponent<VText>();
             // golden laurels
             var l1 = UI.Icon(Root, Icon.Leaf, 84); l1.color = Theme.Gold; l1.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(-232, 372), new Vector2(84, 84)); l1.rectTransform.localRotation = Quaternion.Euler(0, 0, 230);
@@ -407,7 +407,7 @@ namespace VoxelBloom
         public override void OnShow()
         {
             stage.SetActive(true);
-            levelLabel.text = "Nivel " + Services.Progress.LatestPlayableLevel();
+            levelLabel.text = "Nivel " + Services.Progress.LatestConveyorLevel(ConveyorController.TotalLevels);
             if (rewardsBadge != null) rewardsBadge.SetActive(Services.Daily.CanClaim(Services.Now));
             App.State.ForceReset(GameState.Home);
             Select(catalog.IndexOf(catalog.ResolveSaved(Services.Save.HomeCharacter, Services.Save)));

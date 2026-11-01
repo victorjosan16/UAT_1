@@ -56,12 +56,14 @@ namespace VoxelBloom
         {
             if (!paused) return;
             GameplayController.Active?.SaveProgress();
+            ConveyorController.Active?.SaveProgress();
             Services.Commit();
         }
 
         void OnApplicationQuit()
         {
             GameplayController.Active?.SaveProgress();
+            ConveyorController.Active?.SaveProgress();
             Services.Commit();
         }
     }

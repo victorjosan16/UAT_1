@@ -248,7 +248,7 @@ namespace VoxelBloom
                 var b = UI.IconButton(rt, unlocked ? Icon.Play : Icon.Lock, 110, unlocked ? ButtonStyle.Gold : ButtonStyle.White);
                 ((RectTransform)b.transform).Place(new Vector2(1, 0.5f), new Vector2(-90, 0), new Vector2(110, 110));
                 int level = l;
-                b.OnClick = () => { if (unlocked) GameplayController.StartLevel(level); else Router.Toast("Reach level " + level + " first", Icon.Lock); };
+                b.OnClick = () => { if (unlocked) ConveyorController.StartLevel(Mathf.Min(level, ConveyorController.TotalLevels)); else Router.Toast("Reach level " + level + " first", Icon.Lock); };
             }
         }
 

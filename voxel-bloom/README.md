@@ -21,7 +21,18 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
 Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈1 min), then
 `node tools/test-rules.mjs`. Mascot contact sheets: `COLS=5 node tools/preview.mjs out.png id,id,...` (see `Docs/Mascots_*.png`).
 
-## Gameplay rules (v2 — 4 columns, 4 launchers)
+## Gameplay (rules v3: conveyor sort, airport style)
+Coloured cubes travel around **one closed rounded-rectangle conveyor loop**. Tap a tray from the bottom queue: it goes to the
+first free station beside the loop, and passing cubes of the colour it needs next jump into its compartments (a visible
+flight). Full trays leave and the progress (`3/8`) counts completed trays. Cubes that do not fit on the belt wait in the feeder
+(`+N`). If the belt fills with cubes nobody needs, it jams. Boosters: **Undo** (last placement), **Shuffle** (queue order,
+kept only if still winnable), **Extra station** (opens a green plus slot). Numbered grey tiles open after n completed trays.
+Full rules, audit, migration and the decisions on uncertain points: `Docs/ConveyorRules.md`.
+20 validated levels (`node tools/conveyor/build-levels.mjs`, tests `node tools/conveyor/test.mjs`, preview
+`node tools/conveyor/preview.mjs <level> <seconds> out.png`). The old voxel-shooter (rules v2, described below) is no
+longer reachable; its code stays until the cleanup phase.
+
+## Old gameplay rules (v2, shooter — replaced)
 * The board has **4 columns** of numbered colour blocks; **only the top block of each column is active**.
 * Tap a top block → it moves into one of the **4 launchers** above the board.
 * Every launcher **fires glowing projectiles** (visible trajectory) at the model: one voxel of its colour per shot,

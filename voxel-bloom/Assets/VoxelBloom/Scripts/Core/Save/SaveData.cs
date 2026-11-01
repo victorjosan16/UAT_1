@@ -16,7 +16,7 @@ namespace VoxelBloom.Core
     /// <summary>All persistent player state. Serialized as versioned JSON by SaveSerializer.</summary>
     public sealed class SaveData
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         public int Version = CurrentVersion;
         public int Coins;
@@ -42,6 +42,12 @@ namespace VoxelBloom.Core
         public int Gems = 50;
         /// <summary>Character shown on the Home screen (v3).</summary>
         public string HomeCharacter = CharacterCatalog.Starter;
+        /// <summary>Conveyor sort progress (v4): highest unlocked conveyor level, best stars, unfinished level snapshot.
+        /// The old shooter levels are a different game, so their progress does not carry over (explicit reset policy);
+        /// coins, gems, lives, boosters, settings and the collection are kept.</summary>
+        public int ConveyorUnlocked = 1;
+        public readonly Dictionary<int, int> ConveyorStars = new Dictionary<int, int>();
+        public Dictionary<string, object> ConveyorActive;
 
         public static SaveData CreateNew(GameConfig cfg)
         {
@@ -72,6 +78,8 @@ namespace VoxelBloom.Core
             foreach (var kv in s.Boosters) boosters[kv.Key.ToString()] = (double)kv.Value;
             var coll = new List<object>();
             foreach (var id in s.CollectionUnlocked) coll.Add(id);
+            var cstars = new Dictionary<string, object>();
+            foreach (var kv in s.ConveyorStars) cstars[kv.Key.ToString()] = (double)kv.Value;
             var st = s.Settings ?? new SettingsData();
             var d = new Dictionary<string, object>
             {
@@ -100,6 +108,9 @@ namespace VoxelBloom.Core
                 { "totalScore", (double)s.TotalScore },
                 { "gems", (double)s.Gems },
                 { "homeCharacter", s.HomeCharacter ?? CharacterCatalog.Starter },
+                { "conveyorUnlocked", (double)s.ConveyorUnlocked },
+                { "conveyorStars", cstars },
+                { "conveyorActive", s.ConveyorActive },
             };
             return MiniJson.Serialize(d);
         }
@@ -147,6 +158,12 @@ namespace VoxelBloom.Core
             s.TotalScore = MiniJson.GetInt(d, "totalScore");
             s.Gems = System.Math.Max(0, MiniJson.GetInt(d, "gems", 50));
             s.HomeCharacter = MiniJson.GetString(d, "homeCharacter", CharacterCatalog.Starter);
+            s.ConveyorUnlocked = Math.Max(1, MiniJson.GetInt(d, "conveyorUnlocked", 1));
+            var cst = MiniJson.GetObj(d, "conveyorStars");
+            if (cst != null)
+                foreach (var kv in cst)
+                    if (int.TryParse(kv.Key, out int id) && kv.Value is double v) s.ConveyorStars[id] = Math.Max(1, Math.Min(3, (int)v));
+            s.ConveyorActive = MiniJson.GetObj(d, "conveyorActive");
 
             // ---- migrations
             if (version < 2)
@@ -155,6 +172,9 @@ namespace VoxelBloom.Core
                 if (cfg != null && cfg.Boosters.TryGetValue(BoosterType.Eliminate, out var e) && !s.Boosters.ContainsKey(BoosterType.Eliminate))
                     s.Boosters[BoosterType.Eliminate] = e.StartCount;
             }
+            // v3 -> v4 (conveyor rebuild): new boosters Undo / ExtraStation get their starting amount from CreateNew;
+            // conveyor progress starts at level 1; the shooter's unfinished level snapshot is dropped.
+            if (version < 4) s.ActiveLevel = null;
             s.Version = SaveData.CurrentVersion;
             return s;
         }

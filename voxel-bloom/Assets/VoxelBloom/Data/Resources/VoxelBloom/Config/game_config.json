@@ -925,7 +925,7 @@
       "voxels": 12
     },
     "shuffle": {
-      "price": 200,
+      "price": 300,
       "startCount": 3
     },
     "colorBomb": {
@@ -936,6 +936,14 @@
     "eliminate": {
       "price": 150,
       "startCount": 2
+    },
+    "undo": {
+      "price": 200,
+      "startCount": 3
+    },
+    "extraStation": {
+      "price": 500,
+      "startCount": 3
     }
   },
   "stars": {
