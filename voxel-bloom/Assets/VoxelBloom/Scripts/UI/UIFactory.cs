@@ -172,14 +172,14 @@ namespace VoxelBloom
         }
 
         /// <summary>White rounded pill with an icon on the left and a value label (top bars).</summary>
-        public static VText Pill(Transform parent, Icon icon, string value, out RectTransform root, float width = 260f, float height = 84f)
+        public static VText Pill(Transform parent, Icon icon, string value, out RectTransform root, float width = 260f, float height = 84f, Color? fill = null, Color? textColor = null)
         {
-            var bg = Panel(parent, "Pill_" + icon, new Color(1, 1, 1, 0.92f), 40, true, 4f);
+            var bg = Panel(parent, "Pill_" + icon, fill ?? new Color(1, 1, 1, 0.92f), 40, true, 4f);
             root = (RectTransform)bg.transform.parent;
             root.sizeDelta = new Vector2(width, height);
             var ic = Icon(root, icon, height * 1.02f);
             ic.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(height * 0.35f, 0), new Vector2(height * 1.02f, height * 1.02f));
-            var t = Text(root, value, height * 0.46f, Theme.Ink);
+            var t = Text(root, value, height * 0.46f, textColor ?? Theme.Ink);
             t.rectTransform.Stretch(height * 0.9f, height * 0.25f, 0, 0);
             return t;
         }

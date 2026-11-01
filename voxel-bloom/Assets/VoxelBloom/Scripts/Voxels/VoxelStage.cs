@@ -158,6 +158,26 @@ namespace VoxelBloom
             return go.transform;
         }
 
+        /// <summary>Replaces the render texture (e.g. a full-screen portrait background).</summary>
+        public void UseTexture(int width, int height)
+        {
+            if (Texture != null) { Camera.targetTexture = null; Texture.Release(); Destroy(Texture); }
+            Texture = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32) { name = name + "_RT", antiAliasing = QualitySettings.antiAliasing > 1 ? 4 : 1 };
+            Texture.Create();
+            Camera.targetTexture = Texture;
+            Camera.allowMSAA = Texture.antiAliasing > 1;
+        }
+
+        /// <summary>Explicit camera placement (local to the stage).</summary>
+        public void SetCamera(Vector3 localPosition, Vector3 lookAtLocal, float fov)
+        {
+            Camera.fieldOfView = fov;
+            Camera.farClipPlane = 120f;
+            camBase = localPosition;
+            Camera.transform.localPosition = camBase;
+            Camera.transform.LookAt(transform.TransformPoint(lookAtLocal));
+        }
+
         public void SetShadowSize(float footprint) { shadow.localPosition = new Vector3(0, 0.004f, 0); shadow.localScale = new Vector3(footprint, 1, footprint); }
 
         /// <summary>Call when the player drags/taps the model: the turntable waits before resuming.</summary>

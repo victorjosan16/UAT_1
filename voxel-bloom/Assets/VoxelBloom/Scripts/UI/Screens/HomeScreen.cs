@@ -28,10 +28,8 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             catalog = new CharacterCatalog(Services.Config);
-            UI.Sky(Root, Theme.Hex("#5DB8FF"), Theme.Hex("#BDE6FF"));
-            // meadow behind the bottom controls (fills the extra height of tall phones)
-            var meadow = UI.Image(Root, "Meadow", SpriteFactory.VerticalGradient(Theme.Hex("#8EDB6A"), Theme.Hex("#5DBE4C")), Color.white, false);
-            meadow.rectTransform.BottomBand(0, 1000, 0);
+            UI.Sky(Root, Theme.Hex("#3FA9F5"), Theme.Hex("#B8E4FF"));
+
             BuildDiorama();
             var top = TopBar.Create(Root);
             top.OnSettings = () => Router.Open<SettingsDialog>();
@@ -46,50 +44,74 @@ namespace VoxelBloom
 
         public override bool FadeIn => false;
 
-        // ------------------------------------------------------------------ 3D landscape + pedestal (static)
+        // ------------------------------------------------------------------ full-screen 3D landscape + pedestal (static)
         void BuildDiorama()
         {
-            stage = VoxelStage.Create("Home", 1024, false);
+            // static clouds in the UI sky (the 3D render has a transparent background)
+            foreach (var (x, y, w) in new[] { (0.12f, 0.93f, 300f), (0.86f, 0.9f, 340f), (0.6f, 0.97f, 260f), (0.3f, 0.82f, 220f), (0.9f, 0.78f, 240f) })
+            {
+                var c = UI.Image(Root, "Cloud", SpriteFactory.Glow(), new Color(1, 1, 1, 0.9f), false);
+                c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(x, y);
+                c.rectTransform.sizeDelta = new Vector2(w, w * 0.5f);
+            }
+
+            stage = VoxelStage.Create("Home", 64, false);
+            stage.UseTexture(900, 1950); // portrait, covers the whole screen
             stage.Model.gameObject.SetActive(false);
             var scene = new GameObject("Scenery").transform;
             scene.SetParent(stage.transform, false);
             const float v = 0.085f;
-            Props.AddCliffWaterfall(scene, new Vector3(2.7f, -1.3f, 3.8f), 0.14f);
-            Props.AddTree(scene, new Vector3(-3.1f, -1.0f, 2.4f), 0.16f, 3);
-            Props.AddTree(scene, new Vector3(-2.0f, -0.8f, 4.4f), 0.12f, 7);
-            Props.AddTree(scene, new Vector3(3.5f, -0.9f, 1.2f), 0.13f, 11);
-            Props.AddIsland(scene, new Vector3(0, -0.36f, 0), 21, v);
+            // ground: wide grass island, raised ledges at the sides
+            Props.AddIsland(scene, new Vector3(0, -0.36f, 2.5f), 40, 0.13f);
+            Props.AddIsland(scene, new Vector3(-3.4f, 0.4f, 4.5f), 12, 0.13f);
+            Props.AddIsland(scene, new Vector3(3.6f, 0.6f, 5.5f), 12, 0.13f);
+            // background: cliffs with a waterfall (right), trees on both sides
+            Props.AddCliffWaterfall(scene, new Vector3(3.1f, 0.2f, 7.5f), 0.2f);
+            Props.AddTree(scene, new Vector3(-2.9f, 0.4f, 3.4f), 0.24f, 3);
+            Props.AddTree(scene, new Vector3(-4.2f, 0.4f, 6.8f), 0.2f, 5);
+            Props.AddTree(scene, new Vector3(-1.9f, 0.4f, 7.6f), 0.16f, 7);
+            Props.AddTree(scene, new Vector3(3.0f, 0.6f, 3.8f), 0.2f, 11);
+            Props.AddTree(scene, new Vector3(4.6f, 2.3f, 9.5f), 0.18f, 13);
+            // flowers and bushes around the pedestal and in the foreground corners
+            Props.AddFlower(scene, new Vector3(-1.6f, -0.36f, -0.4f), v * 1.4f, new Color32(190, 120, 255, 255), new Color32(255, 214, 64, 255));
+            Props.AddFlower(scene, new Vector3(1.65f, -0.36f, -0.2f), v * 1.4f, new Color32(255, 120, 190, 255), new Color32(255, 214, 64, 255));
+            Props.AddFlower(scene, new Vector3(-1.3f, -0.36f, -2.6f), v * 1.8f, new Color32(255, 214, 64, 255), new Color32(255, 150, 40, 255));
+            Props.AddFlower(scene, new Vector3(1.35f, -0.36f, -2.7f), v * 1.9f, new Color32(255, 150, 210, 255), new Color32(255, 214, 64, 255));
+            Props.AddFlower(scene, new Vector3(-1.9f, 0.4f, 2.6f), v * 1.3f, new Color32(190, 120, 255, 255), new Color32(255, 214, 64, 255));
+            Props.AddBush(scene, new Vector3(-1.5f, -0.36f, 1.0f), v * 1.3f);
+            Props.AddBush(scene, new Vector3(1.6f, -0.36f, 1.2f), v * 1.3f);
+            // purple/gold display pedestal
             Props.AddPedestal(scene, Vector3.zero, 13, v);
-            Props.AddFlower(scene, new Vector3(-1.55f, -0.36f, -0.9f), v * 1.3f, new Color32(190, 120, 255, 255), new Color32(255, 214, 64, 255));
-            Props.AddFlower(scene, new Vector3(1.6f, -0.36f, -0.7f), v * 1.3f, new Color32(255, 120, 190, 255), new Color32(255, 214, 64, 255));
-            Props.AddFlower(scene, new Vector3(-1.75f, -0.36f, 0.5f), v, new Color32(255, 214, 64, 255), new Color32(255, 150, 40, 255));
-            Props.AddBush(scene, new Vector3(1.2f, -0.36f, 1.3f), v);
 
             hero = CharacterPreview.Create(stage.Pivot);
             hero.Static = true; // home page is static
-            stage.FrameScene(3.4f, 2.6f, 0.75f); // model ~45% of the square, pedestal wider than the model
+            // camera: model in the upper middle of the screen (like the reference), looking slightly down
+            stage.SetCamera(new Vector3(0, 2.0f, -8.6f), new Vector3(0, 0.05f, 0), 40f);
             stage.TargetYaw = stage.Yaw = -22f;
 
-            var raw = UI.Raw(Root, "Diorama", stage.Texture);
-            // fixed-size square anchored to the top: identical framing on every phone (canvas width is always 1080)
-            raw.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -880), new Vector2(1180, 1180));
+            var raw = UI.Raw(Root, "Landscape", stage.Texture);
+            raw.rectTransform.Stretch();
+            var arf = raw.gameObject.AddComponent<AspectRatioFitter>();
+            arf.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            arf.aspectRatio = 900f / 1950f;
             raw.raycastTarget = true;
             var input = raw.gameObject.AddComponent<ModelInput>();
             input.Stage = stage; // drag to rotate 360° (only moves when the player drags)
 
-            // "360°" label on the pedestal front
-            var badge = UI.Rect(Root, "Label360").Place(new Vector2(0.5f, 1), new Vector2(0, -1065), new Vector2(380, 80)); // on the pedestal ring
-            var bl = UI.Icon(badge, Icon.ArrowLeft, 56); bl.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(56, 56));
-            var br = UI.Icon(badge, Icon.ArrowRight, 56); br.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(56, 56));
-            var t360 = UI.Text(badge, "360°", 62, Color.white, TextAnchor.MiddleCenter, 0.25f, Theme.PurpleDark);
+            // "360°" on the pedestal front and round purple arrows beside the model (anchored to screen fractions,
+            // matching the full-screen render)
+            var badge = UI.Rect(Root, "Label360");
+            badge.anchorMin = badge.anchorMax = new Vector2(0.5f, 0.445f); badge.sizeDelta = new Vector2(420, 84);
+            var bl = UI.Icon(badge, Icon.ArrowLeft, 60); bl.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(60, 60));
+            var br = UI.Icon(badge, Icon.ArrowRight, 60); br.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(60, 60));
+            var t360 = UI.Text(badge, "360°", 66, Color.white, TextAnchor.MiddleCenter, 0.3f, Theme.PurpleDark);
             t360.rectTransform.Stretch();
 
-            // round purple arrows beside the model
             var left = UI.IconButton(Root, Icon.ArrowLeft, 118, ButtonStyle.Purple);
-            ((RectTransform)left.transform).Place(new Vector2(0, 1), new Vector2(150, -860), new Vector2(118, 118));
+            var lr = (RectTransform)left.transform; lr.anchorMin = lr.anchorMax = new Vector2(0.16f, 0.57f); lr.sizeDelta = new Vector2(118, 118);
             left.OnClick = () => Select(catalog.Step(selected, -1));
             var right = UI.IconButton(Root, Icon.ArrowRight, 118, ButtonStyle.Purple);
-            ((RectTransform)right.transform).Place(new Vector2(1, 1), new Vector2(-150, -860), new Vector2(118, 118));
+            var rr = (RectTransform)right.transform; rr.anchorMin = rr.anchorMax = new Vector2(0.84f, 0.57f); rr.sizeDelta = new Vector2(118, 118);
             right.OnClick = () => Select(catalog.Step(selected, +1));
         }
 
@@ -115,13 +137,13 @@ namespace VoxelBloom
         RectTransform Word(Transform parent, string text, float size, Vector2 pos, Color top, Color bottom, Color edge)
         {
             var holder = UI.Rect(parent, "Word_" + text).Place(new Vector2(0.5f, 0.5f), pos, new Vector2(800, size + 20));
-            for (int d = 5; d >= 1; d--)
+            for (int d = 7; d >= 1; d--)
             {
-                var ext = UI.Text(holder, text, size, Theme.Darker(edge, 0.85f), TextAnchor.MiddleCenter, 0.3f, Theme.Darker(edge, 0.7f));
+                var ext = UI.Text(holder, text, size, Theme.Darker(edge, 0.85f), TextAnchor.MiddleCenter, 0.55f, Theme.Darker(edge, 0.7f));
                 ext.fontStyle = FontStyle.Bold;
                 ext.rectTransform.Stretch(0, 0, d * 3, -d * 3);
             }
-            var face = UI.Text(holder, text, size, Color.white, TextAnchor.MiddleCenter, 0.3f, edge);
+            var face = UI.Text(holder, text, size, Color.white, TextAnchor.MiddleCenter, 0.55f, edge);
             face.fontStyle = FontStyle.Bold;
             face.rectTransform.Stretch();
             face.SetGradient(top, bottom);
@@ -139,7 +161,7 @@ namespace VoxelBloom
         // ------------------------------------------------------------------ carousel strip
         void BuildCarousel()
         {
-            var strip = UI.Panel(Root, "CarouselStrip", new Color(1, 1, 1, 0.45f), 44, true, 6f);
+            var strip = UI.Panel(Root, "CarouselStrip", new Color(0.93f, 0.95f, 1f, 0.55f), 44, true, 6f);
             var row = (RectTransform)strip.transform.parent;
             row.BottomBand(650, 176, 24);
             for (int i = 0; i < CharacterCatalog.PerPage; i++)
@@ -164,8 +186,13 @@ namespace VoxelBloom
                 b.OnClick = () => { if (tiles[slot].Index >= 0) Select(tiles[slot].Index); };
                 tiles.Add(t);
             }
-            caption = UI.Text(Root, "", 40, Theme.Ink, TextAnchor.MiddleCenter, 0.15f, Color.white);
+            caption = UI.Text(Root, "", 42, Theme.Navy, TextAnchor.MiddleCenter, 0.2f, Color.white);
             caption.rectTransform.BottomBand(600, 54, 0);
+            foreach (var x in new[] { -250f, 250f })
+            {
+                var sp = UI.Icon(Root, Icon.Sparkle, 40); sp.color = Theme.Gold;
+                sp.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(x, 627), new Vector2(40, 40));
+            }
         }
 
         void Select(int index)
@@ -212,6 +239,8 @@ namespace VoxelBloom
         // ------------------------------------------------------------------ play / level / nav
         void BuildPlay()
         {
+            var glow = UI.Image(Root, "PlayGlow", SpriteFactory.Glow(), new Color(0.75f, 1f, 0.4f, 0.45f), false);
+            glow.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 508), new Vector2(880, 300));
             var play = UI.Button(Root, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110);
             ((RectTransform)play.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 508), new Vector2(700, 176));
             play.OnClick = () => GameplayController.StartLevel(Services.Progress.LatestPlayableLevel());
@@ -231,10 +260,10 @@ namespace VoxelBloom
             var bar = UI.Rect(Root, "Nav").BottomBand(60, 230, 28);
             var hl = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
             hl.spacing = 20; hl.childForceExpandWidth = true; hl.childControlWidth = true; hl.childControlHeight = true;
-            AddNav(bar, Icon.Paw, "Colecție", () => Router.Show<CollectionScreen>());
+            AddNav(bar, Icon.PawGold, "Colecție", () => Router.Show<CollectionScreen>());
             var rewards = AddNav(bar, Icon.Gift, "Recompense", () => Router.Open<RewardsDialog>());
             AddNav(bar, Icon.Shop, "Magazin", () => Router.Show<ShopScreen>());
-            AddNav(bar, Icon.Calendar, "Evenimente", () => Router.Show<EventsScreen>());
+            AddNav(bar, Icon.CalendarStar, "Evenimente", () => Router.Show<EventsScreen>());
             var badge = UI.Image(rewards, "Badge", SpriteFactory.Circle(), Theme.Red, false);
             badge.rectTransform.Place(new Vector2(1, 1), new Vector2(-16, -10), new Vector2(64, 64));
             UI.Text(badge.transform, "!", 46, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Darker(Theme.Red, 0.6f)).rectTransform.Stretch();

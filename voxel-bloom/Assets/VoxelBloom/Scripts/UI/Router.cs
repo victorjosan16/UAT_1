@@ -216,7 +216,7 @@ namespace VoxelBloom
             var avatarBtn = UI.IconButton(rt, Icon.Avatar, 110, ButtonStyle.White);
             ((RectTransform)avatarBtn.transform).Place(new Vector2(0, 0.5f), new Vector2(55, 0), new Vector2(110, 110));
             avatarBtn.OnClick = () => OnAvatar?.Invoke();
-            var ring = UI.Image(avatarBtn.transform, "Ring", SpriteFactory.Circle(), Theme.Gold, false);
+            var ring = UI.Image(avatarBtn.transform, "Ring", SpriteFactory.Circle(), Theme.Gold, false); // gold level badge
             ring.rectTransform.Place(new Vector2(1, 0), new Vector2(-8, 8), new Vector2(54, 54));
             var lvlBg = UI.Image(ring.transform, "Level", SpriteFactory.Circle(), Theme.Ink, false);
             lvlBg.rectTransform.Stretch(5, 5, 5, 5);
@@ -224,13 +224,13 @@ namespace VoxelBloom
             playerLevel.fontStyle = FontStyle.Bold;
             playerLevel.rectTransform.Stretch();
 
-            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 214, 80);
+            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 214, 80, Theme.Hex("#ECE8FF"), Theme.Hex("#2E2A5C"));
             lr.Place(new Vector2(0, 0.5f), new Vector2(236, 0), new Vector2(214, 80));
 
-            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 250, 80);
+            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 250, 80, new Color(0.17f, 0.2f, 0.4f, 0.88f), Color.white);
             cr.Place(new Vector2(0, 0.5f), new Vector2(482, 0), new Vector2(250, 80));
 
-            gems = UI.Pill(rt, Icon.Gem, "0", out var gr, 220, 80);
+            gems = UI.Pill(rt, Icon.Gem, "0", out var gr, 220, 80, new Color(0.17f, 0.2f, 0.4f, 0.88f), Color.white);
             gr.Place(new Vector2(0, 0.5f), new Vector2(740, 0), new Vector2(220, 80));
             var plusG = UI.IconButton(gr, Icon.Plus, 66, ButtonStyle.Green);
             ((RectTransform)plusG.transform).Place(new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(66, 66));

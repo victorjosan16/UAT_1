@@ -7,7 +7,7 @@ namespace VoxelBloom
     {
         Coin, Heart, Star, StarEmpty, Gear, Plus, Pause, Play, Close, Restart, ArrowLeft, ArrowRight, Lock, Check,
         Hammer, Shuffle, ColorBomb, Eliminate, Paw, Gift, Shop, Calendar, Avatar, Music, Sound, Vibrate, Trophy, Cube,
-        Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue, Gem, Crown,
+        Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue, Gem, Crown, PawGold, CalendarStar,
     }
 
     /// <summary>Generates and caches all UI sprites procedurally (see IconPainter).</summary>
@@ -298,6 +298,15 @@ namespace VoxelBloom
                     OutlinedPoly(p, Theme.Hex("#59B8FF"), new float[] { 64, 118, 112, 92, 112, 36, 64, 10, 16, 36, 16, 92 });
                     p.Polygon(Theme.Hex("#A9DCFF"), new float[] { 64, 118, 112, 92, 64, 66, 16, 92 });
                     p.Polygon(Theme.Hex("#2F8FE0"), new float[] { 64, 66, 112, 92, 112, 36, 64, 10 });
+                    break;
+                case Icon.PawGold:
+                    OutlinedCircle(p, 64, 46, 26, Theme.Gold);
+                    OutlinedCircle(p, 30, 76, 13, Theme.Gold, 5); OutlinedCircle(p, 52, 96, 13, Theme.Gold, 5); OutlinedCircle(p, 78, 96, 13, Theme.Gold, 5); OutlinedCircle(p, 99, 76, 13, Theme.Gold, 5);
+                    break;
+                case Icon.CalendarStar:
+                    Draw(p, Icon.Calendar);
+                    p.Polygon(Ink, IconPainter.Star(96, 34, 30), null, 5);
+                    p.Polygon(Theme.Gold, IconPainter.Star(96, 34, 30));
                     break;
                 case Icon.Gem:
                     OutlinedPoly(p, Theme.Hex("#B347FF"), new float[] { 64, 10, 118, 74, 92, 104, 36, 104, 10, 74 });
