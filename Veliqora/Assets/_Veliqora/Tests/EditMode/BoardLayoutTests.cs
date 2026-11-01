@@ -46,10 +46,47 @@ namespace Veliqora.Tests.EditMode
         }
 
         [Test]
-        public void Layout_UsesMoreRows_AsTheBoardGrows()
+        public void Layout_FollowsTheRowRule_OnAPortraitPhone()
         {
-            Assert.AreEqual(1, BoardLayout.Choose(5, AreaW, AreaH, 3.2f).Rows);
-            Assert.GreaterOrEqual(BoardLayout.Choose(20, AreaW, AreaH, 3.2f).Rows, 3);
+            for (int n = 1; n <= 5; n++) Assert.AreEqual(1, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
+            for (int n = 6; n <= 10; n++) Assert.AreEqual(2, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
+            for (int n = 11; n <= 15; n++) Assert.AreEqual(3, BoardLayout.Choose(n, AreaW, AreaH, 3.2f).Rows, "n=" + n);
+            for (int n = 16; n <= 20; n++)
+            {
+                // compact grid: 4 rows when bottles stay comfortable, otherwise the denser 3-row grid gives bigger bottles
+                var l = BoardLayout.Choose(n, AreaW, AreaH, 3.2f);
+                Assert.That(l.Rows, Is.InRange(3, 4), "n=" + n);
+                Assert.GreaterOrEqual(l.PerRow, 5, "compact rows n=" + n);
+            }
+        }
+
+        [Test]
+        public void Layout_IsCenteredHorizontallyAndVertically([Values(5, 8, 13, 20)] int n)
+        {
+            var l = BoardLayout.Choose(n, AreaW, AreaH, 3.2f);
+            var x = new float[n]; var y = new float[n];
+            BoardLayout.Positions(n, l, x, y);
+            float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+            for (int i = 0; i < n; i++)
+            {
+                minX = System.Math.Min(minX, x[i] - l.BottleWidth / 2); maxX = System.Math.Max(maxX, x[i] + l.BottleWidth / 2);
+                minY = System.Math.Min(minY, y[i] - BoardLayout.TagSpace); maxY = System.Math.Max(maxY, y[i] + l.BottleHeight);
+            }
+            Assert.AreEqual(0f, (minX + maxX) / 2f, 1f, "horizontal center");
+            Assert.AreEqual(0f, (minY + maxY) / 2f, l.RowHeight * 0.25f, "vertical center");
+        }
+
+        [Test]
+        public void Layout_AdaptsToOtherAndroidResolutions([Values(720f, 1080f, 1440f)] float width)
+        {
+            // canvas scales to 1080 reference width; tall (20:9) and short (16:9) screens change the board height
+            foreach (float h in new[] { 1000f, 1240f, 1500f })
+                for (int n = 5; n <= 20; n++)
+                {
+                    var l = BoardLayout.Choose(n, AreaW, h, 3.2f);
+                    Assert.LessOrEqual(l.Rows * l.RowHeight, h + 1f, "fits height " + h + " n=" + n);
+                    Assert.GreaterOrEqual(l.BottleWidth, BoardLayout.MinWidth);
+                }
         }
 
         [Test]

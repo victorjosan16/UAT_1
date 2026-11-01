@@ -15,9 +15,9 @@ namespace Veliqora.Core.Layout
     }
 
     /// <summary>
-    /// Adaptive multi-row layout for 1–20 bottles (pure math, testable without Unity). Tries 1–4 rows and keeps the
-    /// arrangement with the largest bottles that fits the board area, leaving room under every bottle for its
-    /// obstacle tag, so nothing overlaps.
+    /// Adaptive multi-row layout for 1–20 bottles (pure math, testable without Unity): 1 row up to 5 bottles, 2 rows
+    /// for 6–10, 3 rows for 11–15 and a compact 4-row grid for 16–20, always centered and balanced, with room under
+    /// every bottle for its obstacle tag so nothing overlaps. Falls back to a better-fitting row count on unusual screens.
     /// </summary>
     public static class BoardLayout
     {
@@ -28,26 +28,41 @@ namespace Veliqora.Core.Layout
         public const float MinWidth = 48f;
         public const float MaxWidth = 190f;
 
+        /// <summary>Design rule: 1–5 bottles → 1 row, 6–10 → 2 rows, 11–15 → 3 rows, 16–20 → 4-row compact grid.</summary>
+        public static int PreferredRows(int count) => count <= 5 ? 1 : count <= 10 ? 2 : count <= 15 ? 3 : 4;
+
+        /// <summary>Smallest comfortable bottle width; below it the layout may use another row count that fits better.</summary>
+        public const float ComfortWidth = 70f;
+
         public static BoardLayoutResult Choose(int count, float areaWidth, float areaHeight, float aspect)
         {
             if (count <= 0) count = 1;
-            var best = new BoardLayoutResult { Rows = 1, PerRow = count, BottleWidth = 0f };
-            for (int rows = 1; rows <= MaxRows; rows++)
+            int preferred = Math.Min(MaxRows, PreferredRows(count));
+            var pick = Evaluate(count, preferred, areaWidth, areaHeight, aspect);
+            if (pick.BottleWidth < ComfortWidth)
             {
-                int perRow = (count + rows - 1) / rows;
-                if (rows > 1 && (rows - 1) * perRow >= count) continue; // an empty row
-                float byWidth = areaWidth / (perRow * (1f + GapRatio) - GapRatio + 0.4f);
-                // each row needs the bottle, the tag space under it and the lift room
-                float byHeight = (areaHeight / rows - TagSpace) / (aspect * RowRatio);
-                float w = Math.Min(MaxWidth, Math.Min(byWidth, byHeight));
-                if (w > best.BottleWidth + 0.5f)
-                    best = new BoardLayoutResult { Rows = rows, PerRow = perRow, BottleWidth = w };
+                // "according to the available space": on unusual aspect ratios fall back to the row count with the largest bottles
+                for (int rows = 1; rows <= MaxRows; rows++)
+                {
+                    var alt = Evaluate(count, rows, areaWidth, areaHeight, aspect);
+                    if (alt.BottleWidth > pick.BottleWidth + 0.5f) pick = alt;
+                }
             }
-            best.BottleWidth = Math.Max(MinWidth, best.BottleWidth);
-            best.BottleHeight = best.BottleWidth * aspect;
-            best.GapX = best.BottleWidth * GapRatio;
-            best.RowHeight = best.BottleHeight * RowRatio + TagSpace;
-            return best;
+            pick.BottleWidth = Math.Max(MinWidth, pick.BottleWidth);
+            pick.BottleHeight = pick.BottleWidth * aspect;
+            pick.GapX = pick.BottleWidth * GapRatio;
+            pick.RowHeight = pick.BottleHeight * RowRatio + TagSpace;
+            return pick;
+        }
+
+        private static BoardLayoutResult Evaluate(int count, int rows, float areaWidth, float areaHeight, float aspect)
+        {
+            rows = Math.Max(1, Math.Min(rows, count));
+            int perRow = (count + rows - 1) / rows;
+            float byWidth = areaWidth / (perRow * (1f + GapRatio) - GapRatio + 0.4f);
+            float byHeight = (areaHeight / rows - TagSpace) / (aspect * RowRatio);
+            float w = Math.Min(MaxWidth, Math.Min(byWidth, byHeight));
+            return new BoardLayoutResult { Rows = rows, PerRow = perRow, BottleWidth = w };
         }
 
         /// <summary>Bottle centers (x) and bottoms (y), origin at the board center, rows centered and balanced.</summary>
