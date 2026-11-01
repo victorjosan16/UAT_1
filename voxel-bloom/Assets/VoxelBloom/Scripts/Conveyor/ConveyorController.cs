@@ -21,10 +21,10 @@ namespace VoxelBloom
         bool paused, finished, failShown;
         int shownCoins = -1;
 
-        sealed class Flight { public Image Img; public Vector2 From; public int Station, Compartment; public float T, Dur; }
+        sealed class Flight { public Vector3 From; public int Station, Compartment, Color; public float T, Dur; }
         readonly List<Flight> flights = new List<Flight>();
-        readonly Stack<Image> flightPool = new Stack<Image>();
         readonly Dictionary<int, float> feedPop = new Dictionary<int, float>();
+        readonly Dictionary<int, float> landPop = new Dictionary<int, float>(); // station*8 + compartment -> time
 
         public ConveyorSession Session => session;
         public ConveyorLevel Level => level;
@@ -55,11 +55,10 @@ namespace VoxelBloom
             colors = new Color[def.Colors.Length];
             for (int i = 0; i < colors.Length; i++) colors[i] = Theme.Hex(def.Colors[i]);
             acc = 0; paused = finished = failShown = false;
-            foreach (var f in flights) if (f.Img != null) Destroy(f.Img.gameObject);
-            flights.Clear(); flightPool.Clear(); feedPop.Clear();
+            flights.Clear(); feedPop.Clear(); landPop.Clear();
             Time.timeScale = 1f;
             Services.Save.LastPlayedLevel = def.Id;
-            view.BuildBoard(def);
+            view.BuildBoard(def, colors);
             view.LevelText.text = "Nivel <color=#FFD84A>" + def.Id + "</color>";
             RefreshAll();
             App.State.ForceReset(GameState.Ready);
@@ -94,19 +93,21 @@ namespace VoxelBloom
             var ghost = UI.Image(view.FlyLayer, "TrayFlight", SpriteFactory.Rounded(24), ConveyorScreen.TrayRim);
             ghost.rectTransform.anchorMin = ghost.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             var to = sv.Tray.anchoredPosition;
-            var size0 = new Vector2(110, 190); var size1 = sv.Tray.sizeDelta;
+            var def = level.Stations[station];
+            float len = def.Capacity * ConveyorBoard.Pitch * view.K * 0.9f, wid = ConveyorBoard.TrayWidth * view.K;
+            var size0 = new Vector2(110, 190); var size1 = ConveyorBoard.IsVertical(def) ? new Vector2(wid, len) : new Vector2(len, wid);
             Tween.Value(0.28f, k =>
             {
                 if (ghost == null) return;
                 ghost.rectTransform.anchoredPosition = Vector2.Lerp(from, to, k) + new Vector2(0, Mathf.Sin(k * Mathf.PI) * 60f);
                 ghost.rectTransform.sizeDelta = Vector2.Lerp(size0, size1, k);
-            }, Ease.OutCubic, () => { if (ghost != null) Destroy(ghost.gameObject); if (sv.Root != null) Tween.Pop(sv.Root, 0.06f, 0.2f); });
+            }, Ease.OutCubic, () => { if (ghost != null) Destroy(ghost.gameObject); });
         }
 
         // ------------------------------------------------------------------ loop
         void Update()
         {
-            if (session == null || view == null || view.SlotCubes == null) return;
+            if (session == null || view == null || view.Board3D == null) return;
             if (!paused && !finished)
             {
                 acc += Time.deltaTime * ConveyorSession.TicksPerSecond * SpeedFactor;
@@ -123,9 +124,7 @@ namespace VoxelBloom
                 else if (!failShown && session.IsStuck()) Fail();
             }
             float alpha = paused || finished ? 0f : Mathf.Clamp01(acc);
-            DrawBelt(alpha);
-            UpdateFlights();
-            UpdateStationsVisual();
+            Draw3D(alpha);
             UpdateHint();
             int c = Services.Wallet.Coins;
             if (c != shownCoins) { shownCoins = c; RefreshHud(); }
@@ -139,20 +138,15 @@ namespace VoxelBloom
                 switch (e.Type)
                 {
                     case ConveyorEventType.Take:
-                        var img = flightPool.Count > 0 ? flightPool.Pop() : NewCubeImage(view.FlyLayer);
-                        img.gameObject.SetActive(true);
-                        img.color = colors[e.Color];
                         flights.Add(new Flight
                         {
-                            Img = img, From = view.ToUi(view.Board.At(session.SlotPos(e.Slot))), Station = e.Station, Compartment = e.Compartment,
+                            From = view.Board3D.BeltCubePos(view.Board.At(session.SlotPos(e.Slot))), Station = e.Station, Compartment = e.Compartment, Color = e.Color,
                             T = 0f, Dur = ConveyorSession.Transfer / (ConveyorSession.TicksPerSecond * SpeedFactor),
                         });
                         break;
                     case ConveyorEventType.Land:
                         Services.Audio.Play(Sfx.Pop, 1f + e.Compartment * 0.08f, 0.7f);
-                        RefreshStation(e.Station);
-                        var cell = view.Stations[e.Station].Cells[Mathf.Clamp(e.Compartment, 0, view.Stations[e.Station].Cells.Length - 1)];
-                        Tween.Pop(cell.transform, 0.25f, 0.18f);
+                        landPop[e.Station * 8 + e.Compartment] = Time.time;
                         break;
                     case ConveyorEventType.Complete:
                         Services.Audio.Play(Sfx.Star, 1.1f);
@@ -174,49 +168,58 @@ namespace VoxelBloom
             session.ClearEvents();
         }
 
-        Image NewCubeImage(Transform parent)
+        /// <summary>Draws all moving 3D cubes for this frame: belt, transfers in flight, tray compartments.</summary>
+        void Draw3D(float alpha)
         {
-            var c = UI.Image(parent, "Cube", SpriteFactory.Glossy(18), Color.white, true);
-            c.pixelsPerUnitMultiplier = 18f / (0.2f * view.K);
-            c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            c.rectTransform.sizeDelta = Vector2.one * 0.8f * view.K;
-            return c;
-        }
-
-        void DrawBelt(float alpha)
-        {
+            var b3 = view.Board3D;
+            b3.BeginFrame();
             float shift = alpha * session.V;
             for (int k = 0; k < session.C; k++)
             {
-                var img = view.SlotCubes[k];
                 int col = session.Slot[k];
-                if (col < 0) { if (img.enabled) img.enabled = false; continue; }
-                if (!img.enabled) img.enabled = true;
-                img.color = colors[col];
-                img.rectTransform.anchoredPosition = view.ToUi(view.Board.At(session.SlotPos(k) + shift));
+                if (col < 0) continue;
+                float sc = 1f;
                 if (feedPop.TryGetValue(k, out var t0))
                 {
                     float f = (Time.time - t0) / 0.25f;
-                    if (f >= 1f) { feedPop.Remove(k); img.rectTransform.localScale = Vector3.one; }
-                    else img.rectTransform.localScale = Vector3.one * Ease.OutBack(Mathf.Clamp01(f));
+                    if (f >= 1f) feedPop.Remove(k); else sc = Ease.OutBack(Mathf.Clamp01(f));
                 }
+                b3.BeltCube(col, view.Board.At(session.SlotPos(k) + shift), sc);
             }
-        }
-
-        void UpdateFlights()
-        {
             for (int i = flights.Count - 1; i >= 0; i--)
             {
                 var f = flights[i];
                 if (!paused) f.T += Time.deltaTime;
                 float k = Mathf.Clamp01(f.T / f.Dur);
-                var def = level.Stations[f.Station];
-                var to = view.ToUi(view.Board.Compartment(def, Mathf.Min(f.Compartment, def.Capacity - 1)));
+                var to = b3.CompartmentPos(level.Stations[f.Station], f.Compartment);
                 float e = Ease.InOutQuad(k);
-                f.Img.rectTransform.anchoredPosition = Vector2.Lerp(f.From, to, e) + new Vector2(0, Mathf.Sin(k * Mathf.PI) * 0.5f * view.K);
-                f.Img.rectTransform.localScale = Vector3.one * (1f + Mathf.Sin(k * Mathf.PI) * 0.18f);
-                if (k >= 1f) { f.Img.gameObject.SetActive(false); flightPool.Push(f.Img); flights.RemoveAt(i); }
+                var p = Vector3.Lerp(f.From, to, e) + new Vector3(0, Mathf.Sin(k * Mathf.PI) * 1.4f, 0);
+                b3.FlyingCube(f.Color, p, 1f + Mathf.Sin(k * Mathf.PI) * 0.15f);
+                if (k >= 1f) flights.RemoveAt(i);
             }
+            for (int i = 0; i < session.Stations.Length; i++)
+            {
+                var st = session.Stations[i]; var def = level.Stations[i];
+                if (st.Tray == null || Time.time < view.Stations[i].HiddenUntil) continue;
+                float leave = st.Leave > 0 ? Mathf.Clamp01((st.Leave - acc) / ConveyorSession.LeaveTicks) : 1f; // completed tray shrinks away
+                float lift = (1f - leave) * 0.8f;
+                for (int c = 0; c < st.Tray.Colors.Length; c++)
+                {
+                    int col = st.Tray.Colors[c];
+                    if (c < st.Tray.Filled)
+                    {
+                        float pop = 1f;
+                        if (landPop.TryGetValue(i * 8 + c, out var lt))
+                        {
+                            float f = (Time.time - lt) / 0.2f;
+                            if (f >= 1f) landPop.Remove(i * 8 + c); else pop = 1f + Mathf.Sin(f * Mathf.PI) * 0.18f;
+                        }
+                        b3.Block(col, def, c, leave * pop, lift);
+                    }
+                    else if (st.Leave == 0) b3.Ghost(col, def, c);
+                }
+            }
+            b3.EndFrame();
         }
 
         void Burst(int station)
@@ -248,31 +251,10 @@ namespace VoxelBloom
         void RefreshStation(int i)
         {
             var st = session.Stations[i]; var v = view.Stations[i];
+            view.Board3D.SetStation(i, st.Lock);
             if (v.LockTile != null) v.LockTile.gameObject.SetActive(st.Lock == StationLock.Completed);
             if (v.LockText != null) v.LockText.text = Mathf.Max(1, st.LockN - session.Completed).ToString();
             if (v.PlusTile != null) v.PlusTile.gameObject.SetActive(st.Lock == StationLock.Booster);
-        }
-
-        void UpdateStationsVisual()
-        {
-            for (int i = 0; i < session.Stations.Length; i++)
-            {
-                var st = session.Stations[i]; var v = view.Stations[i];
-                float a = 1f;
-                if (st.Leave > 0) a = Mathf.Clamp01((st.Leave - acc) / ConveyorSession.LeaveTicks); // completed tray fades out
-                bool hidden = Time.time < v.HiddenUntil;
-                for (int c = 0; c < v.Cells.Length; c++)
-                {
-                    var cell = v.Cells[c];
-                    if (hidden || st.Tray == null || c >= st.Tray.Colors.Length) { cell.color = Color.clear; continue; }
-                    var col = colors[st.Tray.Colors[c]];
-                    if (c >= st.Tray.Filled) col = Color.Lerp(col, Color.white, 0.25f); // ghost = still required (lighter, half transparent)
-                    cell.color = new Color(col.r, col.g, col.b, (c < st.Tray.Filled ? 1f : 0.5f) * a);
-                }
-                bool open = st.Lock == StationLock.None;
-                v.Rim.color = open ? ConveyorScreen.TrayRim : new Color(1, 1, 1, 0);
-                v.Inner.color = open ? ConveyorScreen.TrayInner : new Color(1, 1, 1, 0);
-            }
         }
 
         void RefreshQueue()
@@ -346,7 +328,6 @@ namespace VoxelBloom
             Services.Boosters.TryConsume(t);
             Services.Audio.Play(Sfx.Booster);
             session.ClearEvents();
-            foreach (var f in flights) { f.Img.gameObject.SetActive(false); flightPool.Push(f.Img); }
             flights.Clear();
             failShown = false;
             RefreshAll();

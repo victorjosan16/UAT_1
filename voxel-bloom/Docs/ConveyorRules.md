@@ -68,6 +68,17 @@ locks) and then **validated by simulation**. They were not hand-played. For each
 Level 1 is the integrated tutorial: an arrow points at the best tray, with a two-line hint, until two trays are placed.
 The generator scales to more levels, but 100+ levels are **not** shipped yet.
 
+## 3D board
+The board is real 3D (`Scripts/Conveyor/ConveyorBoard3D.cs`), rendered by a `VoxelStage` camera (fov 26°, 78° almost
+top-down, auto-framed) into a RenderTexture under the UI. It contains:
+* the raised loop with plate lines and luminous cyan edges;
+* bevelled glossy cubes (GPU-instanced, one batch per colour);
+* trays with walls and recessed compartments (still-required colours shown as low light plates);
+* stone lock tiles, green plus slots in relief, and the feeder chute.
+Lock numbers, chevrons, the feeder count and the tap target of the plus slots are UI overlays projected through the
+camera. HUD, queue and boosters stay UI. `node tools/conveyor/preview3d.mjs <level> <seconds> out.png` renders the same
+geometry and camera (with Lambert shading, not Unity's shader) for a look check.
+
 ## Tests
 * `node tools/conveyor/test.mjs`: loop continuity and constant spacing, matching/non-matching transfer, transfer
   timing, order of compartments, unique reservation, double tap, completion and leaving, queue advance, numbered lock and plus slot,
