@@ -16,7 +16,14 @@ namespace Veliqora.Core.Puzzle
         CompletedBottles = 3,
     }
 
-    /// <summary>Immutable cork on a bottle: no pouring into or out of it until the condition holds.</summary>
+    /// <summary>
+    /// How an obstacle is presented: FROZEN bottles (ice with a countdown) thaw after a number of pours or completed
+    /// bottles; LOCKED bottles (colored padlock, the key is completing that color) open on an objective or a chain.
+    /// Both block pouring into and out of the bottle until the condition holds.
+    /// </summary>
+    public enum ObstacleKind { Frozen = 0, Locked = 1 }
+
+    /// <summary>Immutable obstacle on a bottle: no pouring into or out of it until the condition holds.</summary>
     public sealed class BottleLock : IEquatable<BottleLock>
     {
         public readonly LockKind Kind;
@@ -28,6 +35,9 @@ namespace Veliqora.Core.Puzzle
             Kind = kind;
             Param = param;
         }
+
+        public ObstacleKind Obstacle => Kind == LockKind.Moves || Kind == LockKind.CompletedBottles ? ObstacleKind.Frozen : ObstacleKind.Locked;
+        public bool IsFrozen => Obstacle == ObstacleKind.Frozen;
 
         public bool Equals(BottleLock other) => other != null && other.Kind == Kind && other.Param == Param;
         public override bool Equals(object obj) => Equals(obj as BottleLock);

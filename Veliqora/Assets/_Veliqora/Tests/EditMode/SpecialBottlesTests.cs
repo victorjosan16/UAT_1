@@ -242,17 +242,26 @@ namespace Veliqora.Tests.EditMode
         // ---------------- catalog ----------------
 
         [Test]
-        public void Catalog_IntroducesMechanics_AlongTheBriefCurve()
+        public void Catalog_FollowsTheLevelEvolutionChart()
         {
             var levels = TestUtil.Catalog.Levels;
-            Assert.IsFalse(levels.Exists(l => l.Number < 71 && (l.HasMystery || l.HasLocks || l.HasMixedCapacities)), "no special bottles before 71");
-            Assert.IsTrue(levels.Exists(l => l.Number >= 71 && l.Number <= 120 && l.HasMystery), "mystery in 71–120");
-            Assert.IsTrue(levels.Exists(l => l.Number >= 71 && l.Number <= 120 && l.HasMixedCapacities), "sizes in 71–120");
-            Assert.IsTrue(levels.Exists(l => l.Number >= 71 && l.Number <= 120 && l.HasLocks), "corks in 71–120");
-            Assert.IsTrue(levels.Exists(l => l.RewardBottles.Length > 0), "rewarded bottles exist");
-            int combos = levels.FindAll(l => l.Number >= 121 && l.Number <= 200 &&
-                (l.HasMystery ? 1 : 0) + (l.HasLocks ? 1 : 0) + (l.HasMixedCapacities ? 1 : 0) >= 2).Count;
-            Assert.Greater(combos, 20, "121–200 combine mechanics");
+            System.Func<int, int, System.Collections.Generic.List<Core.Levels.LevelDefinition>> range = (a, b) => levels.FindAll(l => l.Number >= a && l.Number <= b);
+            foreach (var l in range(1, 10)) { Assert.That(l.Bottles.Length, Is.InRange(5, 6), l.Id); Assert.AreEqual(3, l.ColorCount, l.Id); }
+            foreach (var l in range(11, 20)) Assert.That(l.Bottles.Length, Is.InRange(7, 8), l.Id);
+            Assert.IsFalse(levels.Exists(l => l.Number < 21 && (l.HasMystery || l.HasLocks)), "no obstacles before 21");
+            Assert.Greater(range(21, 35).FindAll(l => l.HasMystery).Count, 5, "21–35 hidden colors");
+            Assert.IsFalse(range(21, 35).Exists(l => l.HasLocks));
+            Assert.Greater(range(36, 50).FindAll(l => l.HasLocks).Count, 10, "36–50 frozen bottles");
+            foreach (var l in range(36, 50)) foreach (var k in l.Locks) Assert.IsTrue(new BottleLock(k.Kind, k.Param).IsFrozen, l.Id + " uses frozen only");
+            Assert.Greater(range(51, 75).FindAll(l => l.HasLocks).Count, 15, "51–75 locked bottles");
+            foreach (var l in range(51, 75)) foreach (var k in l.Locks) Assert.IsFalse(new BottleLock(k.Kind, k.Param).IsFrozen, l.Id + " uses padlocks only");
+            int combined = range(76, 100).FindAll(l => l.HasMystery && l.HasLocks).Count;
+            Assert.Greater(combined, 10, "76–100 combine mechanics");
+            foreach (var l in range(101, 150)) Assert.That(l.Bottles.Length, Is.InRange(12, 15), l.Id);
+            Assert.Greater(range(151, 250).FindAll(l => l.HasMixedCapacities).Count, 80, "151–250 special glasses");
+            foreach (var l in range(251, 300)) Assert.That(l.Bottles.Length, Is.InRange(15, 20), l.Id);
+            Assert.IsTrue(levels.TrueForAll(l => l.Bottles.Length >= 5 && l.Bottles.Length <= 20), "5–20 bottles everywhere");
+            Assert.IsTrue(levels.Exists(l => l.RewardBottles.Length > 0), "bonus bottles exist");
             Assert.IsTrue(levels.TrueForAll(l => l.Difficulty >= 1 && l.Difficulty <= 10));
             Assert.IsTrue(levels.Exists(l => l.Objectives.Count > 0 && l.Number >= 31));
             Assert.IsTrue(levels.Exists(l => l.Objectives.Exists(o => o.Rewarded)), "rewarded objectives on boss levels");

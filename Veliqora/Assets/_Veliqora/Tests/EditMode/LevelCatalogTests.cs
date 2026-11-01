@@ -72,14 +72,16 @@ namespace Veliqora.Tests.EditMode
         [Test]
         public void Difficulty_RampsGradually_ByTierAverages()
         {
+            // Difficulty rating (1–10) combines solution length, trap density and obstacles: later tiers use special
+            // glasses / obstacles on smaller boards, so raw solution length alone is not monotonic by design.
             double prev = 0;
             foreach (DifficultyTier tier in System.Enum.GetValues(typeof(DifficultyTier)))
             {
                 var levels = Catalog.Levels.FindAll(l => l.Tier == tier);
                 double avg = 0;
-                foreach (var l in levels) avg += l.ParMoves;
+                foreach (var l in levels) avg += l.Difficulty;
                 avg /= levels.Count;
-                Assert.Greater(avg, prev, "average solution length should increase with tier " + tier);
+                Assert.Greater(avg, prev, "average difficulty rating should increase with tier " + tier);
                 prev = avg;
             }
         }

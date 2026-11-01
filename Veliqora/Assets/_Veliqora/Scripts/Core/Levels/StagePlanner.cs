@@ -92,15 +92,16 @@ namespace Veliqora.Core.Levels
         public const int MaxColors = 8;
 
         /// <summary>
-        /// Published color progression: 1–10 → 3–4 colors, 11–25 → 4–5, 26–50 → 5–6, 51–100 → 6–8,
-        /// 101–200 → 6–8, 201+ → 7–8 (later difficulty comes from mechanics, sizes and tighter boards).
+        /// Color progression (design chart): 1–10 → 3 · 11–20 → 4–5 · 21–50 → 5–6 · 51–75 → 6–7 · 76–100 → 6–8 · 101+ → 7–8.
+        /// Bigger boards beyond that come from colors that fill two bottles, not from more hues.
         /// </summary>
         public static void ColorRange(int number, out int min, out int max)
         {
-            if (number <= 10) { min = 3; max = 4; }
-            else if (number <= 25) { min = 4; max = 5; }
+            if (number <= 10) { min = 3; max = 3; }
+            else if (number <= 20) { min = 4; max = 5; }
             else if (number <= 50) { min = 5; max = 6; }
-            else if (number <= 200) { min = 6; max = MaxColors; }
+            else if (number <= 75) { min = 6; max = 7; }
+            else if (number <= 100) { min = 6; max = MaxColors; }
             else { min = 7; max = MaxColors; }
         }
 

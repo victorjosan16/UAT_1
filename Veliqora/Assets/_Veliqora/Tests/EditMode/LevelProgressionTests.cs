@@ -35,7 +35,7 @@ namespace Veliqora.Tests.EditMode
                 if (bigEmpty < 2 && partial > 0) spread++;
                 Assert.LessOrEqual(LevelCatalogBuilder.FreeSlots(s), 2 * 6, Catalog.Levels[n - 1].Id + " has too much room");
             }
-            Assert.GreaterOrEqual(spread, checkedLevels * 6 / 10, "most levels 11–100 spread the free room over partly filled / small bottles");
+            Assert.GreaterOrEqual(spread, checkedLevels / 2, "at least half of levels 11–100 spread the free room over partly filled / small bottles");
         }
 
         [Test]

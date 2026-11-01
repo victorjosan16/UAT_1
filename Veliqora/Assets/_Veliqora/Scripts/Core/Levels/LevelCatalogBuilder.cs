@@ -27,6 +27,9 @@ namespace Veliqora.Core.Levels
         /// <summary>Distributed free space (see GenerationSpec.SpreadBottles) and small empty helper bottles.</summary>
         public int Spread;
         public int SmallEmpties;
+        /// <summary>Colors spanning two bottles (big boards) and the obstacle style of corked bottles.</summary>
+        public int Doubles;
+        public LockStyle LockStyle = LockStyle.Any;
         /// <summary>Optional variant used on even level numbers (introduces constraints gradually).</summary>
         public CurveSegment AlternateOnEven;
 
@@ -65,41 +68,48 @@ namespace Veliqora.Core.Levels
         // Measured with Tools/LevelGen: 1-spare-bottle deals are often provably unsolvable (rejected) and leave far
         // less room for error; capacity-5 "tall" bottles lengthen solutions. Both are introduced late and gradually.
         private static CurveSegment Seg(int a, int b, int colors, int minSol, int cand, int empties = 2, int cap = 4, int pairs = 3, CurveSegment alt = null,
-            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0, int minOpt = 0, int spread = 0, int small = 0) =>
+            CapacityMode caps = CapacityMode.Uniform, int mystery = 0, int locks = 0, int reward = 0, int minOpt = 0, int spread = 0, int small = 0, int doubles = 0, LockStyle style = LockStyle.Any) =>
             new CurveSegment
             {
                 FirstLevel = a, LastLevel = b, Colors = colors, MinSolution = minSol, Candidates = cand, EmptyBottles = empties, Capacity = cap,
                 MaxAdjacentPairs = pairs, AlternateOnEven = alt, CapMode = caps, Mystery = mystery, Locks = locks, RewardBottles = reward,
-                MinOptimal = minOpt, Spread = spread, SmallEmpties = small,
+                MinOptimal = minOpt, Spread = spread, SmallEmpties = small, Doubles = doubles, LockStyle = style,
             };
 
-        // Every level is a complete, solver-verified puzzle from level 1 (no tutorial levels). Color progression
-        // (clamped by StagePlanner.ColorRange): 1–10 → 3–4 · 11–25 → 4–5 · 26–50 → 5–6 · 51–100 → 6–8 · 101+ → 6–8.
-        // Free space is NOT always two big empty bottles: most levels from 6 on spread the room over partly filled
-        // bottles ("S" = spread: one extra bottle's room distributed) plus small 2-slot helper bottles ("h"), or give
-        // a single empty bottle. Board room per level type (capacity 4):
-        //   classic 2 empty = 8 free · S + 2h = 8 free, no big empty · S + 1h = 6 free · 1 empty = 4 free.
-        // Mechanics: 71–85 mystery · 86–100 mixed sizes · 101–120 corks (+ optional ad bottle) · 121–300 combinations.
-        // Levels 1–10 must need at least 6 (level 1) / 7 pours, proven by exact search.
+        // Level evolution (design chart "Evoluția nivelurilor"); every level is a complete, solver-verified puzzle:
+        //   1–10    complete start: 3 colors, 5–6 bottles (no tutorial; ≥ 6 / ≥ 7 pours proven by exact search)
+        //   11–20   more colors: 7–8 bottles
+        //   21–35   mystery bottles (hidden colors)
+        //   36–50   frozen bottles (thaw after pours / completed bottles)
+        //   51–75   locked bottles (colored padlock: the key is completing that color; chains)
+        //   76–100  combined mechanics (frozen + locked + mystery)
+        //   101–150 big boards: 12–15 bottles (some colors fill two bottles)
+        //   151–250 special glasses: bottles of different sizes / shapes, with obstacles
+        //   251–300 complex boards: 15–20 bottles
+        // Free room is usually spread over partly filled bottles and small 2-slot helper bottles instead of two big
+        // empty bottles; StagePlanner adds random Hard and stage-finale Boss levels from level 11.
         public static readonly CurveSegment[] DefaultCurve =
         {
-            Seg(1, 5, 3, 6, 4, pairs: 2, minOpt: 6, alt: Seg(1, 5, 4, 8, 4, pairs: 2, minOpt: 7)),
-            Seg(6, 10, 3, 8, 4, pairs: 2, minOpt: 7, alt: Seg(6, 10, 4, 9, 4, pairs: 2, minOpt: 7, empties: 0, spread: 1, small: 2)),
-            Seg(11, 25, 4, 10, 3, empties: 0, spread: 1, small: 2, alt: Seg(11, 25, 5, 12, 3, empties: 0, spread: 1, small: 2)),
-            Seg(26, 35, 5, 12, 3, empties: 0, spread: 1, small: 2, alt: Seg(26, 35, 6, 14, 3, empties: 1, spread: 1)),
-            Seg(36, 50, 6, 14, 3, empties: 0, spread: 1, small: 2, alt: Seg(36, 50, 5, 12, 3, empties: 0, spread: 1, small: 1)),
-            Seg(51, 70, 7, 16, 3, empties: 0, spread: 1, small: 2, alt: Seg(51, 70, 6, 14, 3, empties: 0, spread: 1, small: 1)),
-            Seg(71, 85, 6, 14, 3, mystery: 2, empties: 0, spread: 1, small: 2, alt: Seg(71, 85, 7, 15, 3, mystery: 3)),
-            Seg(86, 100, 7, 15, 3, caps: CapacityMode.SmallLarge, alt: Seg(86, 100, 6, 14, 3, caps: CapacityMode.SmallLarge, mystery: 2, empties: 1, spread: 1)),
-            Seg(101, 110, 7, 15, 3, locks: 1, empties: 0, spread: 1, small: 2, alt: Seg(101, 110, 7, 15, 3, locks: 1, mystery: 2)),
-            Seg(111, 120, 7, 15, 3, locks: 1, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(111, 120, 7, 15, 3, caps: CapacityMode.SmallLarge, locks: 1)),
-            Seg(121, 150, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, alt: Seg(121, 150, 7, 16, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2)),
-            Seg(151, 175, 8, 18, 3, mystery: 3, locks: 1, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(151, 175, 7, 16, 3, caps: CapacityMode.Wide, locks: 2)),
-            Seg(176, 200, 8, 19, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, alt: Seg(176, 200, 8, 19, 3, mystery: 2, reward: 1, empties: 0, spread: 1, small: 2)),
-            Seg(201, 225, 8, 20, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2, alt: Seg(201, 225, 8, 20, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 2)),
-            Seg(226, 250, 8, 21, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 1, alt: Seg(226, 250, 8, 21, 3, mystery: 3, locks: 1, empties: 0, spread: 1, small: 2)),
-            Seg(251, 275, 8, 22, 3, mystery: 3, locks: 2, reward: 1, empties: 0, spread: 1, small: 2, alt: Seg(251, 275, 8, 22, 3, caps: CapacityMode.Wide, mystery: 2, locks: 2)),
-            Seg(276, 300, 8, 23, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2, reward: 1, alt: Seg(276, 300, 8, 23, 3, mystery: 3, locks: 2, empties: 0, spread: 1, small: 2)),
+            Seg(1, 5, 3, 6, 4, pairs: 2, minOpt: 6, alt: Seg(1, 5, 3, 7, 4, pairs: 2, minOpt: 7)),
+            Seg(6, 10, 3, 7, 4, pairs: 2, minOpt: 7, empties: 0, spread: 1, small: 2),
+            Seg(11, 20, 4, 10, 3, empties: 0, spread: 1, small: 2, alt: Seg(11, 20, 5, 12, 3, empties: 0, spread: 1, small: 2)),
+            Seg(21, 35, 5, 12, 3, mystery: 2, empties: 0, spread: 1, small: 2, alt: Seg(21, 35, 6, 13, 3, mystery: 2)),
+            Seg(36, 50, 6, 13, 3, locks: 1, style: LockStyle.Frozen, empties: 0, spread: 1, small: 2,
+                alt: Seg(36, 50, 6, 13, 3, locks: 2, style: LockStyle.Frozen)),
+            Seg(51, 75, 6, 14, 3, locks: 1, style: LockStyle.Locked, empties: 0, spread: 1, small: 2,
+                alt: Seg(51, 75, 7, 15, 3, locks: 2, style: LockStyle.Locked)),
+            Seg(76, 100, 7, 15, 3, mystery: 2, locks: 2, empties: 0, spread: 1, small: 2,
+                alt: Seg(76, 100, 7, 15, 3, mystery: 2, locks: 2, reward: 1)),
+            Seg(101, 150, 7, 22, 3, doubles: 3, empties: 0, spread: 1, small: 2,
+                alt: Seg(101, 150, 7, 22, 3, doubles: 4, mystery: 2, locks: 1, reward: 1)),
+            Seg(151, 200, 7, 16, 3, caps: CapacityMode.SmallLarge, mystery: 2, locks: 1, style: LockStyle.Frozen,
+                alt: Seg(151, 200, 7, 16, 3, caps: CapacityMode.SmallLarge, locks: 2, style: LockStyle.Locked, empties: 1, spread: 1)),
+            Seg(201, 250, 8, 18, 3, caps: CapacityMode.Wide, mystery: 2, locks: 2, reward: 1,
+                alt: Seg(201, 250, 8, 18, 3, caps: CapacityMode.SmallLarge, mystery: 3, locks: 2)),
+            Seg(251, 275, 8, 30, 3, doubles: 6, mystery: 2, locks: 2, empties: 0, spread: 1, small: 2,
+                alt: Seg(251, 275, 8, 30, 3, doubles: 7, locks: 2, reward: 1)),
+            Seg(276, 300, 8, 32, 3, doubles: 8, mystery: 2, locks: 2, reward: 1, empties: 0, spread: 1, small: 2,
+                alt: Seg(276, 300, 8, 32, 3, doubles: 8, mystery: 3, locks: 3)),
         };
 
         /// <summary>Exact minimum-move search budget for the report (levels up to this number).</summary>
@@ -179,6 +189,8 @@ namespace Veliqora.Core.Levels
                     RewardBottles = seg.RewardBottles,
                     SpreadBottles = seg.Spread,
                     SmallEmpties = seg.SmallEmpties,
+                    DoubleColors = seg.Doubles,
+                    LockStyle = seg.LockStyle,
                     MaxAttempts = seg.Locks > 0 || seg.Mystery > 0 ? 250 : 400,
                 };
                 candidates = new List<GeneratedLevel>();
@@ -206,6 +218,7 @@ namespace Veliqora.Core.Levels
                     FirstLevel = seg.FirstLevel, LastLevel = seg.LastLevel, Colors = seg.Colors, EmptyBottles = 2, Capacity = seg.Capacity,
                     MinSolution = seg.MinSolution, Candidates = seg.Candidates, MaxAdjacentPairs = seg.MaxAdjacentPairs, CapMode = seg.CapMode,
                     Mystery = seg.Mystery, Locks = seg.Locks, RewardBottles = seg.RewardBottles, MinOptimal = seg.MinOptimal,
+                    Doubles = seg.Doubles, LockStyle = seg.LockStyle,
                 };
                 return BuildGenerated(n, baseSeed, classic, report, plan, seenLayouts);
             }

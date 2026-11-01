@@ -47,11 +47,17 @@ namespace Veliqora.Core.Levels
         /// <summary>Small empty helper bottles (capacity <see cref="SmallCapacity"/>) added in addition to EmptyBottles.</summary>
         public int SmallEmpties;
         public int SmallCapacity = 2;
+        /// <summary>Colors that fill two bottles (2 × capacity units), to build 12–20 bottle boards with few colors (uniform capacity only).</summary>
+        public int DoubleColors;
+        /// <summary>Which obstacle types the corked bottles use.</summary>
+        public LockStyle LockStyle = LockStyle.Any;
 
-        public bool HasSpecials => CapacityMode != CapacityMode.Uniform || MysteryDepth > 0 || Locks > 0 || RewardBottles > 0 || SpreadBottles > 0 || SmallEmpties > 0;
+        public bool HasSpecials => CapacityMode != CapacityMode.Uniform || MysteryDepth > 0 || Locks > 0 || RewardBottles > 0 || SpreadBottles > 0 || SmallEmpties > 0 || DoubleColors > 0;
         /// <summary>Free slots on the starting board (difficulty indicator: less room = harder).</summary>
         public int FreeSlots(int capacity) => (EmptyBottles + SpreadBottles) * capacity + SmallEmpties * SmallCapacity;
     }
+
+    public enum LockStyle { Any = 0, Frozen = 1, Locked = 2 }
 
     public sealed class GeneratedLevel
     {
@@ -133,7 +139,9 @@ namespace Veliqora.Core.Levels
         public static GameState DealSpecial(GenerationSpec spec, ulong seed)
         {
             var rng = new DeterministicRandom(seed);
-            int n = spec.Colors;
+            int colors = spec.Colors;
+            int doubles = spec.CapacityMode == CapacityMode.Uniform ? Math.Min(spec.DoubleColors, colors) : 0;
+            int n = colors + doubles;   // filled bottles
             var caps = new int[n];
             for (int i = 0; i < n; i++)
             {
@@ -145,13 +153,24 @@ namespace Veliqora.Core.Levels
                 }
             }
             // Color sizes are a permutation of the bottle sizes (so colors don't simply match their start bottle).
-            var colorSize = (int[])caps.Clone();
-            rng.Shuffle(colorSize);
+            int[] colorSize;
+            if (doubles > 0)
+            {
+                colorSize = new int[colors];
+                for (int c = 0; c < colors; c++) colorSize[c] = spec.Capacity;
+                var pick = Indices(colors, rng);
+                for (int d = 0; d < doubles; d++) colorSize[pick[d]] = 2 * spec.Capacity;
+            }
+            else
+            {
+                colorSize = (int[])caps.Clone();
+                rng.Shuffle(colorSize);
+            }
             int total = 0;
             foreach (var c in caps) total += c;
             var pool = new int[total];
             int k = 0;
-            for (int c = 0; c < n; c++) for (int u = 0; u < colorSize[c]; u++) pool[k++] = c + 1;
+            for (int c = 0; c < colors; c++) for (int u = 0; u < colorSize[c]; u++) pool[k++] = c + 1;
             rng.Shuffle(pool);
 
             var bottles = new List<BottleState>();
@@ -225,7 +244,25 @@ namespace Veliqora.Core.Levels
                 {
                     int b = order[i];
                     BottleLock lk;
-                    if (i > 0 && rng.NextDouble() < 0.5)
+                    if (spec.LockStyle == LockStyle.Frozen)
+                    {
+                        lk = rng.NextDouble() < 0.6 ? new BottleLock(LockKind.Moves, 3 + rng.Range(0, 6)) : new BottleLock(LockKind.CompletedBottles, 1 + rng.Range(0, 2));
+                    }
+                    else if (spec.LockStyle == LockStyle.Locked && i > 0 && rng.NextDouble() < 0.4)
+                        lk = new BottleLock(LockKind.AfterBottle, locked[0]);
+                    else if (spec.LockStyle == LockStyle.Locked)
+                    {
+                        var candidates = new List<int>();
+                        for (int c = 1; c <= spec.Colors; c++)
+                        {
+                            bool inside = bottles[b].CountOf(c) > 0;
+                            foreach (var lb in locked) if (bottles[lb].CountOf(c) > 0) inside = true;
+                            if (!inside) candidates.Add(c);
+                        }
+                        if (candidates.Count == 0) return null;   // no achievable key color: reject this deal
+                        lk = new BottleLock(LockKind.CompleteColor, candidates[rng.Range(0, candidates.Count)]);
+                    }
+                    else if (i > 0 && rng.NextDouble() < 0.5)
                         lk = new BottleLock(LockKind.AfterBottle, locked[0]);           // chain: opens after the first cork
                     else
                     {
