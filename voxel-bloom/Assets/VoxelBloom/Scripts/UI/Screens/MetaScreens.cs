@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VoxelBloom.Core;
@@ -13,7 +12,7 @@ namespace VoxelBloom
         string category = "Animals";
         RectTransform grid;
         readonly List<UIButton> tabs = new List<UIButton>();
-        TextMeshProUGUI progressText;
+        VText progressText;
         ProgressBar progress;
 
         protected override void OnBuild()
@@ -70,7 +69,7 @@ namespace VoxelBloom
                 UI.StyleColors(Categories[i] == category ? ButtonStyle.Green : ButtonStyle.White, out var face, out var lip, out var tc);
                 tabs[i].Face.GetComponent<Image>().color = face;
                 tabs[i].transform.Find("Lip").GetComponent<Image>().color = lip;
-                tabs[i].Face.Find("Label").GetComponent<TextMeshProUGUI>().color = tc;
+                tabs[i].Face.Find("Label").GetComponent<VText>().color = tc;
             }
             for (int i = grid.childCount - 1; i >= 0; i--) Destroy(grid.GetChild(i).gameObject);
             int n = 0;
@@ -176,8 +175,8 @@ namespace VoxelBloom
             var tr = (RectTransform)tip.transform.parent;
             tr.Place(new Vector2(0.5f, 1), new Vector2(0, -980), new Vector2(900, 300));
             UI.Icon(tr, Icon.Lightning, 150).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(110, 0), new Vector2(150, 150));
-            var t = UI.Text(tr, "Every 5th level is a HARD level.\nWin it for x2.5 coins and spend them\non Eliminare to clear a jammed queue!", 38, Theme.Ink, TextAlignmentOptions.Left);
-            t.textWrappingMode = TextWrappingModes.Normal;
+            var t = UI.Text(tr, "Every 5th level is a HARD level.\nWin it for x2.5 coins and spend them\non Eliminare to clear a jammed queue!", 38, Theme.Ink, TextAnchor.MiddleLeft);
+            t.Wrap = true;
             t.rectTransform.Stretch(210, 30, 20, 20);
         }
 
@@ -215,8 +214,8 @@ namespace VoxelBloom
                 var rt = (RectTransform)card.transform.parent;
                 UI.Layout(rt, 190);
                 UI.Icon(rt, Icon.Lightning, 110).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(90, 0), new Vector2(110, 110));
-                UI.Text(rt, "Level " + l + " · " + def.Name, 44, Theme.Ink, TextAlignmentOptions.Left).rectTransform.Place(new Vector2(0, 1), new Vector2(170, -60), new Vector2(560, 56), new Vector2(0, 0.5f));
-                var sub = UI.Text(rt, stars > 0 ? "Completed · " + stars + " stars" : "Reward " + def.RewardCoins + " coins", 34, stars > 0 ? Theme.Green : Theme.InkSoft, TextAlignmentOptions.Left);
+                UI.Text(rt, "Level " + l + " · " + def.Name, 44, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0, 1), new Vector2(170, -60), new Vector2(560, 56), new Vector2(0, 0.5f));
+                var sub = UI.Text(rt, stars > 0 ? "Completed · " + stars + " stars" : "Reward " + def.RewardCoins + " coins", 34, stars > 0 ? Theme.Green : Theme.InkSoft, TextAnchor.MiddleLeft);
                 sub.rectTransform.Place(new Vector2(0, 0), new Vector2(170, 56), new Vector2(560, 50), new Vector2(0, 0.5f));
                 var b = UI.IconButton(rt, unlocked ? Icon.Play : Icon.Lock, 110, unlocked ? ButtonStyle.Gold : ButtonStyle.White);
                 ((RectTransform)b.transform).Place(new Vector2(1, 0.5f), new Vector2(-90, 0), new Vector2(110, 110));

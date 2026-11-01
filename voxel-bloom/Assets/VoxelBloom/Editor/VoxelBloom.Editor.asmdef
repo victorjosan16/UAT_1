@@ -4,12 +4,12 @@
     "references": [
         "VoxelBloom.Core",
         "VoxelBloom.Runtime",
-        "Unity.TextMeshPro",
-        "Unity.TextMeshPro.Editor",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime"
     ],
-    "includePlatforms": [ "Editor" ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

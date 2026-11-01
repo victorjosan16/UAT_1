@@ -1,5 +1,4 @@
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VoxelBloom.Core;
@@ -47,7 +46,7 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             var t = UI.Text(Body, Message, 50, Theme.Ink);
-            t.textWrappingMode = TextWrappingModes.Normal;
+            t.Wrap = true;
             t.rectTransform.Stretch(10, 10, 40, 220);
             var yes = UI.Button(Body, YesLabel, ButtonStyle.Green, new Vector2(320, 130), null, 56);
             ((RectTransform)yes.transform).Place(new Vector2(0.5f, 0), new Vector2(175, 90), new Vector2(320, 130));
@@ -62,7 +61,7 @@ namespace VoxelBloom
     {
         [NonSerialized] public CompletionReceipt Receipt;
         [NonSerialized] public LevelDefinition Level;
-        TextMeshProUGUI coinsText;
+        VText coinsText;
         UIButton doubleBtn;
         protected override string Title => "Level Complete!";
         protected override Vector2 Size => new Vector2(920, 1360);
@@ -100,7 +99,7 @@ namespace VoxelBloom
             var rt = UI.Text(rr, Receipt.Hard ? "Hard level reward" : "Reward", 40, Theme.InkSoft);
             rt.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -36), new Vector2(600, 50));
             UI.Icon(rr, Icon.Coin, 100).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(-120, 60), new Vector2(100, 100));
-            coinsText = UI.Text(rr, "+0", 80, Theme.Ink, TextAlignmentOptions.Left);
+            coinsText = UI.Text(rr, "+0", 80, Theme.Ink, TextAnchor.MiddleLeft);
             coinsText.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(-50, 60), new Vector2(320, 100), new Vector2(0, 0.5f));
             Tween.Value(0.9f, k => { if (coinsText != null) coinsText.text = "+" + Mathf.RoundToInt(Receipt.Coins * k); });
             Tween.Delay(0.9f, () => Services.Audio.Play(Sfx.Coin));
@@ -162,7 +161,7 @@ namespace VoxelBloom
             string msg = Reason == FailReason.QueueFull ? "The attack queue is jammed:\nno queued colour can reach the model."
                 : Reason == FailReason.OutOfMoves ? "You ran out of moves." : "No blocks left on the board.";
             var t = UI.Text(Body, msg, 46, Theme.Ink);
-            t.textWrappingMode = TextWrappingModes.Normal;
+            t.Wrap = true;
             t.rectTransform.TopBand(80, 200, 10);
             UI.Icon(Body, Icon.Heart, 120).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(-70, -350), new Vector2(120, 120));
             UI.Text(Body, "-1", 70, Theme.Red).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(60, -350), new Vector2(160, 100));
@@ -236,12 +235,12 @@ namespace VoxelBloom
             var rt = (RectTransform)bg.transform.parent;
             rt.TopBand(70 + row * 270, 240, 0);
             UI.Icon(rt, it.i, 150).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(100, 0), new Vector2(150, 150));
-            var n = UI.Text(rt, it.name, 50, Theme.Ink, TextAlignmentOptions.Left);
+            var n = UI.Text(rt, it.name, 50, Theme.Ink, TextAnchor.MiddleLeft);
             n.rectTransform.Place(new Vector2(0, 1), new Vector2(200, -60), new Vector2(400, 60), new Vector2(0, 0.5f));
-            var d = UI.Text(rt, it.desc, 32, Theme.InkSoft, TextAlignmentOptions.TopLeft);
-            d.textWrappingMode = TextWrappingModes.Normal;
+            var d = UI.Text(rt, it.desc, 32, Theme.InkSoft, TextAnchor.UpperLeft);
+            d.Wrap = true;
             d.rectTransform.Place(new Vector2(0, 1), new Vector2(200, -100), new Vector2(380, 110), new Vector2(0, 1));
-            var owned = UI.Text(rt, "Owned: " + Services.Boosters.Count(it.t), 32, Theme.Purple, TextAlignmentOptions.Left);
+            var owned = UI.Text(rt, "Owned: " + Services.Boosters.Count(it.t), 32, Theme.Purple, TextAnchor.MiddleLeft);
             owned.rectTransform.Place(new Vector2(0, 0), new Vector2(200, 34), new Vector2(300, 44), new Vector2(0, 0.5f));
             int price = Services.Config.Booster(it.t).Price;
             var buy = UI.Button(rt, price.ToString(), ButtonStyle.Green, new Vector2(230, 110), Icon.Coin, 46);
@@ -268,7 +267,7 @@ namespace VoxelBloom
 
     public sealed class CoinsLabel : MonoBehaviour
     {
-        public TextMeshProUGUI Label;
+        public VText Label;
         int shown = -1;
         void Update()
         {
@@ -291,7 +290,7 @@ namespace VoxelBloom
             Toggle(1, Icon.Sound, "Sound", () => st.Sound, v => st.Sound = v);
             Toggle(2, Icon.Vibrate, "Vibration", () => st.Vibration, v => st.Vibration = v);
             Toggle(3, Icon.Sparkle, "Reduced effects", () => st.ReducedEffects, v => st.ReducedEffects = v);
-            var q = UI.Text(Body, "Graphics quality", 44, Theme.Ink, TextAlignmentOptions.Left);
+            var q = UI.Text(Body, "Graphics quality", 44, Theme.Ink, TextAnchor.MiddleLeft);
             q.rectTransform.TopBand(4 * 170 + 70, 60, 20);
             string[] names = { "Low", "Medium", "High" };
             var buttons = new UIButton[3];
@@ -312,7 +311,7 @@ namespace VoxelBloom
             var rt = (RectTransform)bg.transform.parent;
             rt.TopBand(60 + row * 170, 140, 0);
             UI.Icon(rt, icon, 100).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(80, 0), new Vector2(100, 100));
-            UI.Text(rt, label, 46, Theme.Ink, TextAlignmentOptions.Left).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(160, 0), new Vector2(400, 60), new Vector2(0, 0.5f));
+            UI.Text(rt, label, 46, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(160, 0), new Vector2(400, 60), new Vector2(0, 0.5f));
             UIButton b = null;
             b = UI.Button(rt, get() ? "ON" : "OFF", get() ? ButtonStyle.Green : ButtonStyle.White, new Vector2(190, 100), null, 44);
             ((RectTransform)b.transform).Place(new Vector2(1, 0.5f), new Vector2(-120, 0), new Vector2(190, 100));
@@ -320,7 +319,7 @@ namespace VoxelBloom
             {
                 set(!get());
                 Services.NotifySettingsChanged();
-                var lbl = b.Face.Find("Label").GetComponent<TextMeshProUGUI>();
+                var lbl = b.Face.Find("Label").GetComponent<VText>();
                 lbl.text = get() ? "ON" : "OFF";
                 UI.StyleColors(get() ? ButtonStyle.Green : ButtonStyle.White, out var face, out var lip, out var tc);
                 b.Face.GetComponent<Image>().color = face;
@@ -376,7 +375,7 @@ namespace VoxelBloom
     public sealed class NoLivesDialog : DialogBase
     {
         const int RefillPrice = 400;
-        TextMeshProUGUI timer;
+        VText timer;
         protected override string Title => "No lives";
         protected override Vector2 Size => new Vector2(860, 900);
 

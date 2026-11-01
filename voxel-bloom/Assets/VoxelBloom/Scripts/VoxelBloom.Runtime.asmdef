@@ -3,7 +3,6 @@
     "rootNamespace": "VoxelBloom",
     "references": [
         "VoxelBloom.Core",
-        "Unity.TextMeshPro",
         "UnityEngine.UI"
     ],
     "includePlatforms": [],

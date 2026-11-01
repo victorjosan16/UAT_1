@@ -20,7 +20,6 @@ namespace VoxelBloom.EditorTools
         [MenuItem("Voxel Bloom/Setup Project (URP + Android + Scene)", priority = 1)]
         public static void SetupAll()
         {
-            ImportTmpEssentials();
             SetupUrp();
             SetupAndroid();
             SetupScene();
@@ -28,14 +27,7 @@ namespace VoxelBloom.EditorTools
             Debug.Log("[VoxelBloom] Setup complete. Press Play in " + ScenePath + " (any scene works: the game boots itself).");
         }
 
-        [MenuItem("Voxel Bloom/1. Import TMP Essentials")]
-        public static void ImportTmpEssentials()
-        {
-            if (Resources.Load<TMPro.TMP_Settings>("TMP Settings") != null) return;
-            TMPro.TMP_PackageResourceImporter.ImportResources(true, false, false);
-        }
-
-        [MenuItem("Voxel Bloom/2. Configure URP")]
+        [MenuItem("Voxel Bloom/1. Configure URP")]
         public static void SetupUrp()
         {
             if (GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset) { Debug.Log("[VoxelBloom] URP already active - kept."); return; }
@@ -56,7 +48,7 @@ namespace VoxelBloom.EditorTools
             Debug.Log("[VoxelBloom] URP asset created and assigned.");
         }
 
-        [MenuItem("Voxel Bloom/3. Configure Android Player")]
+        [MenuItem("Voxel Bloom/2. Configure Android Player")]
         public static void SetupAndroid()
         {
             PlayerSettings.productName = "Voxel Bloom 3D";
@@ -67,16 +59,15 @@ namespace VoxelBloom.EditorTools
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-            if ((int)PlayerSettings.Android.minSdkVersion < 24) PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            if ((int)PlayerSettings.Android.minSdkVersion < 26) PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
             PlayerSettings.Android.forceInternetPermission = false;
-            PlayerSettings.Android.androidIsGame = true;
             PlayerSettings.colorSpace = ColorSpace.Linear;
             EditorUserBuildSettings.buildAppBundle = true;
             // Signing (keystore, aliases, passwords) is intentionally left untouched.
             Debug.Log("[VoxelBloom] Android: " + PackageId + ", IL2CPP, ARM64, portrait, AAB. Signing untouched.");
         }
 
-        [MenuItem("Voxel Bloom/4. Create Bootstrap Scene")]
+        [MenuItem("Voxel Bloom/3. Create Bootstrap Scene")]
         public static void SetupScene()
         {
             if (!File.Exists(ScenePath))

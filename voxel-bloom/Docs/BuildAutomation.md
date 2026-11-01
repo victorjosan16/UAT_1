@@ -11,7 +11,7 @@ Trei moduri, toate folosesc `Assets/VoxelBloom/Editor/BuildScript.cs`:
 ## Setări aplicate automat de BuildScript
 
 **Comune:** nume produs „Voxel Bloom 3D”, companie Animatix, versiunea din `-buildVersion` / `VB_VERSION`
-(implicit 1.0.0), orientare doar Portrait, Linear color space, URP + TMP + scena Bootstrap create dacă lipsesc.
+(implicit 1.0.0), orientare doar Portrait, Linear color space, URP + scena Bootstrap create dacă lipsesc (textul nu depinde de TMP).
 
 **iOS:**
 - Bundle ID `com.animatix.voxelbloom3d` (suprascris cu `IOS_BUNDLE_ID`)
@@ -21,7 +21,7 @@ Trei moduri, toate folosesc `Assets/VoxelBloom/Editor/BuildScript.cs`:
 - Jocul e offline: nu are nevoie de permisiuni, ATT sau `NSUserTrackingUsageDescription`.
 
 **Android:**
-- Package `com.animatix.voxelbloom3d`, IL2CPP, ARM64, min API 24, target API = cel mai nou instalat
+- Package `com.animatix.voxelbloom3d`, IL2CPP, ARM64, min API 26, target API = cel mai nou instalat
 - **AAB** (pentru Google Play); APK cu `-apk` sau `VB_ANDROID_FORMAT=apk`
 - `versionCode` din `-androidVersionCode` / `VB_BUILD_NUMBER`
 - Fără permisiunea INTERNET
@@ -70,5 +70,5 @@ Alternativă la GitHub Actions, configurată din browser:
 - **Bundle ID:** `com.animatix.voxelbloom3d`
 - **Credentials:** „Auto-generated debug keystore” pentru test, sau keystore-ul tău de upload pentru Google Play
 - **Advanced → Pre-Export Method:** `VoxelBloom.EditorTools.BuildScript.CloudBuildPreExport` (**obligatoriu**:
-  creează scena Bootstrap, URP și TMP, care nu sunt în repo)
+  creează scena Bootstrap și URP, care nu sunt în repo)
 - **Android → Build App Bundle:** bifat pentru Google Play, debifat pentru APK de test

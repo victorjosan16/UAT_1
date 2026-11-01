@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -84,23 +83,23 @@ namespace VoxelBloom
             return img;
         }
 
-        public static TextMeshProUGUI Text(Transform parent, string text, float size, Color color, TextAlignmentOptions align = TextAlignmentOptions.Center, float outline = 0f, Color? outlineColor = null)
+        public static VText Text(Transform parent, string text, float size, Color color, TextAnchor align = TextAnchor.MiddleCenter, float outline = 0f, Color? outlineColor = null)
         {
             var rt = Rect(parent, "Text");
-            var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
-            var f = Fonts.Main;
-            if (f != null) t.font = f;
+            var t = rt.gameObject.AddComponent<VText>();
+            t.font = Fonts.Main;
             t.text = text;
             t.fontSize = size;
             t.color = color;
             t.alignment = align;
             t.raycastTarget = false;
-            t.textWrappingMode = TextWrappingModes.NoWrap;
-            t.overflowMode = TextOverflowModes.Overflow;
+            t.supportRichText = false;
+            t.Wrap = false;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
             if (outline > 0f)
             {
+                t.outlineColor = outlineColor ?? Theme.Ink;
                 t.outlineWidth = outline;
-                t.outlineColor = outlineColor ?? (Color32)Theme.Ink;
             }
             return t;
         }
@@ -148,7 +147,7 @@ namespace VoxelBloom
             }
             if (!string.IsNullOrEmpty(label))
             {
-                var t = Text(faceImg.transform, label, fs, textColor, TextAlignmentOptions.Center, style == ButtonStyle.White ? 0f : 0.22f, Theme.Darker(lip, 0.8f));
+                var t = Text(faceImg.transform, label, fs, textColor, TextAnchor.MiddleCenter, style == ButtonStyle.White ? 0f : 0.22f, Theme.Darker(lip, 0.8f));
                 t.rectTransform.Stretch(icon.HasValue ? iconSize + size.y * 0.25f : 16, 16, 0, 0);
                 t.name = "Label";
             }
@@ -166,14 +165,14 @@ namespace VoxelBloom
         {
             var img = Image(parent, "Ribbon", SpriteFactory.Ribbon(), Color.white);
             img.rectTransform.sizeDelta = new Vector2(width, height);
-            var t = Text(img.transform, text, height * 0.42f, Color.white, TextAlignmentOptions.Center, 0.25f, Theme.PurpleDark);
+            var t = Text(img.transform, text, height * 0.42f, Color.white, TextAnchor.MiddleCenter, 0.25f, Theme.PurpleDark);
             t.rectTransform.Stretch(60, 60, 4, height * 0.12f);
             t.name = "Title";
             return img.rectTransform;
         }
 
         /// <summary>White rounded pill with an icon on the left and a value label (top bars).</summary>
-        public static TextMeshProUGUI Pill(Transform parent, Icon icon, string value, out RectTransform root, float width = 260f, float height = 84f)
+        public static VText Pill(Transform parent, Icon icon, string value, out RectTransform root, float width = 260f, float height = 84f)
         {
             var bg = Panel(parent, "Pill_" + icon, new Color(1, 1, 1, 0.92f), 40, true, 4f);
             root = (RectTransform)bg.transform.parent;

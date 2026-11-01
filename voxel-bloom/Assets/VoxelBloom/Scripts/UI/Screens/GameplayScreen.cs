@@ -1,5 +1,4 @@
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -12,7 +11,7 @@ namespace VoxelBloom
     {
         public RectTransform Root;
         public Image Face, Lip;
-        public TextMeshProUGUI Label;
+        public VText Label;
         public UIButton Button;
         public AttackBlock? Block;
 
@@ -25,8 +24,8 @@ namespace VoxelBloom
             var v = new BlockView { Root = (RectTransform)b.transform, Button = b };
             v.Face = b.Face.GetComponent<Image>();
             v.Lip = b.transform.Find("Lip").GetComponent<Image>();
-            v.Label = b.Face.Find("Label").GetComponent<TextMeshProUGUI>();
-            v.Label.fontStyle = FontStyles.Bold;
+            v.Label = b.Face.Find("Label").GetComponent<VText>();
+            v.Label.fontStyle = FontStyle.Bold;
             return v;
         }
 
@@ -95,9 +94,9 @@ namespace VoxelBloom
         public readonly BlockView[] Board = new BlockView[GameSession.BoardSize];
         public readonly BlockView[] QueueBlocks = new BlockView[5];
         public readonly RectTransform[] QueueSlots = new RectTransform[5];
-        public readonly TextMeshProUGUI[] BoosterCounts = new TextMeshProUGUI[4];
+        public readonly VText[] BoosterCounts = new VText[4];
         public readonly UIButton[] BoosterButtons = new UIButton[4];
-        public TextMeshProUGUI LevelText, CoinsText, MovesText, ProgressText, RemainingText, HintText;
+        public VText LevelText, CoinsText, MovesText, ProgressText, RemainingText, HintText;
         public Image[] Stars = new Image[3];
         public ProgressBar Progress;
         public RectTransform ModelPanel, ComboLayer, HardBadge, BoardRoot;
@@ -183,7 +182,7 @@ namespace VoxelBloom
             UI.Icon(HardBadge, Icon.Lightning, 56).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(34, 0), new Vector2(56, 56));
             UI.Text(HardBadge, "HARD x2.5", 32, Color.white).rectTransform.Stretch(60, 8, 0, 0);
 
-            HintText = UI.Text(ModelPanel, "", 40, Color.white, TextAlignmentOptions.Center, 0.25f, Theme.PurpleDark);
+            HintText = UI.Text(ModelPanel, "", 40, Color.white, TextAnchor.MiddleCenter, 0.25f, Theme.PurpleDark);
             HintText.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -60), new Vector2(760, 60));
 
             ComboLayer = UI.Rect(ModelPanel, "Combo").Stretch();
@@ -193,7 +192,7 @@ namespace VoxelBloom
             cube.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(70, 70));
             Progress = UI.Progress(prog, Theme.Green, 44);
             ((RectTransform)Progress.transform).Stretch(90, 150, 13, 13);
-            ProgressText = UI.Text(prog, "0%", 42, Theme.Ink, TextAlignmentOptions.Right);
+            ProgressText = UI.Text(prog, "0%", 42, Theme.Ink, TextAnchor.MiddleRight);
             ProgressText.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(0, 0), new Vector2(140, 60), new Vector2(1, 0.5f));
         }
 
@@ -258,13 +257,12 @@ namespace VoxelBloom
 
         public void ShowCombo(int combo)
         {
-            var t = UI.Text(ComboLayer, "COMBO\nx" + Mathf.Min(combo, 5), 110, Theme.Gold, TextAlignmentOptions.Center, 0.3f, Theme.Darker(Theme.Red, 0.8f));
-            t.fontStyle = FontStyles.Bold;
-            t.lineSpacing = -30;
+            var t = UI.Text(ComboLayer, "COMBO\nx" + Mathf.Min(combo, 5), 110, Theme.Gold, TextAnchor.MiddleCenter, 0.3f, Theme.Darker(Theme.Red, 0.8f));
+            t.fontStyle = FontStyle.Bold;
+            t.lineSpacing = 0.8f;
             t.rectTransform.Place(new Vector2(1, 1), new Vector2(-190, -170), new Vector2(360, 260));
             t.rectTransform.localRotation = Quaternion.Euler(0, 0, -10);
-            t.colorGradient = new VertexGradient(Theme.Lighter(Theme.Gold, 0.4f), Theme.Lighter(Theme.Gold, 0.4f), Theme.Orange, Theme.Hex("#FF5FA2"));
-            t.enableVertexGradient = true;
+            t.SetGradient(Theme.Lighter(Theme.Gold, 0.4f), Theme.Hex("#FF7A5C"));
             var cg = t.gameObject.AddComponent<CanvasGroup>();
             Tween.Scale(t.transform, Vector3.one * 0.3f, Vector3.one, 0.35f, Ease.OutBack);
             Tween.Delay(0.8f, () => { if (cg != null) Tween.Fade(cg, 1, 0, 0.3f, () => { if (t != null) Destroy(t.gameObject); }); });
@@ -272,7 +270,7 @@ namespace VoxelBloom
 
         public void FloatText(string text, Color color, Vector2 pos)
         {
-            var t = UI.Text(ComboLayer, text, 54, color, TextAlignmentOptions.Center, 0.25f, Theme.Ink);
+            var t = UI.Text(ComboLayer, text, 54, color, TextAnchor.MiddleCenter, 0.25f, Theme.Ink);
             t.rectTransform.Place(new Vector2(0.5f, 0.5f), pos, new Vector2(500, 80));
             var cg = t.gameObject.AddComponent<CanvasGroup>();
             Tween.Move(t.rectTransform, pos, pos + new Vector2(0, 120), 0.9f);

@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VoxelBloom.Core;
@@ -44,14 +43,14 @@ namespace VoxelBloom
             thumb.rectTransform.Stretch(6, 6, 6, 6);
             if (!unlocked) thumb.color = new Color(1, 1, 1, 0.55f);
 
-            var t1 = UI.Text(root, "Chapter " + ch.Id, 38, Theme.InkSoft, TextAlignmentOptions.Left);
+            var t1 = UI.Text(root, "Chapter " + ch.Id, 38, Theme.InkSoft, TextAnchor.MiddleLeft);
             t1.rectTransform.Place(new Vector2(0, 1), new Vector2(270, -54), new Vector2(480, 50), new Vector2(0, 0.5f));
-            var t2 = UI.Text(root, ch.Name, 54, Theme.Ink, TextAlignmentOptions.Left);
+            var t2 = UI.Text(root, ch.Name, 54, Theme.Ink, TextAnchor.MiddleLeft);
             t2.rectTransform.Place(new Vector2(0, 1), new Vector2(270, -112), new Vector2(520, 64), new Vector2(0, 0.5f));
             int stars = Services.Progress.ChapterStars(ch);
             var star = UI.Icon(root, Icon.Star, 56);
             star.rectTransform.Place(new Vector2(0, 0), new Vector2(298, 62), new Vector2(56, 56));
-            var st = UI.Text(root, unlocked ? stars + "/" + ch.LevelCount * 3 : "Need " + ch.UnlockStars + " stars", 40, unlocked ? Theme.Ink : Theme.InkSoft, TextAlignmentOptions.Left);
+            var st = UI.Text(root, unlocked ? stars + "/" + ch.LevelCount * 3 : "Need " + ch.UnlockStars + " stars", 40, unlocked ? Theme.Ink : Theme.InkSoft, TextAnchor.MiddleLeft);
             st.rectTransform.Place(new Vector2(0, 0), new Vector2(340, 62), new Vector2(420, 50), new Vector2(0, 0.5f));
 
             UIButton action;

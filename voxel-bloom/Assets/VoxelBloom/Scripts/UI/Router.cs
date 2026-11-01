@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -102,7 +101,7 @@ namespace VoxelBloom
             root.Place(new Vector2(0.5f, 0f), new Vector2(0, 300), new Vector2(860, 120));
             var t = UI.Text(root, message, 44, Color.white);
             t.rectTransform.Stretch(icon.HasValue ? 120 : 30, 30, 0, 0);
-            t.textWrappingMode = TextWrappingModes.Normal;
+            t.Wrap = true;
             if (icon.HasValue) UI.Icon(root, icon.Value, 90).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(70, 0), new Vector2(90, 90));
             var cg = root.gameObject.AddComponent<CanvasGroup>();
             cg.blocksRaycasts = false;
@@ -195,7 +194,7 @@ namespace VoxelBloom
     /// <summary>Top bar shown on meta screens: avatar, lives, coins (+), settings.</summary>
     public sealed class TopBar : MonoBehaviour
     {
-        TextMeshProUGUI lives, coins;
+        VText lives, coins;
         int shownCoins = -1, shownLives = -1;
         long shownSeconds = -1;
         public Action OnSettings, OnAddCoins, OnAvatar;
