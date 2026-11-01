@@ -16,6 +16,7 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
    min API 24; **signing is never touched**) and creates `Scenes/Bootstrap/Bootstrap.unity`.
 3. Press **Play** with any scene. The game boots itself (`App.Boot`, `RuntimeInitializeOnLoadMethod`).
 4. Tests: **Window → General → Test Runner**, EditMode + PlayMode.
+5. Automated iOS/Android builds (Editor menu, `tools/build.sh`, GitHub Actions): see `Docs/BuildAutomation.md`.
 
 Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈1 min), then
 `node tools/test-rules.mjs`. Model contact sheet: `node tools/preview.mjs Docs/ModelSheet.png`.

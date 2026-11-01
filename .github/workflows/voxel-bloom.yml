@@ -1,0 +1,196 @@
+# Automated builds for Voxel Bloom 3D (Unity project in ./voxel-bloom)
+#   tests -> iOS Xcode project (Linux) -> signed .ipa (macOS, optional TestFlight upload)
+#        -> Android .aab (Linux, optional Google Play internal track upload)
+# Required secrets are listed in voxel-bloom/Docs/BuildAutomation.md.
+name: Voxel Bloom 3D builds
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'voxel-bloom/**', '.github/workflows/voxel-bloom.yml' ]
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload to TestFlight and Google Play (internal track)'
+        type: boolean
+        default: false
+      version:
+        description: 'Marketing version (e.g. 1.0.0)'
+        type: string
+        default: '1.0.0'
+
+concurrency:
+  group: voxel-bloom-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_PATH: voxel-bloom
+  VB_VERSION: ${{ inputs.version || '1.0.0' }}
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  tests:
+    name: Tests (rules + Unity EditMode/PlayMode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Rules & level validation (Node)
+        run: node voxel-bloom/tools/test-rules.mjs
+      - uses: actions/cache@v4
+        with:
+          path: voxel-bloom/Library
+          key: Library-tests-${{ hashFiles('voxel-bloom/Packages/manifest.json') }}
+          restore-keys: Library-tests-
+      - name: Unity tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: voxel-bloom
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  build-ios:
+    name: iOS - Unity export (Xcode project)
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: voxel-bloom/Library
+          key: Library-iOS-${{ hashFiles('voxel-bloom/Packages/manifest.json') }}
+          restore-keys: Library-iOS-
+      - name: Build Xcode project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          projectPath: voxel-bloom
+          targetPlatform: iOS
+          buildName: VoxelBloom3D
+          buildsPath: build
+          buildMethod: VoxelBloom.EditorTools.BuildScript.BuildFromCI
+          versioning: None
+          customParameters: -customBuildTarget iOS -buildVersion ${{ env.VB_VERSION }} -iosBuildNumber ${{ env.BUILD_NUMBER }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcode-project
+          path: build/iOS
+          retention-days: 3
+
+  archive-ios:
+    name: iOS - sign & archive (.ipa)
+    needs: build-ios
+    runs-on: macos-15
+    env:
+      XCODE_PROJECT_DIR: ios
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-xcode-project
+          path: ios
+      - name: Locate Unity-iPhone.xcodeproj
+        run: |
+          PROJ=$(find ios -name "Unity-iPhone.xcodeproj" -maxdepth 3 | head -1)
+          test -n "$PROJ" || { echo "Xcode project not found"; exit 1; }
+          echo "PROJ=$PROJ" >> $GITHUB_ENV
+      - name: App Store Connect API key
+        env:
+          APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          echo "$APPSTORE_P8" > "$RUNNER_TEMP/keys/AuthKey.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey.p8" >> $GITHUB_ENV
+      - name: Archive (automatic signing)
+        run: |
+          xcodebuild -project "$PROJ" -scheme Unity-iPhone -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/VoxelBloom3D.xcarchive" \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
+            archive | tail -50
+      - name: Export .ipa (and upload to TestFlight when requested)
+        run: |
+          DEST=export
+          if [ "${{ inputs.upload }}" = "true" ]; then DEST=upload; fi
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>$DEST</string>
+            <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/VoxelBloom3D.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/ipa" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ runner.temp }}/ipa
+          retention-days: 14
+
+  build-android:
+    name: Android - signed .aab
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space (Android builds are large)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with: { tool-cache: false, android: false }
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: voxel-bloom/Library
+          key: Library-Android-${{ hashFiles('voxel-bloom/Packages/manifest.json') }}
+          restore-keys: Library-Android-
+      - name: Build AAB
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: voxel-bloom
+          targetPlatform: Android
+          buildName: VoxelBloom3D
+          buildsPath: build
+          buildMethod: VoxelBloom.EditorTools.BuildScript.BuildFromCI
+          versioning: None
+          androidExportType: androidAppBundle
+          androidKeystoreName: user.keystore
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          customParameters: -customBuildTarget Android -buildVersion ${{ env.VB_VERSION }} -androidVersionCode ${{ env.BUILD_NUMBER }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: build/Android
+          retention-days: 14
+      - name: Upload to Google Play (internal track)
+        if: ${{ inputs.upload }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.animatix.voxelbloom3d
+          releaseFiles: build/Android/**/*.aab
+          track: internal
+          status: draft
