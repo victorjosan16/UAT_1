@@ -255,7 +255,7 @@ namespace VoxelBloom
         /// </summary>
         void BuildArt(RectTransform rt)
         {
-            const float k = 0.96f;
+            float k = showLives ? 0.96f : 1.24f; // the reference Home has bigger avatar / coin / gem pills
             RectTransform PlaceArt(Image img, float x, float w)
             {
                 var r = img.rectTransform;
@@ -301,7 +301,7 @@ namespace VoxelBloom
                 var hearts = PlaceArt(UIArt.Picture(rt, "HUD/pill_hearts_blank", 215 * k), 150 * k, 215 * k);
                 lives = Value(hearts, 0.687f, 0.44f, Theme.Hex("#3B1A78"), new Color(1, 1, 1, 0.5f));
             }
-            float cx = showLives ? 370 : 175, gx = showLives ? 652 : 480;
+            float cx = showLives ? 370 : 150, gx = showLives ? 652 : 440;
             var coinPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_coins_blank", 278 * k, true), cx * k, 278 * k);
             coins = Value(coinPill, 0.52f, 0.43f, Color.white, Theme.Hex("#0E1430"));
             Hit(coinPill, new Vector2(0.74f, 0), Vector2.one, () => OnAddCoins?.Invoke());

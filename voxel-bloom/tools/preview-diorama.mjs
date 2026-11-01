@@ -11,7 +11,7 @@ const out = process.argv[2] || '/tmp/diorama.png';
 const heroId = process.argv[3] || 'fox';
 const yaw = +(process.argv[4] ?? -22) * Math.PI / 180;
 const D = JSON.parse(fs.readFileSync('Assets/VoxelBloom/Data/Resources/VoxelBloom/Home/diorama.json', 'utf8'));
-if (process.env.VB_HOME) { D.camera = D.homeCamera; D.parts = D.parts.filter((p) => p.model !== 'pedestal'); }
+if (process.env.VB_HOME) { D.camera = D.homeCamera; D.parts = D.parts.filter((p) => !(D.homeSkip || ['pedestal']).includes(p.model)); } else { D.parts = D.parts.filter((p) => p.only !== 'home'); }
 const [W, H] = D.camera.texture;
 
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

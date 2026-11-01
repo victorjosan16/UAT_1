@@ -169,13 +169,17 @@ namespace VoxelBloom
                     camLook = V3(MiniJson.GetArr(cam, "look"), camLook);
                     fov = (float)MiniJson.GetDouble(cam, "fov", fov);
                 }
+                var skip = new HashSet<string> { "pedestal" };
+                var skipList = MiniJson.GetArr(root, "homeSkip");
+                if (skipList != null) foreach (var o in skipList) if (o is string k) skip.Add(k);
                 var models = MiniJson.GetObj(root, "models");
                 var built = new Dictionary<string, (sbyte[] cells, int x, int y, int z, Color32[] pal)>();
                 foreach (var po in MiniJson.GetArr(root, "parts"))
                 {
                     var part = MiniJson.Obj(po);
                     string key = MiniJson.GetString(part, "model");
-                    if (homeBackdrop && key == "pedestal") continue; // the backdrop has no mascot pedestal
+                    if (homeBackdrop && skip.Contains(key)) continue; // the backdrop leaves out the pedestal and what hides the waterfall
+                    if (!homeBackdrop && MiniJson.GetString(part, "only", "") == "home") continue; // windmill / clouds of the home backdrop
                     if (!built.TryGetValue(key, out var m))
                     {
                         var md = MiniJson.GetObj(models, key);

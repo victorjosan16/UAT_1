@@ -8,7 +8,9 @@ import fs from 'fs';
 const OUT = 'Assets/VoxelBloom/Data/Resources/VoxelBloom/Home/diorama.json';
 export const CAMERA = { pos: [0, 1.85, -8.6], look: [0, -0.1, 0], fov: 40, texture: [900, 1950] };
 // Home / title backdrop of the reference mockup: no pedestal or mascot, looking at the waterfall cliffs
-export const HOME_CAMERA = { pos: [1.2, 1.6, -6.0], look: [2.6, 1.0, 7.0], fov: 46, texture: [900, 1950] };
+// parts left out of the home backdrop (they would hide the waterfall)
+export const HOME_SKIP = ['pedestal', 'treeB', 'terraceR', 'bush2', 'fK', 'fK2', 'fP', 'bush1'];
+export const HOME_CAMERA = { pos: [2.6,2.4,-3.2], look: [3.1,0.9,7.0], fov: 56, texture: [900, 1950] };
 
 function hash(x, y, z) { let h = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791)) >>> 0; h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995) >>> 0; return (h & 1023) / 1023; }
 
@@ -185,6 +187,18 @@ function farHills() {
   return p;
 }
 
+/** Small voxel windmill (white tower, red roof, four wooden blades facing the camera). */
+function windmill() {
+  const X = 21, Y = 34, Z = 9, p = new Part('Windmill', X, Y, Z), cx = 10;
+  for (let y = 0; y < 20; y++) { const r = 4 - Math.floor(y / 7); for (let x = cx - r; x <= cx + r; x++) for (let z = 4 - r; z <= 4 + r; z++) p.set(x, y, z, (y % 6 === 0) ? '#E3DED3' : '#F6F3EC'); }
+  for (let y = 20; y < 25; y++) { const r = 4 - (y - 20); for (let x = cx - r; x <= cx + r; x++) for (let z = 4 - r; z <= 4 + r; z++) p.set(x, y, z, '#D9483B'); }
+  for (let y = 2; y < 6; y++) p.set(cx, y, 0, '#7A4A2A');
+  const hub = 18;
+  for (let i = -9; i <= 9; i++) { p.set(cx + i, hub, 0, '#A0703E'); p.set(cx, hub + i, 0, '#A0703E');
+    if (Math.abs(i) > 2) { p.set(cx + i, hub + (i > 0 ? 1 : -1), 0, '#F1E6C8'); p.set(cx + (i > 0 ? -1 : 1), hub + i, 0, '#F1E6C8'); } }
+  return p;
+}
+
 // ---------------------------------------------------------------- composition
 export function buildDiorama() {
   const models = {}, parts = [];
@@ -213,7 +227,13 @@ export function buildDiorama() {
   for (const [k, prt, pos, s] of F) add(k, prt, pos, s);
   // fluffy clouds beside the logo
   add('cloud1', cloud(1, 22), [-3.3, 3.3, 18], 0.09); add('cloud2', cloud(2, 20), [3.5, 3.7, 19], 0.09);
-  return { camera: CAMERA, homeCamera: HOME_CAMERA, models, parts };
+  // home backdrop only: windmill on the hills and fluffy clouds in the upper sky
+  const home = (key, part, pos, size) => { add(key, part, pos, size); parts[parts.length - 1].only = 'home'; };
+  home('windmill', windmill(), [4.4, gy + 3.2, 14.5], 0.11);
+  home('hf1', flower('#FF7FC8', '#FFE15A', '#E8549E'), [1.15, gy, 0.4], 0.075); home('hf2', flower('#C9A2FF', '#FFE15A', '#9C6CF0'), [1.7, gy, 1.4], 0.06);
+  home('hf3', flower('#FF9AD5', '#FFE15A', '#F06AB0'), [4.9, gy, 0.6], 0.075); home('hf4', flower('#FFD23F', '#FF8A1F', '#F0A800'), [4.4, gy, 1.6], 0.06);
+  home('hcloud1', cloud(7, 26), [-1.0, 6.4, 18], 0.13); home('hcloud2', cloud(8, 22), [6.5, 7.2, 20], 0.13); home('hcloud3', cloud(9, 18), [2.0, 8.6, 24], 0.14);
+  return { camera: CAMERA, homeCamera: HOME_CAMERA, homeSkip: HOME_SKIP, models, parts };
 }
 
 if (process.argv[1] && process.argv[1].endsWith('diorama.mjs')) {
