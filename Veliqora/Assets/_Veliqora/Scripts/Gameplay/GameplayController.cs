@@ -55,7 +55,7 @@ namespace Veliqora.Gameplay
         public event Action Stuck;
         public event Action<TapResult> Tapped;
         public event Action<string> Notice;              // toast-worthy messages
-        public event Action<int> BottleUnlocked;         // a cork came off (index)
+        public event Action<int, ObstacleKind> BottleUnlocked;   // ice melted / padlock opened (index, kind)
         public event Action ObjectivesChanged;
         /// <summary>Screen-level tap handler (booster selection modes, ad bottles). Return true to consume the tap.</summary>
         public Func<int, bool> TapInterceptor;
@@ -69,7 +69,7 @@ namespace Veliqora.Gameplay
 
             var snap = services.Save.Session;
             if (snap != null && snap.LevelNumber == level.Number) Session = GameSession.FromSnapshot(level, snap);
-            if (Session == null) Session = new GameSession(level, Guid.NewGuid().ToString("N"));
+            if (Session == null) { Session = new GameSession(level, Guid.NewGuid().ToString("N")); services.Save.Stats.LevelsStarted++; }
             board.BottleTapped = OnBottleTapped;
             board.PourStarted = _ => { _s.Audio.PlayPour(1); _s.Haptics.Light(); };
             PersistSession();
@@ -122,6 +122,7 @@ namespace Veliqora.Gameplay
         private void AnimateCommittedMove(TapResult r)
         {
             // The model already committed the move; persist immediately, then render it.
+            _s.Save.Stats.TotalPours++;
             PersistSession();
             StateChanged?.Invoke();
             Session.IsBusy = true;
@@ -134,9 +135,11 @@ namespace Veliqora.Gameplay
                 _board.SyncTo(Session.Current);
                 foreach (int u in mr.Unlocked)
                 {
+                    var kind = mr.Before[u].Lock != null ? mr.Before[u].Lock.Obstacle : ObstacleKind.Locked;
                     _board.PlayUnlock(u);
                     _s.Save.Stats.CorksOpened++;
-                    BottleUnlocked?.Invoke(u);
+                    if (kind == ObstacleKind.Frozen) _s.Save.Stats.IceThawed++; else _s.Save.Stats.LocksOpened++;
+                    BottleUnlocked?.Invoke(u, kind);
                 }
                 int revealed = revealedBefore - mr.After.HiddenTotal();
                 if (revealed > 0)
@@ -348,7 +351,7 @@ namespace Veliqora.Gameplay
             Session.ClearSelection();
             var token = _cts.Token;
             var session = Session;
-            var opts = SolverOptions.Hint;
+            var opts = SolverOptions.HintFor(session.Current);
             opts.IsCancelled = () => token.IsCancellationRequested;
             var task = Task.Run(() => session.GetHint(opts), token);
             _host.StartCoroutine(Await(task, hint =>
@@ -357,7 +360,9 @@ namespace Veliqora.Gameplay
                 if (hint == null) return;
                 if (!hint.HasMove)
                 {
-                    Notice?.Invoke(hint.Message ?? "No hint available right now.");
+                    Notice?.Invoke(hint.Source == HintSource.UndoSuggested
+                        ? UI.Loc.F("Dead end: undo {0} move(s) to get back on track.", hint.UndoSteps)
+                        : UI.Loc.T(hint.Message ?? "No hint available right now."));
                     return;
                 }
                 if (!_s.Economy.ConsumeBooster(BoosterType.Hint, Tx("hint")).Success) return;

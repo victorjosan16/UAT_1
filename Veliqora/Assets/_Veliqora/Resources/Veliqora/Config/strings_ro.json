@@ -294,6 +294,14 @@
     "Moon Palace": "Palatul Lunii",
     "Chapter {0}: {1}": "Capitolul {0}: {1}",
     "Chapter chest +{0}": "Cufărul capitolului +{0}",
-    "Chapter complete!": "Capitol finalizat!"
+    "Chapter complete!": "Capitol finalizat!",
+    "Dead end: undo {0} move(s) to get back on track.": "Fundătură: anulează {0} mutări ca să revii pe drumul bun.",
+    "No hint available right now.": "Niciun indiciu disponibil acum.",
+    "No solution from here. Try Undo or Restart.": "Nu există soluție de aici. Încearcă Anulează sau Reia.",
+    "Couldn't find a hint quickly. Try Undo, or Restart the level.": "Nu am găsit rapid un indiciu. Încearcă Anulează sau reia nivelul.",
+    "The ice melted!": "Gheața s-a topit!",
+    "Lock opened!": "Lacătul s-a deschis!",
+    "Frozen bottle — thaws after: {0}": "Sticlă înghețată — se dezgheață după: {0}",
+    "Locked bottle — opens when: {0}": "Sticlă blocată — se deschide când: {0}"
   }
 }

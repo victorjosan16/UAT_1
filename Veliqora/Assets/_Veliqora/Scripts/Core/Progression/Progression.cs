@@ -14,7 +14,11 @@ namespace Veliqora.Core.Progression
         public int DailyClaims;
         public int ObjectivesCompleted;
         public int MysteryRevealed;
-        public int CorksOpened;
+        public int CorksOpened;      // all obstacles cleared (frozen + locked)
+        public int IceThawed;
+        public int LocksOpened;
+        public int TotalPours;
+        public int LevelsStarted;
     }
 
     public sealed class DailyState

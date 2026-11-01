@@ -142,6 +142,10 @@ namespace Veliqora.Core.Save
                     ["objectives"] = (long)d.Stats.ObjectivesCompleted,
                     ["mystery"] = (long)d.Stats.MysteryRevealed,
                     ["corks"] = (long)d.Stats.CorksOpened,
+                    ["ice"] = (long)d.Stats.IceThawed,
+                    ["locks"] = (long)d.Stats.LocksOpened,
+                    ["pours"] = (long)d.Stats.TotalPours,
+                    ["started"] = (long)d.Stats.LevelsStarted,
                 },
                 ["dailyReward"] = new Dictionary<string, object> { ["lastDay"] = (long)d.Daily.LastClaimDay, ["streak"] = (long)d.Daily.Streak },
                 ["achievements"] = ToList(d.ClaimedAchievements),
@@ -215,6 +219,10 @@ namespace Veliqora.Core.Save
             d.Stats.ObjectivesCompleted = Math.Max(0, MiniJson.GetInt(st, "objectives"));
             d.Stats.MysteryRevealed = Math.Max(0, MiniJson.GetInt(st, "mystery"));
             d.Stats.CorksOpened = Math.Max(0, MiniJson.GetInt(st, "corks"));
+            d.Stats.IceThawed = Math.Max(0, MiniJson.GetInt(st, "ice"));
+            d.Stats.LocksOpened = Math.Max(0, MiniJson.GetInt(st, "locks"));
+            d.Stats.TotalPours = Math.Max(0, MiniJson.GetInt(st, "pours"));
+            d.Stats.LevelsStarted = Math.Max(0, MiniJson.GetInt(st, "started"));
             var dr = MiniJson.GetObject(p, "dailyReward");
             d.Daily.LastClaimDay = MiniJson.GetInt(dr, "lastDay", -1);
             d.Daily.Streak = Math.Max(0, MiniJson.GetInt(dr, "streak"));

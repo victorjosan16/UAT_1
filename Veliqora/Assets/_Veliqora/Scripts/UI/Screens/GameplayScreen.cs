@@ -114,7 +114,7 @@ namespace Veliqora.UI.Screens
             boardRt.offsetMin = new Vector2(30, 360);
             boardRt.offsetMax = new Vector2(-30, -UIStyle.TopBarHeight - 110 - objectiveSpace);
             _board = boardRt.gameObject.AddComponent<BoardView>();
-            _board.Init(cap => S.Themes.Bottle(cap), _level.Capacity, S.Settings.Data.ColorblindSymbols);
+            _board.Init(cap => S.Themes.BoardBottle(cap), _level.Capacity, S.Settings.Data.ColorblindSymbols);
             if (light) _board.SetGlassColor(UIStyle.Hex("#7F8DB0"));
 
             // Booster bar
@@ -137,7 +137,7 @@ namespace Veliqora.UI.Screens
             _ctl.Tapped += OnTapped;
             _ctl.TapInterceptor = InterceptTap;
             _ctl.ObjectivesChanged += RefreshObjectives;
-            _ctl.BottleUnlocked += i => Overlays.Toast(Loc.T("Cork removed!"), 1.6f);
+            _ctl.BottleUnlocked += (i, kind) => Overlays.Toast(Loc.T(kind == Core.Puzzle.ObstacleKind.Frozen ? "The ice melted!" : "Lock opened!"), 1.6f);
             _board.Build(_ctl.Session.Current, true);
             S.Economy.Changed += Refresh;
             S.Settings.Changed += OnSettingsChanged;
@@ -435,7 +435,10 @@ namespace Veliqora.UI.Screens
                 Color c;
                 int idx = _ctl.Session.Current[r.Index].IsLocked ? r.Index : r.PreviousSelection;
                 string cond = idx >= 0 ? BoardView.LockLabel(_ctl.Session.Current, idx, out c) : null;
-                Overlays.Toast(cond != null ? Loc.F("Corked bottle — opens when: {0}", cond) : Loc.T("This bottle is locked."), 2.2f);
+                bool frozen = idx >= 0 && _ctl.Session.Current[idx].Lock != null && _ctl.Session.Current[idx].Lock.IsFrozen;
+                string msg = cond == null ? Loc.T("This bottle is locked.")
+                    : frozen ? Loc.F("Frozen bottle — thaws after: {0}", cond) : Loc.F("Locked bottle — opens when: {0}", cond);
+                Overlays.Toast(msg, 2.2f);
             }
             if (r.Kind == TapKind.Moved) RefreshObjectives();
         }

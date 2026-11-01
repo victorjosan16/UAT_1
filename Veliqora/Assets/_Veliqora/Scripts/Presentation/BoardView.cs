@@ -75,12 +75,25 @@ namespace Veliqora.Presentation
             }
         }
 
+        /// <summary>Countdown shown on frozen bottles: pours or completed bottles still needed (-1 = no countdown).</summary>
+        public static int ObstacleRemaining(GameState s, int index)
+        {
+            var lk = s[index].Lock;
+            if (lk == null) return -1;
+            switch (lk.Kind)
+            {
+                case LockKind.Moves: return Mathf.Max(0, lk.Param - s.Moves);
+                case LockKind.CompletedBottles: return Mathf.Max(0, lk.Param - s.CompletedBottleCount());
+                default: return -1;
+            }
+        }
+
         private void ShowBottle(int i)
         {
             Color c;
             string label = LockLabel(_state, i, out c);
             _views[i].ShowState(_state[i]);
-            _views[i].ShowSpecial(_state[i], label, c, i);
+            _views[i].ShowSpecial(_state[i], label, c, i, ObstacleRemaining(_state, i));
         }
 
         /// <summary>Cork pop + sparkle when a bottle unlocks.</summary>
@@ -88,8 +101,13 @@ namespace Veliqora.Presentation
         {
             if (index < 0 || index >= _views.Count) return;
             var v = _views[index];
+            bool ice = v.ShowsIce;
             v.PlayUncork();
-            if (_fx != null) _fx.Sparkle(v.HomePosition + new Vector2(0, v.Height), UIStyle.ThemeAccent, 14, v.Width / 100f);
+            if (_fx != null)
+            {
+                if (ice) { _fx.Sparkle(v.HomePosition + new Vector2(0, v.Height * 0.5f), UIStyle.Hex("#BFEFFF"), 18, v.Width / 90f); _fx.Splash(v.HomePosition + new Vector2(0, v.Height * 0.2f), UIStyle.Hex("#9FE3FF"), v.Width / 120f); }
+                else _fx.Sparkle(v.HomePosition + new Vector2(0, v.Height * 0.6f), UIStyle.Hex("#FFD35A"), 14, v.Width / 100f);
+            }
         }
 
         /// <summary>Flash for newly revealed mystery layers.</summary>
@@ -163,46 +181,39 @@ namespace Veliqora.Presentation
             }
         }
 
-        private void Rows(int n, out int rows, out int perRow)
-        {
-            rows = n <= 5 ? 1 : (n <= 12 ? 2 : 3);
-            perRow = Mathf.CeilToInt(n / (float)rows);
-        }
+        private Core.Layout.BoardLayoutResult _layout;
 
+        /// <summary>Adaptive 1–4 row layout (Core.Layout.BoardLayout) sized for the tallest bottle on the board.</summary>
         private float ComputeBottleWidth(GameState state)
         {
-            Rows(state.BottleCount, out int rows, out int perRow);
             float aspect = 0f;
             for (int i = 0; i < state.BottleCount; i++) aspect = Mathf.Max(aspect, _shapeFor(state[i].Capacity).Aspect);
             var size = _rect.rect.size;
-            float byWidth = size.x / (perRow * 1.5f + 0.4f);
-            float byHeight = size.y / (rows * (aspect * 1.32f) + 0.2f);
-            return Mathf.Clamp(Mathf.Min(byWidth, byHeight), 60f, 190f);
+            _layout = Core.Layout.BoardLayout.Choose(state.BottleCount, size.x, size.y, aspect);
+            return _layout.BottleWidth;
         }
+
+        /// <summary>Current layout (rows, bottles per row, bottle size) — exposed for tests and tooling.</summary>
+        public Core.Layout.BoardLayoutResult CurrentLayout => _layout;
 
         private void Layout(bool animate)
         {
             int n = _views.Count;
             if (n == 0) return;
-            Rows(n, out int rows, out int perRow);
-            float w = _views[0].Width, h = 0f;
-            foreach (var v in _views) h = Mathf.Max(h, v.Height); // rows sized by the tallest bottle; bottoms aligned
-            float gapX = w * 0.5f;
-            float rowH = h * 1.32f;
-            float totalH = rows * rowH;
-            int idx = 0;
-            for (int r = 0; r < rows; r++)
+            if (_layout.Rows == 0 || _layout.Rows * _layout.PerRow < n)
             {
-                int inRow = Mathf.Min(perRow, n - idx);
-                float rowW = inRow * w + (inRow - 1) * gapX;
-                float y = totalH * 0.5f - (r + 1) * rowH + (rowH - h) * 0.35f;
-                for (int c = 0; c < inRow; c++, idx++)
-                {
-                    float x = -rowW * 0.5f + c * (w + gapX) + w * 0.5f;
-                    var v = _views[idx];
-                    v.HomePosition = new Vector2(x, y);
-                    if (!animate) v.Rect.anchoredPosition = v.HomePosition;
-                }
+                float aspect = 0f;
+                foreach (var v in _views) aspect = Mathf.Max(aspect, v.Height / Mathf.Max(1f, v.Width));
+                _layout = Core.Layout.BoardLayout.Choose(n, _rect.rect.width, _rect.rect.height, aspect);
+            }
+            var xs = new float[n];
+            var ys = new float[n];
+            Core.Layout.BoardLayout.Positions(n, _layout, xs, ys);
+            for (int i = 0; i < n; i++)
+            {
+                var v = _views[i];
+                v.HomePosition = new Vector2(xs[i], ys[i]);
+                if (!animate) v.Rect.anchoredPosition = v.HomePosition;
             }
         }
 

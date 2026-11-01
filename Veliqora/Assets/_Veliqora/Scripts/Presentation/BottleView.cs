@@ -96,15 +96,23 @@ namespace Veliqora.Presentation
 
         private RectTransform _specialRoot;
         private readonly List<Text> _questionMarks = new List<Text>();
-        private Image _cork;
         private RectTransform _lockTag;
         private Text _lockText;
         private Image _lockDot;
+        // frozen obstacle: ice slab with countdown
+        private RectTransform _ice;
+        private Text _iceCount;
+        private int _lastRemaining = -1;
+        // locked obstacle: chains + colored padlock (the key is completing that color)
+        private RectTransform _padlockRoot;
+        private Image _padlock;
+        private Image _padKey;
+        private ObstacleKind _obstacle;
         private RectTransform _adOverlay;
         private int _lastHidden = -1;
 
         /// <summary>Mystery "?" marks, cork + live unlock condition, ad-lock overlay. Call after ShowState.</summary>
-        public void ShowSpecial(BottleState b, string lockLabel, Color lockColor, int index)
+        public void ShowSpecial(BottleState b, string lockLabel, Color lockColor, int index, int remaining = -1)
         {
             if (_specialRoot == null)
             {
@@ -128,40 +136,58 @@ namespace Veliqora.Presentation
             }
             _lastHidden = b.Hidden;
 
-            // cork + condition tag
+            // obstacles: FROZEN (ice + countdown) or LOCKED (chains + padlock in the key color), plus a condition tag
             bool corked = b.IsCorked;
-            if (corked && _cork == null)
+            if (corked && _lockTag == null)
             {
-                _cork = UIFactory.Image(_specialRoot, "Cork", SpriteLibrary.Get(Icon.Cork), Color.white);
-                _cork.rectTransform.anchorMin = _cork.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-                _cork.rectTransform.sizeDelta = new Vector2(Width * Shape.NeckWidth * 1.25f, Width * 0.62f);
-                _cork.rectTransform.anchoredPosition = new Vector2(0, Height - Width * 0.12f);
-                var tagBg = UIFactory.Image(_specialRoot, "LockTag", SpriteLibrary.Rounded(20), new Color(0.08f, 0.06f, 0.2f, 0.92f));
+                var tagBg = UIFactory.Image(_specialRoot, "LockTag", SpriteLibrary.Rounded(20), new Color(0.06f, 0.09f, 0.16f, 0.92f));
                 _lockTag = tagBg.rectTransform;
                 _lockTag.anchorMin = _lockTag.anchorMax = new Vector2(0.5f, 0f);
-                _lockTag.sizeDelta = new Vector2(Mathf.Max(150f, Width * 1.5f), 46f);
-                _lockTag.anchoredPosition = new Vector2(0, -30f);
+                _lockTag.sizeDelta = new Vector2(Mathf.Clamp(Width * 1.45f, 96f, 190f), 40f);
+                _lockTag.anchoredPosition = new Vector2(0, -26f);
                 UIFactory.AddOutline(tagBg, UIStyle.WithAlpha(UIStyle.ThemeAccent, 0.8f), 2f);
-                var lockIcon = UIFactory.Image(_lockTag, "Lock", SpriteLibrary.Get(Icon.Lock), Color.white);
-                UIFactory.Place(lockIcon.rectTransform, new Vector2(0, 0.5f), new Vector2(30, 30), new Vector2(8, 0), new Vector2(0, 0.5f));
                 _lockDot = UIFactory.Image(_lockTag, "Dot", SpriteLibrary.Circle, Color.white);
-                UIFactory.Place(_lockDot.rectTransform, new Vector2(1, 0.5f), new Vector2(22, 22), new Vector2(-10, 0), new Vector2(1, 0.5f));
-                _lockText = UIFactory.Text(_lockTag, "", 22, Color.white);
-                _lockText.rectTransform.offsetMin = new Vector2(38, 0);
-                _lockText.rectTransform.offsetMax = new Vector2(-34, 0);
-                _lockText.horizontalOverflow = HorizontalWrapMode.Overflow;
+                UIFactory.Place(_lockDot.rectTransform, new Vector2(0, 0.5f), new Vector2(20, 20), new Vector2(8, 0), new Vector2(0, 0.5f));
+                _lockText = UIFactory.Text(_lockTag, "", 20, Color.white);
+                _lockText.rectTransform.offsetMin = new Vector2(30, 0);
+                _lockText.rectTransform.offsetMax = new Vector2(-6, 0);
+                _lockText.resizeTextForBestFit = true;
+                _lockText.resizeTextMinSize = 12;
+                _lockText.resizeTextMaxSize = 20;
             }
-            if (_cork != null)
+            if (corked)
             {
-                _cork.gameObject.SetActive(corked);
+                _obstacle = b.Lock.Obstacle;
+                if (_obstacle == ObstacleKind.Frozen) EnsureIce(); else EnsurePadlock();
+            }
+            if (_ice != null) _ice.gameObject.SetActive(corked && _obstacle == ObstacleKind.Frozen);
+            if (_padlockRoot != null) _padlockRoot.gameObject.SetActive(corked && _obstacle == ObstacleKind.Locked);
+            if (_lockTag != null)
+            {
                 _lockTag.gameObject.SetActive(corked);
                 if (corked)
                 {
                     _lockText.text = lockLabel ?? "";
                     bool colorCond = b.Lock.Kind == LockKind.CompleteColor;
-                    _lockDot.gameObject.SetActive(colorCond);
-                    _lockDot.color = lockColor;
+                    _lockDot.color = colorCond ? lockColor : (_obstacle == ObstacleKind.Frozen ? UIStyle.Hex("#9FE3FF") : Color.white);
                 }
+            }
+            if (corked && _obstacle == ObstacleKind.Frozen && _iceCount != null)
+            {
+                _iceCount.text = remaining >= 0 ? remaining.ToString() : "";
+                if (_lastRemaining >= 0 && remaining >= 0 && remaining < _lastRemaining && !MotionPrefs.Reduced)
+                {
+                    Tween.Scale(this, _iceCount.rectTransform, new Vector3(1.5f, 1.5f, 1), Vector3.one, 0.3f, Ease.OutBack);
+                    Kick(2f); // ice cracks a little with every step of the countdown
+                }
+                _lastRemaining = remaining;
+            }
+            else _lastRemaining = -1;
+            if (corked && _obstacle == ObstacleKind.Locked && _padlock != null)
+            {
+                bool colorKey = b.Lock.Kind == LockKind.CompleteColor;
+                _padlock.color = colorKey ? Color.Lerp(lockColor, Color.white, 0.15f) : UIStyle.Hex("#E7C46A");
+                _padKey.gameObject.SetActive(colorKey);
             }
 
             // rewarded (ad-locked) bottle
@@ -179,30 +205,95 @@ namespace Veliqora.Presentation
             _liquid.color = b.IsLocked ? new Color(0.82f, 0.82f, 0.82f, 1f) : Color.white;
         }
 
-        /// <summary>Cork flies up and fades; condition tag disappears.</summary>
+        private void EnsureIce()
+        {
+            if (_ice != null) return;
+            _ice = UIFactory.Rect("Ice", _specialRoot);
+            _ice.anchorMin = _ice.anchorMax = new Vector2(0.5f, 0f);
+            _ice.pivot = new Vector2(0.5f, 0f);
+            _ice.sizeDelta = new Vector2(Width * 1.08f, Height * 1.02f);
+            _ice.anchoredPosition = new Vector2(0, -Width * 0.02f);
+            var slab = UIFactory.Image(_ice, "Slab", SpriteLibrary.Rounded(28), new Color(0.72f, 0.9f, 1f, 0.42f));
+            UIFactory.Stretch(slab.rectTransform);
+            UIFactory.AddOutline(slab, new Color(0.85f, 0.97f, 1f, 0.85f), 2f);
+            // frost streaks (discreet reflections)
+            for (int i = 0; i < 3; i++)
+            {
+                var streak = UIFactory.Image(_ice, "Frost" + i, SpriteLibrary.Rounded(6), new Color(1f, 1f, 1f, 0.28f - i * 0.06f));
+                UIFactory.Place(streak.rectTransform, new Vector2(0.28f + i * 0.2f, 0.62f - i * 0.12f), new Vector2(Width * 0.08f, Height * 0.36f), Vector2.zero);
+                streak.rectTransform.localEulerAngles = new Vector3(0, 0, 18f);
+            }
+            var flake = UIFactory.Image(_ice, "Snowflake", SpriteLibrary.Get(Icon.Snowflake), new Color(1f, 1f, 1f, 0.9f));
+            UIFactory.Place(flake.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(Width * 0.62f, Width * 0.62f), Vector2.zero);
+            _iceCount = UIFactory.Text(_ice, "", Mathf.RoundToInt(Mathf.Clamp(Width * 0.48f, 22f, 64f)), Color.white);
+            UIFactory.Place(_iceCount.rectTransform, new Vector2(0.5f, 0.3f), new Vector2(Width, Width * 0.6f), Vector2.zero);
+            UIFactory.AddOutline(_iceCount, UIStyle.Hex("#2A6FB0"), 3f);
+            foreach (var g in _ice.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
+        }
+
+        private void EnsurePadlock()
+        {
+            if (_padlockRoot != null) return;
+            _padlockRoot = UIFactory.Rect("Padlock", _specialRoot);
+            _padlockRoot.anchorMin = _padlockRoot.anchorMax = new Vector2(0.5f, 0f);
+            _padlockRoot.sizeDelta = new Vector2(Width, Height);
+            _padlockRoot.pivot = new Vector2(0.5f, 0f);
+            _padlockRoot.anchoredPosition = Vector2.zero;
+            // two crossing chains
+            for (int i = 0; i < 2; i++)
+            {
+                var chain = UIFactory.Image(_padlockRoot, "Chain" + i, SpriteLibrary.Rounded(8), new Color(0.78f, 0.8f, 0.86f, 0.9f));
+                UIFactory.Place(chain.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(Width * 1.25f, Mathf.Max(8f, Width * 0.1f)), Vector2.zero);
+                chain.rectTransform.localEulerAngles = new Vector3(0, 0, i == 0 ? 28f : -28f);
+                UIFactory.AddOutline(chain, new Color(0.25f, 0.27f, 0.33f, 0.9f), 1.5f);
+            }
+            _padlock = UIFactory.Image(_padlockRoot, "Lock", SpriteLibrary.Get(Icon.Lock), Color.white);
+            UIFactory.Place(_padlock.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(Width * 0.66f, Width * 0.66f), new Vector2(0, -Width * 0.05f));
+            UIFactory.AddShadow(_padlock, new Color(0, 0, 0, 0.45f), new Vector2(0, -3));
+            _padKey = UIFactory.Image(_padlock.rectTransform, "Key", SpriteLibrary.Get(Icon.Key), new Color(0.1f, 0.12f, 0.2f, 0.85f));
+            UIFactory.Place(_padKey.rectTransform, new Vector2(0.5f, 0.38f), new Vector2(Width * 0.34f, Width * 0.34f), Vector2.zero);
+            foreach (var g in _padlockRoot.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
+        }
+
+        /// <summary>
+        /// Obstacle cleared: ice cracks and melts away (scale up + fade), or the padlock springs open and drops with
+        /// the chains. The condition tag disappears.
+        /// </summary>
         public void PlayUncork()
         {
-            if (_cork == null) return;
-            var cork = _cork.rectTransform;
-            var tag = _lockTag;
-            var start = cork.anchoredPosition;
-            if (tag != null) tag.gameObject.SetActive(false);
-            if (MotionPrefs.Reduced) { _cork.gameObject.SetActive(false); return; }
-            _cork.gameObject.SetActive(true);
-            Tween.Run(this, 0.45f, k =>
+            if (_lockTag != null) _lockTag.gameObject.SetActive(false);
+            _lastRemaining = -1;
+            RectTransform target = _obstacle == ObstacleKind.Frozen ? _ice : _padlockRoot;
+            if (target == null) return;
+            if (MotionPrefs.Reduced) { target.gameObject.SetActive(false); return; }
+            target.gameObject.SetActive(true);
+            var graphics = target.GetComponentsInChildren<Graphic>();
+            var alphas = new float[graphics.Length];
+            for (int i = 0; i < graphics.Length; i++) alphas[i] = graphics[i].color.a;
+            var lockRt = _padlock != null ? _padlock.rectTransform : null;
+            var lockStart = lockRt != null ? lockRt.anchoredPosition : Vector2.zero;
+            bool frozen = _obstacle == ObstacleKind.Frozen;
+            Tween.Run(this, frozen ? 0.5f : 0.55f, k =>
             {
-                cork.anchoredPosition = start + new Vector2(Mathf.Sin(k * 3f) * 10f, k * Height * 0.5f);
-                cork.localEulerAngles = new Vector3(0, 0, k * 200f);
-                _cork.color = new Color(1, 1, 1, 1f - k);
+                if (frozen) target.localScale = Vector3.one * (1f + 0.18f * k);
+                else if (lockRt != null)
+                {
+                    lockRt.anchoredPosition = lockStart + new Vector2(0, Mathf.Sin(k * Mathf.PI) * Width * 0.35f - k * Width * 0.6f);
+                    lockRt.localEulerAngles = new Vector3(0, 0, -k * 40f);
+                }
+                for (int i = 0; i < graphics.Length; i++) graphics[i].color = UIStyle.WithAlpha(graphics[i].color, alphas[i] * (1f - k));
             }, () =>
             {
-                cork.anchoredPosition = start;
-                cork.localEulerAngles = Vector3.zero;
-                _cork.color = Color.white;
-                _cork.gameObject.SetActive(false);
+                target.localScale = Vector3.one;
+                if (lockRt != null) { lockRt.anchoredPosition = lockStart; lockRt.localEulerAngles = Vector3.zero; }
+                for (int i = 0; i < graphics.Length; i++) graphics[i].color = UIStyle.WithAlpha(graphics[i].color, alphas[i]);
+                target.gameObject.SetActive(false);
             }, Ease.OutCubic);
-            Kick(5f);
+            Kick(frozen ? 6f : 4f);
         }
+
+        /// <summary>True while the obstacle shown is ice (used by the board to pick the burst color).</summary>
+        public bool ShowsIce => _obstacle == ObstacleKind.Frozen;
 
         // ---------------- state display ----------------
 

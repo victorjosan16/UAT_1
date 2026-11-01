@@ -46,6 +46,16 @@ namespace Veliqora.Presentation
         public BottleShape Bottle(int capacity) => BottleShape.From(_config.FindCosmetic(_selection.Bottle), capacity);
         public BottleShape BottleFor(string id, int capacity) => BottleShape.From(_config.FindCosmetic(id), capacity);
 
+        /// <summary>
+        /// Glass for a board slot: standard bottles (capacity 4) use the selected skin; "special glasses" make other
+        /// sizes instantly recognizable — small helpers (2–3) are slim vials, big ones (5–6) are flasks.
+        /// </summary>
+        public BottleShape BoardBottle(int capacity)
+        {
+            if (capacity == Core.Puzzle.BottleState.DefaultCapacity) return Bottle(capacity);
+            return BottleFor(capacity < Core.Puzzle.BottleState.DefaultCapacity ? "bottle_slim" : "bottle_flask", capacity);
+        }
+
         /// <summary>Applies an owned cosmetic. Returns false if not owned.</summary>
         public bool Apply(string id)
         {

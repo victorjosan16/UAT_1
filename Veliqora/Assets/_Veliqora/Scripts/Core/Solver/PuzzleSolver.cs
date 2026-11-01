@@ -17,6 +17,18 @@ namespace Veliqora.Core.Solver
         public Func<bool> IsCancelled;
 
         public static SolverOptions Hint => new SolverOptions { MaxNodes = 60_000, TimeoutMs = 800, HeuristicWeight = 2.0 };
+
+        /// <summary>
+        /// Hint budget scaled to the board: big boards (12–20 bottles) search greedier and a little longer so a legal,
+        /// solution-leading hint is still found quickly (runs off the main thread).
+        /// </summary>
+        public static SolverOptions HintFor(Puzzle.GameState s)
+        {
+            int n = s.BottleCount;
+            if (n <= 10) return Hint;
+            if (n <= 14) return new SolverOptions { MaxNodes = 120_000, TimeoutMs = 1_000, HeuristicWeight = 3.0 };
+            return new SolverOptions { MaxNodes = 200_000, TimeoutMs = 1_200, HeuristicWeight = 4.0 };
+        }
         public static SolverOptions Validation => new SolverOptions { MaxNodes = 400_000, TimeoutMs = 10_000, HeuristicWeight = 1.25 };
         public static SolverOptions Generation => new SolverOptions { MaxNodes = 150_000, TimeoutMs = 2_500, HeuristicWeight = 1.5 };
     }

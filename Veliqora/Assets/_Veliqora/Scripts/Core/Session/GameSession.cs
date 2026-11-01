@@ -26,7 +26,7 @@ namespace Veliqora.Core.Session
         public GameState After;
     }
 
-    public enum HintSource { None, StoredSolution, Solver, AlreadySolved, NotFound }
+    public enum HintSource { None, StoredSolution, Solver, AlreadySolved, NotFound, UndoSuggested }
 
     public sealed class HintResult
     {
@@ -34,6 +34,8 @@ namespace Veliqora.Core.Session
         public Move Move;
         public bool HasMove => Source == HintSource.StoredSolution || Source == HintSource.Solver;
         public string Message;
+        /// <summary>For UndoSuggested: how many undos bring the board back to a position with a verified solution.</summary>
+        public int UndoSteps;
     }
 
     /// <summary>
@@ -304,12 +306,28 @@ namespace Veliqora.Core.Session
                 if (mr.IsLegal) return new HintResult { Source = HintSource.StoredSolution, Move = mr.Move };
             }
 
-            var result = PuzzleSolver.Solve(Current, options ?? SolverOptions.Hint);
+            var result = PuzzleSolver.Solve(Current, options ?? SolverOptions.HintFor(Current));
             if (result.Status == SolveStatus.Solved && result.Moves.Count > 0)
                 return new HintResult { Source = HintSource.Solver, Move = result.Moves[0] };
+            int steps = UndoStepsToVerifiedPath();
+            if (steps > 0)
+                return new HintResult { Source = HintSource.UndoSuggested, UndoSteps = steps, Message = "Dead end: undo " + steps + " move(s) to get back on track." };
             if (result.Status == SolveStatus.Unsolvable)
                 return new HintResult { Source = HintSource.NotFound, Message = "No solution from here. Try Undo or Restart." };
             return new HintResult { Source = HintSource.NotFound, Message = "Couldn't find a hint quickly. Try Undo, or Restart the level." };
+        }
+
+        /// <summary>
+        /// Number of undos back to the last position that lies on the stored verified solution (0 = not available,
+        /// e.g. the undo history is too short or the stored solution no longer applies).
+        /// </summary>
+        public int UndoStepsToVerifiedPath()
+        {
+            if (_currentSolution == null || _moves.Count == 0) return 0;
+            int k = 0;
+            while (k < _moves.Count && k < _currentSolution.Length && _moves[k].From == _currentSolution[k][0] && _moves[k].To == _currentSolution[k][1]) k++;
+            int steps = _moves.Count - k;
+            return steps > 0 && steps <= _history.Count ? steps : 0;
         }
 
         private bool FollowsStoredSolution()

@@ -74,14 +74,14 @@
       "visual": {
         "style": "clean",
         "particles": "none",
-        "skyTop": "#101827",
+        "skyTop": "#18294D",
         "skyBottom": "#101827",
         "mountain": "#101827",
         "hill": "#162033",
         "hillDark": "#0C1220",
         "river": "#3995F6",
         "accent": "#3995F6",
-        "gameTop": "#101827",
+        "gameTop": "#18294D",
         "gameBottom": "#101827"
       }
     },

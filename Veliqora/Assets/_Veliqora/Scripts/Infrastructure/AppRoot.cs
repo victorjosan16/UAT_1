@@ -52,6 +52,9 @@ namespace Veliqora.Infrastructure
                 case "objectives": return Save.Stats.ObjectivesCompleted;
                 case "mystery": return Save.Stats.MysteryRevealed;
                 case "corks": return Save.Stats.CorksOpened;
+                case "ice": return Save.Stats.IceThawed;
+                case "locks": return Save.Stats.LocksOpened;
+                case "pours": return Save.Stats.TotalPours;
                 case "themes": return Save.Economy.OwnedCosmetics.Count;
                 default: return 0;
             }

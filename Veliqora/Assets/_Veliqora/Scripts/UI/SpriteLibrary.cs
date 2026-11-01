@@ -7,7 +7,7 @@ namespace Veliqora.UI
     public enum Icon
     {
         Coin, Star, StarEmpty, Lock, Check, Plus, Gear, Pause, Back, Undo, Shuffle, Bulb, BottlePlus,
-        Play, Close, Home, Restart, Chest, ChestOpen, Droplet, Map, Bag, Palette, Ad, Crown, Cork,
+        Play, Close, Home, Restart, Chest, ChestOpen, Droplet, Map, Bag, Palette, Ad, Crown, Cork, Snowflake, Key,
     }
 
     /// <summary>
@@ -184,6 +184,27 @@ namespace Veliqora.UI
                     p.Fill(q => PixelPainter.Arc(q, new Vector2(64, 74), 24, 0, Mathf.PI, 7), w);
                     p.Fill(q => PixelPainter.RoundedRect(q, new Rect(28, 14, 72, 60), 12), w);
                     p.Fill(q => PixelPainter.Circle(q, new Vector2(64, 46), 8), new Color(0, 0, 0, 0.35f));
+                    break;
+                case Icon.Snowflake:
+                {
+                    var c0 = new Vector2(64, 64);
+                    for (int arm = 0; arm < 6; arm++)
+                    {
+                        float a = arm * Mathf.PI / 3f;
+                        var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                        var tip = c0 + dir * 50f;
+                        var mid = c0 + dir * 30f;
+                        var side1 = mid + new Vector2(Mathf.Cos(a + 0.7f), Mathf.Sin(a + 0.7f)) * 16f;
+                        var side2 = mid + new Vector2(Mathf.Cos(a - 0.7f), Mathf.Sin(a - 0.7f)) * 16f;
+                        p.Fill(q => Mathf.Min(PixelPainter.Segment(q, c0, tip, 5), Mathf.Min(PixelPainter.Segment(q, mid, side1, 4), PixelPainter.Segment(q, mid, side2, 4))), w);
+                    }
+                    p.Fill(q => PixelPainter.Circle(q, c0, 9), w);
+                    break;
+                }
+                case Icon.Key:
+                    p.Fill(q => Mathf.Abs(PixelPainter.Circle(q, new Vector2(38, 64), 20)) - 7, w);
+                    p.Fill(q => PixelPainter.Segment(q, new Vector2(56, 64), new Vector2(110, 64), 8), w);
+                    p.Fill(q => Mathf.Min(PixelPainter.Segment(q, new Vector2(92, 64), new Vector2(92, 46), 7), PixelPainter.Segment(q, new Vector2(106, 64), new Vector2(106, 50), 7)), w);
                     break;
                 case Icon.Check:
                     p.Fill(q => Mathf.Min(PixelPainter.Segment(q, new Vector2(28, 66), new Vector2(54, 40), 10),
