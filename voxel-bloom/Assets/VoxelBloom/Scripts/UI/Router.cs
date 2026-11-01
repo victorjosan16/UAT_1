@@ -194,7 +194,8 @@ namespace VoxelBloom
     /// <summary>Top bar shown on meta screens: avatar, lives, coins (+), settings.</summary>
     public sealed class TopBar : MonoBehaviour
     {
-        VText lives, coins;
+        VText lives, coins, playerLevel;
+        int shownLevel = -1;
         int shownCoins = -1, shownLives = -1;
         long shownSeconds = -1;
         public Action OnSettings, OnAddCoins, OnAvatar;
@@ -212,6 +213,13 @@ namespace VoxelBloom
             var avatarBtn = UI.IconButton(rt, Icon.Avatar, 110, ButtonStyle.White);
             ((RectTransform)avatarBtn.transform).Place(new Vector2(0, 0.5f), new Vector2(55, 0), new Vector2(110, 110));
             avatarBtn.OnClick = () => OnAvatar?.Invoke();
+            var ring = UI.Image(avatarBtn.transform, "Ring", SpriteFactory.Circle(), Theme.Gold, false);
+            ring.rectTransform.Place(new Vector2(1, 0), new Vector2(-8, 8), new Vector2(54, 54));
+            var lvlBg = UI.Image(ring.transform, "Level", SpriteFactory.Circle(), Theme.Ink, false);
+            lvlBg.rectTransform.Stretch(5, 5, 5, 5);
+            playerLevel = UI.Text(lvlBg.transform, "1", 28, Color.white);
+            playerLevel.fontStyle = FontStyle.Bold;
+            playerLevel.rectTransform.Stretch();
 
             lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 250, 84);
             lr.Place(new Vector2(0, 0.5f), new Vector2(150 + 125, 0), new Vector2(250, 84));
@@ -232,6 +240,8 @@ namespace VoxelBloom
             if (!Services.Initialized) return;
             long now = Services.Now;
             Services.Lives.Update(now);
+            int pl = 1 + Services.Progress.TotalStars / 10; // player level grows with stars
+            if (pl != shownLevel) { shownLevel = pl; playerLevel.text = pl.ToString(); }
             int c = Services.Wallet.Coins;
             if (c != shownCoins) { shownCoins = c; coins.text = c.ToString("N0"); }
             int l = Services.Lives.Count;

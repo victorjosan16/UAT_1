@@ -61,6 +61,7 @@ export class Grid {
     for (let z = 0; z < this.Z; z++) for (let y = 0; y < this.Y; y++) for (let x = 0; x < this.X; x++)
       if (this.get(x, y, z) >= 0) { mn = [Math.min(mn[0], x), Math.min(mn[1], y), Math.min(mn[2], z)]; mx = [Math.max(mx[0], x), Math.max(mx[1], y), Math.max(mx[2], z)]; }
     const g = new Grid(mx[0] - mn[0] + 1, mx[1] - mn[1] + 1, mx[2] - mn[2] + 1);
+    g.offset = mn;
     for (let z = mn[2]; z <= mx[2]; z++) for (let y = mn[1]; y <= mx[1]; y++) for (let x = mn[0]; x <= mx[0]; x++)
       g.set(x - mn[0], y - mn[1], z - mn[2], this.get(x, y, z));
     return g;
@@ -84,4 +85,35 @@ export function encode(g) {
   let s = '';
   for (let i = 0; i < g.v.length; i++) s += g.v[i] < 0 ? '.' : ALPHABET[g.v[i]];
   return s;
+}
+
+// Connects every detached component to the largest one with a straight voxel bridge (component colour),
+// so no model contains floating cubes. Returns the number of bridges built.
+export function connectComponents(g) {
+  let bridges = 0;
+  for (let guard = 0; guard < 64; guard++) {
+    const comp = new Int32Array(g.v.length).fill(-1); const sizes = [];
+    for (let i = 0; i < g.v.length; i++) if (g.v[i] >= 0 && comp[i] < 0) {
+      const id = sizes.length; let n = 0; const st = [i]; comp[i] = id;
+      while (st.length) { const j = st.pop(); n++; const x = j % g.X, y = Math.floor(j / g.X) % g.Y, z = Math.floor(j / (g.X * g.Y));
+        for (const [a, b, c] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) { if (!g.in(x+a,y+b,z+c)) continue; const k = g.i(x+a,y+b,z+c); if (g.v[k] >= 0 && comp[k] < 0) { comp[k] = id; st.push(k); } } }
+      sizes.push(n);
+    }
+    if (sizes.length <= 1) return bridges;
+    const main = sizes.indexOf(Math.max(...sizes));
+    const other = sizes.findIndex((s, id) => id !== main);
+    // nearest pair (Manhattan) between `other` and `main`
+    const A = [], B = [];
+    for (let i = 0; i < g.v.length; i++) { if (comp[i] === other) A.push(i); else if (comp[i] === main) B.push(i); }
+    let best = null, bd = 1e9;
+    const P = (i) => [i % g.X, Math.floor(i / g.X) % g.Y, Math.floor(i / (g.X * g.Y))];
+    for (const a of A) { const pa = P(a); for (const b of B) { const pb = P(b); const d = Math.abs(pa[0]-pb[0]) + Math.abs(pa[1]-pb[1]) + Math.abs(pa[2]-pb[2]); if (d < bd) { bd = d; best = [pa, pb, g.v[a]]; } } }
+    let [p, q, c] = best; p = [...p];
+    while (p[0] !== q[0] || p[1] !== q[1] || p[2] !== q[2]) {
+      const ax = [0, 1, 2].find((t) => p[t] !== q[t]); p[ax] += Math.sign(q[ax] - p[ax]);
+      const i = g.i(p[0], p[1], p[2]); if (g.v[i] < 0) g.v[i] = c;
+    }
+    bridges++;
+  }
+  return bridges;
 }

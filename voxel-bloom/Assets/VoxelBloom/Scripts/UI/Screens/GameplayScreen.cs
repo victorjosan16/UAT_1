@@ -29,6 +29,14 @@ namespace VoxelBloom
             return v;
         }
 
+        /// <summary>Blocks whose colour has no reachable voxel right now are dimmed.</summary>
+        public void SetPlayable(bool playable)
+        {
+            var cg = Root.GetComponent<CanvasGroup>();
+            if (cg == null) cg = Root.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = playable ? 1f : 0.5f;
+        }
+
         public void Set(AttackBlock? block, Color32[] palette)
         {
             Block = block;
@@ -232,6 +240,8 @@ namespace VoxelBloom
                 bv.Root.Place(new Vector2(0, 1), new Vector2(20 + w / 2 + col * (w + 16), -20 - h / 2 - row * (h + 12)), new Vector2(w, h));
                 int slot = s;
                 bv.Button.OnClick = () => controller.OnBlockTapped(slot);
+                bv.Button.OnPress = () => controller.PreviewBlock(slot);
+                bv.Button.OnRelease = () => controller.ClearPreview();
                 Board[s] = bv;
             }
         }

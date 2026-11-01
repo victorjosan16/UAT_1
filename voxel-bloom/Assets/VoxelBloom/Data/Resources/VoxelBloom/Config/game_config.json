@@ -44,81 +44,95 @@
   ],
   "collection": [
     {
-      "id": "chicken",
-      "name": "Chicken",
-      "category": "Animals",
-      "voxels": 655,
-      "unlockLevel": 1
-    },
-    {
       "id": "fox",
       "name": "Fox",
       "category": "Animals",
-      "voxels": 620,
+      "voxels": 1575,
       "unlockLevel": 6
+    },
+    {
+      "id": "panda",
+      "name": "Panda",
+      "category": "Animals",
+      "voxels": 1448,
+      "unlockLevel": 7
+    },
+    {
+      "id": "chicken",
+      "name": "Chick",
+      "category": "Animals",
+      "voxels": 1328,
+      "unlockLevel": 1
+    },
+    {
+      "id": "bunny",
+      "name": "Bunny",
+      "category": "Animals",
+      "voxels": 1579,
+      "unlockLevel": 2
+    },
+    {
+      "id": "lion",
+      "name": "Lion",
+      "category": "Animals",
+      "voxels": 2451,
+      "unlockLevel": 10
     },
     {
       "id": "cat",
       "name": "Cat",
       "category": "Animals",
-      "voxels": 441,
+      "voxels": 1491,
       "unlockLevel": 5
     },
     {
       "id": "bear",
       "name": "Bear",
       "category": "Animals",
-      "voxels": 682,
+      "voxels": 1432,
       "unlockLevel": 4
     },
     {
-      "id": "bunny",
-      "name": "Bunny",
+      "id": "dog",
+      "name": "Puppy",
       "category": "Animals",
-      "voxels": 502,
-      "unlockLevel": 2
-    },
-    {
-      "id": "panda",
-      "name": "Panda",
-      "category": "Animals",
-      "voxels": 634,
-      "unlockLevel": 7
+      "voxels": 1617,
+      "unlockLevel": 8
     },
     {
       "id": "penguin",
       "name": "Penguin",
       "category": "Animals",
-      "voxels": 557,
+      "voxels": 1873,
       "unlockLevel": 3
+    },
+    {
+      "id": "elephant",
+      "name": "Elephant",
+      "category": "Animals",
+      "voxels": 1475,
+      "unlockLevel": 9
     },
     {
       "id": "sheep",
       "name": "Sheep",
       "category": "Animals",
-      "voxels": 689,
-      "unlockLevel": 8
+      "voxels": 690,
+      "unlockLevel": 18
     },
     {
       "id": "wolf",
       "name": "Wolf",
       "category": "Animals",
       "voxels": 600,
-      "unlockLevel": 9
+      "unlockLevel": 19
     },
     {
       "id": "deer",
       "name": "Deer",
       "category": "Animals",
-      "voxels": 414,
-      "unlockLevel": 10
-    },
-    {
-      "id": "lion",
-      "name": "Lion",
-      "category": "Animals",
-      "voxels": 593,
-      "unlockLevel": 11
+      "voxels": 415,
+      "unlockLevel": 20
     },
     {
       "id": "fish",
@@ -131,14 +145,14 @@
       "id": "crab",
       "name": "Crab",
       "category": "Animals",
-      "voxels": 401,
+      "voxels": 403,
       "unlockLevel": 62
     },
     {
       "id": "octopus",
       "name": "Octopus",
       "category": "Animals",
-      "voxels": 575,
+      "voxels": 597,
       "unlockLevel": 63
     },
     {
@@ -152,7 +166,7 @@
       "id": "whale",
       "name": "Whale",
       "category": "Animals",
-      "voxels": 680,
+      "voxels": 684,
       "unlockLevel": 65
     },
     {
@@ -250,7 +264,7 @@
       "id": "windmill",
       "name": "Windmill",
       "category": "Buildings",
-      "voxels": 1070,
+      "voxels": 1083,
       "unlockLevel": 45
     },
     {
@@ -271,15 +285,15 @@
       "id": "dragon",
       "name": "Baby Dragon",
       "category": "Animals",
-      "voxels": 750,
+      "voxels": 754,
       "unlockLevel": 81
     },
     {
       "id": "unicorn",
       "name": "Unicorn",
       "category": "Animals",
-      "voxels": 474,
-      "unlockLevel": 20
+      "voxels": 477,
+      "unlockLevel": 82
     }
   ],
   "hardLevels": {

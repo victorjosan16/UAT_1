@@ -21,6 +21,7 @@ namespace VoxelBloom
         readonly List<Vector3> verts = new List<Vector3>(8192);
         readonly List<Vector3> norms = new List<Vector3>(8192);
         readonly List<Color32> cols = new List<Color32>(8192);
+        readonly List<Vector2> uvs = new List<Vector2>(8192);
         readonly List<int> tris = new List<int>(12288);
         readonly float[] ao = new float[4];
 
@@ -29,7 +30,7 @@ namespace VoxelBloom
         /// <summary>Rebuilds <paramref name="mesh"/>. Voxel (x,y,z) occupies [x,x+1]*size, centred on X/Z, base at y=0.</summary>
         public void Build(Mesh mesh, sbyte[] cells, int X, int Y, int Z, Color32[] palette, float size)
         {
-            verts.Clear(); norms.Clear(); cols.Clear(); tris.Clear();
+            verts.Clear(); norms.Clear(); cols.Clear(); uvs.Clear(); tris.Clear();
             var offset = new Vector3(-X * 0.5f, 0f, -Z * 0.5f);
             for (int z = 0; z < Z; z++)
             for (int y = 0; y < Y; y++)
@@ -52,6 +53,7 @@ namespace VoxelBloom
                         Vector3 p = center + ((Vector3)u * SU[k] + (Vector3)v * SV[k]) * 0.5f;
                         verts.Add((p + offset) * size);
                         norms.Add(n);
+                        uvs.Add(new Vector2(SU[k] > 0 ? 1f : 0f, SV[k] > 0 ? 1f : 0f));
                         float shade = jitter;
                         ao[k] = 3;
                         if (AmbientOcclusion)
@@ -84,6 +86,7 @@ namespace VoxelBloom
             mesh.SetVertices(verts);
             mesh.SetNormals(norms);
             mesh.SetColors(cols);
+            mesh.SetUVs(0, uvs);
             mesh.SetTriangles(tris, 0, true);
         }
 
@@ -101,7 +104,7 @@ namespace VoxelBloom
         }
 
         static Color32 Scale(Color32 c, float s)
-            => new Color32((byte)Mathf.Clamp(c.r * s, 0, 255), (byte)Mathf.Clamp(c.g * s, 0, 255), (byte)Mathf.Clamp(c.b * s, 0, 255), 255);
+            => new Color32((byte)Mathf.Clamp(c.r * s, 0, 255), (byte)Mathf.Clamp(c.g * s, 0, 255), (byte)Mathf.Clamp(c.b * s, 0, 255), c.a);
 
         public static Color32[] ToColors(Core.Rgb[] palette)
         {

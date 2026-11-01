@@ -18,14 +18,13 @@ const models = Object.fromEntries(buildAll().map((m) => [m.id, m]));
 
 // ---------------------------------------------------------------- variants (colour-name substitutions)
 const VARIANTS = {
-  'chicken:golden': ['Golden Chicken', { yellow: 'gold', white: 'cream' }],
+  'chicken:golden': ['Golden Chick', { yellow: 'gold', white: 'cream' }],
   'bunny:choco': ['Chocolate Bunny', { white: 'choco', pink: 'tan', black: 'cream' }],
   'penguin:royal': ['Royal Penguin', { navy: 'yellow', orange: 'red' }],
   'bear:polar': ['Polar Bear', { brown: 'white', tan: 'lightGrey', darkBrown: 'grey' }],
   'cat:ginger': ['Ginger Cat', { grey: 'orange', darkGrey: 'brown' }],
   'fox:arctic': ['Arctic Fox', { orange: 'white', white: 'lightGrey', darkBrown: 'grey' }],
   'panda:red': ['Red Panda', { white: 'orange', black: 'darkBrown', pink: 'cream' }],
-  'sheep:black': ['Black Sheep', { white: 'darkGrey', cream: 'grey', black: 'white' }],
   'wolf:night': ['Night Wolf', { grey: 'navy', darkGrey: 'black', white: 'sky' }],
   'deer:snow': ['Snow Deer', { brown: 'white', white: 'sky', tan: 'gold' }],
   'cake:choco': ['Chocolate Cake', { pink: 'choco', cream: 'tan' }],
@@ -57,7 +56,7 @@ const VARIANTS = {
 
 // ---------------------------------------------------------------- the 100 levels
 const CHAPTERS = [
-  { id: 1, name: 'Happy Animals', list: ['chicken', 'bunny', 'penguin', 'bear', 'cat', 'fox', 'panda', 'sheep', 'wolf', 'deer', 'lion', 'chicken:golden', 'bunny:choco', 'penguin:royal', 'bear:polar', 'cat:ginger', 'fox:arctic', 'panda:red', 'sheep:black', 'unicorn'] },
+  { id: 1, name: 'Happy Animals', list: ['chicken', 'bunny', 'penguin', 'bear', 'cat', 'fox', 'panda', 'dog', 'elephant', 'lion', 'chicken:golden', 'bunny:choco', 'penguin:royal', 'bear:polar', 'cat:ginger', 'fox:arctic', 'panda:red', 'sheep', 'wolf', 'deer'] },
   { id: 2, name: 'Sweet World', list: ['icecream', 'candy', 'donut', 'cupcake', 'watermelon', 'cake', 'burger', 'candy:mint', 'donut:blue', 'icecream:berry', 'cupcake:lemon', 'cake:choco', 'watermelon#core', 'burger:veggie', 'donut:choco', 'icecream#core', 'cake:lemon', 'candy#core', 'cupcake#core', 'cake#core'] },
   { id: 3, name: 'City Blocks', list: ['car', 'rocket', 'robot', 'lighthouse', 'windmill', 'bus', 'truck', 'house', 'car:blue', 'rocket:moon', 'lighthouse:blue', 'robot:gold', 'windmill:spring', 'bus:city', 'house:blue', 'car:mint', 'truck:ice', 'bus#core', 'house#core', 'truck#core'] },
   { id: 4, name: 'Ocean Wonders', list: ['fish', 'crab', 'octopus', 'turtle', 'whale', 'fish:tang', 'crab:golden', 'octopus:pink', 'turtle:sea', 'whale:orca', 'fish#core', 'crab#core', 'octopus#core', 'turtle#core', 'whale#core', 'fish:tang#core', 'crab:golden#core', 'octopus:pink#core', 'turtle:sea#core', 'whale:orca#core'] },
@@ -111,7 +110,7 @@ const POWERS = [2, 4, 8, 16, 32, 64];
 function buildDeck(counts, d, slack, r) {
   // larger powers early (shorter levels), richer mix later; very large models keep big powers so levels stay < ~70 taps
   const total = counts.reduce((a, b) => a + b, 0);
-  let allowed = d < 0.15 ? [16, 32, 64] : d < 0.4 ? [8, 16, 32, 64] : d < 0.7 ? [4, 8, 16, 32, 64] : [2, 4, 8, 16, 32, 64];
+  let allowed = d < 0.03 ? [32, 64] : d < 0.15 ? [16, 32, 64] : d < 0.4 ? [8, 16, 32, 64] : d < 0.7 ? [4, 8, 16, 32, 64] : [2, 4, 8, 16, 32, 64];
   if (total > 1400) allowed = allowed.filter((p) => p >= 16);
   if (total > 2200) allowed = [32, 64, 64];
   const deck = [];
@@ -134,7 +133,7 @@ function buildDeck(counts, d, slack, r) {
 const modelIndex = [];
 for (const m of Object.values(models)) {
   const g = m.grid;
-  fs.writeFileSync(path.join(OUT, 'Models', m.id + '.json'), JSON.stringify({ id: m.id, name: m.name, category: m.category, size: [g.X, g.Y, g.Z], palette: m.palette, voxels: encode(g) }));
+  fs.writeFileSync(path.join(OUT, 'Models', m.id + '.json'), JSON.stringify({ id: m.id, name: m.name, category: m.category, size: [g.X, g.Y, g.Z], palette: m.palette, voxels: encode(g), anim: m.anim }));
   modelIndex.push({ id: m.id, name: m.name, category: m.category, voxels: g.count() });
 }
 

@@ -1,6 +1,7 @@
 // Original voxel models for Voxel Bloom 3D. Each model returns a Grid + palette.
 // Silhouettes are designed to read clearly from the front-right 3/4 view.
-import { Grid, rng } from './voxel.mjs';
+import { Grid, rng, connectComponents } from './voxel.mjs';
+import { defineAnimals } from './animals.mjs';
 
 const C = {
   yellow: '#FFD23F', gold: '#F5A623', white: '#F7F4EA', cream: '#FFF1C9', red: '#E8343A', orange: '#FF8A1F',
@@ -16,99 +17,8 @@ function model(id, name, category, colorNames, X, Y, Z, build) {
 }
 
 // ---------------------------------------------------------------- Animals
-model('chicken', 'Chicken', 'Animals', ['yellow', 'white', 'red', 'orange', 'black'], 14, 18, 14, (g, k) => {
-  g.ell(7, 6, 7, 4.6, 4.3, 4.8, k.yellow);
-  g.ell(7, 11.5, 6, 3.4, 3.4, 3.2, k.yellow);
-  g.ell(7, 5, 3, 3.4, 3.2, 2.4, k.white, 'paint');
-  g.ell(2.4, 6.5, 7.5, 1.3, 2.6, 3, k.white); g.ell(11.6, 6.5, 7.5, 1.3, 2.6, 3, k.white);
-  g.box(6, 8, 11, 8, 10, 12, k.white); g.box(7, 10, 12, 7, 11, 12, k.white);
-  g.box(6, 10, 1, 8, 11, 2, k.orange); g.box(7, 10, 0, 7, 10, 0, k.orange);
-  g.box(7, 9, 2, 7, 9, 2, k.red);
-  g.front(5, 12, k.black); g.front(9, 12, k.black);
-  g.box(6, 15, 4, 8, 15, 7, k.red); g.box(7, 16, 4, 7, 16, 6, k.red); g.box(6, 16, 6, 6, 16, 6, k.red);
-  g.box(5, 0, 6, 5, 2, 6, k.orange); g.box(9, 0, 6, 9, 2, 6, k.orange);
-  g.box(4, 0, 4, 6, 0, 5, k.orange); g.box(8, 0, 4, 10, 0, 5, k.orange);
-});
-
-model('fox', 'Fox', 'Animals', ['orange', 'white', 'black', 'darkBrown'], 18, 18, 14, (g, k) => {
-  g.ell(7, 5.5, 7, 3.8, 4.5, 3.6, k.orange);
-  g.ell(7, 5, 4, 2.4, 3.4, 1.6, k.white, 'paint');
-  g.ell(7, 11.5, 6, 3.6, 3, 3.2, k.orange);
-  g.box(5, 9, 1, 9, 11, 3, k.orange); g.box(6, 9, 0, 8, 10, 0, k.white); g.box(5, 9, 1, 9, 9, 3, k.white, 'paint');
-  g.box(7, 11, 0, 7, 11, 0, k.black);
-  g.front(5, 12, k.black); g.front(9, 12, k.black);
-  for (let i = 0; i < 4; i++) { g.box(4 + (i > 1 ? 0 : 0), 14 + i, 5, 5, 14 + i, 6, k.orange); g.box(9, 14 + i, 5, 10, 14 + i, 6, k.orange); }
-  g.box(4, 17, 5, 4, 17, 6, k.black); g.box(10, 17, 5, 10, 17, 6, k.black);
-  g.box(4, 14, 5, 4, 15, 5, k.darkBrown, 'paint'); g.box(10, 14, 5, 10, 15, 5, k.darkBrown, 'paint');
-  g.box(5, 0, 4, 6, 2, 5, k.black); g.box(8, 0, 4, 9, 2, 5, k.black);
-  // big curled tail to the right
-  g.ell(13, 3.5, 8, 3.2, 2.4, 2.4, k.orange); g.ell(15, 6.5, 8, 1.8, 3, 2, k.orange);
-  g.ell(15.5, 9, 8, 1.6, 1.6, 1.6, k.white);
-});
-
-model('cat', 'Cat', 'Animals', ['grey', 'white', 'pink', 'black', 'darkGrey'], 16, 18, 12, (g, k) => {
-  g.ell(7, 5, 6, 3.6, 4.6, 3.4, k.grey);
-  g.ell(7, 4.5, 3.4, 2.2, 3, 1.4, k.white, 'paint');
-  g.ell(7, 11.5, 5.5, 3.8, 3.2, 3.2, k.grey);
-  for (let y = 2; y < 15; y += 3) { g.box(3, y, 4, 11, y, 9, k.darkGrey, 'paint'); }
-  g.box(6, 10, 2, 8, 11, 2, k.white, 'paint'); g.box(5, 10, 2, 9, 10, 2, k.white, 'paint');
-  g.box(7, 11, 1, 7, 11, 1, k.pink);
-  g.front(5, 12, k.black); g.front(9, 12, k.black);
-  g.box(4, 14, 4, 5, 14, 6, k.grey); g.box(4, 15, 5, 4, 16, 5, k.grey); g.box(5, 15, 5, 5, 15, 5, k.pink);
-  g.box(9, 14, 4, 10, 14, 6, k.grey); g.box(10, 15, 5, 10, 16, 5, k.grey); g.box(9, 15, 5, 9, 15, 5, k.pink);
-  g.box(5, 0, 3, 6, 1, 4, k.white); g.box(8, 0, 3, 9, 1, 4, k.white);
-  // tail rising behind on the right
-  g.box(11, 1, 9, 13, 1, 9, k.grey); g.box(13, 1, 9, 13, 8, 9, k.grey); g.box(13, 9, 9, 14, 10, 9, k.darkGrey);
-});
-
-model('bear', 'Bear', 'Animals', ['brown', 'tan', 'black', 'darkBrown'], 15, 17, 13, (g, k) => {
-  g.ell(7, 5, 6.5, 4.6, 4.8, 4.2, k.brown);
-  g.ell(7, 4.5, 3, 3, 3.2, 1.8, k.tan, 'paint');
-  g.ell(7, 11.5, 6, 4, 3.6, 3.6, k.brown);
-  g.ell(7, 10.2, 2.6, 2.2, 1.6, 1.4, k.tan);
-  g.box(7, 11, 1, 7, 11, 1, k.black); g.box(6, 11, 1, 8, 11, 1, k.black, 'paint');
-  g.front(5, 13, k.black); g.front(9, 13, k.black);
-  g.ell(3.6, 14.6, 6, 1.6, 1.6, 1.2, k.brown); g.ell(10.4, 14.6, 6, 1.6, 1.6, 1.2, k.brown);
-  g.front(4, 15, k.darkBrown); g.front(10, 15, k.darkBrown);
-  g.ell(2.4, 6, 4.5, 1.3, 2.4, 1.4, k.brown); g.ell(11.6, 6, 4.5, 1.3, 2.4, 1.4, k.brown);
-  g.ell(4.5, 1.2, 3, 1.6, 1.2, 1.8, k.brown); g.ell(9.5, 1.2, 3, 1.6, 1.2, 1.8, k.brown);
-  g.front(4, 1, k.tan); g.front(10, 1, k.tan);
-});
-
-model('bunny', 'Bunny', 'Animals', ['white', 'pink', 'black', 'hotPink'], 14, 22, 12, (g, k) => {
-  g.ell(7, 5, 6, 3.8, 4.4, 3.6, k.white);
-  g.ell(7, 11, 5.5, 3.6, 3.2, 3.2, k.white);
-  g.box(5, 13, 5, 6, 20, 6, k.white); g.box(8, 13, 5, 9, 20, 6, k.white);
-  g.box(5, 14, 4, 6, 19, 4, k.pink); g.box(8, 14, 4, 9, 19, 4, k.pink);
-  g.box(5, 21, 5, 6, 21, 5, k.white); g.box(8, 21, 5, 9, 21, 5, k.white);
-  g.front(5, 11, k.black); g.front(9, 11, k.black);
-  g.front(7, 10, k.hotPink); g.front(4, 9, k.pink); g.front(10, 9, k.pink);
-  g.ell(7, 4, 10, 1.6, 1.6, 1.4, k.white);
-  g.ell(4.5, 1, 3, 1.4, 1, 2, k.white); g.ell(9.5, 1, 3, 1.4, 1, 2, k.white);
-});
-
-model('panda', 'Panda', 'Animals', ['white', 'black', 'pink', 'green'], 16, 17, 13, (g, k) => {
-  g.ell(7.5, 5, 6.5, 4.6, 4.8, 4.2, k.white);
-  g.box(2, 0, 2, 13, 4, 10, k.black, 'paint'); g.box(2, 6, 2, 13, 7, 10, k.black, 'paint');
-  g.ell(7.5, 11.5, 6, 4.2, 3.6, 3.6, k.white);
-  g.ell(3.6, 14.8, 6, 1.6, 1.6, 1.2, k.black); g.ell(11.4, 14.8, 6, 1.6, 1.6, 1.2, k.black);
-  for (const x of [5, 10]) { g.front(x, 12, k.black); g.front(x, 11, k.black); g.front(x + (x < 7 ? 1 : -1), 12, k.black); }
-  g.front(7, 10, k.black); g.front(8, 10, k.black);
-  g.front(4, 10, k.pink); g.front(11, 10, k.pink);
-  // bamboo
-  g.box(13, 0, 3, 13, 9, 3, k.green); g.box(14, 7, 3, 15, 7, 3, k.green); g.box(12, 9, 3, 12, 10, 3, k.green);
-});
-
-model('penguin', 'Penguin', 'Animals', ['black', 'white', 'orange', 'navy'], 14, 17, 12, (g, k) => {
-  g.ell(7, 7, 6, 4.4, 6.8, 4, k.black);
-  g.ell(7, 6, 3.2, 3.2, 5, 2, k.white, 'paint');
-  g.ell(7, 11.5, 3.6, 2.6, 2.2, 1.6, k.white, 'paint');
-  g.box(6, 10, 1, 8, 10, 1, k.orange); g.box(7, 10, 0, 7, 10, 0, k.orange);
-  g.front(5, 12, k.navy); g.front(9, 12, k.navy);
-  g.box(2, 4, 5, 2, 9, 7, k.black); g.box(12, 4, 5, 12, 9, 7, k.black); g.box(1, 4, 6, 1, 6, 6, k.black); g.box(13, 4, 6, 13, 6, 6, k.black);
-  g.box(4, 0, 2, 6, 0, 4, k.orange); g.box(8, 0, 2, 10, 0, 4, k.orange);
-  g.box(6, 13, 8, 8, 14, 9, k.navy, 'paint');
-});
+// Chibi hero animals (fox, panda, chick, bunny, lion, cat, bear, puppy, penguin, elephant) live in animals.mjs
+defineAnimals(model);
 
 model('sheep', 'Sheep', 'Animals', ['white', 'black', 'cream', 'pink'], 18, 15, 13, (g, k) => {
   const r = rng(7);
@@ -147,17 +57,6 @@ model('deer', 'Deer', 'Animals', ['brown', 'white', 'tan', 'black'], 18, 22, 10,
   g.box(15, 9, 4, 15, 10, 6, k.white);
   // antlers
   for (const x of [1, 4]) { g.box(x, 17, 5, x, 20, 5, k.tan); g.box(x - 1, 19, 5, x - 1, 21, 5, k.tan); g.box(x + 1, 18, 5, x + 1, 19, 5, k.tan); }
-});
-
-model('lion', 'Lion', 'Animals', ['yellow', 'orange', 'darkBrown', 'black', 'cream'], 18, 17, 14, (g, k) => {
-  g.ell(9.5, 5, 7, 5.5, 3.2, 3.2, k.yellow);
-  for (const [x, z] of [[5, 5], [13, 5], [5, 8], [13, 8]]) g.box(x, 0, z, x + 1, 3, z + 1, k.yellow);
-  g.ell(5, 9.5, 5, 4.6, 4.6, 3, k.orange);
-  g.ell(5, 9.5, 5, 4.6, 4.6, 3, k.darkBrown, 'paint'); g.ell(5, 9.5, 4, 4, 4, 2.6, k.orange, 'paint');
-  g.ell(5, 9.5, 3, 2.8, 2.8, 2.4, k.yellow);
-  g.box(4, 8, 0, 6, 9, 1, k.cream); g.box(5, 9, 0, 5, 9, 0, k.black);
-  g.front(4, 11, k.black); g.front(6, 11, k.black);
-  g.box(15, 4, 7, 16, 4, 7, k.yellow); g.box(17, 4, 7, 17, 7, 7, k.yellow); g.box(17, 8, 7, 17, 8, 7, k.darkBrown);
 });
 
 model('fish', 'Clownfish', 'Animals', ['orange', 'white', 'black', 'blue'], 18, 13, 8, (g, k) => {
@@ -409,10 +308,23 @@ model('unicorn', 'Unicorn', 'Animals', ['white', 'pink', 'lavender', 'sky', 'yel
   for (let t = 0; t < 6; t++) { g.set(16 + (t >> 1), 8 - t, 5, [k.pink, k.lavender, k.sky][t % 3]); g.set(16 + (t >> 1), 8 - t, 4, [k.hotPink, k.lavender, k.sky][t % 3]); }
 });
 
+// Converts anim meta from build space to trimmed model space; eyes become front-most cell indices.
+function exportAnim(a, g) {
+  if (!a) return null;
+  const [ox, oy, oz] = g.offset;
+  const eyes = [];
+  for (const [x0, y0] of a.eyes || []) {
+    const x = x0 - ox, y = y0 - oy;
+    for (let z = 0; z < g.Z; z++) if (g.get(x, y, z) >= 0) { eyes.push(g.i(x, y, z)); break; }
+  }
+  const t = a.tail;
+  return { headY: a.headY - oy, lid: a.lid, eyes, tail: t ? [t[0] - ox, t[1] - oy, t[2] - oz, t[3] - ox, t[4] - oy, t[5] - oz] : null };
+}
+
 export function buildAll() {
   return MODELS.map((m) => {
-    const g = m.build().trim();
-    return { id: m.id, name: m.name, category: m.category, palette: m.colorNames.map((n) => C[n]), paletteNames: m.colorNames, grid: g };
+    const raw = m.build(); const bridges = connectComponents(raw); const g = raw.trim();
+    return { id: m.id, name: m.name, category: m.category, palette: m.colorNames.map((n) => C[n]), paletteNames: m.colorNames, grid: g, bridges, anim: exportAnim(raw.anim, g) };
   });
 }
 export { C as COLORS };

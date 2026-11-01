@@ -101,9 +101,37 @@ namespace VoxelBloom
             StartResolve();
         }
 
+        /// <summary>Press-and-hold on a board block: show on the model exactly which voxels it would remove.</summary>
+        public void PreviewBlock(int slot)
+        {
+            if (session == null || finished || paused) return;
+            var b = session.BoardAt(slot);
+            if (!b.HasValue) return;
+            var targets = session.PreviewTargets(b.Value.Color, b.Value.Power);
+            if (targets.Count == 0) { view.HintText.text = "No reachable voxels of this colour yet"; return; }
+            view.Stage.Model.SetHighlight(targets, Theme.Lighter(palette[b.Value.Color], 0.55f));
+            view.HintText.text = targets.Count + " voxels will be removed";
+        }
+
+        public void ClearPreview()
+        {
+            if (view == null) return;
+            view.Stage.Model.ClearHighlight();
+            if (targeting == null) view.HintText.text = "";
+        }
+
         public void OnQueueTapped(int index)
         {
             if (targeting == BoosterType.Eliminate) ApplyEliminate(index);
+        }
+
+        /// <summary>World point just below the model view, horizontally aligned with the queue slot.</summary>
+        Vector3 QueueOriginWorld(int queueIndex)
+        {
+            var cam = view.Stage.Camera;
+            float x = 0.5f + (Mathf.Clamp(queueIndex, 0, 4) - 2) * 0.17f;
+            float dist = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
+            return cam.ViewportToWorldPoint(new Vector3(x, -0.08f, dist * 0.8f));
         }
 
         void FlyBlock(BlockView from, int queueIndex, AttackBlock block)
@@ -163,19 +191,41 @@ namespace VoxelBloom
                 yield return new WaitForSeconds(0.12f);
                 yield break;
             }
+            var color = palette[r.Attack.Color];
+            var model = view.Stage.Model;
+            int n = r.Destroyed.Count;
+            // 1) show where the colour goes: targets pulse and coloured cubes fly from the queue slot to them
+            model.SetHighlight(r.Destroyed, Theme.Lighter(color, 0.6f));
+            Vector3 origin = QueueOriginWorld(r.QueueIndex);
+            int shotsEvery = Mathf.Max(1, n / (Services.ReducedEffects ? 6 : 24));
+            const float flight = 0.28f;
+            for (int k = 0; k < n; k += shotsEvery)
+                view.Stage.Fragments.Shoot(origin, model.VoxelWorldPosition(r.Destroyed[k]), color, model.VoxelSize, flight, k * 0.004f);
+            Services.Audio.Play(Sfx.Launch, 1.1f);
+            yield return new WaitForSeconds(flight);
+            model.ClearHighlight();
+            // 2) pop the voxels
             Services.Audio.Play(Sfx.Pop, 1f + Mathf.Min(r.Combo, 5) * 0.06f);
             int bursts = view.Stage.Fragments.MaxPerBurst;
-            int n = r.Destroyed.Count;
-            float duration = Mathf.Lerp(0.18f, 0.45f, Mathf.Clamp01(n / 64f));
+            float duration = Mathf.Lerp(0.15f, 0.35f, Mathf.Clamp01(n / 64f));
             int perStep = Mathf.Max(1, Mathf.CeilToInt(n / (duration / 0.03f)));
             int every = Mathf.Max(1, n / Mathf.Max(1, bursts));
-            var color = palette[r.Attack.Color];
             for (int k = 0; k < n; k++)
             {
                 int idx = r.Destroyed[k];
-                if (k % every == 0) view.Stage.Fragments.Burst(view.Stage.Model.VoxelWorldPosition(idx), color, view.Stage.Model.VoxelSize, 2);
-                view.Stage.Model.RemoveVoxel(idx);
+                if (k % every == 0) view.Stage.Fragments.Burst(model.VoxelWorldPosition(idx), color, model.VoxelSize, 2);
+                model.RemoveVoxel(idx);
                 if ((k + 1) % perStep == 0) yield return new WaitForSeconds(0.03f);
+            }
+            // 3) detached pieces fall (physics debris) - no part stays floating
+            if (r.Dropped.Count > 0)
+            {
+                foreach (int idx in r.Dropped)
+                {
+                    view.Stage.Debris.Spawn(model.VoxelWorldPosition(idx), model.ColorOf(level.Grid.Get(idx)), model.VoxelSize);
+                    model.RemoveVoxel(idx);
+                }
+                Services.Audio.Play(Sfx.Whoosh, 0.8f);
             }
             view.Progress.Set(session.Progress);
             RefreshHud();
@@ -189,8 +239,9 @@ namespace VoxelBloom
             if (r.ColorCleared)
             {
                 view.FloatText("Colour cleared!", Color.white, new Vector2(0, -100));
-                foreach (int s in r.RefilledSlots) { view.Board[s].Set(session.BoardAt(s), palette); Tween.Pop(view.Board[s].Root, 0.2f); }
+                foreach (int s in r.RefilledSlots) Tween.Pop(view.Board[s].Root, 0.2f);
             }
+            RefreshAll();
             yield return new WaitForSeconds(0.08f);
         }
 
@@ -439,7 +490,12 @@ namespace VoxelBloom
         // ------------------------------------------------------------------ view refresh
         void RefreshAll()
         {
-            for (int s = 0; s < GameSession.BoardSize; s++) view.Board[s].Set(session.BoardAt(s), palette);
+            for (int s = 0; s < GameSession.BoardSize; s++)
+            {
+                var b = session.BoardAt(s);
+                view.Board[s].Set(b, palette);
+                if (b.HasValue) view.Board[s].SetPlayable(session.ExposedCount(b.Value.Color) > 0);
+            }
             RefreshQueue();
             RefreshHud();
         }

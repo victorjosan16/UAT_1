@@ -9,6 +9,7 @@ namespace VoxelBloom
     public sealed class UIButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, IPointerExitHandler
     {
         public Action OnClick;
+        public Action OnPress, OnRelease;
         public bool Interactable = true;
         public Sfx Sound = Sfx.Button;
         public float Cooldown = 0.25f;
@@ -20,6 +21,7 @@ namespace VoxelBloom
         {
             if (!Interactable) return;
             pressed = true;
+            OnPress?.Invoke();
             transform.localScale = new Vector3(0.94f, 0.92f, 1f);
         }
 
@@ -30,6 +32,7 @@ namespace VoxelBloom
         {
             if (!pressed) return;
             pressed = false;
+            OnRelease?.Invoke();
             Tween.Scale(transform, transform.localScale, Vector3.one, 0.18f, Ease.OutBack);
         }
 

@@ -1,100 +1,102 @@
-  1 ch1 Chicken              vox= 655 colors=5 deck= 29 witness= 18 limit=24      reward=40 stars=18,21 casual=1 core=0 tries=1
-  2 ch1 Bunny                vox= 502 colors=4 deck= 21 witness= 12 limit=17      reward=41 stars=12,15 casual=0.98 core=0 tries=1
-  3 ch1 Penguin              vox= 557 colors=4 deck= 24 witness= 15 limit=21      reward=42 stars=15,18 casual=0.92 core=0 tries=1
-  4 ch1 Bear                 vox= 682 colors=4 deck= 29 witness= 15 limit=29      reward=42 stars=15,22 casual=0.83 core=0 tries=1
-  5 ch1 Cat                  vox= 441 colors=5 deck= 18 witness= 13 limit=15 HARD reward=108 stars=13,14 casual=0.73 core=0 tries=2
-  6 ch1 Fox                  vox= 620 colors=4 deck= 23 witness= 13 limit=18      reward=44 stars=13,16 casual=0.78 core=0 tries=1
-  7 ch1 Panda                vox= 634 colors=4 deck= 25 witness= 13 limit=20      reward=45 stars=13,17 casual=0.95 core=0 tries=1
-  8 ch1 Sheep                vox= 689 colors=4 deck= 29 witness= 16 limit=23      reward=46 stars=16,20 casual=0.88 core=0 tries=1
-  9 ch1 Wolf                 vox= 600 colors=4 deck= 27 witness= 14 limit=23      reward=46 stars=14,19 casual=1 core=0 tries=1
- 10 ch1 Deer                 vox= 414 colors=4 deck= 19 witness= 11 limit=14 HARD reward=118 stars=11,13 casual=0.55 core=0 tries=2
- 11 ch1 Lion                 vox= 593 colors=5 deck= 25 witness= 15 limit=21      reward=48 stars=15,18 casual=0.77 core=0 tries=1
- 12 ch1 Golden Chicken       vox= 655 colors=5 deck= 29 witness= 18 limit=24      reward=49 stars=18,21 casual=0.94 core=0 tries=1
- 13 ch1 Chocolate Bunny      vox= 502 colors=4 deck= 21 witness= 12 limit=17      reward=50 stars=12,15 casual=0.92 core=0 tries=1
- 14 ch1 Royal Penguin        vox= 557 colors=4 deck= 23 witness= 13 limit=19      reward=51 stars=13,16 casual=0.73 core=0 tries=1
- 15 ch1 Polar Bear           vox= 682 colors=4 deck= 27 witness= 15 limit=21 HARD reward=128 stars=15,18 casual=0.7 core=0 tries=4
- 16 ch1 Ginger Cat           vox= 441 colors=5 deck= 28 witness= 16 limit=23      reward=52 stars=16,20 casual=0.86 core=0 tries=1
- 17 ch1 Arctic Fox           vox= 620 colors=4 deck= 29 witness= 13 limit=24      reward=53 stars=13,19 casual=0.89 core=0 tries=1
- 18 ch1 Red Panda            vox= 634 colors=4 deck= 36 witness= 17 limit=27      reward=54 stars=17,22 casual=0.88 core=0 tries=1
- 19 ch1 Black Sheep          vox= 689 colors=4 deck= 38 witness= 20 limit=31      reward=55 stars=20,26 casual=0.89 core=0 tries=1
- 20 ch1 Unicorn              vox= 474 colors=7 deck= 28 witness= 16 limit=21 HARD reward=138 stars=16,19 casual=0.55 core=0 tries=2
- 21 ch2 Ice Cream            vox= 614 colors=7 deck= 34 witness= 22 limit=34      reward=56 stars=22,28 casual=0.63 core=0 tries=1
- 22 ch2 Candy                vox= 523 colors=4 deck= 27 witness= 14 limit=22      reward=57 stars=14,18 casual=0.69 core=0 tries=1
- 23 ch2 Donut                vox= 896 colors=6 deck= 38 witness= 23 limit=30      reward=58 stars=23,27 casual=0.86 core=0 tries=1
- 24 ch2 Cupcake              vox=1087 colors=6 deck= 51 witness= 24 limit=51      reward=59 stars=24,38 casual=0.8 core=0 tries=1
- 25 ch2 Watermelon           vox= 996 colors=5 deck= 48 witness= 27 limit=36 HARD reward=148 stars=27,32 casual=0.44 core=0 tries=1
- 26 ch2 Strawberry Cake      vox=1446 colors=6 deck= 53 witness= 30 limit=39      reward=60 stars=30,35 casual=0.84 core=0 tries=1
- 27 ch2 Burger               vox=1539 colors=6 deck= 57 witness= 40 limit=57      reward=61 stars=40,49 casual=0.63 core=0 tries=2
- 28 ch2 Mint Candy           vox= 523 colors=4 deck= 25 witness= 18 limit=21      reward=62 stars=18,20 casual=0.81 core=0 tries=1
- 29 ch2 Blueberry Donut      vox= 896 colors=6 deck= 37 witness= 21 limit=37      reward=63 stars=21,29 casual=0.7 core=0 tries=1
- 30 ch2 Berry Cone           vox= 614 colors=7 deck= 30 witness= 21 limit=30 HARD reward=159 stars=21,26 casual=0.28 core=0 tries=1
- 31 ch2 Lemon Cupcake        vox=1087 colors=6 deck= 47 witness= 25 limit=36      reward=64 stars=25,31 casual=0.94 core=0 tries=1
- 32 ch2 Chocolate Cake       vox=1446 colors=6 deck= 54 witness= 31 limit=40      reward=65 stars=31,36 casual=0.78 core=0 tries=1
- 33 ch2 Watermelon ✦         vox= 996 colors=5 deck= 48 witness= 30 limit=38      reward=86 stars=30,34 casual=0.83 core=222 tries=1
- 34 ch2 Veggie Burger        vox=1539 colors=6 deck= 53 witness= 33 limit=53      reward=67 stars=33,43 casual=0.63 core=0 tries=2
- 35 ch2 Choco Donut          vox= 896 colors=6 deck= 36 witness= 21 limit=27 HARD reward=169 stars=21,24 casual=0.48 core=0 tries=1
- 36 ch2 Ice Cream ✦          vox= 614 colors=7 deck= 43 witness= 30 limit=43      reward=88 stars=30,37 casual=0.8 core=149 tries=5
- 37 ch2 Lemon Cake           vox=1446 colors=5 deck= 48 witness= 29 limit=37      reward=69 stars=29,33 casual=0.86 core=0 tries=1
- 38 ch2 Candy ✦              vox= 523 colors=4 deck= 26 witness= 13 limit=21      reward=90 stars=13,17 casual=0.69 core=111 tries=1
- 39 ch2 Cupcake ✦            vox=1087 colors=6 deck= 52 witness= 25 limit=38      reward=91 stars=25,32 casual=0.67 core=315 tries=2
- 40 ch2 Strawberry Cake ✦    vox=1446 colors=7 deck= 54 witness= 37 limit=45 HARD reward=229 stars=37,41 casual=0.61 core=398 tries=1
- 41 ch3 Red Car              vox=1096 colors=6 deck= 61 witness= 34 limit=43      reward=72 stars=34,39 casual=0.69 core=0 tries=1
- 42 ch3 Rocket               vox= 813 colors=7 deck= 46 witness= 33 limit=39      reward=73 stars=33,36 casual=0.78 core=0 tries=1
- 43 ch3 Robo Buddy           vox=1058 colors=6 deck= 61 witness= 33 limit=45      reward=74 stars=33,39 casual=0.69 core=0 tries=1
- 44 ch3 Lighthouse           vox=1213 colors=6 deck= 67 witness= 36 limit=50      reward=75 stars=36,43 casual=0.88 core=0 tries=1
- 45 ch3 Windmill             vox=1070 colors=7 deck= 66 witness= 33 limit=44 HARD reward=189 stars=33,39 casual=0.55 core=0 tries=1
- 46 ch3 School Bus           vox=2211 colors=6 deck= 60 witness= 37 limit=44      reward=76 stars=37,41 casual=0.88 core=0 tries=2
- 47 ch3 Fire Truck           vox=1786 colors=6 deck= 65 witness= 39 limit=49      reward=77 stars=39,44 casual=0.8 core=0 tries=1
- 48 ch3 Cozy House           vox=2362 colors=7 deck= 62 witness= 42 limit=47      reward=78 stars=42,45 casual=0.83 core=0 tries=1
- 49 ch3 Blue Racer           vox=1096 colors=5 deck= 58 witness= 32 limit=44      reward=79 stars=32,38 casual=0.8 core=0 tries=1
- 50 ch3 Moon Rocket          vox= 813 colors=7 deck= 47 witness= 30 limit=36 HARD reward=199 stars=30,33 casual=0.33 core=0 tries=1
- 51 ch3 Harbour Light        vox=1213 colors=6 deck= 62 witness= 34 limit=48      reward=80 stars=34,41 casual=0.77 core=0 tries=1
- 52 ch3 Gold Robot           vox=1058 colors=5 deck= 47 witness= 25 limit=37      reward=81 stars=25,31 casual=0.73 core=0 tries=1
- 53 ch3 Spring Mill          vox=1070 colors=6 deck= 58 witness= 36 limit=47      reward=82 stars=36,42 casual=0.84 core=0 tries=1
- 54 ch3 City Bus             vox=2211 colors=6 deck= 62 witness= 37 limit=43      reward=83 stars=37,40 casual=0.53 core=0 tries=3
- 55 ch3 Blue Cottage         vox=2362 colors=6 deck= 58 witness= 40 limit=43 HARD reward=209 stars=40,42 casual=0.45 core=0 tries=1
- 56 ch3 Mint Cruiser         vox=1096 colors=6 deck= 48 witness= 31 limit=37      reward=84 stars=31,34 casual=0.58 core=0 tries=1
- 57 ch3 Ice Cream Truck      vox=1786 colors=6 deck= 61 witness= 39 limit=47      reward=85 stars=39,43 casual=0.61 core=0 tries=1
- 58 ch3 School Bus ✦         vox=2211 colors=6 deck= 57 witness= 37 limit=45      reward=106 stars=37,41 casual=0.8 core=692 tries=1
- 59 ch3 Cozy House ✦         vox=2362 colors=7 deck= 63 witness= 44 limit=52      reward=107 stars=44,48 casual=0.5 core=765 tries=1
- 60 ch3 Fire Truck ✦         vox=1786 colors=6 deck= 62 witness= 42 limit=48 HARD reward=269 stars=42,45 casual=0.42 core=475 tries=1
- 61 ch4 Clownfish            vox= 341 colors=3 deck= 22 witness= 11 limit=19      reward=88 stars=11,15 casual=0.72 core=0 tries=1
- 62 ch4 Crab                 vox= 401 colors=4 deck= 20 witness= 12 limit=16      reward=89 stars=12,14 casual=0.72 core=0 tries=1
- 63 ch4 Octopus              vox= 575 colors=4 deck= 31 witness= 16 limit=25      reward=90 stars=16,21 casual=0.75 core=0 tries=1
- 64 ch4 Turtle               vox= 518 colors=5 deck= 29 witness= 16 limit=23      reward=91 stars=16,20 casual=0.69 core=0 tries=1
- 65 ch4 Whale                vox= 680 colors=5 deck= 35 witness= 19 limit=29 HARD reward=229 stars=19,24 casual=0.42 core=0 tries=1
- 66 ch4 Blue Tang            vox= 341 colors=3 deck= 18 witness= 10 limit=16      reward=93 stars=10,13 casual=0.67 core=0 tries=1
- 67 ch4 Golden Crab          vox= 401 colors=4 deck= 28 witness= 10 limit=20      reward=93 stars=10,15 casual=0.42 core=0 tries=3
- 68 ch4 Pink Octopus         vox= 575 colors=4 deck= 33 witness= 16 limit=25      reward=94 stars=16,21 casual=0.61 core=0 tries=5
- 69 ch4 Sea Turtle           vox= 518 colors=5 deck= 30 witness= 17 limit=23      reward=95 stars=17,20 casual=0.59 core=0 tries=1
- 70 ch4 Orca                 vox= 680 colors=3 deck= 46 witness= 26 limit=35 HARD reward=239 stars=26,31 casual=0.38 core=0 tries=1
- 71 ch4 Clownfish ✦          vox= 341 colors=3 deck= 28 witness= 14 limit=23      reward=117 stars=14,19 casual=0.56 core=76 tries=1
- 72 ch4 Crab ✦               vox= 401 colors=4 deck= 24 witness= 10 limit=24      reward=117 stars=10,17 casual=0.5 core=73 tries=2
- 73 ch4 Octopus ✦            vox= 575 colors=4 deck= 34 witness= 15 limit=34      reward=118 stars=15,25 casual=0.38 core=162 tries=3
- 74 ch4 Turtle ✦             vox= 518 colors=5 deck= 42 witness= 25 limit=35      reward=119 stars=25,30 casual=0.73 core=125 tries=1
- 75 ch4 Whale ✦              vox= 680 colors=5 deck= 46 witness= 29 limit=35 HARD reward=299 stars=29,32 casual=0.17 core=201 tries=1
- 76 ch4 Blue Tang ✦          vox= 341 colors=3 deck= 26 witness= 11 limit=22      reward=121 stars=11,17 casual=0.41 core=78 tries=1
- 77 ch4 Golden Crab ✦        vox= 401 colors=4 deck= 27 witness= 11 limit=23      reward=121 stars=11,17 casual=0.58 core=76 tries=1
- 78 ch4 Pink Octopus ✦       vox= 575 colors=4 deck= 30 witness= 15 limit=30      reward=122 stars=15,23 casual=0.52 core=167 tries=1
- 79 ch4 Sea Turtle ✦         vox= 518 colors=5 deck= 43 witness= 22 limit=36      reward=123 stars=22,29 casual=0.67 core=129 tries=1
- 80 ch4 Orca ✦               vox= 680 colors=3 deck= 39 witness= 17 limit=28 HARD reward=310 stars=17,23 casual=0.22 core=207 tries=1
- 81 ch5 Baby Dragon          vox= 750 colors=7 deck= 47 witness= 23 limit=36      reward=105 stars=23,30 casual=0.73 core=0 tries=2
- 82 ch5 Night Unicorn        vox= 474 colors=6 deck= 38 witness= 23 limit=29      reward=105 stars=23,26 casual=0.41 core=0 tries=1
- 83 ch5 Dream Castle         vox=3026 colors=7 deck= 73 witness= 54 limit=60      reward=106 stars=54,57 casual=0.58 core=0 tries=1
- 84 ch5 Fire Dragon          vox= 750 colors=6 deck= 46 witness= 26 limit=36      reward=107 stars=26,31 casual=0.44 core=0 tries=1
- 85 ch5 Rocket ✦             vox= 813 colors=7 deck= 68 witness= 42 limit=50 HARD reward=320 stars=42,46 casual=0.28 core=263 tries=2
- 86 ch5 Robo Buddy ✦         vox=1058 colors=6 deck= 54 witness= 30 limit=42      reward=129 stars=30,36 casual=0.38 core=279 tries=2
- 87 ch5 Snow Deer            vox= 414 colors=4 deck= 38 witness= 19 limit=27      reward=109 stars=19,23 casual=0.48 core=0 tries=2
- 88 ch5 Night Wolf           vox= 600 colors=3 deck= 34 witness= 14 limit=29      reward=110 stars=14,22 casual=0.52 core=0 tries=1
- 89 ch5 Lion ✦               vox= 593 colors=5 deck= 48 witness= 21 limit=38      reward=131 stars=21,30 casual=0.67 core=173 tries=3
- 90 ch5 Sunset Castle        vox=3026 colors=7 deck= 72 witness= 53 limit=58 HARD reward=280 stars=53,56 casual=0.27 core=0 tries=1
- 91 ch5 Unicorn ✦            vox= 474 colors=7 deck= 38 witness= 25 limit=38      reward=133 stars=25,32 casual=0.31 core=76 tries=1
- 92 ch5 Baby Dragon ✦        vox= 750 colors=7 deck= 47 witness= 28 limit=39      reward=134 stars=28,34 casual=0.53 core=215 tries=1
- 93 ch5 Panda ✦              vox= 634 colors=4 deck= 39 witness= 20 limit=32      reward=134 stars=20,26 casual=0.52 core=220 tries=1
- 94 ch5 Fox ✦                vox= 620 colors=4 deck= 34 witness= 16 limit=29      reward=135 stars=16,23 casual=0.48 core=159 tries=3
- 95 ch5 Penguin ✦            vox= 557 colors=4 deck= 40 witness= 27 limit=33 HARD reward=340 stars=27,30 casual=0.28 core=189 tries=1
- 96 ch5 Lighthouse ✦         vox=1213 colors=6 deck= 75 witness= 49 limit=62      reward=137 stars=49,56 casual=0.5 core=413 tries=1
- 97 ch5 Windmill ✦           vox=1070 colors=7 deck= 61 witness= 39 limit=54      reward=138 stars=39,47 casual=0.47 core=295 tries=1
- 98 ch5 Dream Castle ✦       vox=3026 colors=7 deck= 76 witness= 54 limit=60      reward=138 stars=54,57 casual=0.59 core=1164 tries=3
- 99 ch5 Fire Dragon ✦        vox= 750 colors=6 deck= 48 witness= 31 limit=43      reward=139 stars=31,37 casual=0.5 core=223 tries=1
-100 ch5 Sunset Castle ✦      vox=3026 colors=7 deck= 72 witness= 53 limit=61 HARD reward=350 stars=53,57 casual=0.23 core=1176 tries=1
+  1 ch1 Chick                vox=1328 colors=7 deck= 45 witness= 20 limit=28      reward=40 stars=20,24 casual=0.97 core=0 tries=1
+  2 ch1 Bunny                vox=1579 colors=5 deck= 52 witness= 26 limit=36      reward=41 stars=26,31 casual=1 core=0 tries=1
+  3 ch1 Penguin              vox=1873 colors=5 deck= 57 witness= 29 limit=39      reward=42 stars=29,34 casual=1 core=0 tries=1
+  4 ch1 Bear                 vox=1432 colors=5 deck= 54 witness= 23 limit=38      reward=42 stars=23,31 casual=0.95 core=0 tries=1
+  5 ch1 Cat                  vox=1491 colors=5 deck= 57 witness= 26 limit=38 HARD reward=108 stars=26,32 casual=0.72 core=0 tries=1
+  6 ch1 Fox                  vox=1575 colors=5 deck= 53 witness= 24 limit=34      reward=44 stars=24,29 casual=0.91 core=0 tries=1
+  7 ch1 Panda                vox=1448 colors=5 deck= 52 witness= 24 limit=33      reward=45 stars=24,29 casual=0.7 core=0 tries=1
+  8 ch1 Puppy                vox=1617 colors=7 deck= 63 witness= 23 limit=37      reward=46 stars=23,30 casual=0.88 core=0 tries=1
+  9 ch1 Elephant             vox=1475 colors=5 deck= 56 witness= 26 limit=37      reward=46 stars=26,32 casual=1 core=0 tries=1
+ 10 ch1 Lion                 vox=2451 colors=6 deck= 69 witness= 38 limit=43 HARD reward=118 stars=38,41 casual=0.61 core=0 tries=1
+ 11 ch1 Golden Chick         vox=1328 colors=6 deck= 50 witness= 21 limit=32      reward=48 stars=21,27 casual=0.86 core=0 tries=1
+ 12 ch1 Chocolate Bunny      vox=1579 colors=5 deck= 63 witness= 32 limit=42      reward=49 stars=32,37 casual=0.83 core=0 tries=1
+ 13 ch1 Royal Penguin        vox=1873 colors=5 deck= 64 witness= 33 limit=47      reward=50 stars=33,40 casual=0.95 core=0 tries=1
+ 14 ch1 Polar Bear           vox=1432 colors=5 deck= 54 witness= 25 limit=37      reward=51 stars=25,31 casual=0.91 core=0 tries=1
+ 15 ch1 Ginger Cat           vox=1491 colors=5 deck= 51 witness= 24 limit=35 HARD reward=128 stars=24,30 casual=0.73 core=0 tries=1
+ 16 ch1 Arctic Fox           vox=1575 colors=5 deck= 64 witness= 32 limit=42      reward=52 stars=32,37 casual=0.83 core=0 tries=1
+ 17 ch1 Red Panda            vox=1448 colors=5 deck= 55 witness= 27 limit=32      reward=53 stars=27,30 casual=0.83 core=0 tries=1
+ 18 ch1 Sheep                vox= 690 colors=4 deck= 37 witness= 16 limit=25      reward=54 stars=16,21 casual=0.83 core=0 tries=1
+ 19 ch1 Wolf                 vox= 600 colors=4 deck= 33 witness= 14 limit=24      reward=55 stars=14,19 casual=0.75 core=0 tries=1
+ 20 ch1 Deer                 vox= 415 colors=4 deck= 26 witness=  7 limit=13 HARD reward=138 stars=7,10 casual=0.66 core=0 tries=3
+ 21 ch2 Ice Cream            vox= 614 colors=7 deck= 34 witness= 15 limit=27      reward=56 stars=15,21 casual=0.72 core=0 tries=1
+ 22 ch2 Candy                vox= 523 colors=4 deck= 27 witness=  9 limit=18      reward=57 stars=9,14 casual=0.8 core=0 tries=1
+ 23 ch2 Donut                vox= 896 colors=6 deck= 38 witness= 15 limit=24      reward=58 stars=15,20 casual=0.86 core=0 tries=1
+ 24 ch2 Cupcake              vox=1087 colors=6 deck= 51 witness= 16 limit=29      reward=59 stars=16,23 casual=0.64 core=0 tries=1
+ 25 ch2 Watermelon           vox= 996 colors=5 deck= 48 witness= 22 limit=34 HARD reward=148 stars=22,28 casual=0.5 core=0 tries=1
+ 26 ch2 Strawberry Cake      vox=1446 colors=6 deck= 53 witness= 25 limit=34      reward=60 stars=25,30 casual=0.91 core=0 tries=1
+ 27 ch2 Burger               vox=1539 colors=6 deck= 57 witness= 38 limit=57      reward=61 stars=38,48 casual=0.73 core=0 tries=2
+ 28 ch2 Mint Candy           vox= 523 colors=4 deck= 25 witness=  9 limit=15      reward=62 stars=9,12 casual=0.81 core=0 tries=1
+ 29 ch2 Blueberry Donut      vox= 896 colors=6 deck= 37 witness= 15 limit=24      reward=63 stars=15,20 casual=0.77 core=0 tries=1
+ 30 ch2 Berry Cone           vox= 614 colors=7 deck= 30 witness= 14 limit=23 HARD reward=159 stars=14,19 casual=0.53 core=0 tries=1
+ 31 ch2 Lemon Cupcake        vox=1087 colors=6 deck= 47 witness= 17 limit=29      reward=64 stars=17,23 casual=0.84 core=0 tries=1
+ 32 ch2 Chocolate Cake       vox=1446 colors=6 deck= 54 witness= 25 limit=35      reward=65 stars=25,30 casual=0.84 core=0 tries=1
+ 33 ch2 Watermelon ✦         vox= 996 colors=5 deck= 48 witness= 23 limit=35      reward=86 stars=23,29 casual=0.72 core=222 tries=1
+ 34 ch2 Veggie Burger        vox=1539 colors=6 deck= 53 witness= 32 limit=53      reward=67 stars=32,43 casual=0.59 core=0 tries=2
+ 35 ch2 Choco Donut          vox= 896 colors=6 deck= 36 witness= 14 limit=22 HARD reward=169 stars=14,18 casual=0.56 core=0 tries=1
+ 36 ch2 Ice Cream ✦          vox= 614 colors=7 deck= 36 witness= 16 limit=32      reward=88 stars=16,24 casual=0.75 core=149 tries=1
+ 37 ch2 Lemon Cake           vox=1446 colors=5 deck= 48 witness= 22 limit=33      reward=69 stars=22,28 casual=0.72 core=0 tries=1
+ 38 ch2 Candy ✦              vox= 523 colors=4 deck= 26 witness= 10 limit=18      reward=90 stars=10,14 casual=0.89 core=111 tries=1
+ 39 ch2 Cupcake ✦            vox=1087 colors=6 deck= 52 witness= 22 limit=34      reward=91 stars=22,28 casual=0.7 core=315 tries=2
+ 40 ch2 Strawberry Cake ✦    vox=1446 colors=7 deck= 51 witness= 26 limit=35 HARD reward=229 stars=26,31 casual=0.38 core=398 tries=2
+ 41 ch3 Red Car              vox=1096 colors=6 deck= 61 witness= 27 limit=42      reward=72 stars=27,35 casual=0.91 core=0 tries=1
+ 42 ch3 Rocket               vox= 813 colors=7 deck= 46 witness= 25 limit=35      reward=73 stars=25,30 casual=0.88 core=0 tries=1
+ 43 ch3 Robo Buddy           vox=1058 colors=6 deck= 61 witness= 24 limit=32      reward=74 stars=24,28 casual=0.67 core=0 tries=1
+ 44 ch3 Lighthouse           vox=1213 colors=6 deck= 67 witness= 20 limit=38      reward=75 stars=20,29 casual=0.77 core=0 tries=1
+ 45 ch3 Windmill             vox=1083 colors=7 deck= 66 witness= 22 limit=33 HARD reward=189 stars=22,28 casual=0.33 core=0 tries=1
+ 46 ch3 School Bus           vox=2211 colors=6 deck= 57 witness= 34 limit=40      reward=76 stars=34,37 casual=0.81 core=0 tries=1
+ 47 ch3 Fire Truck           vox=1786 colors=6 deck= 65 witness= 35 limit=45      reward=77 stars=35,40 casual=0.86 core=0 tries=1
+ 48 ch3 Cozy House           vox=2362 colors=7 deck= 62 witness= 30 limit=35      reward=78 stars=30,33 casual=0.64 core=0 tries=1
+ 49 ch3 Blue Racer           vox=1096 colors=5 deck= 58 witness= 24 limit=41      reward=79 stars=24,33 casual=0.72 core=0 tries=1
+ 50 ch3 Moon Rocket          vox= 813 colors=7 deck= 47 witness= 25 limit=31 HARD reward=199 stars=25,28 casual=0.5 core=0 tries=1
+ 51 ch3 Harbour Light        vox=1213 colors=6 deck= 62 witness= 23 limit=35      reward=80 stars=23,29 casual=0.61 core=0 tries=1
+ 52 ch3 Gold Robot           vox=1058 colors=5 deck= 47 witness= 21 limit=34      reward=81 stars=21,28 casual=0.8 core=0 tries=1
+ 53 ch3 Spring Mill          vox=1083 colors=6 deck= 59 witness= 26 limit=39      reward=82 stars=26,33 casual=0.77 core=0 tries=1
+ 54 ch3 City Bus             vox=2211 colors=6 deck= 56 witness= 33 limit=40      reward=83 stars=33,37 casual=0.75 core=0 tries=1
+ 55 ch3 Blue Cottage         vox=2362 colors=6 deck= 63 witness= 26 limit=34 HARD reward=209 stars=26,30 casual=0.52 core=0 tries=2
+ 56 ch3 Mint Cruiser         vox=1096 colors=6 deck= 48 witness= 21 limit=35      reward=84 stars=21,28 casual=0.58 core=0 tries=1
+ 57 ch3 Ice Cream Truck      vox=1786 colors=6 deck= 61 witness= 29 limit=43      reward=85 stars=29,36 casual=0.72 core=0 tries=1
+ 58 ch3 School Bus ✦         vox=2211 colors=6 deck= 57 witness= 34 limit=41      reward=106 stars=34,38 casual=0.8 core=692 tries=1
+ 59 ch3 Cozy House ✦         vox=2362 colors=7 deck= 63 witness= 33 limit=44      reward=107 stars=33,39 casual=0.63 core=765 tries=1
+ 60 ch3 Fire Truck ✦         vox=1786 colors=6 deck= 62 witness= 37 limit=45 HARD reward=269 stars=37,41 casual=0.45 core=475 tries=1
+ 61 ch4 Clownfish            vox= 341 colors=3 deck= 23 witness=  9 limit=18      reward=88 stars=9,14 casual=0.67 core=0 tries=2
+ 62 ch4 Crab                 vox= 403 colors=4 deck= 21 witness=  8 limit=15      reward=89 stars=8,12 casual=0.78 core=0 tries=1
+ 63 ch4 Octopus              vox= 597 colors=4 deck= 33 witness= 13 limit=23      reward=90 stars=13,18 casual=0.73 core=0 tries=1
+ 64 ch4 Turtle               vox= 518 colors=5 deck= 29 witness= 12 limit=21      reward=91 stars=12,17 casual=0.7 core=0 tries=1
+ 65 ch4 Whale                vox= 684 colors=5 deck= 35 witness= 15 limit=25 HARD reward=229 stars=15,20 casual=0.45 core=0 tries=1
+ 66 ch4 Blue Tang            vox= 341 colors=3 deck= 18 witness=  9 limit=15      reward=93 stars=9,12 casual=0.56 core=0 tries=1
+ 67 ch4 Golden Crab          vox= 403 colors=4 deck= 26 witness=  9 limit=17      reward=93 stars=9,13 casual=0.67 core=0 tries=1
+ 68 ch4 Pink Octopus         vox= 597 colors=4 deck= 35 witness= 12 limit=23      reward=94 stars=12,18 casual=0.69 core=0 tries=2
+ 69 ch4 Sea Turtle           vox= 518 colors=5 deck= 30 witness= 11 limit=21      reward=95 stars=11,16 casual=0.55 core=0 tries=1
+ 70 ch4 Orca                 vox= 684 colors=3 deck= 43 witness= 22 limit=33 HARD reward=239 stars=22,28 casual=0.48 core=0 tries=1
+ 71 ch4 Clownfish ✦          vox= 341 colors=3 deck= 28 witness= 12 limit=22      reward=117 stars=12,17 casual=0.61 core=76 tries=1
+ 72 ch4 Crab ✦               vox= 403 colors=4 deck= 25 witness=  9 limit=23      reward=117 stars=9,16 casual=0.42 core=73 tries=1
+ 73 ch4 Octopus ✦            vox= 597 colors=4 deck= 37 witness= 12 limit=30      reward=118 stars=12,21 casual=0.69 core=162 tries=1
+ 74 ch4 Turtle ✦             vox= 518 colors=5 deck= 42 witness= 18 limit=32      reward=119 stars=18,25 casual=0.52 core=125 tries=1
+ 75 ch4 Whale ✦              vox= 684 colors=5 deck= 42 witness= 17 limit=31 HARD reward=299 stars=17,24 casual=0.38 core=202 tries=1
+ 76 ch4 Blue Tang ✦          vox= 341 colors=3 deck= 26 witness= 12 limit=21      reward=121 stars=12,17 casual=0.41 core=78 tries=1
+ 77 ch4 Golden Crab ✦        vox= 403 colors=4 deck= 28 witness=  9 limit=23      reward=121 stars=9,16 casual=0.58 core=76 tries=1
+ 78 ch4 Pink Octopus ✦       vox= 597 colors=4 deck= 33 witness= 13 limit=33      reward=122 stars=13,23 casual=0.63 core=167 tries=1
+ 79 ch4 Sea Turtle ✦         vox= 518 colors=5 deck= 43 witness= 21 limit=32      reward=123 stars=21,27 casual=0.45 core=129 tries=1
+ 80 ch4 Orca ✦               vox= 684 colors=3 deck= 40 witness= 18 limit=28 HARD reward=310 stars=18,23 casual=0.28 core=208 tries=1
+ 81 ch5 Baby Dragon          vox= 754 colors=7 deck= 50 witness= 16 limit=31      reward=105 stars=16,24 casual=0.55 core=0 tries=1
+ 82 ch5 Night Unicorn        vox= 477 colors=6 deck= 34 witness=  9 limit=21      reward=105 stars=9,15 casual=0.56 core=0 tries=1
+ 83 ch5 Dream Castle         vox=3026 colors=7 deck= 73 witness= 43 limit=51      reward=106 stars=43,47 casual=0.45 core=0 tries=1
+ 84 ch5 Fire Dragon          vox= 754 colors=6 deck= 44 witness= 14 limit=28      reward=107 stars=14,21 casual=0.64 core=0 tries=1
+ 85 ch5 Rocket ✦             vox= 813 colors=7 deck= 56 witness= 27 limit=37 HARD reward=320 stars=27,32 casual=0.33 core=263 tries=1
+ 86 ch5 Robo Buddy ✦         vox=1058 colors=6 deck= 54 witness= 20 limit=39      reward=129 stars=20,30 casual=0.44 core=279 tries=2
+ 87 ch5 Snow Deer            vox= 415 colors=4 deck= 25 witness= 10 limit=15      reward=109 stars=10,13 casual=0.63 core=0 tries=1
+ 88 ch5 Night Wolf           vox= 600 colors=3 deck= 34 witness= 13 limit=26      reward=110 stars=13,20 casual=0.52 core=0 tries=1
+ 89 ch5 Lion ✦               vox=2451 colors=6 deck= 60 witness= 39 limit=45      reward=131 stars=39,42 casual=0.66 core=1022 tries=2
+ 90 ch5 Sunset Castle        vox=3026 colors=7 deck= 72 witness= 43 limit=50 HARD reward=280 stars=43,47 casual=0.39 core=0 tries=1
+ 91 ch5 Unicorn ✦            vox= 477 colors=7 deck= 40 witness= 11 limit=28      reward=133 stars=11,20 casual=0.31 core=76 tries=3
+ 92 ch5 Baby Dragon ✦        vox= 754 colors=7 deck= 47 witness= 14 limit=33      reward=134 stars=14,24 casual=0.59 core=215 tries=1
+ 93 ch5 Panda ✦              vox=1448 colors=5 deck= 51 witness= 30 limit=36      reward=134 stars=30,33 casual=0.58 core=507 tries=1
+ 94 ch5 Fox ✦                vox=1575 colors=5 deck= 44 witness= 24 limit=33      reward=135 stars=24,29 casual=0.47 core=536 tries=1
+ 95 ch5 Penguin ✦            vox=1873 colors=5 deck= 59 witness= 36 limit=46 HARD reward=340 stars=36,41 casual=0.22 core=791 tries=1
+ 96 ch5 Lighthouse ✦         vox=1213 colors=6 deck= 75 witness= 26 limit=49      reward=137 stars=26,38 casual=0.52 core=413 tries=1
+ 97 ch5 Windmill ✦           vox=1083 colors=7 deck= 64 witness= 21 limit=39      reward=138 stars=21,30 casual=0.3 core=295 tries=1
+ 98 ch5 Dream Castle ✦       vox=3026 colors=7 deck= 75 witness= 42 limit=52      reward=138 stars=42,47 casual=0.59 core=1164 tries=2
+ 99 ch5 Fire Dragon ✦        vox= 754 colors=6 deck= 47 witness= 24 limit=47      reward=139 stars=24,36 casual=0.36 core=223 tries=2
+100 ch5 Sunset Castle ✦      vox=3026 colors=7 deck= 73 witness= 43 limit=49 HARD reward=350 stars=43,46 casual=0.05 core=1176 tries=2
+
+100 levels, 36 models written to Assets/VoxelBloom/Data/Resources/VoxelBloom

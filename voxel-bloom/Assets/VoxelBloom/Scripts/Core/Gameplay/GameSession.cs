@@ -10,6 +10,8 @@ namespace VoxelBloom.Core
         public AttackBlock Attack;
         public int QueueIndex;
         public readonly List<int> Destroyed = new List<int>();
+        /// <summary>Voxels of detached pieces that fell after this attack (count as destroyed).</summary>
+        public readonly List<int> Dropped = new List<int>();
         public bool Wasted;
         public bool ColorCleared;
         public int Combo;
@@ -100,6 +102,17 @@ namespace VoxelBloom.Core
             get { for (int s = 0; s < BoardSize; s++) if (board[s].HasValue) return false; return true; }
         }
 
+        /// <summary>Voxels an attack of this colour/power would remove right now (same order as ResolveNext).</summary>
+        public List<int> PreviewTargets(int color, int power)
+        {
+            var list = new List<int>();
+            if (color < 0 || color >= remaining.Length) return list;
+            for (int i = 0; i < N; i++) if (exposed[i] && cell[i] == color) list.Add(i);
+            list.Sort((u, v) => rank[u].CompareTo(rank[v]));
+            if (list.Count > power) list.RemoveRange(power, list.Count - power);
+            return list;
+        }
+
         public bool CanTap(int slot)
             => slot >= 0 && slot < BoardSize && !IsWon && Moves < MoveLimit && board[slot].HasValue && queue.Count < QueueSize;
 
@@ -164,11 +177,9 @@ namespace VoxelBloom.Core
             res.ScoreGained = res.Destroyed.Count * 10 * ComboMultiplier(Combo);
             Score += res.ScoreGained;
 
-            if (remaining[a.Color] == 0)
-            {
-                res.ColorCleared = true;
-                ClearColorFromBoard(a.Color, res.RefilledSlots);
-            }
+            Collapse(res.Dropped);
+            res.ColorCleared = remaining[a.Color] == 0;
+            PurgeClearedColors(res.RefilledSlots);
             return res;
         }
 
@@ -213,7 +224,8 @@ namespace VoxelBloom.Core
                     if (cell[j] >= 0 && seen.Add(j)) frontier.Add(j);
                 }
             }
-            PurgeClearedColors();
+            Collapse(destroyed);
+            PurgeClearedColors(null);
             return destroyed;
         }
 
@@ -230,7 +242,8 @@ namespace VoxelBloom.Core
                 int take = Math.Min(count - destroyed.Count, scratch.Count);
                 for (int k = 0; k < take; k++) { Destroy(scratch[k]); destroyed.Add(scratch[k]); }
             }
-            PurgeClearedColors();
+            Collapse(destroyed);
+            PurgeClearedColors(null);
             return destroyed;
         }
 
@@ -296,9 +309,61 @@ namespace VoxelBloom.Core
                 if (board[s].HasValue && board[s].Value.Color == color) { board[s] = DrawFromDeck(); refilled?.Add(s); }
         }
 
-        void PurgeClearedColors()
+        /// <summary>Board blocks of finished colours are replaced (colours ascending, slots ascending), as in rules.mjs.</summary>
+        void PurgeClearedColors(List<int> refilled)
         {
-            for (int c = 0; c < remaining.Length; c++) if (remaining[c] == 0) ClearColorFromBoard(c, null);
+            for (int c = 0; c < remaining.Length; c++) if (remaining[c] == 0) ClearColorFromBoard(c, refilled);
+        }
+
+        int[] compBuf;
+        readonly List<int> bfs = new List<int>(1024);
+
+        /// <summary>
+        /// Structural rule (mirrors rules.mjs collapse): the largest connected piece stays, plus every piece touching
+        /// y = 0; any other detached piece falls and counts as destroyed. Ties: piece containing the lowest index.
+        /// Appends fallen voxel indices (ascending per piece) to <paramref name="dropped"/>.
+        /// </summary>
+        public int Collapse(List<int> dropped)
+        {
+            if (compBuf == null) compBuf = new int[N];
+            for (int i = 0; i < N; i++) compBuf[i] = -1;
+            var sizes = new List<int>(); var grounded = new List<bool>(); var members = new List<int[]>();
+            int XY = X * Y;
+            for (int i = 0; i < N; i++)
+            {
+                if (cell[i] < 0 || compBuf[i] >= 0) continue;
+                int id = sizes.Count; bool g = false;
+                bfs.Clear(); bfs.Add(i); compBuf[i] = id;
+                for (int h = 0; h < bfs.Count; h++)
+                {
+                    int j = bfs[h], x = j % X, y = (j / X) % Y, z = j / XY;
+                    if (y == 0) g = true;
+                    if (x > 0) Visit(j - 1, id);
+                    if (x < X - 1) Visit(j + 1, id);
+                    if (y > 0) Visit(j - X, id);
+                    if (y < Y - 1) Visit(j + X, id);
+                    if (z > 0) Visit(j - XY, id);
+                    if (z < Z - 1) Visit(j + XY, id);
+                }
+                sizes.Add(bfs.Count); grounded.Add(g); members.Add(bfs.ToArray());
+            }
+            if (sizes.Count <= 1) return 0;
+            int main = 0;
+            for (int k = 1; k < sizes.Count; k++) if (sizes[k] > sizes[main]) main = k;
+            int n = 0;
+            for (int k = 0; k < sizes.Count; k++)
+            {
+                if (k == main || grounded[k]) continue;
+                var list = members[k];
+                Array.Sort(list);
+                foreach (int i in list) { Destroy(i); dropped?.Add(i); n++; }
+            }
+            return n;
+        }
+
+        void Visit(int j, int id)
+        {
+            if (cell[j] >= 0 && compBuf[j] < 0) { compBuf[j] = id; bfs.Add(j); }
         }
 
         void Destroy(int i)

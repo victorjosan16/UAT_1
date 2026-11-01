@@ -96,12 +96,46 @@ export class Session {
     this.maxCombo = Math.max(this.maxCombo, this.combo);
     const mult = Math.min(Math.max(this.combo, 1), 5);
     this.score += destroyed.length * 10 * mult;
-    let colorCleared = false;
-    if (this.remaining[a.c] === 0) {
-      colorCleared = true;
-      for (let s = 0; s < BOARD_SIZE; s++) if (this.board[s] && this.board[s].c === a.c) this.board[s] = this.drawFromDeck();
+    const dropped = this.collapse();
+    const colorCleared = this.remaining[a.c] === 0;
+    this.purgeClearedColors();
+    return { attack: a, destroyed, dropped, wasted: false, colorCleared, combo: this.combo };
+  }
+  // Board blocks of finished colours are replaced (colours ascending, slots ascending).
+  purgeClearedColors() {
+    for (let c = 0; c < this.colorCount; c++) if (this.remaining[c] === 0)
+      for (let s = 0; s < BOARD_SIZE; s++) if (this.board[s] && this.board[s].c === c) this.board[s] = this.drawFromDeck();
+  }
+  // Structural rule: after destruction, the largest connected piece stays (it rests on the pedestal) together with
+  // every piece touching the floor (y = 0); any other detached piece falls and counts as destroyed.
+  // Tie-break for "largest": the piece containing the lowest cell index.
+  collapse() {
+    const N = this.N, X = this.X, Y = this.Y, Z = this.Z, comp = new Int32Array(N).fill(-1);
+    const sizes = [], grounded = [], members = [];
+    for (let i = 0; i < N; i++) {
+      if (this.cell[i] < 0 || comp[i] >= 0) continue;
+      const id = sizes.length, list = [i]; comp[i] = id; let g = false;
+      for (let h = 0; h < list.length; h++) {
+        const j = list[h], x = j % X, y = Math.floor(j / X) % Y, z = Math.floor(j / (X * Y));
+        if (y === 0) g = true;
+        if (x > 0 && this.cell[j - 1] >= 0 && comp[j - 1] < 0) { comp[j - 1] = id; list.push(j - 1); }
+        if (x < X - 1 && this.cell[j + 1] >= 0 && comp[j + 1] < 0) { comp[j + 1] = id; list.push(j + 1); }
+        if (y > 0 && this.cell[j - X] >= 0 && comp[j - X] < 0) { comp[j - X] = id; list.push(j - X); }
+        if (y < Y - 1 && this.cell[j + X] >= 0 && comp[j + X] < 0) { comp[j + X] = id; list.push(j + X); }
+        if (z > 0 && this.cell[j - X * Y] >= 0 && comp[j - X * Y] < 0) { comp[j - X * Y] = id; list.push(j - X * Y); }
+        if (z < Z - 1 && this.cell[j + X * Y] >= 0 && comp[j + X * Y] < 0) { comp[j + X * Y] = id; list.push(j + X * Y); }
+      }
+      sizes.push(list.length); grounded.push(g); members.push(list);
     }
-    return { attack: a, destroyed, wasted: false, colorCleared, combo: this.combo };
+    if (sizes.length <= 1) return [];
+    let main = 0; for (let k = 1; k < sizes.length; k++) if (sizes[k] > sizes[main]) main = k;
+    const dropped = [];
+    for (let k = 0; k < sizes.length; k++) {
+      if (k === main || grounded[k]) continue;
+      const list = members[k].slice().sort((a, b) => a - b);
+      for (const i of list) { this.destroy(i); dropped.push(i); }
+    }
+    return dropped;
   }
   resolveAll() { const out = []; let r; while ((r = this.resolveNext())) { out.push(r); if (this.isWon()) break; } return out; }
   isWon() { return this.totalRemaining === 0; }

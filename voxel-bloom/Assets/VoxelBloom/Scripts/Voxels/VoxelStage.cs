@@ -15,6 +15,7 @@ namespace VoxelBloom
         public VoxelModelView Model { get; private set; }
         public RenderTexture Texture { get; private set; }
         public FragmentSystem Fragments { get; private set; }
+        public PhysicsDebris Debris { get; private set; }
         public Transform Pivot { get; private set; }
         public Transform PedestalRoot { get; private set; }
 
@@ -65,6 +66,8 @@ namespace VoxelBloom
 
             Fragments = new GameObject("Fragments").AddComponent<FragmentSystem>();
             Fragments.transform.SetParent(transform, false);
+            Debris = new GameObject("Debris").AddComponent<PhysicsDebris>();
+            Debris.transform.SetParent(transform, false);
             Frame(1f, 1f);
         }
 
@@ -103,10 +106,21 @@ namespace VoxelBloom
             PedestalRoot.localScale = Vector3.one * (footprint * 0.62f / 9f);
             PedestalRoot.localPosition = new Vector3(0, -PedestalRoot.localScale.y * 3f, 0);
             Frame(Mathf.Max(x, z) * size, y * size);
+            Debris.SetFloor(transform.position.y);
         }
 
         public void ShowModel(VoxelGrid g, float span = 2f)
             => ShowModel(g.CopyCells(), g.X, g.Y, g.Z, VoxelMeshBuilder.ToColors(g.Palette), span);
+
+        /// <summary>Frames a wider scene (diorama) instead of a single model.</summary>
+        public void FrameScene(float width, float height, float lookY)
+        {
+            float radius = Mathf.Max(width * 0.5f, height * 0.5f);
+            float dist = radius / Mathf.Tan(Camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * 1.05f;
+            camBase = new Vector3(0, lookY + dist * 0.22f, -dist);
+            Camera.transform.localPosition = camBase;
+            Camera.transform.LookAt(transform.position + new Vector3(0, lookY, 0));
+        }
 
         void Frame(float width, float height)
         {

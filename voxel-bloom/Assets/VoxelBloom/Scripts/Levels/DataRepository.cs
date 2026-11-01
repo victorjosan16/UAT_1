@@ -10,6 +10,7 @@ namespace VoxelBloom
         public const string Root = "VoxelBloom/";
         readonly Dictionary<int, LevelDefinition> levels = new Dictionary<int, LevelDefinition>();
         readonly Dictionary<string, VoxelGrid> models = new Dictionary<string, VoxelGrid>();
+        readonly Dictionary<string, AnimProfile> anims = new Dictionary<string, AnimProfile>();
         public GameConfig Config { get; private set; }
 
         public void LoadConfig()
@@ -49,10 +50,19 @@ namespace VoxelBloom
             if (models.TryGetValue(id, out var m)) return m;
             var ta = Resources.Load<TextAsset>(Root + "Models/" + id);
             if (ta == null) { Debug.LogWarning("[VoxelBloom] Model " + id + " missing"); return null; }
-            m = VoxelGrid.FromJson(MiniJson.Obj(MiniJson.Parse(ta.text)));
+            var d = MiniJson.Obj(MiniJson.Parse(ta.text));
+            m = VoxelGrid.FromJson(d);
+            anims[id] = AnimProfile.FromJson(MiniJson.GetObj(d, "anim"));
             Resources.UnloadAsset(ta);
             models[id] = m;
             return m;
+        }
+
+        /// <summary>Idle animation profile of a model (null when the model has none).</summary>
+        public AnimProfile GetAnim(string id)
+        {
+            if (GetModel(id) == null) return null;
+            return anims.TryGetValue(id, out var a) ? a : null;
         }
     }
 }

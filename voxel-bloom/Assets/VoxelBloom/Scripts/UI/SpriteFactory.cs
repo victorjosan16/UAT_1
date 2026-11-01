@@ -7,7 +7,7 @@ namespace VoxelBloom
     {
         Coin, Heart, Star, StarEmpty, Gear, Plus, Pause, Play, Close, Restart, ArrowLeft, ArrowRight, Lock, Check,
         Hammer, Shuffle, ColorBomb, Eliminate, Paw, Gift, Shop, Calendar, Avatar, Music, Sound, Vibrate, Trophy, Cube,
-        Lightning, Video, Home, Sparkle, Eye,
+        Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue,
     }
 
     /// <summary>Generates and caches all UI sprites procedurally (see IconPainter).</summary>
@@ -85,6 +85,29 @@ namespace VoxelBloom
             p.RoundRect(26, 8, W - 26, H - 6, 14, mid, IconPainter.Vertical(Theme.Lighter(mid, 0.2f), dark, 8, H - 6));
             p.RoundRect(34, H * 0.55f, W - 34, H - 14, 10, new Color(1, 1, 1, 0.18f));
             return ToSprite(p, "Ribbon", new Vector4(60, 30, 60, 30));
+        });
+
+        /// <summary>Soft sun rays (behind the logo).</summary>
+        public static Sprite Rays() => Cached("rays", () =>
+        {
+            const int S = 256;
+            var p = new IconPainter(S, S);
+            for (int i = 0; i < 14; i++)
+            {
+                float a0 = i * Mathf.PI * 2 / 14, a1 = a0 + Mathf.PI / 22;
+                p.Polygon(new Color(1, 1, 1, 0.28f), new float[] { S / 2, S / 2, S / 2 + Mathf.Cos(a0) * S, S / 2 + Mathf.Sin(a0) * S, S / 2 + Mathf.Cos(a1) * S, S / 2 + Mathf.Sin(a1) * S });
+            }
+            p.SoftRect(S * 0.3f, S * 0.3f, S * 0.7f, S * 0.7f, S * 0.2f, S * 0.12f, new Color(1, 1, 1, 0.55f));
+            return ToSprite(p, "Rays");
+        });
+
+        /// <summary>Soft round blob (glow, clouds).</summary>
+        public static Sprite Glow() => Cached("glow", () =>
+        {
+            const int S = 128;
+            var p = new IconPainter(S, S);
+            p.SoftRect(28, 28, 100, 100, 36, 24, Color.white);
+            return ToSprite(p, "Glow");
         });
 
         // ------------------------------------------------------------------ icons
@@ -254,6 +277,29 @@ namespace VoxelBloom
                     break;
                 case Icon.Sparkle:
                     p.Polygon(W, new float[] { 64, 124, 74, 74, 124, 64, 74, 54, 64, 4, 54, 54, 4, 64, 54, 74 });
+                    break;
+                case Icon.Leaf:
+                {
+                    var leaf = new System.Collections.Generic.List<float>();
+                    for (int i = 0; i <= 20; i++) { float t = i / 20f; leaf.Add(14 + t * 100); leaf.Add(64 + Mathf.Sin(t * Mathf.PI) * 34); }
+                    for (int i = 20; i >= 0; i--) { float t = i / 20f; leaf.Add(14 + t * 100); leaf.Add(64 - Mathf.Sin(t * Mathf.PI) * 26); }
+                    OutlinedPoly(p, Theme.Hex("#5CCB52"), leaf.ToArray(), 5);
+                    p.Line(18, 64, 104, 66, 5, Theme.Hex("#3E9E3E"));
+                    break;
+                }
+                case Icon.Flower:
+                    for (int i = 0; i < 5; i++) { float a = i * Mathf.PI * 2 / 5 + 0.3f; OutlinedCircle(p, 64 + Mathf.Cos(a) * 30, 64 + Mathf.Sin(a) * 30, 24, Theme.Hex("#FF7EC2"), 4); }
+                    OutlinedCircle(p, 64, 64, 18, Theme.Gold, 4);
+                    break;
+                case Icon.CubePink:
+                    OutlinedPoly(p, Theme.Hex("#FF6FB5"), new float[] { 64, 118, 112, 92, 112, 36, 64, 10, 16, 36, 16, 92 });
+                    p.Polygon(Theme.Hex("#FFB0D8"), new float[] { 64, 118, 112, 92, 64, 66, 16, 92 });
+                    p.Polygon(Theme.Hex("#E0489A"), new float[] { 64, 66, 112, 92, 112, 36, 64, 10 });
+                    break;
+                case Icon.CubeBlue:
+                    OutlinedPoly(p, Theme.Hex("#59B8FF"), new float[] { 64, 118, 112, 92, 112, 36, 64, 10, 16, 36, 16, 92 });
+                    p.Polygon(Theme.Hex("#A9DCFF"), new float[] { 64, 118, 112, 92, 64, 66, 16, 92 });
+                    p.Polygon(Theme.Hex("#2F8FE0"), new float[] { 64, 66, 112, 92, 112, 36, 64, 10 });
                     break;
                 case Icon.Eye:
                     OutlinedPoly(p, W, new float[] { 8, 64, 36, 92, 64, 100, 92, 92, 120, 64, 92, 36, 64, 28, 36, 36 });

@@ -16,6 +16,13 @@ namespace VoxelBloom
         public Color32[] Palette { get; private set; }
         sbyte[] cells;
         bool dirty;
+        // highlight overlay (targets of the next attack)
+        MeshRenderer hlRenderer;
+        Mesh hlMesh;
+        Material hlMaterial;
+        Color hlColor;
+        float hlTime;
+        static readonly int HighlightId = Shader.PropertyToID("_Highlight");
 
         void Awake()
         {
@@ -38,6 +45,14 @@ namespace VoxelBloom
 
         public void SetModel(VoxelGrid grid, float voxelSize)
             => SetModel(grid.CopyCells(), grid.X, grid.Y, grid.Z, VoxelMeshBuilder.ToColors(grid.Palette), voxelSize);
+
+        /// <summary>Replaces all cells (same dimensions) and rebuilds; used for blinking.</summary>
+        public void SetCells(sbyte[] newCells)
+        {
+            if (newCells == null || cells == null || newCells.Length != cells.Length) return;
+            System.Array.Copy(newCells, cells, cells.Length);
+            dirty = true;
+        }
 
         public void RemoveVoxel(int index)
         {
@@ -110,9 +125,52 @@ namespace VoxelBloom
             return -1;
         }
 
+        /// <summary>Shows the given voxels pulsing in <paramref name="color"/> on top of the model.</summary>
+        public void SetHighlight(System.Collections.Generic.IList<int> voxels, Color color)
+        {
+            if (cells == null) return;
+            if (voxels == null || voxels.Count == 0) { ClearHighlight(); return; }
+            if (hlRenderer == null)
+            {
+                var go = new GameObject("Highlight", typeof(MeshFilter), typeof(MeshRenderer));
+                go.transform.SetParent(transform, false);
+                hlMesh = new Mesh { name = "VoxelHighlight" };
+                hlMesh.MarkDynamic();
+                go.GetComponent<MeshFilter>().sharedMesh = hlMesh;
+                hlRenderer = go.GetComponent<MeshRenderer>();
+                hlMaterial = new Material(VoxelMaterials.Voxel) { name = "VoxelHighlight (runtime)" };
+                hlMaterial.SetFloat("_OffsetFactor", -1f);
+                hlMaterial.SetFloat("_OffsetUnits", -2f);
+                hlRenderer.sharedMaterial = hlMaterial;
+                hlRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            var mask = new sbyte[cells.Length];
+            for (int i = 0; i < mask.Length; i++) mask[i] = -1;
+            foreach (int v in voxels) if (v >= 0 && v < cells.Length && cells[v] >= 0) mask[v] = cells[v];
+            new VoxelMeshBuilder { AmbientOcclusion = false }.Build(hlMesh, mask, X, Y, Z, Palette, VoxelSize);
+            hlColor = color;
+            hlTime = 0f;
+            hlRenderer.enabled = true;
+        }
+
+        public void ClearHighlight()
+        {
+            if (hlRenderer != null) hlRenderer.enabled = false;
+        }
+
+        void Update()
+        {
+            if (hlRenderer == null || !hlRenderer.enabled) return;
+            hlTime += Time.unscaledDeltaTime;
+            float a = 0.35f + 0.3f * Mathf.Sin(hlTime * 14f);
+            hlMaterial.SetColor(HighlightId, new Color(hlColor.r, hlColor.g, hlColor.b, a));
+        }
+
         void OnDestroy()
         {
             if (mesh != null) Destroy(mesh);
+            if (hlMesh != null) Destroy(hlMesh);
+            if (hlMaterial != null) Destroy(hlMaterial);
         }
     }
 }

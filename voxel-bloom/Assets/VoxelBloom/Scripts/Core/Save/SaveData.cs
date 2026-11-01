@@ -13,7 +13,7 @@ namespace VoxelBloom.Core
     /// <summary>All persistent player state. Serialized as versioned JSON by SaveSerializer.</summary>
     public sealed class SaveData
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
         public int Coins;
@@ -35,6 +35,8 @@ namespace VoxelBloom.Core
         public bool LastReceiptDoubled;
         public long ReceiptCounter;
         public int TotalScore;
+        /// <summary>Character shown on the Home screen (v3).</summary>
+        public string HomeCharacter = CharacterCatalog.Starter;
 
         public static SaveData CreateNew(GameConfig cfg)
         {
@@ -91,6 +93,7 @@ namespace VoxelBloom.Core
                 { "lastReceiptDoubled", s.LastReceiptDoubled },
                 { "receiptCounter", (double)s.ReceiptCounter },
                 { "totalScore", (double)s.TotalScore },
+                { "homeCharacter", s.HomeCharacter ?? CharacterCatalog.Starter },
             };
             return MiniJson.Serialize(d);
         }
@@ -134,6 +137,7 @@ namespace VoxelBloom.Core
             s.LastReceiptDoubled = MiniJson.GetBool(d, "lastReceiptDoubled");
             s.ReceiptCounter = MiniJson.GetLong(d, "receiptCounter");
             s.TotalScore = MiniJson.GetInt(d, "totalScore");
+            s.HomeCharacter = MiniJson.GetString(d, "homeCharacter", CharacterCatalog.Starter);
 
             // ---- migrations
             if (version < 2)

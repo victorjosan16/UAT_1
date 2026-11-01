@@ -28,6 +28,11 @@ Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈
   Fewer targets → only those are removed and the attack is consumed. Attacks never hit other colours.
 * Attacks whose colour is not reachable yet **wait** in the queue. Queue full with nothing able to fire = fail.
 * Consecutive full-power attacks → **COMBO x2…x5** (score multiplier, effects, coins).
+* **No floating parts:** after every destruction the largest connected piece stays (it rests on the pedestal) together
+  with any piece touching the floor; every other detached piece falls (pooled Rigidbody debris) and counts as destroyed.
+  Same rule in `tools/rules.mjs` and `GameSession.Collapse`, so solver witnesses still replay exactly.
+* **See where the colour goes:** hold a block to highlight on the model exactly which voxels it would remove; when an
+  attack fires, its targets pulse and coloured cubes fly from the queue slot to them. Blocks with no reachable voxel are dimmed.
 * Fail: queue jammed, move limit reached, or no blocks left. Stars: moves ≤ 3★ / 2★ thresholds.
 * **HARD levels: every 5th level** (5, 10, …, 100). Tighter move limit, **x2.5 coins**, red HARD badge, own
   Events track. Coins buy boosters, including **Eliminare** (150): it removes a stuck attack from the queue,
@@ -38,12 +43,27 @@ keeps a playable move), Color Bomb (500, 48 voxels of one colour), Eliminare (15
 with the grant and can never go negative.
 
 ## Content
-* **34 original voxel models** (`tools/models.mjs`): chicken, fox, cat, bear, bunny, panda, penguin, sheep, wolf, deer,
-  lion, clownfish, crab, octopus, turtle, whale, dragon, unicorn, cake, ice cream, candy, donut, cupcake, watermelon,
+* **36 original voxel models**. The 10 hero animals (fox, panda, chick, bunny, lion, cat, bear, puppy, penguin, elephant) are
+  chibi characters with big eyes and idle-animation profiles (`tools/animals.mjs`, front views in `Docs/AnimalsFront.png`); the rest
+  (`tools/models.mjs`): sheep, wolf, deer, clownfish, crab, octopus, turtle, whale, dragon, unicorn, cake, ice cream, candy, donut, cupcake, watermelon,
   burger, car, bus, fire truck, rocket, robot, house, lighthouse, windmill, castle. See `Docs/ModelSheet.png`.
 * **100 levels in 5 chapters** (Happy Animals, Sweet World, City Blocks, Ocean Wonders, Dream Collection).
   They use colour variants (e.g. Polar Bear, Orca, Fire Dragon) and **hidden cores** (interior recoloured).
   Each level is solver-validated, see `Docs/Solver.md` and `Docs/LevelReport.txt`.
+
+## Home screen
+Follows the premium mockup: HUD (avatar with player level, lives, coins +, settings), dimensional logo with rays, leaves and
+floating cubes, a 3D diorama (floating grass island, layered voxel trees, swaying flowers, cliffs with an animated waterfall)
+with the selected character (breathing, blinking, head tilt, tail wag, hop and spin on tap, drag to rotate 360°),
+a 10-character carousel (6 per page, arrows wrap, page dots, locked characters shown as silhouettes with their unlock level),
+level badge, PLAY (always the latest unlocked level) and Collection / Rewards / Shop / Events. The Home selection is saved
+(save v3) but never changes which model a level uses.
+
+Voxels render with bevelled edges and a 2×2 "small cubes" sub-grid (`VoxelLit.shader`), so models read as built from
+small cubes without increasing the number of gameplay voxels.
+
+**Text:** UI text uses `UnityEngine.UI.Text` + the bundled Fredoka font (`VText`), not TextMeshPro: Unity Build
+Automation does not contain the imported TMP Essential Resources, and TMP text crashed the Home screen on device.
 
 ## Architecture
 ```

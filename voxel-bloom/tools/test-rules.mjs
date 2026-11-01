@@ -72,6 +72,33 @@ test('attacks for a finished colour are discarded as wasted (combo reset)', () =
   const rs = s.resolveAll();
   eq(rs.length, 2); eq(rs[0].destroyed.length, 26); eq(rs[0].colorCleared, true); eq(rs[1].wasted, true); eq(s.combo, 0); eq(s.queue.length, 0);
 });
+test('collapse: equal pieces - lowest-index piece is the main one, the other ungrounded piece falls', () => {
+  // 3x3x1: bottom row and top row joined by the centre voxel. Removing it leaves two 3-voxel pieces; the bottom one
+  // has the lowest index (main, also grounded); the top one is neither main nor grounded and falls.
+  const s = new Session({ size: [3, 3, 1], palette: ['#ff0000', '#00ff00'], voxels: '000' + '.1.' + '000', deck: [[1, 2], [0, 8]], queueSize: 5 });
+  s.tap(0); const r = s.resolveNext();
+  eq(r.destroyed.length, 1); eq(r.dropped.length, 3); eq(s.totalRemaining, 3);
+});
+test('collapse: floating piece smaller than main falls and counts as destroyed', () => {
+  // 5x3x1: bottom row 5 voxels (grounded), pillar at x=2 y=1 (c1), top: 2 voxels at y=2 x=2..3 (c0)
+  const v = '00000' + '..1..' + '..00.';
+  const s = new Session({ size: [5, 3, 1], palette: ['#ff0000', '#00ff00'], voxels: v, deck: [[1, 2], [0, 8]], queueSize: 5 });
+  s.tap(0); const r = s.resolveNext();
+  eq(r.destroyed.length, 1); eq(r.dropped.length, 2); eq(s.remaining[0], 5); eq(s.totalRemaining, 5);
+});
+test('models: every model is a single connected piece (no floating cubes)', () => {
+  const MD = path.join(ROOT, 'Assets/VoxelBloom/Data/Resources/VoxelBloom/Models');
+  for (const f of fs.readdirSync(MD).filter((x) => x.endsWith('.json'))) {
+    const m = JSON.parse(fs.readFileSync(path.join(MD, f)));
+    const s = new Session({ size: m.size, palette: m.palette, voxels: m.voxels, deck: [[0, 2]], queueSize: 5 });
+    eq(s.collapse().length, 0, f + ' has detached pieces');
+    const seen = new Uint8Array(s.N); let first = -1; for (let i = 0; i < s.N; i++) if (s.cell[i] >= 0) { first = i; break; }
+    const st = [first]; seen[first] = 1; let n = 0;
+    while (st.length) { const j = st.pop(); n++; const x = j % s.X, y = Math.floor(j / s.X) % s.Y, z = Math.floor(j / (s.X * s.Y));
+      for (const [a, b, c] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) { const xx = x + a, yy = y + b, zz = z + c; if (xx < 0 || yy < 0 || zz < 0 || xx >= s.X || yy >= s.Y || zz >= s.Z) continue; const k = s.idx(xx, yy, zz); if (s.cell[k] >= 0 && !seen[k]) { seen[k] = 1; st.push(k); } } }
+    eq(n, s.totalVoxels, f + ' is not a single connected piece');
+  }
+});
 test('all 100 levels: witness replays to a win with identical moves and score', () => {
   const files = fs.readdirSync(LV).filter((f) => f.endsWith('.json')).sort();
   eq(files.length, 100, 'level count');
