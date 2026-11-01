@@ -42,7 +42,7 @@ function multicolor(m, target, r, inner = 0) {
   for (let i = 0; i < g.v.length; i++) { const c = g.v[i]; if (c < 0) continue; if (!byColor.has(c)) byColor.set(c, []); byColor.get(c).push(i); }
   const features = [], regions = [];
   for (const [c, list] of byColor) (list.length < total * 0.03 ? features : regions).push({ c, list });
-  const want = Math.max(3, target - features.length - inner);
+  const want = Math.max(4, target - features.length - inner); // surface keeps >= 4 colours (recognisable)
   const pos = (i) => [i % g.X, Math.floor(i / g.X) % g.Y, Math.floor(i / (g.X * g.Y))];
   while (regions.length < want) {
     regions.sort((a, b) => b.list.length - a.list.length);
@@ -69,10 +69,20 @@ function multicolor(m, target, r, inner = 0) {
     for (let h = 0; h < q.length; h++) { const i = q[h], [x, y, z] = pos(i); for (const [a, b, c] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) { if (!g.in(x + a, y + b, z + c)) continue; const j = g.i(x + a, y + b, z + c); if (g.v[j] >= 0 && depth[j] < 0) { depth[j] = depth[i] + 1; q.push(j); } } }
     const free = colors.slice(regions.length);
     const isFeature = new Set(features.flatMap((f) => f.list));
-    for (let layer = 0; layer < inner && layer < free.length; layer++) {
-      const ci = palette.length; palette.push(free[layer]);
-      const minD = 2 + layer * 2;
-      for (let i = 0; i < v.length; i++) if (depth[i] >= minD && !isFeature.has(i)) v[i] = ci;
+    // several hidden colours: the interior (depth >= 2) is split by depth band AND by side (left/right, front/back),
+    // so digging in different places reveals different colours
+    const K = Math.min(inner, free.length);
+    if (K > 0) {
+      const base = palette.length;
+      for (let k = 0; k < K; k++) palette.push(free[k]);
+      const cx = (g.X - 1) / 2, cz = (g.Z - 1) / 2;
+      for (let i = 0; i < v.length; i++) {
+        if (depth[i] < 2 || isFeature.has(i)) continue;
+        const [x, , z] = pos(i);
+        const band = Math.min(2, (depth[i] - 2) >> 1);           // 2-3, 4-5, 6+
+        const side = (x < cx ? 0 : 1) + (z < cz ? 0 : 2);       // 4 quadrants
+        v[i] = base + ((band * 4 + side) % K);
+      }
     }
   }
   for (const f of features) { let hex = m.palette[f.c]; let ci = palette.indexOf(hex); if (ci < 0) { ci = palette.length; palette.push(hex); } for (const i of f.list) v[i] = ci; }
@@ -161,13 +171,13 @@ for (const ch of CHAPTERS) {
     const d = (n - 1) / T;
     const hard = n % 5 === 0;
     const target = Math.max(0.12, (n <= 2 ? 0.95 : 0.9 - 0.5 * d) - (hard ? 0.3 : 0));
-    const nColors = 6 + Math.min(4, Math.floor(d * 5));
+    const nColors = 8 + Math.min(3, Math.floor(d * 4)); // 8-11 colours in total (surface + hidden)
     let best = null;
     for (let attempt = 0; attempt < 40 && !(best && attempt >= 20); attempt++) {
       const relax = Math.floor(attempt / 10); // after 10 failed attempts: fewer inner layers, weaker bias
       const seed = 2000 + n * 7919 + attempt * 104729;
       const r = rng(seed);
-      const innerLayers = n <= 3 ? 0 : Math.max(0, Math.min(3, 1 + Math.floor(d * 2.5) + (hard ? 1 : 0)) - relax);
+      const innerLayers = n <= 3 ? 0 : Math.max(0, Math.min(5, 2 + Math.floor(d * 3) + (hard ? 1 : 0)) - relax); // 2-5 hidden colours
       const mc = multicolor(models[id], nColors, r, innerLayers);
       const core = n >= 26 && n % 3 === 0 ? hiddenCore(mc, 0.3 + 0.3 * d, r) : 0;
       const counts = new Array(mc.palette.length).fill(0); for (const c of mc.v) if (c >= 0) counts[c]++;

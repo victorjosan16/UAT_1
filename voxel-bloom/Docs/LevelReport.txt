@@ -1,120 +1,120 @@
-  1 ch1 Dream Castle       vox=3026 colors= 6 blocks= 24 witness= 20      casual=1 reward=40
-  2 ch1 Cozy House         vox=2362 colors= 6 blocks= 20 witness= 14      casual=1 reward=41
-  3 ch1 Red Car            vox=1096 colors= 6 blocks= 11 witness=  8      casual=1 reward=41
-  4 ch1 Strawberry Cake    vox=1446 colors= 6 blocks= 15 witness= 13      casual=0.92 reward=42
-  5 ch1 Rocket             vox= 813 colors= 8 blocks= 12 witness= 11 HARD casual=1 reward=107
-  6 ch1 Windmill           vox=1083 colors= 8 blocks= 13 witness=  9      casual=1 reward=43
-  7 ch1 Steam Train        vox=1649 colors= 9 blocks= 18 witness= 14      casual=1 reward=44
-  8 ch1 Robo Buddy         vox=1058 colors= 6 blocks= 12 witness= 11      casual=1 reward=45
-  9 ch1 Excavator          vox=1467 colors= 8 blocks= 14 witness= 12      casual=1 reward=45
- 10 ch1 Cruise Ship        vox=1340 colors= 7 blocks= 17 witness= 11 HARD casual=0.92 reward=115
- 11 ch1 Jet Plane          vox= 593 colors= 8 blocks= 10 witness= 10      casual=1 reward=47
- 12 ch1 Hot-Air Balloon    vox=1742 colors= 9 blocks= 20 witness= 20      casual=0.83 reward=47
- 13 ch1 Ferris Wheel       vox= 926 colors= 9 blocks= 11 witness=  9      casual=1 reward=48
- 14 ch1 Stadium            vox=1470 colors= 9 blocks= 16 witness= 15      casual=1 reward=49
- 15 ch1 Lighthouse         vox=1213 colors= 7 blocks= 16 witness= 13 HARD casual=0.96 reward=124
- 16 ch1 Dragon             vox=1563 colors= 8 blocks= 20 witness= 16      casual=0.92 reward=50
- 17 ch1 Elephant           vox=1475 colors= 7 blocks= 21 witness= 16      casual=0.88 reward=51
- 18 ch1 Bear               vox=1432 colors= 7 blocks= 20 witness= 15      casual=0.92 reward=51
- 19 ch1 Dolphin            vox= 577 colors= 6 blocks=  8 witness=  7      casual=1 reward=52
- 20 ch1 Rainbow Pyramid    vox=1777 colors=11 blocks= 28 witness= 23 HARD casual=0.58 reward=132
- 21 ch2 Fox                vox=1575 colors= 7 blocks= 22 witness= 15      casual=0.83 reward=53
- 22 ch2 Panda              vox=1448 colors= 7 blocks= 18 witness= 14      casual=0.92 reward=54
- 23 ch2 Chick              vox=1328 colors= 8 blocks= 17 witness= 13      casual=0.92 reward=55
- 24 ch2 Bunny              vox=1579 colors= 8 blocks= 26 witness= 17      casual=0.92 reward=55
- 25 ch2 Lion               vox=2451 colors= 8 blocks= 26 witness= 24 HARD casual=0.42 reward=140
- 26 ch2 Cat                vox=1491 colors= 7 blocks= 25 witness= 16      casual=0.83 reward=57
- 27 ch2 Puppy              vox=1617 colors= 8 blocks= 22 witness= 14      casual=0.83 reward=57
- 28 ch2 Penguin            vox=1873 colors= 7 blocks= 22 witness= 16      casual=0.83 reward=58
- 29 ch2 Fawn               vox=1510 colors= 7 blocks= 19 witness= 17      casual=0.83 reward=59
- 30 ch2 Unicorn            vox=1820 colors= 8 blocks= 27 witness= 23 HARD casual=0.46 reward=149
- 31 ch2 Raccoon            vox=1516 colors= 8 blocks= 21 witness= 19      casual=0.83 reward=60
- 32 ch2 Squirrel           vox=1700 colors= 7 blocks= 25 witness= 22      casual=0.83 reward=61
- 33 ch2 Cow                vox=1460 colors= 7 blocks= 17 witness= 12      casual=0.71 reward=62
- 34 ch2 Piglet             vox=1483 colors= 7 blocks= 24 witness= 21      casual=0.79 reward=62
- 35 ch2 Sheep              vox=1438 colors= 7 blocks= 27 witness= 19 HARD casual=0.67 reward=157
- 36 ch2 Tiger              vox=1448 colors= 7 blocks= 20 witness= 17      casual=0.71 reward=64
- 37 ch2 Koala              vox=1435 colors= 9 blocks= 28 witness= 23      casual=0.79 reward=64
- 38 ch2 Dino               vox=1324 colors= 8 blocks= 24 witness= 21      casual=0.83 reward=65
- 39 ch2 Giraffe            vox=1600 colors= 9 blocks= 23 witness= 15      casual=0.71 reward=66
- 40 ch2 Zebra              vox=1598 colors= 7 blocks= 30 witness= 23 HARD casual=0.63 reward=166
- 41 ch3 Hippo              vox=1430 colors= 7 blocks= 26 witness= 17      casual=0.71 reward=67
- 42 ch3 Rhino              vox=1426 colors= 8 blocks= 22 witness= 20      casual=0.79 reward=68
- 43 ch3 Crocodile          vox=1330 colors= 8 blocks= 27 witness= 24      casual=0.79 reward=68
- 44 ch3 Wolf               vox=1575 colors= 7 blocks= 26 witness= 20      casual=0.79 reward=69
- 45 ch3 Monkey             vox=1443 colors= 9 blocks= 26 witness= 18 HARD casual=0.42 reward=174
- 46 ch3 Gorilla            vox=1408 colors= 7 blocks= 29 witness= 23      casual=0.67 reward=70
- 47 ch3 Capybara           vox=1442 colors= 9 blocks= 27 witness= 18      casual=0.75 reward=71
- 48 ch3 Sloth              vox=1404 colors= 7 blocks= 18 witness= 14      casual=0.88 reward=72
- 49 ch3 Beaver             vox=1443 colors= 9 blocks= 27 witness= 19      casual=0.67 reward=72
- 50 ch3 Hedgehog           vox=1511 colors= 9 blocks= 32 witness= 27 HARD casual=0.38 reward=182
- 51 ch3 Otter              vox=1439 colors= 7 blocks= 25 witness= 15      casual=0.75 reward=74
- 52 ch3 Walrus             vox=1446 colors= 9 blocks= 28 witness= 20      casual=0.75 reward=74
- 53 ch3 Seal               vox=1439 colors= 8 blocks= 26 witness= 18      casual=0.67 reward=75
- 54 ch3 Emperor Penguin    vox=1304 colors= 7 blocks= 20 witness= 17      casual=0.63 reward=76
- 55 ch3 Owl                vox=1328 colors=11 blocks= 27 witness= 19 HARD casual=0.42 reward=191
- 56 ch3 Eagle              vox=1364 colors= 8 blocks= 24 witness= 21      casual=0.71 reward=77
- 57 ch3 Parrot             vox=1400 colors= 9 blocks= 20 witness= 16      casual=0.58 reward=78
- 58 ch3 Flamingo           vox=1268 colors= 8 blocks= 22 witness= 15      casual=0.71 reward=78
- 59 ch3 Swan               vox=1326 colors= 7 blocks= 26 witness= 16      casual=0.58 reward=79
- 60 ch3 Duckling           vox=1310 colors= 7 blocks= 19 witness= 17 HARD casual=0.33 reward=199
- 61 ch4 Goose              vox=1326 colors= 6 blocks= 20 witness= 17      casual=0.58 reward=80
- 62 ch4 Raven              vox=1304 colors= 8 blocks= 23 witness= 17      casual=0.71 reward=81
- 63 ch4 Crow               vox=1304 colors= 8 blocks= 24 witness= 20      casual=0.54 reward=82
- 64 ch4 Cuckoo             vox=1400 colors= 8 blocks= 26 witness= 23      casual=0.71 reward=82
- 65 ch4 Goldfinch          vox=1324 colors= 9 blocks= 24 witness= 18 HARD casual=0.33 reward=208
- 66 ch4 Sparrow            vox=1304 colors= 9 blocks= 22 witness= 18      casual=0.63 reward=84
- 67 ch4 Dove               vox=1304 colors= 7 blocks= 28 witness= 22      casual=0.63 reward=84
- 68 ch4 Clownfish          vox= 511 colors= 7 blocks=  7 witness=  7      casual=1 reward=85
- 69 ch4 Blue Tang          vox= 511 colors= 7 blocks= 13 witness= 12      casual=0.92 reward=86
- 70 ch4 Shark              vox= 578 colors= 6 blocks= 12 witness= 11 HARD casual=1 reward=216
- 71 ch4 Whale              vox= 663 colors= 7 blocks= 13 witness= 11      casual=1 reward=87
- 72 ch4 Jellyfish          vox=1216 colors= 8 blocks= 32 witness= 29      casual=0.92 reward=88
- 73 ch4 Octopus            vox=1012 colors= 9 blocks= 29 witness= 24      casual=0.58 reward=88
- 74 ch4 Crab               vox= 680 colors= 8 blocks= 19 witness= 17      casual=0.96 reward=89
- 75 ch4 Seahorse           vox= 628 colors= 7 blocks= 14 witness= 12 HARD casual=0.96 reward=224
- 76 ch4 Sea Turtle         vox=1868 colors= 9 blocks= 30 witness= 25      casual=0.21 reward=90
- 77 ch4 Turtle             vox=1868 colors= 9 blocks= 30 witness= 25      casual=0.33 reward=91
- 78 ch4 Frog               vox=1122 colors= 9 blocks= 26 witness= 23      casual=0.42 reward=92
- 79 ch4 Tree Frog          vox=1122 colors= 8 blocks= 21 witness= 18      casual=0.63 reward=92
- 80 ch4 Salamander         vox=1308 colors= 8 blocks= 27 witness= 25 HARD casual=0.33 reward=233
- 81 ch5 Snake              vox=1146 colors= 8 blocks= 28 witness= 23      casual=0.58 reward=94
- 82 ch5 Chameleon          vox=1310 colors= 9 blocks= 28 witness= 23      casual=0.63 reward=94
- 83 ch5 Lizard             vox=1308 colors=10 blocks= 29 witness= 24      casual=0.54 reward=95
- 84 ch5 Iguana             vox=1339 colors= 8 blocks= 27 witness= 23      casual=0.46 reward=96
- 85 ch5 Gecko              vox=1308 colors=10 blocks= 32 witness= 28 HARD casual=0.25 reward=241
- 86 ch5 Manticore          vox=1640 colors=11 blocks= 35 witness= 25      casual=0.58 reward=97
- 87 ch5 Bat                vox=1608 colors= 8 blocks= 30 witness= 22      casual=0.46 reward=98
- 88 ch5 Desert Hedgehog    vox=1562 colors= 8 blocks= 34 witness= 26      casual=0.46 reward=98
- 89 ch5 Scorpion           vox= 852 colors= 9 blocks= 28 witness= 22      casual=0.67 reward=99
- 90 ch5 Spider             vox= 820 colors= 8 blocks= 25 witness= 18 HARD casual=0.29 reward=250
- 91 ch5 Ant                vox=1002 colors= 9 blocks= 26 witness= 20      casual=0.58 reward=101
- 92 ch5 Bee                vox= 890 colors= 9 blocks= 25 witness= 18      casual=0.79 reward=101
- 93 ch5 Butterfly          vox= 888 colors= 7 blocks= 23 witness= 19      casual=0.58 reward=102
- 94 ch5 Ladybug            vox=1278 colors= 9 blocks= 27 witness= 17      casual=0.54 reward=103
- 95 ch5 Dragonfly          vox=1112 colors= 8 blocks= 34 witness= 24 HARD casual=0.21 reward=258
- 96 ch5 Snail              vox=2156 colors= 8 blocks= 62 witness= 54      casual=0.5 reward=104
- 97 ch5 Red Panda          vox=1516 colors= 9 blocks= 31 witness= 21      casual=0.5 reward=105
- 98 ch5 Ferret             vox=1439 colors= 9 blocks= 33 witness= 29      casual=0.46 reward=105
- 99 ch5 Pike               vox= 469 colors= 8 blocks= 15 witness= 14      casual=0.96 reward=106
-100 ch5 Lynx               vox=1492 colors= 9 blocks= 36 witness= 28 HARD casual=0.21 reward=266
-101 ch6 Wildcat            vox=1516 colors= 9 blocks= 38 witness= 29      casual=0.46 reward=107
-102 ch6 Cheetah            vox=1448 colors= 8 blocks= 48 witness= 38      casual=0.38 reward=108
-103 ch6 Jaguar             vox=1448 colors= 9 blocks= 32 witness= 24      casual=0.42 reward=109
-104 ch6 Leopard            vox=1423 colors= 9 blocks= 31 witness= 22      casual=0.5 reward=109
-105 ch6 Wild Ox            vox=1494 colors= 8 blocks= 47 witness= 37 HARD casual=0.42 reward=275
-106 ch6 Moose              vox=1466 colors= 9 blocks= 33 witness= 27      casual=0.5 reward=111
-107 ch6 Mammoth            vox=1450 colors= 9 blocks= 35 witness= 25      casual=0.33 reward=111
-108 ch6 Stag               vox=1506 colors= 8 blocks= 53 witness= 40      casual=0.33 reward=112
-109 ch6 Arctic Wolf        vox=1575 colors= 9 blocks= 37 witness= 31      casual=0.38 reward=113
-110 ch6 Polar Bear         vox=1432 colors= 9 blocks= 35 witness= 30 HARD casual=0.21 reward=283
-111 ch6 Baby Penguin       vox=1318 colors= 9 blocks= 49 witness= 42      casual=0.71 reward=114
-112 ch6 Reindeer           vox=1506 colors=10 blocks= 38 witness= 24      casual=0.33 reward=115
-113 ch6 Alpaca             vox=1791 colors= 9 blocks= 43 witness= 35      casual=0.5 reward=115
-114 ch6 Camel              vox=1562 colors= 9 blocks= 44 witness= 38      casual=0.38 reward=116
-115 ch6 Llama              vox=1710 colors= 9 blocks= 43 witness= 32 HARD casual=0.17 reward=292
-116 ch6 Bison              vox=1448 colors=10 blocks= 37 witness= 29      casual=0.33 reward=117
-117 ch6 Donut              vox= 896 colors= 9 blocks= 29 witness= 22      casual=0.46 reward=118
-118 ch6 Cupcake            vox=1087 colors= 9 blocks= 31 witness= 22      casual=0.29 reward=119
-119 ch6 School Bus         vox=2211 colors=10 blocks= 88 witness= 79      casual=0.63 target=0.40 reward=119
-120 ch6 Fire Truck         vox=1786 colors= 9 blocks= 70 witness= 64 HARD casual=0.46 target=0.12 reward=300
+  1 ch1 Castel Regal       vox=3026 colors= 7 blocks= 24 witness= 19      casual=1 target=0.95 reward=40
+  2 ch1 Casă Modernă       vox=2362 colors= 7 blocks= 21 witness= 16      casual=1 target=0.95 reward=41
+  3 ch1 Mașină Sport       vox=1096 colors= 8 blocks= 12 witness=  9      casual=1 target=0.89 reward=41
+  4 ch1 Tort Festiv        vox=1446 colors= 9 blocks= 17 witness= 14      casual=0.92 target=0.89 reward=42
+  5 ch1 Rachetă Spațială   vox= 813 colors=10 blocks= 13 witness= 11 HARD casual=1 target=0.58 reward=107
+  6 ch1 Moară              vox=1083 colors= 9 blocks= 13 witness= 11      casual=1 target=0.88 reward=43
+  7 ch1 Tren               vox=1649 colors= 9 blocks= 18 witness= 17      casual=1 target=0.87 reward=44
+  8 ch1 Robot              vox=1058 colors= 8 blocks= 12 witness=  9      casual=1 target=0.87 reward=45
+  9 ch1 Excavator          vox=1467 colors= 9 blocks= 15 witness= 12      casual=1 target=0.87 reward=45
+ 10 ch1 Vapor              vox=1340 colors= 8 blocks= 18 witness= 14 HARD casual=0.88 target=0.56 reward=115
+ 11 ch1 Avion              vox= 593 colors= 9 blocks= 11 witness=  9      casual=1 target=0.86 reward=47
+ 12 ch1 Balon              vox=1742 colors=10 blocks= 20 witness= 20      casual=0.88 target=0.85 reward=47
+ 13 ch1 Roată Mare         vox= 926 colors= 9 blocks= 11 witness=  9      casual=1 target=0.85 reward=48
+ 14 ch1 Stadion            vox=1470 colors=10 blocks= 17 witness= 16      casual=1 target=0.85 reward=49
+ 15 ch1 Far                vox=1213 colors= 9 blocks= 15 witness= 14 HARD casual=0.92 target=0.54 reward=124
+ 16 ch1 Dragon             vox=1563 colors= 9 blocks= 23 witness= 17      casual=0.79 target=0.84 reward=50
+ 17 ch1 Elefant            vox=1475 colors= 9 blocks= 19 witness= 15      casual=0.88 target=0.83 reward=51
+ 18 ch1 Urs                vox=1432 colors= 8 blocks= 23 witness= 19      casual=0.79 target=0.83 reward=51
+ 19 ch1 Delfin             vox= 577 colors= 8 blocks=  9 witness=  9      casual=1 target=0.82 reward=52
+ 20 ch1 Piramidă           vox=1777 colors=12 blocks= 24 witness= 19 HARD casual=0.67 target=0.52 reward=132
+ 21 ch2 Vulpe              vox=1575 colors= 8 blocks= 23 witness= 14      casual=0.83 target=0.82 reward=53
+ 22 ch2 Panda              vox=1448 colors= 8 blocks= 23 witness= 16      casual=0.88 target=0.81 reward=54
+ 23 ch2 Pui                vox=1328 colors= 9 blocks= 21 witness= 14      casual=0.83 target=0.81 reward=55
+ 24 ch2 Iepuraș            vox=1579 colors= 9 blocks= 25 witness= 20      casual=0.83 target=0.80 reward=55
+ 25 ch2 Leu                vox=2451 colors=10 blocks= 26 witness= 23 HARD casual=0.46 target=0.50 reward=140
+ 26 ch2 Pisică             vox=1491 colors= 9 blocks= 20 witness= 17      casual=0.88 target=0.79 reward=57
+ 27 ch2 Cățel              vox=1617 colors=10 blocks= 19 witness= 17      casual=0.83 target=0.79 reward=57
+ 28 ch2 Pinguin            vox=1873 colors= 8 blocks= 23 witness= 17      casual=0.71 target=0.79 reward=58
+ 29 ch2 Căprioară          vox=1510 colors= 9 blocks= 19 witness= 16      casual=0.83 target=0.78 reward=59
+ 30 ch2 Unicorn            vox=1820 colors= 9 blocks= 27 witness= 24 HARD casual=0.54 target=0.48 reward=149
+ 31 ch2 Raton              vox=1516 colors= 9 blocks= 26 witness= 20      casual=0.83 target=0.77 reward=60
+ 32 ch2 Veveriță           vox=1700 colors= 9 blocks= 24 witness= 17      casual=0.75 target=0.77 reward=61
+ 33 ch2 Văcuță             vox=1460 colors= 9 blocks= 19 witness= 16      casual=0.83 target=0.77 reward=62
+ 34 ch2 Porcușor           vox=1483 colors= 9 blocks= 19 witness= 14      casual=0.83 target=0.76 reward=62
+ 35 ch2 Oaie               vox=1438 colors= 9 blocks= 26 witness= 23 HARD casual=0.75 target=0.46 reward=157
+ 36 ch2 Tigru              vox=1448 colors= 9 blocks= 19 witness= 19      casual=0.71 target=0.75 reward=64
+ 37 ch2 Koala              vox=1435 colors=10 blocks= 29 witness= 27      casual=0.75 target=0.75 reward=64
+ 38 ch2 Dinozaur           vox=1324 colors= 8 blocks= 26 witness= 24      casual=0.83 target=0.74 reward=65
+ 39 ch2 Girafă             vox=1600 colors=12 blocks= 23 witness= 17      casual=0.75 target=0.74 reward=66
+ 40 ch2 Zebră              vox=1598 colors= 9 blocks= 28 witness= 22 HARD casual=0.38 target=0.44 reward=166
+ 41 ch3 Hipopotam          vox=1430 colors= 9 blocks= 24 witness= 19      casual=0.71 target=0.73 reward=67
+ 42 ch3 Rinocer            vox=1426 colors=11 blocks= 22 witness= 17      casual=0.79 target=0.73 reward=68
+ 43 ch3 Crocodil           vox=1330 colors=10 blocks= 28 witness= 24      casual=0.79 target=0.72 reward=68
+ 44 ch3 Lup                vox=1575 colors=10 blocks= 24 witness= 18      casual=0.79 target=0.72 reward=69
+ 45 ch3 Maimuță            vox=1443 colors=12 blocks= 24 witness= 15 HARD casual=0.42 target=0.42 reward=174
+ 46 ch3 Gorilă             vox=1408 colors=10 blocks= 22 witness= 18      casual=0.75 target=0.71 reward=70
+ 47 ch3 Capibara           vox=1442 colors=12 blocks= 25 witness= 22      casual=0.71 target=0.71 reward=71
+ 48 ch3 Leneș              vox=1404 colors= 9 blocks= 19 witness= 13      casual=0.75 target=0.70 reward=72
+ 49 ch3 Castor             vox=1443 colors=11 blocks= 25 witness= 20      casual=0.75 target=0.70 reward=72
+ 50 ch3 Arici              vox=1511 colors=12 blocks= 26 witness= 19 HARD casual=0.46 target=0.39 reward=182
+ 51 ch3 Vidră              vox=1439 colors=10 blocks= 24 witness= 17      casual=0.71 target=0.69 reward=74
+ 52 ch3 Morsă              vox=1446 colors=11 blocks= 25 witness= 20      casual=0.71 target=0.69 reward=74
+ 53 ch3 Focă               vox=1439 colors= 9 blocks= 23 witness= 15      casual=0.75 target=0.68 reward=75
+ 54 ch3 Pinguin Imperial   vox=1304 colors= 9 blocks= 18 witness= 15      casual=0.88 target=0.68 reward=76
+ 55 ch3 Bufniță            vox=1328 colors=12 blocks= 28 witness= 22 HARD casual=0.42 target=0.37 reward=191
+ 56 ch3 Vultur             vox=1364 colors= 9 blocks= 20 witness= 17      casual=0.67 target=0.67 reward=77
+ 57 ch3 Papagal            vox=1400 colors=10 blocks= 33 witness= 27      casual=0.79 target=0.66 reward=78
+ 58 ch3 Flamingo           vox=1268 colors= 9 blocks= 19 witness= 14      casual=0.71 target=0.66 reward=78
+ 59 ch3 Lebădă             vox=1326 colors= 8 blocks= 22 witness= 17      casual=0.71 target=0.66 reward=79
+ 60 ch3 Rață               vox=1310 colors=10 blocks= 21 witness= 17 HARD casual=0.38 target=0.35 reward=199
+ 61 ch4 Gâscă              vox=1326 colors= 9 blocks= 23 witness= 17      casual=0.71 target=0.65 reward=80
+ 62 ch4 Corb               vox=1304 colors=10 blocks= 20 witness= 17      casual=0.71 target=0.64 reward=81
+ 63 ch4 Cioară             vox=1304 colors=10 blocks= 21 witness= 18      casual=0.75 target=0.64 reward=82
+ 64 ch4 Cuc                vox=1400 colors=10 blocks= 22 witness= 19      casual=0.71 target=0.64 reward=82
+ 65 ch4 Sticlete           vox=1324 colors=10 blocks= 29 witness= 21 HARD casual=0.38 target=0.33 reward=208
+ 66 ch4 Vrăbiuță           vox=1304 colors=11 blocks= 24 witness= 18      casual=0.58 target=0.63 reward=84
+ 67 ch4 Porumbel           vox=1304 colors= 9 blocks= 25 witness= 18      casual=0.58 target=0.62 reward=84
+ 68 ch4 Pește Clovn        vox= 511 colors=10 blocks= 10 witness=  9      casual=1 target=0.62 reward=85
+ 69 ch4 Pește Albastru     vox= 511 colors=10 blocks= 18 witness= 16      casual=0.92 target=0.61 reward=86
+ 70 ch4 Rechin             vox= 578 colors=10 blocks= 15 witness= 14 HARD casual=1 target=0.31 reward=216
+ 71 ch4 Balenă             vox= 663 colors= 9 blocks= 14 witness= 12      casual=1 target=0.61 reward=87
+ 72 ch4 Meduză             vox=1216 colors=10 blocks= 27 witness= 25      casual=0.75 target=0.60 reward=88
+ 73 ch4 Caracatiță         vox=1012 colors=10 blocks= 29 witness= 25      casual=0.5 target=0.60 reward=88
+ 74 ch4 Crab               vox= 680 colors=10 blocks= 17 witness= 15      casual=0.96 target=0.59 reward=89
+ 75 ch4 Căluț de Mare      vox= 628 colors= 9 blocks= 18 witness= 17 HARD casual=0.54 target=0.29 reward=224
+ 76 ch4 Țestoasă Marină    vox=1868 colors=11 blocks= 31 witness= 27      casual=0.29 target=0.58 reward=90
+ 77 ch4 Țestoasă           vox=1868 colors=10 blocks= 40 witness= 36      casual=0.71 target=0.58 reward=91
+ 78 ch4 Broască            vox=1122 colors=11 blocks= 23 witness= 20      casual=0.5 target=0.58 reward=92
+ 79 ch4 Brotăcel           vox=1122 colors= 9 blocks= 29 witness= 27      casual=0.54 target=0.57 reward=92
+ 80 ch4 Salamandră         vox=1308 colors= 9 blocks= 30 witness= 28 HARD casual=0.25 target=0.27 reward=233
+ 81 ch5 Șarpe              vox=1146 colors=10 blocks= 24 witness= 15      casual=0.5 target=0.56 reward=94
+ 82 ch5 Cameleon           vox=1310 colors=11 blocks= 27 witness= 24      casual=0.58 target=0.56 reward=94
+ 83 ch5 Șopârlă            vox=1308 colors=13 blocks= 30 witness= 26      casual=0.58 target=0.56 reward=95
+ 84 ch5 Iguana             vox=1339 colors=10 blocks= 33 witness= 27      casual=0.75 target=0.55 reward=96
+ 85 ch5 Gecko              vox=1308 colors=13 blocks= 27 witness= 23 HARD casual=0.29 target=0.25 reward=241
+ 86 ch5 Manticoră          vox=1640 colors=13 blocks= 40 witness= 26      casual=0.71 target=0.54 reward=97
+ 87 ch5 Liliac             vox=1608 colors=10 blocks= 41 witness= 32      casual=0.58 target=0.54 reward=98
+ 88 ch5 Arici de Deșert    vox=1562 colors=10 blocks= 29 witness= 21      casual=0.5 target=0.53 reward=98
+ 89 ch5 Scorpion           vox= 852 colors=12 blocks= 24 witness= 18      casual=0.58 target=0.53 reward=99
+ 90 ch5 Păianjen           vox= 820 colors=11 blocks= 20 witness= 13 HARD casual=0.29 target=0.23 reward=250
+ 91 ch5 Furnică            vox=1002 colors=11 blocks= 26 witness= 23      casual=0.46 target=0.52 reward=101
+ 92 ch5 Albină             vox= 890 colors=11 blocks= 29 witness= 22      casual=0.79 target=0.52 reward=101
+ 93 ch5 Fluture            vox= 888 colors= 9 blocks= 25 witness= 20      casual=0.46 target=0.51 reward=102
+ 94 ch5 Buburuză           vox=1278 colors=11 blocks= 35 witness= 30      casual=0.5 target=0.51 reward=103
+ 95 ch5 Libelulă           vox=1112 colors=12 blocks= 30 witness= 24 HARD casual=0.25 target=0.21 reward=258
+ 96 ch5 Melc               vox=2156 colors=11 blocks= 69 witness= 62      casual=0.5 target=0.50 reward=104
+ 97 ch5 Panda Roșu         vox=1516 colors=11 blocks= 34 witness= 25      casual=0.33 target=0.50 reward=105
+ 98 ch5 Dihor              vox=1439 colors=11 blocks= 36 witness= 30      casual=0.46 target=0.49 reward=105
+ 99 ch5 Știucă             vox= 469 colors=10 blocks= 14 witness= 13      casual=0.92 target=0.49 reward=106
+100 ch5 Râs                vox=1492 colors=13 blocks= 36 witness= 28 HARD casual=0.13 target=0.18 reward=266
+101 ch6 Pisică Sălbatică   vox=1516 colors=11 blocks= 39 witness= 35      casual=0.25 target=0.48 reward=107
+102 ch6 Ghepard            vox=1448 colors=10 blocks= 49 witness= 42      casual=0.58 target=0.48 reward=108
+103 ch6 Jaguar             vox=1448 colors=11 blocks= 33 witness= 24      casual=0.33 target=0.47 reward=109
+104 ch6 Leopard            vox=1423 colors=11 blocks= 44 witness= 33      casual=0.38 target=0.47 reward=109
+105 ch6 Zimbru             vox=1494 colors=12 blocks= 45 witness= 40 HARD casual=0.5 target=0.16 reward=275
+106 ch6 Elan               vox=1466 colors=11 blocks= 46 witness= 36      casual=0.54 target=0.46 reward=111
+107 ch6 Mamut              vox=1450 colors=12 blocks= 40 witness= 30      casual=0.38 target=0.45 reward=111
+108 ch6 Cerb               vox=1506 colors=10 blocks= 54 witness= 40      casual=0.63 target=0.45 reward=112
+109 ch6 Lup Polar          vox=1575 colors=11 blocks= 54 witness= 43      casual=0.46 target=0.45 reward=113
+110 ch6 Urs Polar          vox=1432 colors=12 blocks= 37 witness= 33 HARD casual=0.21 target=0.14 reward=283
+111 ch6 Pinguin Mic        vox=1318 colors=11 blocks= 43 witness= 38      casual=0.92 target=0.44 reward=114
+112 ch6 Ren                vox=1506 colors=13 blocks= 41 witness= 35      casual=0.5 target=0.43 reward=115
+113 ch6 Alpaca             vox=1791 colors=11 blocks= 47 witness= 37      casual=0.08 target=0.43 reward=115
+114 ch6 Cămilă             vox=1562 colors=11 blocks= 60 witness= 47      casual=0.46 target=0.43 reward=116
+115 ch6 Lama               vox=1710 colors=11 blocks= 65 witness= 43 HARD casual=0.04 target=0.12 reward=292
+116 ch6 Bizon              vox=1448 colors=13 blocks= 41 witness= 36      casual=0.25 target=0.42 reward=117
+117 ch6 Gogoașă            vox= 896 colors=11 blocks= 31 witness= 20      casual=0.33 target=0.41 reward=118
+118 ch6 Brioșă             vox=1087 colors=12 blocks= 30 witness= 24      casual=0.29 target=0.41 reward=119
+119 ch6 Autobuz Școlar     vox=2211 colors=11 blocks= 88 witness= 74      casual=0.79 target=0.40 reward=119
+120 ch6 Mașină de Pompieri vox=1786 colors= 9 blocks= 65 witness= 60 HARD casual=0.63 target=0.12 reward=300
