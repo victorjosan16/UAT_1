@@ -223,12 +223,9 @@ namespace VoxelBloom
         }
 
         // ------------------------------------------------------------------ balls (barrel tip -> cube, one continuous flight)
-        sealed class UiBall { public RectTransform Rt; public UnityEngine.UI.Image Img; public Vector3 From; public int Voxel; public float T, Dur, Size0, Size1, SparkAcc; public Color Col; }
-        sealed class Spark { public RectTransform Rt; public UnityEngine.UI.Image Img; public float Life, Max; public Color Col; }
+        sealed class UiBall { public RectTransform Rt, Tail; public UnityEngine.UI.Image Img, TailImg; public Vector3 From, Last; public int Voxel; public float T, Dur, Size0, Size1; public Color Col; }
         readonly List<UiBall> uiBalls = new List<UiBall>();
         readonly Stack<UiBall> uiBallPool = new Stack<UiBall>();
-        readonly List<Spark> sparks = new List<Spark>();
-        readonly Stack<Spark> sparkPool = new Stack<Spark>();
 
         /// <summary>UI (canvas world) position of a voxel as seen in the 3D view.</summary>
         Vector3 VoxelToUi(int voxel)
@@ -265,13 +262,19 @@ namespace VoxelBloom
             var b = uiBallPool.Count > 0 ? uiBallPool.Pop() : null;
             if (b == null)
             {
+                // comet tail: one soft streak in the ball's colour, stretched behind it along the flight direction
+                var tail = UI.Image(view.Root, "BallTail", SpriteFactory.Glow(), Color.white, false);
+                tail.rectTransform.pivot = new Vector2(1f, 0.5f);
                 var img = UI.Image(view.Root, "Ball", SpriteFactory.Orb(), Color.white, false);
-                b = new UiBall { Img = img, Rt = img.rectTransform };
+                b = new UiBall { Img = img, Rt = img.rectTransform, TailImg = tail, Tail = tail.rectTransform };
             }
             b.Img.gameObject.SetActive(true);
+            b.TailImg.gameObject.SetActive(true);
+            b.Tail.SetAsLastSibling();
             b.Rt.SetAsLastSibling();
             b.Col = Color.Lerp(c, Color.white, 0.15f);
             b.Img.color = b.Col;
+            b.TailImg.color = new Color(b.Col.r, b.Col.g, b.Col.b, 0f);
             var barrelRt = view.LauncherBarrel[li];
             b.From = view.Root.InverseTransformPoint(barrelRt.TransformPoint(new Vector3(0, barrelRt.rect.height, 0))); // barrel tip
             b.Voxel = voxel;
@@ -280,9 +283,10 @@ namespace VoxelBloom
             var cam = view.Stage.Camera;
             float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
             float voxelPx = view.Stage.Model.VoxelSize / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
-            b.Size0 = 44f;
-            b.Size1 = Mathf.Clamp(voxelPx * 1.5f, 18f, 36f);
-            b.T = 0f; b.Dur = BallTime; b.SparkAcc = 0f;
+            b.Size0 = 30f;
+            b.Size1 = Mathf.Clamp(voxelPx * 1.3f, 12f, 24f);
+            b.T = 0f; b.Dur = BallTime;
+            b.Last = b.From;
             b.Rt.localPosition = b.From;
             b.Rt.sizeDelta = Vector2.one * b.Size0;
             uiBalls.Add(b);
@@ -291,10 +295,8 @@ namespace VoxelBloom
 
         void ClearUiBalls()
         {
-            foreach (var b in uiBalls) { b.Img.gameObject.SetActive(false); uiBallPool.Push(b); }
+            foreach (var b in uiBalls) { b.Img.gameObject.SetActive(false); b.TailImg.gameObject.SetActive(false); uiBallPool.Push(b); }
             uiBalls.Clear();
-            foreach (var sp in sparks) { sp.Img.gameObject.SetActive(false); sparkPool.Push(sp); }
-            sparks.Clear();
         }
 
         void UpdateUiBalls()
@@ -312,39 +314,22 @@ namespace VoxelBloom
                 var p = Vector3.Lerp(Vector3.Lerp(b.From, mid, e), Vector3.Lerp(mid, to, e), e);
                 b.Rt.localPosition = p;
                 b.Rt.sizeDelta = Vector2.one * Mathf.Lerp(b.Size0, b.Size1, e);
-                // glowing trail behind the ball
-                b.SparkAcc += dt * (Services.ReducedEffects ? 40f : 90f);
-                while (b.SparkAcc >= 1f) { b.SparkAcc -= 1f; EmitSpark(p, b.Col, b.Rt.sizeDelta.x * 0.6f); }
-                b.Rt.SetAsLastSibling(); // ball above its trail
-                if (k >= 1f) { b.Img.gameObject.SetActive(false); uiBalls.RemoveAt(i); uiBallPool.Push(b); }
-            }
-            for (int i = sparks.Count - 1; i >= 0; i--)
-            {
-                var sp = sparks[i];
-                sp.Life -= dt;
-                if (sp.Life <= 0f) { sp.Img.gameObject.SetActive(false); sparks.RemoveAt(i); sparkPool.Push(sp); continue; }
-                float f = sp.Life / sp.Max;
-                sp.Img.color = new Color(sp.Col.r, sp.Col.g, sp.Col.b, 0.75f * f);
-                sp.Rt.localScale = Vector3.one * (0.3f + 0.7f * f);
+                // comet tail behind the ball (length follows its speed), fades in after leaving the barrel
+                var vel = (p - b.Last) / Mathf.Max(dt, 1e-4f);
+                b.Last = p;
+                float speed = vel.magnitude;
+                if (speed > 1f)
+                {
+                    float len = Mathf.Clamp(speed * 0.06f, 0f, 90f);
+                    b.Tail.localPosition = p;
+                    b.Tail.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(vel.y, vel.x) * Mathf.Rad2Deg);
+                    b.Tail.sizeDelta = new Vector2(len + b.Rt.sizeDelta.x * 0.5f, b.Rt.sizeDelta.x * 0.8f);
+                    b.TailImg.color = new Color(b.Col.r, b.Col.g, b.Col.b, 0.45f * Mathf.Clamp01(k * 6f));
+                }
+                if (k >= 1f) { b.Img.gameObject.SetActive(false); b.TailImg.gameObject.SetActive(false); uiBalls.RemoveAt(i); uiBallPool.Push(b); }
             }
         }
 
-        void EmitSpark(Vector3 localPos, Color col, float size)
-        {
-            if (sparks.Count >= 400) return;
-            var sp = sparkPool.Count > 0 ? sparkPool.Pop() : null;
-            if (sp == null)
-            {
-                var img = UI.Image(view.Root, "Trail", SpriteFactory.Orb(), Color.white, false);
-                sp = new Spark { Img = img, Rt = img.rectTransform };
-            }
-            sp.Img.gameObject.SetActive(true);
-            sp.Rt.SetAsLastSibling();
-            sp.Rt.localPosition = localPos;
-            sp.Rt.sizeDelta = Vector2.one * size;
-            sp.Col = Color.Lerp(col, Color.white, 0.45f);
-            sp.Max = sp.Life = 0.22f;
-        }
 
         void Update()
         {

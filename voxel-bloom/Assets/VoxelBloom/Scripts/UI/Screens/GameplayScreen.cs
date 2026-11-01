@@ -63,7 +63,7 @@ namespace VoxelBloom
             var cg = Root.GetComponent<CanvasGroup>();
             if (cg == null) cg = Root.gameObject.AddComponent<CanvasGroup>();
             // inactive rows are only slightly faded (colours stay true, never grey)
-            cg.alpha = row > 0 ? 0.72f : (visibleColour ? 1f : 0.88f);
+            cg.alpha = row > 0 ? 0.88f : (visibleColour ? 1f : 0.92f); // only slightly faded: colours stay recognisable
             Root.localScale = Vector3.one * (row > 0 ? 0.96f : 1f);
         }
 
