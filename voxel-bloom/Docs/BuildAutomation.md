@@ -61,3 +61,14 @@ folosești altă versiune de Unity 6, deschide proiectul o dată cu ea; Unity re
 Scriptul de build și workflow-ul sunt scrise și au trecut verificarea de sintaxă (C# și YAML), dar **nu au fost rulate**:
 nu există Unity în mediul în care au fost create, iar secretele trebuie adăugate de tine. Prima rulare va
 confirma dacă mai e nevoie de ajustări.
+
+## Unity Build Automation (Cloud Build, cloud.unity.com)
+Alternativă la GitHub Actions, configurată din browser:
+- **Repository / branch:** `victorjosan16/UAT_1`, ramura `ccr-1b2ddcf1-u2muz2` (sau `main`, după merge)
+- **Project subfolder / Project path:** `voxel-bloom` (proiectul Unity nu e în rădăcina repo-ului)
+- **Unity version:** 6000.0.x (aceeași cu `ProjectSettings/ProjectVersion.txt`)
+- **Bundle ID:** `com.animatix.voxelbloom3d`
+- **Credentials:** „Auto-generated debug keystore” pentru test, sau keystore-ul tău de upload pentru Google Play
+- **Advanced → Pre-Export Method:** `VoxelBloom.EditorTools.BuildScript.CloudBuildPreExport` (**obligatoriu**:
+  creează scena Bootstrap, URP și TMP, care nu sunt în repo)
+- **Android → Build App Bundle:** bifat pentru Google Play, debifat pentru APK de test

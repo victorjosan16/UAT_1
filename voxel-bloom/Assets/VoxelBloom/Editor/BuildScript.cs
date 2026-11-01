@@ -38,6 +38,29 @@ namespace VoxelBloom.EditorTools
             Build(t.Equals("iOS", StringComparison.OrdinalIgnoreCase) ? BuildTarget.iOS : BuildTarget.Android, exitOnFinish: true);
         }
 
+        /// <summary>
+        /// Unity Build Automation (Cloud Build) "Pre-Export Method":
+        ///   VoxelBloom.EditorTools.BuildScript.CloudBuildPreExport
+        /// Creates what the repository does not contain (TMP essentials, URP asset, Bootstrap scene in
+        /// Build Settings) and applies orientation/IL2CPP/ARM64. Bundle ID, version and signing are left to
+        /// the Build Automation target configuration.
+        /// </summary>
+        public static void CloudBuildPreExport()
+        {
+            VoxelBloomSetup.ImportTmpEssentials();
+            VoxelBloomSetup.SetupUrp();
+            VoxelBloomSetup.SetupScene();
+            ApplyCommon();
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            if ((int)PlayerSettings.Android.minSdkVersion < 24) PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            PlayerSettings.Android.forceInternetPermission = false;
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.iOS, ScriptingImplementation.IL2CPP);
+            PlayerSettings.iOS.targetOSVersionString = "13.0";
+            AssetDatabase.SaveAssets();
+            Debug.Log("[VoxelBloom] Cloud Build pre-export setup done.");
+        }
+
         static void Build(BuildTarget target, bool exitOnFinish)
         {
             int code = 1;
