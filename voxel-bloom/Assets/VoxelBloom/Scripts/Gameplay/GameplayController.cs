@@ -17,7 +17,8 @@ namespace VoxelBloom
         const float BaseTick = 0.12f, BaseFlight = 0.5f; // Normal speed: slow enough to follow every ball to its cube
         static float SpeedFactor => SettingsData.FireSpeedFactor[Mathf.Clamp(Services.Save.Settings.FireSpeed, 0, 2)];
         static float Tick => BaseTick / SpeedFactor;
-        static float Flight => BaseFlight / Mathf.Sqrt(SpeedFactor); // balls fly a bit faster too, but stay visible
+        /// <summary>Time a ball needs from the barrel to its cube (faster fire speeds shorten it a little, it stays visible).</summary>
+        static float BallTime => (0.16f + BaseFlight) / Mathf.Sqrt(SpeedFactor);
 
         GameplayScreen view;
         LevelDefinition level;
@@ -170,7 +171,7 @@ namespace VoxelBloom
                 yield return new WaitForSeconds(Tick);
             }
             fireRoutine = null;
-            yield return new WaitForSeconds(Flight + 0.05f);
+            yield return new WaitForSeconds(BallTime + 0.05f);
             ShowTargets();
             Settle();
         }
@@ -182,11 +183,10 @@ namespace VoxelBloom
             {
                 var c = palette[level.Grid.Get(voxel)];
                 aimVoxel[li] = voxel;
-                // 1) a UI ball leaves the barrel tip towards the bottom edge of the 3D view ...
-                float rise = LaunchUiBall(li, c);
-                // 2) ... where the 3D ball takes over and flies to its cube
-                view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, BallWorldSize() / 1.5f, Flight, rise);
-                pendingPops.Add((Time.time + rise + Flight, voxel, c));
+                // one ball flies from the barrel tip all the way to its cube (drawn above the 3D view, never hidden);
+                // the cube pops exactly when the ball arrives
+                float t = LaunchBall(li, voxel, c);
+                pendingPops.Add((Time.time + t, voxel, c));
                 var g = view.LauncherGlow[li];
                 g.color = new Color(c.r / 255f, c.g / 255f, c.b / 255f, 0.35f);
             }
@@ -222,10 +222,13 @@ namespace VoxelBloom
             view.Stage.Model.SetHighlight(list, Color.white);
         }
 
-        // ------------------------------------------------------------------ UI balls (launcher -> 3D view edge)
-        sealed class UiBall { public RectTransform Rt; public UnityEngine.UI.Image Img; public Vector3 From, To; public float T, Dur; }
+        // ------------------------------------------------------------------ balls (barrel tip -> cube, one continuous flight)
+        sealed class UiBall { public RectTransform Rt; public UnityEngine.UI.Image Img; public Vector3 From; public int Voxel; public float T, Dur, Size0, Size1, SparkAcc; public Color Col; }
+        sealed class Spark { public RectTransform Rt; public UnityEngine.UI.Image Img; public float Life, Max; public Color Col; }
         readonly List<UiBall> uiBalls = new List<UiBall>();
         readonly Stack<UiBall> uiBallPool = new Stack<UiBall>();
+        readonly List<Spark> sparks = new List<Spark>();
+        readonly Stack<Spark> sparkPool = new Stack<Spark>();
 
         /// <summary>UI (canvas world) position of a voxel as seen in the 3D view.</summary>
         Vector3 VoxelToUi(int voxel)
@@ -256,67 +259,91 @@ namespace VoxelBloom
             }
         }
 
-        /// <summary>Starts a ball at the launcher orb towards the point where the 3D ball appears; returns its travel time.</summary>
-        float LaunchUiBall(int li, Color32 c)
+        /// <summary>Starts a ball at the barrel tip that flies (arc) to the cube's current screen position; returns its flight time.</summary>
+        float LaunchBall(int li, int voxel, Color32 c)
         {
-            float dur = 0.16f / Mathf.Sqrt(SpeedFactor);
-            var viewRt = (RectTransform)view.ModelInput.transform;
-            var corners = new Vector3[4];
-            viewRt.GetWorldCorners(corners); // 0 bottom-left, 3 bottom-right
-            float vx = 0.5f + (Mathf.Clamp(li, 0, 3) - 1.5f) * 0.22f;
             var b = uiBallPool.Count > 0 ? uiBallPool.Pop() : null;
             if (b == null)
             {
                 var img = UI.Image(view.Root, "Ball", SpriteFactory.Orb(), Color.white, false);
                 b = new UiBall { Img = img, Rt = img.rectTransform };
-                b.Rt.sizeDelta = new Vector2(46, 46);
             }
             b.Img.gameObject.SetActive(true);
             b.Rt.SetAsLastSibling();
-            b.Img.color = Color.Lerp(c, Color.white, 0.2f);
+            b.Col = Color.Lerp(c, Color.white, 0.15f);
+            b.Img.color = b.Col;
             var barrelRt = view.LauncherBarrel[li];
-            b.From = barrelRt.TransformPoint(new Vector3(0, barrelRt.rect.height, 0)); // barrel tip
-            // same apparent size as the 3D ball at the hand-over point (no visible jump)
-            var cam = view.Stage.Camera;
-            float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position) * 0.8f;
-            float px = BallWorldSize() / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
-            b.Rt.sizeDelta = Vector2.one * Mathf.Clamp(px, 22f, 80f);
-            b.To = Vector3.Lerp(corners[0], corners[3], vx);
-            b.T = 0f; b.Dur = dur;
-            b.Rt.position = b.From;
-            uiBalls.Add(b);
-            return dur;
-        }
-
-        /// <summary>
-        /// Rendered ball diameter (world units). At least ~3.2% of the view height so a ball stays easy to follow even when
-        /// the model (and its voxels) is small on screen; never smaller than 1.6 voxels.
-        /// </summary>
-        float BallWorldSize()
-        {
+            b.From = view.Root.InverseTransformPoint(barrelRt.TransformPoint(new Vector3(0, barrelRt.rect.height, 0))); // barrel tip
+            b.Voxel = voxel;
+            // big at the launcher, shrinking to about the size of a cube on screen when it hits (depth cue)
+            var viewRt = (RectTransform)view.ModelInput.transform;
             var cam = view.Stage.Camera;
             float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
-            float viewH = 2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-            return Mathf.Max(view.Stage.Model.VoxelSize * 1.6f, viewH * 0.032f);
+            float voxelPx = view.Stage.Model.VoxelSize / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
+            b.Size0 = 44f;
+            b.Size1 = Mathf.Clamp(voxelPx * 1.5f, 18f, 36f);
+            b.T = 0f; b.Dur = BallTime; b.SparkAcc = 0f;
+            b.Rt.localPosition = b.From;
+            b.Rt.sizeDelta = Vector2.one * b.Size0;
+            uiBalls.Add(b);
+            return b.Dur;
         }
 
         void ClearUiBalls()
         {
             foreach (var b in uiBalls) { b.Img.gameObject.SetActive(false); uiBallPool.Push(b); }
             uiBalls.Clear();
+            foreach (var sp in sparks) { sp.Img.gameObject.SetActive(false); sparkPool.Push(sp); }
+            sparks.Clear();
         }
 
         void UpdateUiBalls()
         {
+            float dt = Time.deltaTime;
             for (int i = uiBalls.Count - 1; i >= 0; i--)
             {
                 var b = uiBalls[i];
-                b.T += Time.deltaTime;
+                b.T += dt;
                 float k = Mathf.Clamp01(b.T / b.Dur);
-                b.Rt.position = Vector3.Lerp(b.From, b.To, k);
-                b.Rt.localScale = Vector3.one * Mathf.Lerp(1f, 0.8f, k);
+                // the target follows the cube while the model turns
+                var to = view.Root.InverseTransformPoint(VoxelToUi(b.Voxel));
+                var mid = (b.From + to) * 0.5f + new Vector3(0, Mathf.Max(80f, Vector3.Distance(b.From, to) * 0.18f), 0);
+                float e = k * (2f - k) * 0.35f + k * 0.65f; // starts fast out of the barrel, then steady
+                var p = Vector3.Lerp(Vector3.Lerp(b.From, mid, e), Vector3.Lerp(mid, to, e), e);
+                b.Rt.localPosition = p;
+                b.Rt.sizeDelta = Vector2.one * Mathf.Lerp(b.Size0, b.Size1, e);
+                // glowing trail behind the ball
+                b.SparkAcc += dt * (Services.ReducedEffects ? 40f : 90f);
+                while (b.SparkAcc >= 1f) { b.SparkAcc -= 1f; EmitSpark(p, b.Col, b.Rt.sizeDelta.x * 0.6f); }
+                b.Rt.SetAsLastSibling(); // ball above its trail
                 if (k >= 1f) { b.Img.gameObject.SetActive(false); uiBalls.RemoveAt(i); uiBallPool.Push(b); }
             }
+            for (int i = sparks.Count - 1; i >= 0; i--)
+            {
+                var sp = sparks[i];
+                sp.Life -= dt;
+                if (sp.Life <= 0f) { sp.Img.gameObject.SetActive(false); sparks.RemoveAt(i); sparkPool.Push(sp); continue; }
+                float f = sp.Life / sp.Max;
+                sp.Img.color = new Color(sp.Col.r, sp.Col.g, sp.Col.b, 0.75f * f);
+                sp.Rt.localScale = Vector3.one * (0.3f + 0.7f * f);
+            }
+        }
+
+        void EmitSpark(Vector3 localPos, Color col, float size)
+        {
+            if (sparks.Count >= 400) return;
+            var sp = sparkPool.Count > 0 ? sparkPool.Pop() : null;
+            if (sp == null)
+            {
+                var img = UI.Image(view.Root, "Trail", SpriteFactory.Orb(), Color.white, false);
+                sp = new Spark { Img = img, Rt = img.rectTransform };
+            }
+            sp.Img.gameObject.SetActive(true);
+            sp.Rt.SetAsLastSibling();
+            sp.Rt.localPosition = localPos;
+            sp.Rt.sizeDelta = Vector2.one * size;
+            sp.Col = Color.Lerp(col, Color.white, 0.45f);
+            sp.Max = sp.Life = 0.22f;
         }
 
         void Update()
@@ -366,14 +393,6 @@ namespace VoxelBloom
             }
         }
 
-        /// <summary>World point just below the model view, aligned with the launcher on screen.</summary>
-        Vector3 LauncherOriginWorld(int li)
-        {
-            var cam = view.Stage.Camera;
-            float x = 0.5f + (Mathf.Clamp(li, 0, 3) - 1.5f) * 0.22f;
-            float dist = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
-            return cam.ViewportToWorldPoint(new Vector3(x, 0f, dist * 0.8f)); // bottom edge of the view: continues the UI ball
-        }
 
         void Settle()
         {
