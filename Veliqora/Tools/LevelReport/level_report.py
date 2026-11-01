@@ -14,7 +14,9 @@ rows = {int(r["level"]): r for r in csv.DictReader(open(os.path.join(root, "Docs
 def mech(l):
     m = []
     if l.get("hidden"): m.append("mystery")
-    if l.get("locks"): m.append("cork×%d" % len(l["locks"]))
+    for kind in ("frozen", "locked"):
+        n = sum(1 for k in (l.get("locks") or []) if (k.get("kind") in ("Moves", "CompletedBottles")) == (kind == "frozen"))
+        if n: m.append(f"{kind}×{n}")
     if l.get("rewardBottles"): m.append("ad bottle")
     caps = l.get("capacities") or [l.get("capacity", 4)] * len(l["bottles"])
     filled = sorted(set(c for b, c in zip(l["bottles"], caps) if len(b) > 0))
@@ -43,7 +45,7 @@ out.append(f"**Levels 1–{count}: {total_pass} / {count} PASS.** Whole catalog:
 out.append("""For every level the validator executed:
 1. color distribution check;
 2. the start is not already solved, no bottle starts monochrome or complete, every color is spread over at least two bottles;
-3. the color count is inside the published range (1–10: 3–4 · 11–25: 4–5 · 26–50: 5–6 · 51–100: 6–8 · 101+: 6–8);
+3. the color count is inside the progression range (1–10: 3 · 11–20: 4–5 · 21–50: 5–6 · 51–75: 6–7 · 76–100: 6–8 · 101+: 7–8);
 4. the layout is not a duplicate of any earlier level (canonical board key);
 5. the stored solution is replayed move by move to a win (objectives checked at the win);
 6. an independent solver run from the start state;

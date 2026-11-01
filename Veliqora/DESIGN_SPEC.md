@@ -113,6 +113,23 @@ Veliqora.Core (no UnityEngine)         Veliqora.Runtime (Unity)                 
 - **UI:** stage banners and red **HARD** / violet crowned **BOSS** nodes on the map; HUD shows "Stage N" and a pulsing HARD/BOSS badge plus an intro toast;
   Home shows the stage; Level Complete shows the bonus.
 
+## 5-chart. Level evolution (user chart) and obstacles
+| Levels | Content | Bottles |
+|---|---|---|
+| 1–10 | complete start, 3 colors (min pours proven ≥ 6 / ≥ 7) | 5–6 |
+| 11–20 | more colors (4–5) | 7–8 |
+| 21–35 | mystery bottles (hidden bottom layers) | 8–9 |
+| 36–50 | frozen bottles: thaw after N pours / N completed bottles (ice + countdown) | 7–9 |
+| 51–75 | locked bottles: colored padlock opened by completing that color; chains (opens after another lock) | 9–10 |
+| 76–100 | combined mechanics (+ optional ad bonus bottle) | 9–11 |
+| 101–150 | big boards: some colors fill two bottles | 12–15 |
+| 151–250 | special glasses: bottles of different sizes / shapes with obstacles | 9–11 |
+| 251–300 | complex boards | 15–20 |
+
+Chapters: 30 levels each (90 stars), names from the chart (Quiet Forest, Crystal Lake, Colorful Canyon, Magic Cave, Temple of
+Colors, …); finishing a chapter grants a chest once. Layout: `BoardLayout` picks 1–4 balanced rows maximizing bottle size while
+reserving tag space under every bottle.
+
 ## 5a. Level set without tutorials (content version 4)
 - Every level, including level 1, is a generated, solver-verified, complete puzzle. No tutorial levels or coach marks.
 - Level 1: 3 colors × 4 layers, 3 full mixed bottles + 2 empty, exact minimum ≥ 6 pours (actual: 10). Levels 2–10: ≥ 7.

@@ -122,6 +122,20 @@ an APK/AAB, or on-device performance.
   offline preview `Docs/ArtPreview/clean_level_001.png`; not yet seen in Unity.
 - 🟡 PlayMode test `FirstLaunch_OpensLevel1_ReadyToPlay_WithoutTutorial` written, not run.
 
+## Advanced gameplay (5–20 bottles, frozen and locked bottles)
+- ✅ Obstacles: FROZEN (thaw after N pours or N completed bottles; ice + countdown) and LOCKED (colored padlock opened by completing
+  the key color, or chained after another lock). Both block pouring in/out; undo restores them; tests cover the rules.
+- ✅ Big boards: colors that fill two bottles (`DoubleColors`) give 12–20 bottles with ≤ 8 clean colors; 20-bottle boards verified.
+- ✅ Level curve follows the user's evolution chart; 300/300 validated, every obstacle cleared in the stored solution; report for all 300.
+- ✅ Chapters (30 levels / 90 stars) with a one-time chapter chest (ledger + persistent claim set).
+- ✅ Adaptive layout `Core.Layout.BoardLayout` (1–4 rows) tested for 5–20 bottles: fits, no overlaps incl. obstacle tags, balanced rows.
+- ✅ Hints scale with board size; from a dead end they say how many undos lead back to the verified path (desktop timing ≤ 1.3 s on 20 bottles).
+- ✅ Stats saved: pours, levels started, ice thawed, locks opened (plus existing ones).
+- 🟡 Unity visuals (compile only, not seen): ice slab with snowflake + countdown pop, melt animation with ice burst; chains + padlock
+  in the key color with spring-open animation; special glass shapes (slim vials 2–3, flasks 5–6); navy gradient background.
+- ⬜ Not done: "special bottle with a unique ability" from the chart, weekly challenges/events, Android performance measurement
+  (needs a device + Unity Profiler).
+
 ## Known issues / risks to check first in Unity
 1. **First open:** let Unity import, then run Setup. If the Input System prompt appears, either choice is fine.
 2. **API drift:** the compile check used Unity 2021.3/2020.3 reference assemblies. Unity 6 may report obsolete-API warnings (handled via `#if UNITY_2021_2_OR_NEWER` for known ones).

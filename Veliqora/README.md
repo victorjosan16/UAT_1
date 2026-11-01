@@ -3,7 +3,7 @@
 Original water-sort puzzle for Android, built in **Unity 6 (LTS)** with C#.
 The working title for the store is *Veliqora: Color Sort Puzzle*. This repo makes no claim about trademark status or Play Store availability.
 
-> **Status (honest summary):** the pure C# game core, 300 verified levels and 138 automated tests are
+> **Status (honest summary):** the pure C# game core, 300 verified levels and 155 automated tests are
 > implemented and **were executed** in this environment (.NET 8). The Unity layer (scenes, UI, rendering,
 > audio, ads, editor tooling, PlayMode tests) is implemented and **compiles** against Unity reference
 > assemblies. It has **not been run inside the Unity Editor or on a device yet**, because no Unity Editor or license was
@@ -12,9 +12,13 @@ The working title for the store is *Veliqora: Color Sort Puzzle*. This repo make
 ## Levels: complete puzzles from level 1
 - No tutorial levels, no demonstrations, no pointing hand, no instruction pop-ups. A brand-new player lands directly on **Level 1**.
 - Level 1: 3 colors × 4 layers, 3 mixed bottles + 2 empty; exhaustive search proves it needs **10 pours** (requirement: ≥ 6).
-- Color progression: 1–10 → 3–4 · 11–25 → 4–5 · 26–50 → 5–6 · 51–100 → 6–8 · 101–300 → 6–8 plus mechanics (mystery, sizes, corks).
+- Level evolution: 1–10 complete start (3 colors, 5–6 bottles) · 11–20 7–8 bottles · 21–35 mystery bottles · 36–50 frozen
+  bottles (ice with countdown) · 51–75 locked bottles (colored padlock, the key is completing that color) · 76–100 combined ·
+  101–150 big boards (12–15 bottles) · 151–250 special glasses (different sizes/shapes) · 251–300 complex boards (15–20 bottles).
+- Boards of 5–20 bottles with an adaptive 1–4 row layout; free room is often spread over partly filled bottles and small helpers.
+- Chapters of 30 levels (90 stars each) with a one-time chapter chest.
 - Every level is verified (replay + independent solver + exact minimum for levels 1–100); results for levels 1–100 are in
-  [Docs/LEVELS_VERIFICATION.md](Docs/LEVELS_VERIFICATION.md).
+  [Docs/LEVELS_VERIFICATION.md](Docs/LEVELS_VERIFICATION.md) (all 300 levels).
 
 ## Visual direction
 - **Default: Clean Midnight** — flat `#101827` background, transparent bottles with discreet reflections, no neon glow, liquid palette
@@ -64,8 +68,8 @@ real scenes aren't in Build Settings.
 
 ```bash
 # from Veliqora/
-dotnet test Tools/Veliqora.Core.Tests                         # 138 EditMode tests against the pure core
-dotnet run -c Release --project Tools/LevelGen -- build       # regenerate the 300 levels deterministically (~3–4 min)
+dotnet test Tools/Veliqora.Core.Tests                         # 155 EditMode tests against the pure core
+dotnet run -c Release --project Tools/LevelGen -- build       # regenerate the 300 levels deterministically (~7 min)
 dotnet run -c Release --project Tools/LevelGen -- validate    # replay + independent solver check -> Docs/level_validation_report.csv
 dotnet build Tools/UnityCompileCheck                          # compile Unity-side code against reference assemblies (optional)
 dotnet run -c Release --project Tools/ArtPreview -- Docs/ArtPreview   # render procedural art previews to PNG
