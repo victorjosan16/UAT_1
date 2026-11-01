@@ -29,7 +29,7 @@ Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈
 * If its colour is **not visible yet** (inside the object), the launcher **waits** (pulsing red) until digging exposes it.
 * A voxel is visible if one of its 6 neighbours is empty or outside; exposure is recomputed after every hit.
   Detached pieces fall (pooled Rigidbody debris) and count as destroyed. Finished colours leave the columns.
-* **Fail:** all 4 launchers are waiting (jammed) — continue with **Eliminare** (empties a waiting launcher) — or no blocks left.
+* **Fail:** all 4 launchers are waiting (jammed) — continue with **Eliminare** (frees a waiting launcher; its block goes back to the bottom of a column) — or no blocks left.
 * Stars from score (combos); every 5th level is HARD (×2.5 coins). Hold a top block to preview the voxels it will hit.
 * Levels are **multicolour objects (6-10 colours from the 12-colour palette)**; later levels have inner colour layers
   that only appear while digging, so loading them too early jams the launchers.

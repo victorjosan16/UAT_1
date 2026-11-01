@@ -218,7 +218,7 @@ namespace VoxelBloom
             (BoosterType.Hammer, Icon.Hammer, "Hammer", "Destroy selected cubes (any colour)."),
             (BoosterType.Shuffle, Icon.Shuffle, "Shuffle", "Mix the blocks of the 4 columns."),
             (BoosterType.ColorBomb, Icon.ColorBomb, "Color Bomb", "Remove a large group of the same colour."),
-            (BoosterType.Eliminate, Icon.Eliminate, "Eliminare", "Empty a waiting launcher."),
+            (BoosterType.Eliminate, Icon.Eliminate, "Eliminare", "Free a waiting launcher (its block goes back to the board)."),
         };
 
         protected override void OnBuild()

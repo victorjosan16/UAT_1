@@ -8,7 +8,7 @@ namespace VoxelBloom
     /// </summary>
     public sealed class FragmentSystem : MonoBehaviour
     {
-        const int Capacity = 512;
+        const int Capacity = 1000; // <= 1023 (one instanced draw)
         readonly Vector3[] pos = new Vector3[Capacity];
         readonly Vector3[] vel = new Vector3[Capacity];
         readonly Quaternion[] rot = new Quaternion[Capacity];
@@ -153,11 +153,12 @@ namespace VoxelBloom
                 Vector3 p = Vector3.Lerp(Vector3.Lerp(shotFrom[i], mid, k), Vector3.Lerp(mid, shotTo[i], k), k);
                 float s = shotSize[i] * 1.5f;
                 // glowing trail: bright sparks left behind the ball
-                if (!Services.ReducedEffects && count < Capacity && Random.value < 0.5f)
+                // (one or two sparks every frame, so the whole path from the launcher to the cube stays readable)
+                for (int sp = Services.ReducedEffects ? 1 : 2; sp > 0 && count < Capacity; sp--)
                 {
                     int t = count++;
-                    pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 1.5f; rot[t] = Random.rotation; spin[t] = Vector3.zero;
-                    life[t] = 0.22f; size[t] = shotSize[i] * 0.45f;
+                    pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 0.8f; rot[t] = Random.rotation; spin[t] = Vector3.zero;
+                    life[t] = 0.3f; size[t] = shotSize[i] * 0.5f;
                     color[t] = Vector4.Lerp(shotColor[i], Vector4.one, 0.55f);
                 }
                 shotMatrices[ns] = Matrix4x4.TRS(p, Quaternion.identity, new Vector3(s, s, s));

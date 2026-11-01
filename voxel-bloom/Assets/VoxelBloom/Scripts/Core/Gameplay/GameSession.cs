@@ -239,11 +239,21 @@ namespace VoxelBloom.Core
             return true;
         }
 
-        /// <summary>Eliminare: discards the block in a launcher (e.g. one that is waiting) and frees it.</summary>
+        /// <summary>
+        /// Eliminare: frees a launcher (e.g. one that is waiting). Its block goes back to the bottom of the shortest column
+        /// instead of being discarded, so the level always keeps enough blocks to be finished.
+        /// </summary>
         public bool ApplyEliminate(int launcher)
         {
             if (launcher < 0 || launcher >= Launchers || !launchers[launcher].HasValue) return false;
+            var b = launchers[launcher].Value;
             launchers[launcher] = null;
+            if (remaining[b.Color] > 0)
+            {
+                int best = 0;
+                for (int c = 1; c < Columns; c++) if (columns[c].Count < columns[best].Count) best = c;
+                columns[best].Add(b);
+            }
             return true;
         }
 
@@ -375,9 +385,31 @@ namespace VoxelBloom.Core
             foreach (var l in launchers) ls.Add(l.HasValue ? Pair(l.Value) : null);
             return new Dictionary<string, object>
             {
-                { "level", (double)Level.Id }, { "rules", 2.0 }, { "cells", new string(cells) }, { "columns", cols }, { "launchers", ls },
+                { "level", (double)Level.Id }, { "rules", 2.0 }, { "sig", Signature(Level).ToString() }, { "cells", new string(cells) }, { "columns", cols }, { "launchers", ls },
                 { "moves", (double)Moves }, { "score", (double)Score }, { "maxCombo", (double)MaxCombo },
             };
+        }
+
+        /// <summary>Stable fingerprint of a level's content (voxels, palette size, columns).</summary>
+        public static uint Signature(LevelDefinition level)
+        {
+            uint h = 2166136261u;
+            void Mix(int v) { unchecked { h = (h ^ (uint)v) * 16777619u; } }
+            var cells = level.Grid.CopyCells();
+            Mix(level.Grid.X); Mix(level.Grid.Y); Mix(level.Grid.Z); Mix(level.Grid.PaletteHex.Length);
+            foreach (var c in cells) Mix(c);
+            foreach (var col in level.Columns) { Mix(-7); foreach (var b in col) { Mix(b.Color); Mix(b.Power); } }
+            return h;
+        }
+
+        /// <summary>For every unfinished colour, the blocks (columns + launchers) can still destroy all its voxels.</summary>
+        public bool HasEnoughBlocks()
+        {
+            var power = new int[remaining.Length];
+            foreach (var col in columns) foreach (var b in col) if (b.Color >= 0 && b.Color < power.Length) power[b.Color] += b.Power;
+            foreach (var l in launchers) if (l.HasValue && l.Value.Color >= 0 && l.Value.Color < power.Length) power[l.Value.Color] += l.Value.Power;
+            for (int c = 0; c < remaining.Length; c++) if (power[c] < remaining[c]) return false;
+            return true;
         }
 
         static List<object> Pair(AttackBlock b) => new List<object> { (double)b.Color, (double)b.Power };
@@ -385,6 +417,9 @@ namespace VoxelBloom.Core
         public static GameSession FromSnapshot(LevelDefinition level, Dictionary<string, object> snap)
         {
             if (snap == null || MiniJson.GetInt(snap, "level") != level.Id || MiniJson.GetInt(snap, "rules") != 2) return null;
+            // a game saved with another version of this level (regenerated data) must never be restored onto it:
+            // its blocks would not match the voxels and the level could become impossible to finish
+            if (MiniJson.GetString(snap, "sig", "") != Signature(level).ToString()) return null;
             var s = new GameSession(level);
             var cells = VoxelGrid.Decode(MiniJson.GetString(snap, "cells", ""));
             if (cells.Length != s.N) return null;
@@ -398,6 +433,7 @@ namespace VoxelBloom.Core
             }
             var ls = MiniJson.GetArr(snap, "launchers");
             for (int i = 0; i < Launchers; i++) s.launchers[i] = ls != null && i < ls.Count ? Read(ls[i]) : null;
+            if (!s.HasEnoughBlocks()) return null;
             s.Moves = MiniJson.GetInt(snap, "moves");
             s.Score = MiniJson.GetInt(snap, "score");
             s.MaxCombo = MiniJson.GetInt(snap, "maxCombo");

@@ -71,6 +71,21 @@ namespace VoxelBloom.Tests
             Assert.IsFalse(s.CanTap(3));
             Assert.IsTrue(s.ApplyEliminate(0), "Eliminare frees a launcher");
             Assert.IsTrue(s.CanTap(3));
+            Assert.IsTrue(s.HasEnoughBlocks(), "the eliminated block went back to a column, nothing is lost");
+            Assert.AreEqual(2, s.BlocksLeft);
+        }
+
+        [Test]
+        public void Snapshot_FromAnotherVersionOfTheLevel_IsRejected()
+        {
+            var lvl = Level(12);
+            var a = new GameSession(lvl);
+            a.Settle(); a.Tap(lvl.Witness[0]);
+            var snap = MiniJson.Obj(MiniJson.Parse(MiniJson.Serialize(a.ToSnapshot())));
+            snap["sig"] = "12345"; // saved by an older build with different level data
+            Assert.IsNull(GameSession.FromSnapshot(lvl, snap));
+            snap.Remove("sig");    // saves from before the signature existed
+            Assert.IsNull(GameSession.FromSnapshot(lvl, snap));
         }
 
         [Test]

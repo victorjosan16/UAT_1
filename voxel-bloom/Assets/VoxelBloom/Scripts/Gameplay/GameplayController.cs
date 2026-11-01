@@ -14,7 +14,7 @@ namespace VoxelBloom
     {
         public static GameplayController Active { get; private set; }
         static GameStateMachine SM => App.State;
-        const float BaseTick = 0.12f, BaseFlight = 0.32f; // Normal speed: slow enough to follow every ball to its cube
+        const float BaseTick = 0.12f, BaseFlight = 0.5f; // Normal speed: slow enough to follow every ball to its cube
         static float SpeedFactor => SettingsData.FireSpeedFactor[Mathf.Clamp(Services.Save.Settings.FireSpeed, 0, 2)];
         static float Tick => BaseTick / SpeedFactor;
         static float Flight => BaseFlight / Mathf.Sqrt(SpeedFactor); // balls fly a bit faster too, but stay visible
@@ -185,7 +185,7 @@ namespace VoxelBloom
                 // 1) a UI ball leaves the barrel tip towards the bottom edge of the 3D view ...
                 float rise = LaunchUiBall(li, c);
                 // 2) ... where the 3D ball takes over and flies to its cube
-                view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, model.VoxelSize * 1.1f, Flight, rise);
+                view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, BallWorldSize() / 1.5f, Flight, rise);
                 pendingPops.Add((Time.time + rise + Flight, voxel, c));
                 var g = view.LauncherGlow[li];
                 g.color = new Color(c.r / 255f, c.g / 255f, c.b / 255f, 0.35f);
@@ -259,7 +259,7 @@ namespace VoxelBloom
         /// <summary>Starts a ball at the launcher orb towards the point where the 3D ball appears; returns its travel time.</summary>
         float LaunchUiBall(int li, Color32 c)
         {
-            float dur = 0.1f / Mathf.Sqrt(SpeedFactor);
+            float dur = 0.16f / Mathf.Sqrt(SpeedFactor);
             var viewRt = (RectTransform)view.ModelInput.transform;
             var corners = new Vector3[4];
             viewRt.GetWorldCorners(corners); // 0 bottom-left, 3 bottom-right
@@ -279,14 +279,25 @@ namespace VoxelBloom
             // same apparent size as the 3D ball at the hand-over point (no visible jump)
             var cam = view.Stage.Camera;
             float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position) * 0.8f;
-            float worldBall = view.Stage.Model.VoxelSize * 1.1f * 1.5f;
-            float px = worldBall / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
-            b.Rt.sizeDelta = Vector2.one * Mathf.Clamp(px, 16f, 80f);
+            float px = BallWorldSize() / (2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad)) * viewRt.rect.height;
+            b.Rt.sizeDelta = Vector2.one * Mathf.Clamp(px, 22f, 80f);
             b.To = Vector3.Lerp(corners[0], corners[3], vx);
             b.T = 0f; b.Dur = dur;
             b.Rt.position = b.From;
             uiBalls.Add(b);
             return dur;
+        }
+
+        /// <summary>
+        /// Rendered ball diameter (world units). At least ~3.2% of the view height so a ball stays easy to follow even when
+        /// the model (and its voxels) is small on screen; never smaller than 1.6 voxels.
+        /// </summary>
+        float BallWorldSize()
+        {
+            var cam = view.Stage.Camera;
+            float d = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
+            float viewH = 2f * d * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            return Mathf.Max(view.Stage.Model.VoxelSize * 1.6f, viewH * 0.032f);
         }
 
         void ClearUiBalls()
