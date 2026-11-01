@@ -6,7 +6,7 @@ namespace VoxelBloom.Core
     public sealed class CompletionReceipt
     {
         public long Id;
-        public int LevelId, Stars, Coins, Score;
+        public int LevelId, Stars, Coins, Score, Gems;
         public bool FirstClear, Hard, NewBest;
     }
 
@@ -99,7 +99,7 @@ namespace VoxelBloom.Core
         /// <summary>Stars: 3 without boosters, 2 with one or two, 1 otherwise.</summary>
         public static int ConveyorStarsForBoosters(int boostersUsed) => boostersUsed == 0 ? 3 : boostersUsed <= 2 ? 2 : 1;
 
-        /// <summary>Records a conveyor win exactly once per call: stars, unlock, coins (replays pay 25%), gems every 5th level.</summary>
+        /// <summary>Records a conveyor win exactly once per call: stars, unlock, coins (replays pay 25%), gems for Greu (+5) / Foarte greu (+10).</summary>
         public CompletionReceipt CompleteConveyor(ConveyorLevel level, int boostersUsed, int total)
         {
             int stars = ConveyorStarsForBoosters(boostersUsed);
@@ -111,13 +111,13 @@ namespace VoxelBloom.Core
             if (!first) coins = Math.Max(5, coins / 4);
             wallet.Add(coins);
             save.Coins = wallet.Coins;
-            bool gemLevel = level.Id % 5 == 0;
-            if (first && gemLevel) save.Gems += 10;
+            int gems = first ? (level.Tier == 3 ? 10 : level.Tier == 2 ? 5 : 0) : 0; // hard tiers pay gems on the first clear
+            save.Gems += gems;
             save.ConveyorActive = null;
             save.ReceiptCounter++;
             save.LastReceiptId = save.ReceiptCounter;
             save.LastReceiptDoubled = false;
-            return new CompletionReceipt { Id = save.LastReceiptId, LevelId = level.Id, Stars = stars, Coins = coins, FirstClear = first, Hard = first && gemLevel, NewBest = stars > prev };
+            return new CompletionReceipt { Id = save.LastReceiptId, LevelId = level.Id, Stars = stars, Coins = coins, Gems = gems, FirstClear = first, Hard = level.Tier >= 2, NewBest = stars > prev };
         }
 
         public bool IsModelUnlocked(string modelId) => save.CollectionUnlocked.Contains(modelId);

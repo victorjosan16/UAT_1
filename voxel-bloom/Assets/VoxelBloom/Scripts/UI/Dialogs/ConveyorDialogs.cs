@@ -48,12 +48,13 @@ namespace VoxelBloom
             var rr = (RectTransform)reward.transform.parent;
             rr.Place(new Vector2(0.5f, 1), new Vector2(0, -760), new Vector2(680, 210));
             UI.Text(rr, "Recompensă", 44, Theme.Ink).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(600, 56));
-            var coin = UI.Icon(rr, Icon.Coin, 80); coin.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(Receipt.Hard ? -230 : -90, 64), new Vector2(80, 80));
-            UI.Text(rr, "+" + Receipt.Coins, 58, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(Receipt.Hard ? -175 : -35, 64), new Vector2(220, 80), new Vector2(0, 0.5f));
-            if (Receipt.Hard)
+            bool gems = Receipt.Gems > 0;
+            var coin = UI.Icon(rr, Icon.Coin, 80); coin.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(gems ? -230 : -90, 64), new Vector2(80, 80));
+            UI.Text(rr, "+" + Receipt.Coins, 58, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(gems ? -175 : -35, 64), new Vector2(220, 80), new Vector2(0, 0.5f));
+            if (gems)
             {
                 var gem = UI.Icon(rr, Icon.Gem, 80); gem.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(90, 64), new Vector2(80, 80));
-                UI.Text(rr, "+10", 58, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(145, 64), new Vector2(200, 80), new Vector2(0, 0.5f));
+                UI.Text(rr, "+" + Receipt.Gems, 58, Theme.Ink, TextAnchor.MiddleLeft).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(145, 64), new Vector2(200, 80), new Vector2(0, 0.5f));
             }
 
             var next = UI.Button(Body, "Următorul", ButtonStyle.Green, new Vector2(640, 150), Icon.Play, 64);

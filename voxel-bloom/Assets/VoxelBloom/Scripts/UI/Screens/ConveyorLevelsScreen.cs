@@ -42,8 +42,17 @@ namespace VoxelBloom
             bool unlocked = Services.Progress.IsConveyorUnlocked(level, total);
             int stars = Services.Progress.ConveyorStarsFor(level);
             bool isCurrent = level == current && stars == 0;
-            var style = !unlocked ? ButtonStyle.White : isCurrent ? ButtonStyle.Purple : ButtonStyle.Green;
+            var def = Services.Data.GetConveyorLevel(level);
+            int tier = def != null ? def.Tier : 1;
+            var style = !unlocked ? ButtonStyle.White : tier == 0 ? ButtonStyle.Green : tier == 1 ? ButtonStyle.Purple : tier == 2 ? ButtonStyle.Gold : ButtonStyle.Red;
             var b = UI.Button(grid, unlocked ? level.ToString() : null, style, new Vector2(220, 220), unlocked ? (Icon?)null : Icon.Lock, 92);
+            if (isCurrent) { var ring = UI.Image(b.transform, "Current", SpriteFactory.Rounded(56), Color.white); ring.rectTransform.Stretch(-10, -10, -10, -10); ring.transform.SetAsFirstSibling(); }
+            if (tier >= 2 && def != null)
+            {
+                var tag = UI.Image(b.transform, "Tier", SpriteFactory.Rounded(20), ConveyorScreen.TierColors[tier]);
+                tag.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, 6), new Vector2(tier == 3 ? 190 : 130, 46));
+                UI.Text(tag.transform, tier == 3 ? "F. GREU" : "GREU", 28, Color.white, TextAnchor.MiddleCenter, 0.15f, Theme.Darker(ConveyorScreen.TierColors[tier], 0.5f)).rectTransform.Stretch();
+            }
             if (unlocked)
             {
                 var label = b.Face.Find("Label") as RectTransform;

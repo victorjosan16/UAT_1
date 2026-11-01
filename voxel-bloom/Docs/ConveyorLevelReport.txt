@@ -1,50 +1,50 @@
-L 1  colours 2  trays 3  cubes 9  belt 9/65  hopper 0  stations 3  witness 17s  casual 1
-L 2  colours 3  trays 5  cubes 15  belt 15/65  hopper 0  stations 3  witness 34s  casual 1
-L 3  colours 3  trays 7  cubes 24  belt 24/65  hopper 0  stations 3  witness 34s  casual 1
-L 4  colours 4  trays 10  cubes 40  belt 40/65  hopper 0  stations 4  witness 60s  casual 1
-L 5  colours 4  trays 14  cubes 53  belt 53/65  hopper 0  stations 5  witness 48s  casual 1
-L 6  colours 4  trays 18  cubes 72  belt 61/65  hopper 11  stations 4  witness 101s  casual 1
-L 7  colours 5  trays 18  cubes 72  belt 61/65  hopper 11  stations 5  witness 61s  casual 1
-L 8  colours 5  trays 20  cubes 80  belt 61/65  hopper 19  stations 4  witness 86s  casual 0.94
-L 9  colours 5  trays 22  cubes 76  belt 61/65  hopper 15  stations 5  witness 58s  casual 1
-L10  colours 6  trays 24  cubes 96  belt 61/65  hopper 35  stations 5  witness 117s  casual 0.81
-L11  colours 6  trays 25  cubes 100  belt 61/65  hopper 39  stations 4  witness 115s  casual 0.63
-L12  colours 6  trays 26  cubes 89  belt 61/65  hopper 28  stations 5  witness 87s  casual 0.88
-L13  colours 6  trays 27  cubes 108  belt 61/65  hopper 47  stations 5  witness 151s  casual 0.44
-L14  colours 7  trays 28  cubes 112  belt 61/65  hopper 51  stations 5  witness 121s  casual 0.63
-L15  colours 7  trays 29  cubes 105  belt 61/65  hopper 44  stations 6  witness 107s  casual 0.69
-L16  colours 7  trays 30  cubes 120  belt 61/65  hopper 59  stations 4  witness 128s  casual 0.5
-L17  colours 7  trays 30  cubes 120  belt 61/65  hopper 59  stations 6  witness 112s  casual 0.5
-L18  colours 8  trays 31  cubes 124  belt 61/65  hopper 63  stations 5  witness 119s  casual 0.5
-L19  colours 8  trays 32  cubes 128  belt 61/65  hopper 67  stations 6  witness 145s  casual 0.5
-L20  colours 8  trays 32  cubes 128  belt 61/65  hopper 67  stations 5  witness 183s  casual 0.5
-L21  colours 8  trays 24  cubes 87  belt 61/65  hopper 26  stations 6  witness 91s  casual 1
-L22  colours 7  trays 30  cubes 120  belt 61/65  hopper 59  stations 5  witness 134s  casual 0.5
-L23  colours 8  trays 31  cubes 101  belt 61/65  hopper 40  stations 5  witness 124s  casual 0.63
-L24  colours 7  trays 31  cubes 124  belt 61/65  hopper 63  stations 6  witness 139s  casual 0.44
-L25  colours 8  trays 31  cubes 110  belt 61/65  hopper 49  stations 5  witness 103s  casual 0.44
-L26  colours 7  trays 25  cubes 100  belt 61/65  hopper 39  stations 5  witness 105s  casual 0.63
-L27  colours 8  trays 32  cubes 115  belt 61/65  hopper 54  stations 6  witness 131s  casual 0.31
-L28  colours 7  trays 32  cubes 128  belt 61/65  hopper 67  stations 5  witness 141s  casual 0.44
-L29  colours 8  trays 32  cubes 112  belt 61/65  hopper 51  stations 5  witness 140s  casual 0.38
-L30  colours 8  trays 32  cubes 128  belt 61/65  hopper 67  stations 6  witness 139s  casual 0.44
-L31  colours 8  trays 27  cubes 95  belt 61/65  hopper 34  stations 5  witness 123s  casual 0.38
-L32  colours 8  trays 33  cubes 132  belt 61/65  hopper 71  stations 5  witness 202s  casual 0.44
-L33  colours 8  trays 33  cubes 117  belt 61/65  hopper 56  stations 6  witness 123s  casual 0.38
-L34  colours 8  trays 34  cubes 136  belt 61/65  hopper 75  stations 5  witness 143s  casual 0.38
-L35  colours 8  trays 34  cubes 119  belt 61/65  hopper 58  stations 5  witness 143s  casual 0.44
-L36  colours 8  trays 28  cubes 112  belt 61/65  hopper 51  stations 6  witness 129s  casual 0.63
-L37  colours 8  trays 34  cubes 121  belt 61/65  hopper 60  stations 5  witness 128s  casual 0.5
-L38  colours 8  trays 35  cubes 140  belt 61/65  hopper 79  stations 5  witness 179s  casual 0.5
-L39  colours 8  trays 35  cubes 120  belt 61/65  hopper 59  stations 6  witness 117s  casual 0.19
-L40  colours 8  trays 35  cubes 140  belt 61/65  hopper 79  stations 5  witness 184s  casual 0.19
-L41  colours 8  trays 30  cubes 109  belt 61/65  hopper 48  stations 5  witness 143s  casual 0.38
-L42  colours 8  trays 36  cubes 144  belt 61/65  hopper 83  stations 6  witness 146s  casual 0.5
-L43  colours 8  trays 36  cubes 126  belt 61/65  hopper 65  stations 5  witness 161s  casual 0.38
-L44  colours 8  trays 36  cubes 144  belt 61/65  hopper 83  stations 5  witness 157s  casual 0.31
-L45  colours 8  trays 37  cubes 134  belt 61/65  hopper 73  stations 6  witness 139s  casual 0.31
-L46  colours 8  trays 31  cubes 124  belt 61/65  hopper 63  stations 5  witness 124s  casual 0.5
-L47  colours 8  trays 37  cubes 131  belt 61/65  hopper 70  stations 5  witness 126s  casual 0.38
-L48  colours 8  trays 37  cubes 148  belt 61/65  hopper 87  stations 6  witness 176s  casual 0.31
-L49  colours 8  trays 38  cubes 134  belt 61/65  hopper 73  stations 5  witness 130s  casual 0.25
-L50  colours 8  trays 38  cubes 152  belt 61/65  hopper 91  stations 5  witness 155s  casual 0.38
+L 1  Ușor        tablă S  culori 2  tăvi  3 (2/3)  cuburi   7  stații 3 [-]  coadă 3  viteză 6  soluție 12s  casual 1
+L 2  Ușor        tablă S  culori 3  tăvi  4 (2/3)  cuburi  10  stații 3 [-]  coadă 4  viteză 6  soluție 12s  casual 1
+L 3  Ușor        tablă S  culori 3  tăvi  5 (2/3)  cuburi  11  stații 3 [-]  coadă 5  viteză 6  soluție 23s  casual 1
+L 4  Normal      tablă M  culori 3  tăvi 20 (3/4)  cuburi  69  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 1
+L 5  Greu        tablă M  culori 4  tăvi 21 (4)  cuburi  84  stații 4 [-]  coadă 5  viteză 7  soluție 67s  casual 0.88
+L 6  Normal      tablă M  culori 4  tăvi 21 (3/4)  cuburi  72  stații 4 [-]  coadă 5  viteză 6  soluție 56s  casual 1
+L 7  Ușor        tablă S  culori 4  tăvi 11 (2/3)  cuburi  29  stații 3 [-]  coadă 6  viteză 6  soluție 32s  casual 1
+L 8  Normal      tablă M  culori 4  tăvi 23 (3/4)  cuburi  78  stații 4 [-]  coadă 5  viteză 6  soluție 71s  casual 1
+L 9  Normal      tablă S  culori 4  tăvi 21 (3)  cuburi  63  stații 4 [#3]  coadă 5  viteză 6  soluție 42s  casual 1
+L10  Foarte greu tablă L  culori 5  tăvi 36 (4)  cuburi 144  stații 5 [-]  coadă 4  viteză 7  soluție 127s  casual 0.38
+L11  Normal      tablă M  culori 4  tăvi 26 (3/4)  cuburi  89  stații 4 [-]  coadă 5  viteză 6  soluție 75s  casual 1
+L12  Ușor        tablă S  culori 4  tăvi 12 (2/3)  cuburi  28  stații 4 [+]  coadă 6  viteză 6  soluție 32s  casual 1
+L13  Normal      tablă S  culori 4  tăvi 24 (3)  cuburi  72  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 0.88
+L14  Normal      tablă M  culori 4  tăvi 27 (3/4)  cuburi  93  stații 4 [-]  coadă 5  viteză 6  soluție 89s  casual 0.94
+L15  Greu        tablă M  culori 5  tăvi 28 (4)  cuburi 112  stații 4 [#4]  coadă 5  viteză 7  soluție 142s  casual 0.5
+L16  Normal      tablă M  culori 5  tăvi 27 (3/4)  cuburi  96  stații 5 [+]  coadă 5  viteză 6  soluție 105s  casual 0.81
+L17  Ușor        tablă S  culori 5  tăvi 12 (2/3)  cuburi  30  stații 3 [-]  coadă 6  viteză 6  soluție 36s  casual 1
+L18  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 115  stații 6 [#3]  coadă 5  viteză 6  soluție 88s  casual 1
+L19  Normal      tablă M  culori 5  tăvi 28 (3/4)  cuburi  98  stații 4 [-]  coadă 5  viteză 6  soluție 116s  casual 0.5
+L20  Foarte greu tablă L  culori 6  tăvi 39 (4)  cuburi 156  stații 6 [+]  coadă 4  viteză 7  soluție 135s  casual 0.31
+L21  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 110  stații 6 [#3]  coadă 5  viteză 6  soluție 104s  casual 0.88
+L22  Ușor        tablă S  culori 5  tăvi 13 (2/3)  cuburi  35  stații 3 [-]  coadă 6  viteză 6  soluție 32s  casual 1
+L23  Normal      tablă M  culori 5  tăvi 28 (3/4)  cuburi 103  stații 4 [-]  coadă 5  viteză 6  soluție 111s  casual 0.63
+L24  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 116  stații 7 [#3 +]  coadă 5  viteză 6  soluție 125s  casual 0.81
+L25  Greu        tablă L  culori 6  tăvi 34 (4)  cuburi 136  stații 5 [-]  coadă 5  viteză 7  soluție 144s  casual 0.38
+L26  Normal      tablă M  culori 6  tăvi 28 (3/4)  cuburi  96  stații 4 [-]  coadă 5  viteză 6  soluție 105s  casual 0.75
+L27  Ușor        tablă S  culori 5  tăvi 13 (2/3)  cuburi  35  stații 3 [-]  coadă 6  viteză 6  soluție 42s  casual 1
+L28  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi  99  stații 5 [+]  coadă 5  viteză 6  soluție 102s  casual 0.69
+L29  Normal      tablă S  culori 5  tăvi 25 (3)  cuburi  75  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 1
+L30  Foarte greu tablă L  culori 7  tăvi 40 (4)  cuburi 160  stații 5 [#5]  coadă 4  viteză 7  soluție 176s  casual 0.25
+L31  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi 105  stații 4 [-]  coadă 5  viteză 6  soluție 120s  casual 0.88
+L32  Ușor        tablă M  culori 6  tăvi 18 (2/3)  cuburi  41  stații 6 [+]  coadă 6  viteză 6  soluție 41s  casual 1
+L33  Normal      tablă L  culori 6  tăvi 34 (3/4)  cuburi 118  stații 6 [#3]  coadă 5  viteză 6  soluție 121s  casual 1
+L34  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi 101  stații 4 [-]  coadă 5  viteză 6  soluție 98s  casual 0.56
+L35  Greu        tablă L  culori 7  tăvi 35 (4)  cuburi 140  stații 5 [-]  coadă 5  viteză 7  soluție 158s  casual 0.31
+L36  Normal      tablă L  culori 7  tăvi 35 (3/4)  cuburi 121  stații 7 [#3 +]  coadă 5  viteză 6  soluție 125s  casual 0.88
+L37  Ușor        tablă S  culori 5  tăvi 14 (2/3)  cuburi  32  stații 3 [-]  coadă 6  viteză 6  soluție 50s  casual 1
+L38  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 106  stații 4 [-]  coadă 5  viteză 6  soluție 111s  casual 0.75
+L39  Normal      tablă L  culori 7  tăvi 35 (3/4)  cuburi 125  stații 6 [#3]  coadă 5  viteză 6  soluție 114s  casual 0.56
+L40  Foarte greu tablă L  culori 8  tăvi 41 (4)  cuburi 164  stații 6 [+]  coadă 4  viteză 7  soluție 192s  casual 0.31
+L41  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 102  stații 4 [-]  coadă 5  viteză 6  soluție 136s  casual 0.69
+L42  Ușor        tablă M  culori 7  tăvi 20 (2/3)  cuburi  49  stații 5 [-]  coadă 6  viteză 6  soluție 46s  casual 1
+L43  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 105  stații 4 [-]  coadă 5  viteză 6  soluție 137s  casual 0.56
+L44  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 107  stații 5 [+]  coadă 5  viteză 6  soluție 139s  casual 0.56
+L45  Greu        tablă L  culori 8  tăvi 36 (4)  cuburi 144  stații 5 [#4]  coadă 5  viteză 7  soluție 138s  casual 0.31
+L46  Normal      tablă M  culori 8  tăvi 30 (3/4)  cuburi 104  stații 4 [-]  coadă 5  viteză 6  soluție 154s  casual 0.69
+L47  Ușor        tablă S  culori 5  tăvi 15 (2/3)  cuburi  37  stații 3 [-]  coadă 6  viteză 6  soluție 41s  casual 1
+L48  Normal      tablă L  culori 8  tăvi 36 (3/4)  cuburi 124  stații 7 [#3 +]  coadă 5  viteză 6  soluție 193s  casual 0.5
+L49  Normal      tablă M  culori 8  tăvi 31 (3/4)  cuburi  99  stații 4 [-]  coadă 5  viteză 6  soluție 137s  casual 0.63
+L50  Foarte greu tablă L  culori 8  tăvi 42 (4)  cuburi 168  stații 5 [-]  coadă 4  viteză 7  soluție 209s  casual 0.25

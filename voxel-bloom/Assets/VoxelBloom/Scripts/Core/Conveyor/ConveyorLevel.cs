@@ -27,6 +27,9 @@ namespace VoxelBloom.Core
         public int Id;
         public string Name;
         public bool Tutorial;
+        /// <summary>Difficulty tier 0..3 (Ușor, Normal, Greu, Foarte greu) and board size S/M/L.</summary>
+        public int Tier = 1;
+        public string TierName = "Normal", BoardSize = "M";
         public float BoardW = 16, BoardH = 18, BoardR = 2;
         public int Slots, Speed, Feeder, Visible;
         public string[] Colors;
@@ -56,6 +59,9 @@ namespace VoxelBloom.Core
                 WitnessTicks = MiniJson.GetInt(d, "witnessTicks"),
                 RewardCoins = MiniJson.GetInt(d, "rewardCoins", 40),
                 CasualWinRate = (float)MiniJson.GetDouble(d, "casualWinRate", 1),
+                Tier = Math.Max(0, Math.Min(3, MiniJson.GetInt(d, "tier", 1))),
+                TierName = MiniJson.GetString(d, "tierName", "Normal"),
+                BoardSize = MiniJson.GetString(d, "boardSize", "M"),
             };
             var board = MiniJson.GetObj(d, "board");
             if (board != null)
@@ -108,6 +114,8 @@ namespace VoxelBloom.Core
             {
                 if (t.Length == 0) throw new FormatException("empty tray");
                 if (t.Length > 4) throw new FormatException("tray too long");
+                bool fits = false; foreach (var s in Stations) if (s.Capacity >= t.Length) fits = true;
+                if (!fits) throw new FormatException("tray longer than every station");
                 foreach (int c in t) { if (c < 0 || c >= Colors.Length) throw new FormatException("colour index"); demand[c]++; }
             }
             for (int c = 0; c < supply.Length; c++)

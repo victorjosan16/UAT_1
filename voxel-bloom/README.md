@@ -28,7 +28,7 @@ flight). Full trays leave and the progress (`3/8`) counts completed trays. Cubes
 (`+N`). If the belt fills with cubes nobody needs, it jams. Boosters: **Undo** (last placement), **Shuffle** (queue order,
 kept only if still winnable), **Extra station** (opens a green plus slot). Numbered grey tiles open after n completed trays.
 Full rules, audit, migration and the decisions on uncertain points: `Docs/ConveyorRules.md`.
-50 validated levels (`node tools/conveyor/build-levels.mjs`, tests `node tools/conveyor/test.mjs`, preview
+50 validated levels with different complexity (tiers Ușor/Normal/Greu/Foarte greu, small/medium/large boards; `node tools/conveyor/build-levels.mjs`, tests `node tools/conveyor/test.mjs`, preview
 `node tools/conveyor/preview.mjs <level> <seconds> out.png`). The old voxel-shooter (rules v2, described below) is no
 longer reachable; its code stays until the cleanup phase.
 

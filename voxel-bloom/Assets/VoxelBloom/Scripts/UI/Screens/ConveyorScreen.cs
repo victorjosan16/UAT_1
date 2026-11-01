@@ -17,7 +17,10 @@ namespace VoxelBloom
             Track = Theme.Hex("#5A5396"), TrackDark = Theme.Hex("#4A4384"), Edge = Theme.Hex("#5BE7FF"), Floor = Theme.Hex("#2B2466"),
             TrayRim = Theme.Hex("#DAD2F7"), TrayInner = Theme.Hex("#383070"), Stone = Theme.Hex("#9396B8"), PlusTray = Theme.Hex("#8C7A52");
 
-        public const float BoardWidth = 1020f;
+        public const float MaxBoardWidth = 1020f;
+        /// <summary>Board width in UI units: 1020, or less when a tall (large) board must fit between the HUD and the queue.</summary>
+        public float BoardWidth = MaxBoardWidth;
+        public static readonly Color[] TierColors = { Theme.Hex("#3FCB4C"), Theme.Hex("#6C5CE7"), Theme.Hex("#FF9A2E"), Theme.Hex("#FF4D5E") };
         public RectTransform BoardRoot, Space, CubeLayer, FlyLayer, QueueRoot, FxLayer;
         public float K; // UI px per board unit
         public ConveyorBoard Board;
@@ -160,6 +163,8 @@ namespace VoxelBloom
             if (QueueRoot != null) Destroy(QueueRoot.gameObject);
             Cards.Clear();
             Board = new ConveyorBoard(level);
+            float maxH = Root.rect.height > 0 ? Root.rect.height - 150f - 220f - 252f : 1300f;
+            BoardWidth = Mathf.Min(MaxBoardWidth, maxH * (Board.W + 2f) / (Board.H + 2f));
             K = BoardWidth / (Board.W + 2f);
             boardHeight = (Board.H + 2f) * K;
 
@@ -239,6 +244,18 @@ namespace VoxelBloom
             HintText.rectTransform.sizeDelta = new Vector2((W - 7f) * K, 4f * K);
 
             BuildQueue(level);
+
+            // difficulty badge on the top edge of the board (not shown for Normal)
+            if (level.Tier != 1)
+            {
+                var badge = UI.Image(BoardRoot, "Tier", SpriteFactory.Rounded(30), TierColors[level.Tier]);
+                badge.rectTransform.anchorMin = badge.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                badge.rectTransform.anchoredPosition = new Vector2(0, 6);
+                badge.rectTransform.sizeDelta = new Vector2(level.Tier == 3 ? 300 : 200, 62);
+                var t = UI.Text(badge.transform, level.TierName.ToUpperInvariant(), 36, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Darker(TierColors[level.Tier], 0.5f));
+                t.fontStyle = FontStyle.Bold;
+                t.rectTransform.Stretch();
+            }
         }
 
         /// <summary>
@@ -304,9 +321,9 @@ namespace VoxelBloom
             QueueRoot.anchorMin = QueueRoot.anchorMax = new Vector2(0.5f, 1f);
             QueueRoot.pivot = new Vector2(0.5f, 1f);
             QueueRoot.anchoredPosition = new Vector2(0, -topY - boardHeight - 22);
-            QueueRoot.sizeDelta = new Vector2(BoardWidth, 230);
+            QueueRoot.sizeDelta = new Vector2(MaxBoardWidth, 230);
             int n = Mathf.Max(1, level.Visible);
-            float slotW = BoardWidth / 7f;
+            float slotW = MaxBoardWidth / 7f;
             float cw = Mathf.Min(132f, slotW - 14f), chh = 214f, cell = cw - 34f;
             float x0 = -(n - 1) * slotW / 2f;
             for (int i = 0; i < n; i++)

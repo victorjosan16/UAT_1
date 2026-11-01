@@ -58,15 +58,33 @@
     It carries a level signature and a cube-conservation check, so it is never restored onto different level data.
 
 ## Levels (`tools/conveyor/build-levels.mjs`)
-50 levels are generated from **hand-set parameters** (1-20 one by one, 21-50 from a parameter ramp with an easier "breather" level every 5 levels) (colours, trays, tray sizes, stations, visible queue, cube clumping,
-locks) and then **validated by simulation**. They were not hand-played. For each level:
-* supply equals demand per colour, no empty or over-long trays, at least one free station, stations far enough apart;
+50 levels that differ **in kind**, not only in size:
+* **Tiers** in a saw-tooth curve: Ușor / Normal / Greu (every 5th) / Foarte greu (every 10th). The tier is shown as a
+  badge on the board and a coloured tile in the level list. Rewards: coins ×1 / ×1.2 / ×1.6 / ×2.2, plus +5 / +10 gems on the
+  first clear of Greu / Foarte greu.
+* **Board sizes:**
+  * small loop (12×14, 49 slots, 3-compartment stations): relaxed levels;
+  * medium (16×18, 65 slots);
+  * large (18×22, 77 slots, up to 8 stations).
+  Stations are placed automatically for each board without overlapping trays.
+* **Jam pressure:** a level can only jam when it has more cubes than the belt holds, so the cube count follows the tier:
+  Ușor below capacity, Normal ≈1.4×, Greu ≈1.65×, Foarte greu ≈1.95× the belt (levels 4-11 start gentler). Colour clumping
+  also grows with the tier.
+* **Other levers:**
+  * tray sizes: 2-3 (Ușor), 3-4 (Normal), 4 (Greu and above);
+  * belt speed 6 / 7;
+  * visible queue 6 / 5 / 5 / 4;
+  * numbered locks (2-5 trays) and green plus slots.
+
+Each level is generated from these hand-set parameters and **validated by simulation**. It was not hand-played. Checks:
+* supply equals demand per colour; no empty tray and no tray longer than the stations; at least one free station; stations
+  far enough apart;
 * a rollout solver finds a winning **witness** (tap tick plus queue index). The JS and C# replays must win on the same tick
-  (`Tests/EditMode/ConveyorRulesTests`), which proves the two rule implementations agree;
-* a casual player (random visible tray after a random delay) plays 16 games; the candidate closest to the target win
-  rate is kept. Results: `Docs/ConveyorLevelReport.txt`.
-Level 1 is the integrated tutorial: an arrow points at the best tray, with a two-line hint, until two trays are placed.
-The generator scales to more levels; 50 are shipped (not 100+).
+  (`Tests/EditMode/ConveyorRulesTests`);
+* a casual player (random visible tray after a random delay) plays 16 games; the candidate closest to the tier's target win
+  rate is kept.
+
+Per-level parameters and results: `Docs/ConveyorLevelReport.txt`. Level 1 is the integrated tutorial.
 
 ## Tests
 * `node tools/conveyor/test.mjs`: loop continuity and constant spacing, matching/non-matching transfer, transfer
