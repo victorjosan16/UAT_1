@@ -14,7 +14,7 @@ namespace VoxelBloom
     {
         public static GameplayController Active { get; private set; }
         static GameStateMachine SM => App.State;
-        const float Tick = 0.07f, Flight = 0.24f;
+        const float Tick = 0.12f, Flight = 0.32f; // slow enough to follow every ball to its cube
 
         GameplayScreen view;
         LevelDefinition level;
@@ -25,6 +25,7 @@ namespace VoxelBloom
         BoosterType? targeting;
         int shownCoins = -1;
         float lastComboFx;
+        bool targetsDirty;
         readonly List<(float at, int voxel, Color32 color)> pendingPops = new List<(float, int, Color32)>();
 
         public LevelDefinition Level => level;
@@ -202,19 +203,14 @@ namespace VoxelBloom
             ShowTargets();
         }
 
-        /// <summary>The voxels the launchers will hit next glow and pulse, so the player sees what is being eliminated.</summary>
+        /// <summary>Exactly the cubes that balls are flying to glow until they are hit (one glow per ball in flight).</summary>
         void ShowTargets()
         {
             if (targeting != null) return;
-            var list = new List<int>();
-            for (int li = 0; li < GameSession.Launchers; li++)
-            {
-                var l = session.LauncherAt(li);
-                if (!l.HasValue || session.IsWaiting(li)) continue;
-                list.AddRange(session.PreviewTargets(l.Value.Color, Mathf.Min(l.Value.Power, 14)));
-            }
-            if (list.Count > 0) view.Stage.Model.SetHighlight(list, Color.white);
-            else view.Stage.Model.ClearHighlight();
+            if (pendingPops.Count == 0) { view.Stage.Model.ClearHighlight(); return; }
+            var list = new List<int>(pendingPops.Count);
+            foreach (var p in pendingPops) list.Add(p.voxel);
+            view.Stage.Model.SetHighlight(list, Color.white);
         }
 
         void Update()
@@ -227,9 +223,13 @@ namespace VoxelBloom
                 pendingPops.RemoveAt(i);
                 if (view == null) continue;
                 var model = view.Stage.Model;
-                if (Random.value < 0.5f) view.Stage.Fragments.Burst(model.VoxelWorldPosition(p.voxel), p.color, model.VoxelSize, 2);
+                var at = model.VoxelWorldPosition(p.voxel);
+                view.Stage.Fragments.PopCube(at, p.color, model.VoxelSize);      // the hit cube swells and vanishes
+                view.Stage.Fragments.Burst(at, p.color, model.VoxelSize * 0.7f, 2); // coloured shards
                 model.RemoveVoxel(p.voxel);
+                targetsDirty = true;
             }
+            if (targetsDirty) { targetsDirty = false; ShowTargets(); }
             // waiting launchers pulse red, firing ones fade their glow
             if (session != null && view != null)
             {

@@ -25,6 +25,15 @@ namespace VoxelBloom
         readonly float[] shotT = new float[MaxShots], shotDur = new float[MaxShots], shotSize = new float[MaxShots];
         readonly Vector4[] shotColor = new Vector4[MaxShots];
         int shots;
+        // hit cubes: the exact voxel swells white and shrinks away where the ball lands
+        const int MaxPops = 128;
+        readonly Vector3[] popPos = new Vector3[MaxPops];
+        readonly float[] popT = new float[MaxPops], popSize = new float[MaxPops];
+        readonly Vector4[] popColor = new Vector4[MaxPops];
+        int pops;
+        readonly Matrix4x4[] popMatrices = new Matrix4x4[1023];
+        readonly Vector4[] popBatchColors = new Vector4[1023];
+        MaterialPropertyBlock popBlock;
         Mesh cube, ball;
         MaterialPropertyBlock block, shotBlock;
         readonly Matrix4x4[] shotMatrices = new Matrix4x4[1023];
@@ -39,6 +48,7 @@ namespace VoxelBloom
             ball = BuildBall();
             block = new MaterialPropertyBlock();
             shotBlock = new MaterialPropertyBlock();
+            popBlock = new MaterialPropertyBlock();
         }
 
         public void Burst(Vector3 worldPos, Color32 c, float voxelSize, int n = 1)
@@ -55,6 +65,15 @@ namespace VoxelBloom
                 size[i] = voxelSize * Random.Range(0.55f, 0.95f);
                 color[i] = new Vector4(c.r / 255f, c.g / 255f, c.b / 255f, 1f);
             }
+        }
+
+        /// <summary>The hit voxel itself: flashes white, swells and shrinks to nothing (0.22 s) at its exact position.</summary>
+        public void PopCube(Vector3 worldPos, Color32 c, float voxelSize)
+        {
+            if (pops >= MaxPops) return;
+            int i = pops++;
+            popPos[i] = worldPos; popT[i] = 0f; popSize[i] = voxelSize;
+            popColor[i] = new Vector4(c.r / 255f, c.g / 255f, c.b / 255f, 1f);
         }
 
         /// <summary>Fires a cube from <paramref name="from"/> to <paramref name="to"/> on an arc; bursts on arrival.</summary>
@@ -98,6 +117,24 @@ namespace VoxelBloom
                 vel[i].y -= g * dt;
                 pos[i] += vel[i] * dt;
                 rot[i] = Quaternion.Euler(spin[i] * dt) * rot[i];
+            }
+            // hit cubes
+            int np = 0;
+            for (int i = 0; i < pops; i++)
+            {
+                popT[i] += dt;
+                const float dur = 0.22f;
+                if (popT[i] >= dur) { pops--; popPos[i] = popPos[pops]; popT[i] = popT[pops]; popSize[i] = popSize[pops]; popColor[i] = popColor[pops]; i--; continue; }
+                float k = popT[i] / dur;
+                float sc = popSize[i] * (k < 0.35f ? Mathf.Lerp(1f, 1.45f, k / 0.35f) : Mathf.Lerp(1.45f, 0f, (k - 0.35f) / 0.65f));
+                popMatrices[np] = Matrix4x4.TRS(popPos[i], Quaternion.identity, new Vector3(sc, sc, sc));
+                popBatchColors[np] = Vector4.Lerp(Vector4.one, popColor[i], k); // white flash -> own colour
+                np++;
+            }
+            if (np > 0)
+            {
+                popBlock.SetVectorArray(ColorId, popBatchColors);
+                Graphics.DrawMeshInstanced(cube, 0, VoxelMaterials.Fragment, popMatrices, np, popBlock, UnityEngine.Rendering.ShadowCastingMode.Off, false, gameObject.layer);
             }
             if (count == 0 && shots == 0) return;
             int n = Mathf.Min(count, matrices.Length);
