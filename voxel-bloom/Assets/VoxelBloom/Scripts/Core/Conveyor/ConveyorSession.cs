@@ -48,6 +48,8 @@ namespace VoxelBloom.Core
         public int Tick { get; private set; }
         public readonly int[] Slot;
         public int HopperPos { get; private set; }
+        /// <summary>Cubes waiting to enter the belt (own copy: the colour-shuffle booster may reorder it).</summary>
+        readonly int[] hopper;
         public readonly List<ConveyorTray> Queue = new List<ConveyorTray>();
         public readonly ConveyorStation[] Stations;
         public readonly List<ConveyorTransfer> Transfers = new List<ConveyorTransfer>();
@@ -65,6 +67,7 @@ namespace VoxelBloom.Core
             Level = level ?? throw new ArgumentNullException(nameof(level));
             C = level.Slots; L = C * P; V = level.Speed;
             Slot = (int[])level.Belt.Clone();
+            hopper = (int[])level.Hopper.Clone();
             for (int i = 0; i < level.Queue.Length; i++) Queue.Add(new ConveyorTray { Id = i, Colors = level.Queue[i] });
             Stations = new ConveyorStation[level.Stations.Length];
             for (int i = 0; i < Stations.Length; i++)
@@ -80,7 +83,7 @@ namespace VoxelBloom.Core
         // ------------------------------------------------------------------ queries
         public int SlotPos(int k) => (k * P + Offset) % L;
         public bool IsWon => Completed == Total;
-        public int HopperLeft => Level.Hopper.Length - HopperPos;
+        public int HopperLeft => hopper.Length - HopperPos;
         public int VisibleCount => Math.Min(Level.Visible, Queue.Count);
         public int UndoCount => undo?.Count ?? 0;
 
@@ -192,7 +195,7 @@ namespace VoxelBloom.Core
                     int d = (Level.Feeder - p0 + L) % L;
                     if (d != 0 && d <= V)
                     {
-                        Slot[k] = Level.Hopper[HopperPos++];
+                        Slot[k] = hopper[HopperPos++];
                         Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Feed, Slot = k, Color = Slot[k], Tick = Tick });
                     }
                 }
@@ -248,11 +251,50 @@ namespace VoxelBloom.Core
             return false;
         }
 
+        /// <summary>
+        /// "Amestecă culorile": reorders the colours of the cubes on the belt and in the feeder (positions stay, supply is
+        /// unchanged). A new arrangement is kept only if the greedy player can still win; otherwise nothing changes.
+        /// </summary>
+        public bool ShuffleColors(DeterministicRandom rand)
+        {
+            var idx = new List<int>();          // >= 0: belt slot, < 0: -(hopper index) - 1
+            var cols = new List<int>();
+            for (int k = 0; k < C; k++) if (Slot[k] >= 0) { idx.Add(k); cols.Add(Slot[k]); }
+            for (int h = HopperPos; h < hopper.Length; h++) { idx.Add(-h - 1); cols.Add(hopper[h]); }
+            if (cols.Count < 2) return false;
+            var orig = cols.ToArray();
+            for (int attempt = 0; attempt < 20; attempt++)
+            {
+                for (int i = cols.Count - 1; i > 0; i--) { int j = rand.Next(i + 1); int t = cols[i]; cols[i] = cols[j]; cols[j] = t; }
+                Assign(idx, cols);
+                if (ConveyorSolver.PlayGreedy(CloneForSim()).Won) { BoostersUsed++; return true; }
+            }
+            Assign(idx, new List<int>(orig));
+            return false;
+        }
+
+        /// <summary>Cubes still to deliver equal the compartments still to fill, per colour (invariant).</summary>
+        public bool HasValidSupply()
+        {
+            var need = new int[Level.Colors.Length];
+            foreach (var t in Queue) foreach (int c in t.Colors) need[c]++;
+            foreach (var st in Stations) if (st.Tray != null) for (int i = st.Tray.Reserved; i < st.Tray.Colors.Length; i++) need[st.Tray.Colors[i]]++;
+            foreach (int c in Slot) if (c >= 0) need[c]--;
+            for (int h = HopperPos; h < hopper.Length; h++) need[hopper[h]]--;
+            foreach (int n in need) if (n != 0) return false;
+            return true;
+        }
+
+        void Assign(List<int> idx, List<int> cols)
+        {
+            for (int i = 0; i < idx.Count; i++) { if (idx[i] >= 0) Slot[idx[i]] = cols[i]; else hopper[-idx[i] - 1] = cols[i]; }
+        }
+
         // ------------------------------------------------------------------ state
         sealed class State
         {
             public int Offset, Tick, HopperPos, Completed, Delivered, Placed, BoostersUsed;
-            public int[] Slot;
+            public int[] Slot, Hopper;
             public List<ConveyorTray> Queue;
             public StationLock[] Locks;
             public ConveyorTray[] Trays;
@@ -265,7 +307,7 @@ namespace VoxelBloom.Core
             var s = new State
             {
                 Offset = Offset, Tick = Tick, HopperPos = HopperPos, Completed = Completed, Delivered = Delivered, Placed = Placed, BoostersUsed = BoostersUsed,
-                Slot = (int[])Slot.Clone(), Queue = new List<ConveyorTray>(Queue), Locks = new StationLock[Stations.Length],
+                Slot = (int[])Slot.Clone(), Hopper = (int[])hopper.Clone(), Queue = new List<ConveyorTray>(Queue), Locks = new StationLock[Stations.Length],
                 Trays = new ConveyorTray[Stations.Length], Leave = new int[Stations.Length], Transfers = new List<ConveyorTransfer>(Transfers),
             };
             for (int i = 0; i < Stations.Length; i++) { s.Locks[i] = Stations[i].Lock; s.Trays[i] = Stations[i].Tray?.Clone(); s.Leave[i] = Stations[i].Leave; }
@@ -276,6 +318,7 @@ namespace VoxelBloom.Core
         {
             Offset = s.Offset; Tick = s.Tick; HopperPos = s.HopperPos; Completed = s.Completed; Delivered = s.Delivered; Placed = s.Placed; BoostersUsed = s.BoostersUsed;
             Array.Copy(s.Slot, Slot, Slot.Length);
+            Array.Copy(s.Hopper, hopper, hopper.Length);
             Queue.Clear(); Queue.AddRange(s.Queue);
             for (int i = 0; i < Stations.Length; i++) { Stations[i].Lock = s.Locks[i]; Stations[i].Tray = s.Trays[i]?.Clone(); Stations[i].Leave = s.Leave[i]; }
             Transfers.Clear(); Transfers.AddRange(s.Transfers);
@@ -304,11 +347,13 @@ namespace VoxelBloom.Core
             foreach (var t in Transfers) tr.Add(new List<object> { (double)t.Station, (double)t.Color, (double)t.Compartment, (double)t.T });
             var slots = new List<object>();
             foreach (int c in Slot) slots.Add((double)c);
+            var hop = new List<object>();
+            foreach (int c in hopper) hop.Add((double)c);
             return new Dictionary<string, object>
             {
                 { "level", (double)Level.Id }, { "rules", 3.0 }, { "sig", Signature(Level) }, { "offset", (double)Offset }, { "tick", (double)Tick }, { "hopperPos", (double)HopperPos },
                 { "completed", (double)Completed }, { "delivered", (double)Delivered }, { "placed", (double)Placed }, { "boosters", (double)BoostersUsed },
-                { "slots", slots }, { "queue", q }, { "stations", st }, { "transfers", tr },
+                { "slots", slots }, { "hopper", hop }, { "queue", q }, { "stations", st }, { "transfers", tr },
             };
         }
 
@@ -335,6 +380,8 @@ namespace VoxelBloom.Core
                 var slots = MiniJson.GetArr(d, "slots");
                 if (slots == null || slots.Count != s.C) return null;
                 for (int i = 0; i < s.C; i++) s.Slot[i] = (int)(double)slots[i];
+                var hop = MiniJson.GetArr(d, "hopper");
+                if (hop != null && hop.Count == s.hopper.Length) for (int i = 0; i < hop.Count; i++) s.hopper[i] = (int)(double)hop[i];
                 s.Offset = MiniJson.GetInt(d, "offset"); s.Tick = MiniJson.GetInt(d, "tick"); s.HopperPos = MiniJson.GetInt(d, "hopperPos");
                 s.Completed = MiniJson.GetInt(d, "completed"); s.Delivered = MiniJson.GetInt(d, "delivered"); s.Placed = MiniJson.GetInt(d, "placed");
                 s.BoostersUsed = MiniJson.GetInt(d, "boosters");

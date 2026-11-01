@@ -20,6 +20,7 @@ namespace VoxelBloom
         public static BoosterInventory Boosters { get; private set; }
         public static DailyRewards Daily { get; private set; }
         public static Progression Progress { get; private set; }
+        public static ConveyorEvents Events { get; private set; }
         public static IRewardedAdService Ads { get; private set; }
         public static AudioService Audio { get; set; }
         public static bool Initialized { get; private set; }
@@ -48,6 +49,8 @@ namespace VoxelBloom
             Boosters.Changed += (t, n) => { Save.Boosters[t] = n; };
             Daily = new DailyRewards(Config.Economy.DailyRewards, s.DailyLastClaimDay, s.DailyStreak);
             Progress = new Progression(Config, s, Wallet);
+            Events = new ConveyorEvents(s, Wallet, Boosters);
+            Events.Refresh(Now);
             Ads = AdServiceFactory.Create();
             Initialized = true;
             Commit();

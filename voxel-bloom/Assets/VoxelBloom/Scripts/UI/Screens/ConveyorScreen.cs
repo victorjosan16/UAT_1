@@ -29,7 +29,7 @@ namespace VoxelBloom
         public UIButton PauseButton, GearButton;
         public readonly UIButton[] BoosterButtons = new UIButton[3];
         public readonly VText[] BoosterCounts = new VText[3];
-        public static readonly BoosterType[] BoosterOrder = { BoosterType.Undo, BoosterType.Shuffle, BoosterType.ExtraStation };
+        public static readonly BoosterType[] BoosterOrder = { BoosterType.Shuffle, BoosterType.ColorShuffle, BoosterType.ExtraStation };
         public Image[] SlotCubes;
         public StationView[] Stations;
         public readonly List<QueueCard> Cards = new List<QueueCard>();
@@ -96,7 +96,7 @@ namespace VoxelBloom
             PauseButton.OnClick = () => controller.Pause();
             GearButton = UI.IconButton(hud, Icon.Gear, 100, ButtonStyle.Purple);
             ((RectTransform)GearButton.transform).Place(new Vector2(1, 0.5f), new Vector2(-50, 0), new Vector2(100, 100));
-            GearButton.OnClick = () => Router.Open<SettingsDialog>();
+            GearButton.OnClick = () => Router.Open<SettingsVioletDialog>();
 
             var lv = UI.Panel(hud, "LevelPill", Theme.Hex("#4B3BB0"), 40, true, 4f);
             var lr = (RectTransform)lv.transform.parent;
@@ -120,16 +120,11 @@ namespace VoxelBloom
         void BuildBoosters()
         {
             var row = UI.Rect(Root, "Boosters").BottomBand(24, 170, 150);
-            Icon[] icons = { Icon.Restart, Icon.Shuffle, Icon.CubePink };
+            Icon[] icons = { Icon.Refresh, Icon.ColorSwap, Icon.CubesPlus };
             for (int i = 0; i < 3; i++)
             {
                 var b = UI.IconButton(row, icons[i], 150, ButtonStyle.Purple);
                 ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / 3f, 0.5f), Vector2.zero, new Vector2(150, 150));
-                if (i == 2)
-                {
-                    var plus = UI.Icon(b.Face, Icon.Plus, 64);
-                    plus.rectTransform.Place(new Vector2(1, 0), new Vector2(-34, 34), new Vector2(64, 64));
-                }
                 var t = BoosterOrder[i];
                 b.Sound = Sfx.Booster;
                 b.OnClick = () => controller.UseBooster(t);

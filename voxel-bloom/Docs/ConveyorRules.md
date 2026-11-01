@@ -47,11 +47,15 @@
    colour of any station. Because supply equals demand, this happens only when the belt is full of cubes that no
    station needs while the needed ones wait in the hopper. That jam is the puzzle. The loss dialog offers Undo /
    Extra station (paid with coins if the inventory is empty), Retry (one life) or Quit. The game never softlocks.
-8. **Boosters** (never consumed on a failed action):
+8. **Boosters** (never consumed on a failed action). Since the 10-screen mockup, the three in-game boosters are
+   **Reîmprospătează** (Shuffle, 200 coins), **Amestecă culorile** (ColorShuffle, 300) and **Adaugă o tavă** (ExtraStation, 500).
+   Undo stays in the rules engine (tests) but is no longer offered in the UI:
    * **Undo:** restores the full state from just before the last tray placement (snapshot stack).
    * **Shuffle:** reorders the queued trays with a seeded random order. A new order is kept only if the greedy player
      can still win from the current state (up to 20 tries). Otherwise nothing changes and nothing is consumed.
-   * **Extra station:** opens the first green plus slot. Not available on levels without one.
+   * **Extra station / Adaugă o tavă:** opens the first green plus slot. Not available on levels without one.
+   * **Amestecă culorile:** reorders the colours of the cubes on the belt and in the feeder. Positions and per-colour counts
+     stay the same. A new arrangement is kept only if the greedy player can still win.
 9. **Stars:** 3 without boosters, 2 with one or two, 1 otherwise. Rewards: level coins (+10 per extra star); replays pay 25%;
    every 5th level gives +10 gems on the first clear.
 10. **Saving:** the unfinished level is saved as a snapshot (`ConveyorActive`) on every placement, on pause and on quit.
@@ -93,3 +97,25 @@ Per-level parameters and results: `Docs/ConveyorLevelReport.txt`. Level 1 is the
 * `Tests/EditMode/ConveyorRulesTests.cs`: the same rules in C#, witness replay of all 50 levels with identical tick counts,
   snapshot round trip, rejection of saves from another level version.
 * **Not run here:** Unity compile, EditMode/PlayMode in the Editor, Android build, device performance, real Unity screenshots.
+
+## Screens (10-panel mockup)
+| Mockup | Implementation | Notes |
+|---|---|---|
+| Title (logo, Joacă) | `TitleScreen` | 3D landscape backdrop (diorama without pedestal, camera on the waterfall) |
+| Home | `HomeScreen` | top bar (avatar, coins, gems, settings); Recompense / Evenimente / Clasament on the left; Colecție / Magazin on the right; green **Niveluri** |
+| Gameplay | `ConveyorScreen` | boosters: Reîmprospătează / Amestecă culorile / Adaugă o tavă |
+| Win | `ConveyorWinDialog` | violet panel, stars, cubes, reward (coins, gems on Greu / Foarte greu), Următorul / Reia |
+| Niveluri | `MapScreen` | winding golden path over a meadow with a river; 8 levels per page, stars, locks, page arrows and dots |
+| Cum se joacă? | `HowToPlayDialog` | shown before level 1 the first time; also in the pause menu |
+| Boostere | `BoostersInfoDialog` | buy one with coins; opens when a booster is at 0 |
+| Magazin | `StoreScreen` | tabs: Boostere (×3 for 500 / 750 / 1000 coins), Monede (for gems), Gems, Pachete (for gems) |
+| Evenimente | `EventsHubScreen` | Provocarea Zilnică (5 levels/day), Misiune Specială (200 cubes, repeats), Sezonul Curcubeu (15 stars in a 7-day season, countdown) |
+| Setări | `SettingsScreen` / `SettingsVioletDialog` | Sunet, Muzică, Vibrații, Limbă (Română), Salvare în cloud, Despre joc |
+| Clasament (button) | `LeaderboardScreen` | the player's own records |
+
+**Not configured, so shown honestly instead of faked:**
+* real-money gem packs: the button explains that payments are not configured;
+* cloud sync: the preference is saved, and a message says Google Play Games is needed;
+* an online leaderboard: it needs a server.
+
+The painted backgrounds of the mockup are replaced by the 3D diorama (Title and Home) and a procedural map (Niveluri).

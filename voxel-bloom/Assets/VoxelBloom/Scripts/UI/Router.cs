@@ -203,10 +203,14 @@ namespace VoxelBloom
         long shownSeconds = -1;
         public Action OnSettings, OnAddCoins, OnAvatar;
 
-        public static TopBar Create(Transform parent)
+        bool showLives = true;
+
+        /// <summary>Top bar; the reference Home shows avatar, coins, gems and settings only (showLives = false).</summary>
+        public static TopBar Create(Transform parent, bool showLives = true)
         {
             var rt = UI.Rect(parent, "TopBar").TopBand(24, 110, 30);
             var tb = rt.gameObject.AddComponent<TopBar>();
+            tb.showLives = showLives;
             tb.Build(rt);
             return tb;
         }
@@ -292,14 +296,17 @@ namespace VoxelBloom
             playerLevel.fontStyle = FontStyle.Bold;
             playerLevel.rectTransform.Stretch();
 
-            var hearts = PlaceArt(UIArt.Picture(rt, "HUD/pill_hearts_blank", 215 * k), 150 * k, 215 * k);
-            lives = Value(hearts, 0.687f, 0.44f, Theme.Hex("#3B1A78"), new Color(1, 1, 1, 0.5f));
-
-            var coinPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_coins_blank", 278 * k, true), 370 * k, 278 * k);
+            if (showLives)
+            {
+                var hearts = PlaceArt(UIArt.Picture(rt, "HUD/pill_hearts_blank", 215 * k), 150 * k, 215 * k);
+                lives = Value(hearts, 0.687f, 0.44f, Theme.Hex("#3B1A78"), new Color(1, 1, 1, 0.5f));
+            }
+            float cx = showLives ? 370 : 175, gx = showLives ? 652 : 480;
+            var coinPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_coins_blank", 278 * k, true), cx * k, 278 * k);
             coins = Value(coinPill, 0.52f, 0.43f, Color.white, Theme.Hex("#0E1430"));
             Hit(coinPill, new Vector2(0.74f, 0), Vector2.one, () => OnAddCoins?.Invoke());
 
-            var gemPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_gems_blank", 250 * k, true), 652 * k, 250 * k);
+            var gemPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_gems_blank", 250 * k, true), gx * k, 250 * k);
             gems = Value(gemPill, 0.535f, 0.35f, Color.white, Theme.Hex("#0E1430"));
             Hit(gemPill, new Vector2(0.72f, 0), Vector2.one, () => OnAddCoins?.Invoke());
 
@@ -324,7 +331,7 @@ namespace VoxelBloom
             if (gm != shownGems) { shownGems = gm; gems.text = gm.ToString(); }
             int l = Services.Lives.Count;
             long secs = Services.Lives.SecondsToNext(now);
-            if (l != shownLives || secs != shownSeconds)
+            if (lives != null && (l != shownLives || secs != shownSeconds))
             {
                 shownLives = l; shownSeconds = secs;
                 lives.text = l >= Services.Lives.Max ? "Full" : l + " · " + (secs / 60).ToString("00") + ":" + (secs % 60).ToString("00");

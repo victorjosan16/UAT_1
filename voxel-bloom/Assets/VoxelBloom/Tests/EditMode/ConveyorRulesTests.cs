@@ -169,5 +169,53 @@ namespace VoxelBloom.Tests
             snap["sig"] = "123";
             Assert.IsNull(ConveyorSession.FromSnapshot(l, snap));
         }
+
+        [Test]
+        public void ShuffleColors_KeepsEveryCube_AndStaysWinnable()
+        {
+            ConveyorLevel l = null;
+            foreach (var x in AllLevels()) if (x.Id == 11) { l = x; break; }
+            var s = new ConveyorSession(l);
+            int w = 0;
+            while (s.Tick < 600) { while (w < l.Witness.Length && l.Witness[w][0] == s.Tick) s.Place(l.Witness[w++][1]); s.Step(); }
+            var before = new int[l.Colors.Length];
+            foreach (int c in s.Slot) if (c >= 0) before[c]++;
+            int beltBefore = s.BeltCount, hopperBefore = s.HopperLeft;
+            if (s.ShuffleColors(new DeterministicRandom(5)))
+            {
+                var after = new int[l.Colors.Length];
+                foreach (int c in s.Slot) if (c >= 0) after[c]++;
+                Assert.AreEqual(beltBefore, s.BeltCount, "positions stay");
+                Assert.AreEqual(hopperBefore, s.HopperLeft);
+                Assert.AreEqual(1, s.BoostersUsed);
+                Assert.IsTrue(ConveyorSolver.PlayGreedy(s.CloneForSim()).Won, "still winnable");
+            }
+            else Assert.AreEqual(0, s.BoostersUsed, "not consumed when no arrangement works");
+            Assert.IsTrue(s.HasValidSupply(), "supply still equals demand");
+        }
+
+        [Test]
+        public void Events_Daily_Mission_Season_ClaimOnce()
+        {
+            var cfg = new GameConfig();
+            var save = SaveData.CreateNew(cfg);
+            var wallet = new Wallet(0);
+            var inv = new BoosterInventory();
+            var ev = new ConveyorEvents(save, wallet, inv);
+            long now = 1_800_000_000;
+            for (int i = 0; i < ConveyorEvents.DailyGoal; i++) ev.OnLevelCompleted(3, now);
+            Assert.IsTrue(ev.CanClaimDaily(now));
+            Assert.AreEqual(100, ev.ClaimDaily(now).Coins);
+            Assert.IsFalse(ev.CanClaimDaily(now), "once per day");
+            Assert.IsTrue(ev.CanClaimSeason(now), "15 stars earned");
+            Assert.AreEqual(20, ev.ClaimSeason(now).Gems);
+            Assert.AreEqual(1, inv.Count(BoosterType.ColorShuffle));
+            ev.OnCubesDelivered(250);
+            Assert.AreEqual(ConveyorEvents.MissionGoal, save.MissionCubes, "capped at the goal");
+            Assert.AreEqual(150, ev.ClaimMission().Coins);
+            Assert.AreEqual(0, save.MissionCubes, "mission repeats");
+            ev.Refresh(now + 86400);
+            Assert.AreEqual(0, save.DailyChallengeCount, "new day resets the daily challenge");
+        }
     }
 }

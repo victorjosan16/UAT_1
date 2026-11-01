@@ -8,6 +8,7 @@ namespace VoxelBloom
         Coin, Heart, Star, StarEmpty, Gear, Plus, Pause, Play, Close, Restart, ArrowLeft, ArrowRight, Lock, Check,
         Hammer, Shuffle, ColorBomb, Eliminate, Paw, Gift, Shop, Calendar, Avatar, Music, Sound, Vibrate, Trophy, Cube,
         Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue, Gem, Crown, PawGold, CalendarStar,
+        Map, Target, Refresh, ColorSwap, CubesPlus, Globe, Cloud, Info, Check2,
     }
 
     /// <summary>Generates and caches all UI sprites procedurally (see IconPainter).</summary>
@@ -135,6 +136,16 @@ namespace VoxelBloom
             Draw(p, icon);
             return ToSprite(p, "Icon_" + icon);
         });
+
+        /// <summary>Small isometric cube (top lighter, left mid, right darker).</summary>
+        static void Cube(IconPainter p, float cx, float cy, float r, Color c)
+        {
+            float h = r * 0.58f;
+            p.Polygon(Ink, new float[] { cx, cy - r, cx + r, cy - r + h, cx + r, cy + h, cx, cy + r, cx - r, cy + h, cx - r, cy - r + h }, null, 5);
+            p.Polygon(Theme.Darker(c, 0.82f), new float[] { cx - r, cy - r + h, cx, cy - r, cx, cy + r - h, cx - r, cy });
+            p.Polygon(Theme.Darker(c, 0.68f), new float[] { cx, cy - r, cx + r, cy - r + h, cx + r, cy, cx, cy + r - h });
+            p.Polygon(Theme.Lighter(c, 0.25f), new float[] { cx - r, cy, cx, cy + r - h, cx + r, cy, cx, cy + r });
+        }
 
         static void OutlinedCircle(IconPainter p, float x, float y, float r, Color c, float o = 6) { p.Circle(x, y, r + o, Ink); p.Circle(x, y, r, c, IconPainter.Vertical(Theme.Lighter(c, 0.3f), c, y - r, y + r)); }
         static void OutlinedRect(IconPainter p, float x0, float y0, float x1, float y1, float rad, Color c, float o = 6) { p.RoundRect(x0 - o, y0 - o, x1 + o, y1 + o, rad + o, Ink); p.RoundRect(x0, y0, x1, y1, rad, c, IconPainter.Vertical(Theme.Lighter(c, 0.3f), c, y0, y1)); }
@@ -281,6 +292,50 @@ namespace VoxelBloom
                     OutlinedPoly(p, Theme.Gold, new float[] { 64, 118, 112, 92, 112, 36, 64, 10, 16, 36, 16, 92 });
                     p.Polygon(Theme.Lighter(Theme.Gold, 0.45f), new float[] { 64, 118, 112, 92, 64, 66, 16, 92 });
                     p.Polygon(Theme.GoldDark, new float[] { 64, 66, 112, 92, 112, 36, 64, 10 });
+                    break;
+                case Icon.Map:
+                    // folded map with a red pin
+                    OutlinedPoly(p, Theme.Hex("#9FD8FF"), new float[] { 12, 22, 44, 30, 84, 22, 116, 30, 116, 98, 84, 90, 44, 98, 12, 90 });
+                    p.Polygon(Theme.Hex("#7EC7F5"), new float[] { 44, 30, 84, 22, 84, 90, 44, 98 });
+                    p.Polyline(Theme.Hex("#4CD964"), 6, 20, 50, 40, 62, 60, 52, 80, 66, 106, 58);
+                    OutlinedCircle(p, 64, 82, 18, Theme.Red); p.Polygon(Theme.Red, new float[] { 50, 76, 78, 76, 64, 52 }); p.Circle(64, 84, 7, W);
+                    break;
+                case Icon.Target:
+                    OutlinedCircle(p, 60, 60, 50, W); p.Circle(60, 60, 40, Theme.Red); p.Circle(60, 60, 28, W); p.Circle(60, 60, 16, Theme.Red);
+                    p.Line(60, 60, 112, 112, 8, Ink); p.Polygon(Theme.Hex("#4CD964"), new float[] { 104, 116, 120, 120, 116, 104 });
+                    break;
+                case Icon.Refresh:
+                {
+                    var g = Theme.Hex("#4CD964");
+                    for (int i = 0; i <= 24; i++) { float a0 = (40 + i * 11) * Mathf.Deg2Rad, a1 = (40 + (i + 1) * 11) * Mathf.Deg2Rad; if (i < 24) p.Line(64 + Mathf.Cos(a0) * 40, 64 + Mathf.Sin(a0) * 40, 64 + Mathf.Cos(a1) * 40, 64 + Mathf.Sin(a1) * 40, 30, Ink); }
+                    for (int i = 0; i < 24; i++) { float a0 = (40 + i * 11) * Mathf.Deg2Rad, a1 = (40 + (i + 1) * 11) * Mathf.Deg2Rad; p.Line(64 + Mathf.Cos(a0) * 40, 64 + Mathf.Sin(a0) * 40, 64 + Mathf.Cos(a1) * 40, 64 + Mathf.Sin(a1) * 40, 18, g); }
+                    OutlinedPoly(p, g, new float[] { 78, 112, 112, 96, 84, 70 });
+                    break;
+                }
+                case Icon.ColorSwap:
+                    Cube(p, 40, 40, 26, Theme.Hex("#FFD93B")); Cube(p, 88, 40, 26, Theme.Hex("#3E9BF0"));
+                    p.Polyline(Ink, 16, 34, 84, 64, 112, 94, 84); p.Polyline(Theme.Hex("#E84BB5"), 9, 34, 84, 64, 112, 94, 84);
+                    OutlinedPoly(p, Theme.Hex("#E84BB5"), new float[] { 82, 92, 106, 92, 98, 70 });
+                    break;
+                case Icon.CubesPlus:
+                    Cube(p, 40, 40, 26, Theme.Hex("#FFD93B")); Cube(p, 66, 82, 24, Theme.Hex("#3E9BF0"));
+                    OutlinedRect(p, 82, 30, 98, 74, 4, Theme.Hex("#4CD964")); OutlinedRect(p, 68, 44, 112, 60, 4, Theme.Hex("#4CD964"));
+                    break;
+                case Icon.Globe:
+                    OutlinedCircle(p, 64, 64, 50, Theme.Hex("#5AA8F0"));
+                    p.Ring(64, 64, 50, 5, Ink); p.Line(14, 64, 114, 64, 5, Ink); p.Line(64, 14, 64, 114, 5, Ink);
+                    p.Ring(64, 64, 26, 5, Ink);
+                    break;
+                case Icon.Cloud:
+                    p.Circle(44, 56, 26, Ink); p.Circle(74, 68, 32, Ink); p.Circle(96, 54, 22, Ink); p.RoundRect(22, 30, 112, 62, 16, Ink);
+                    p.Circle(44, 56, 20, W); p.Circle(74, 68, 26, W); p.Circle(96, 54, 16, W); p.RoundRect(28, 36, 106, 58, 12, W);
+                    p.Line(64, 34, 64, 62, 8, Theme.Blue); p.Polygon(Theme.Blue, new float[] { 52, 56, 76, 56, 64, 72 });
+                    break;
+                case Icon.Info:
+                    OutlinedCircle(p, 64, 64, 50, Theme.Hex("#6C5CE7")); p.RoundRect(56, 26, 72, 74, 6, W); p.Circle(64, 92, 9, W);
+                    break;
+                case Icon.Check2:
+                    OutlinedCircle(p, 64, 64, 50, Theme.Hex("#4CD964")); p.Polyline(W, 14, 38, 66, 56, 46, 92, 84);
                     break;
                 case Icon.Lightning: OutlinedPoly(p, Theme.Orange, new float[] { 74, 122, 26, 58, 58, 58, 46, 6, 102, 74, 70, 74 }); break;
                 case Icon.Video:

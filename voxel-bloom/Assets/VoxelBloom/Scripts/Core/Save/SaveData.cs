@@ -16,7 +16,7 @@ namespace VoxelBloom.Core
     /// <summary>All persistent player state. Serialized as versioned JSON by SaveSerializer.</summary>
     public sealed class SaveData
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         public int Version = CurrentVersion;
         public int Coins;
@@ -48,6 +48,16 @@ namespace VoxelBloom.Core
         public int ConveyorUnlocked = 1;
         public readonly Dictionary<int, int> ConveyorStars = new Dictionary<int, int>();
         public Dictionary<string, object> ConveyorActive;
+        /// <summary>Events (v5): daily challenge, special mission, season; "Cum se joacă?" seen; cloud-save preference.</summary>
+        public long DailyChallengeDay = -1;
+        public int DailyChallengeCount;
+        public bool DailyChallengeClaimed;
+        public int MissionCubes, MissionsDone;
+        public int SeasonId = -1, SeasonStars;
+        public bool SeasonClaimed;
+        public bool HowToPlaySeen;
+        public bool CloudSave;
+        public int CubesDelivered;
 
         public static SaveData CreateNew(GameConfig cfg)
         {
@@ -111,6 +121,10 @@ namespace VoxelBloom.Core
                 { "conveyorUnlocked", (double)s.ConveyorUnlocked },
                 { "conveyorStars", cstars },
                 { "conveyorActive", s.ConveyorActive },
+                { "dailyChallengeDay", (double)s.DailyChallengeDay }, { "dailyChallengeCount", (double)s.DailyChallengeCount }, { "dailyChallengeClaimed", s.DailyChallengeClaimed },
+                { "missionCubes", (double)s.MissionCubes }, { "missionsDone", (double)s.MissionsDone },
+                { "seasonId", (double)s.SeasonId }, { "seasonStars", (double)s.SeasonStars }, { "seasonClaimed", s.SeasonClaimed },
+                { "howToPlaySeen", s.HowToPlaySeen }, { "cloudSave", s.CloudSave }, { "cubesDelivered", (double)s.CubesDelivered },
             };
             return MiniJson.Serialize(d);
         }
@@ -164,6 +178,17 @@ namespace VoxelBloom.Core
                 foreach (var kv in cst)
                     if (int.TryParse(kv.Key, out int id) && kv.Value is double v) s.ConveyorStars[id] = Math.Max(1, Math.Min(3, (int)v));
             s.ConveyorActive = MiniJson.GetObj(d, "conveyorActive");
+            s.DailyChallengeDay = MiniJson.GetLong(d, "dailyChallengeDay", -1);
+            s.DailyChallengeCount = Math.Max(0, MiniJson.GetInt(d, "dailyChallengeCount"));
+            s.DailyChallengeClaimed = MiniJson.GetBool(d, "dailyChallengeClaimed");
+            s.MissionCubes = Math.Max(0, MiniJson.GetInt(d, "missionCubes"));
+            s.MissionsDone = Math.Max(0, MiniJson.GetInt(d, "missionsDone"));
+            s.SeasonId = MiniJson.GetInt(d, "seasonId", -1);
+            s.SeasonStars = Math.Max(0, MiniJson.GetInt(d, "seasonStars"));
+            s.SeasonClaimed = MiniJson.GetBool(d, "seasonClaimed");
+            s.HowToPlaySeen = MiniJson.GetBool(d, "howToPlaySeen");
+            s.CloudSave = MiniJson.GetBool(d, "cloudSave");
+            s.CubesDelivered = Math.Max(0, MiniJson.GetInt(d, "cubesDelivered"));
 
             // ---- migrations
             if (version < 2)

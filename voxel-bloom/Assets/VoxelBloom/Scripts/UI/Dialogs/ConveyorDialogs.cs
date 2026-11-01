@@ -15,6 +15,7 @@ namespace VoxelBloom
 
         protected override void OnBuild()
         {
+            VB.VioletPanel(Panel);
             var stars = UI.Rect(Body, "Stars").Place(new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(700, 220));
             for (int i = 0; i < 3; i++)
             {
@@ -78,25 +79,20 @@ namespace VoxelBloom
 
         protected override void OnBuild()
         {
-            var t = UI.Text(Body, "Banda e plină cu cuburi\nde care nu are nevoie nicio tavă.", 46, Theme.Ink);
+            VB.VioletPanel(Panel);
+            var t = UI.Text(Body, "Banda e plină cu cuburi\nde care nu are nevoie nicio tavă.", 46, Color.white);
             t.Wrap = true;
             t.rectTransform.TopBand(70, 170, 10);
             float y = 600;
-            if (Controller.CanUndo)
-            {
-                AddBooster(BoosterType.Undo, Icon.Restart, ref y);
-            }
-            if (Controller.HasPlusSlot)
-            {
-                AddBooster(BoosterType.ExtraStation, Icon.Plus, ref y);
-            }
+            AddBooster(BoosterType.ColorShuffle, Icon.ColorSwap, ref y);
+            if (Controller.HasPlusSlot) AddBooster(BoosterType.ExtraStation, Icon.CubesPlus, ref y);
             var retry = UI.Button(Body, "Reîncearcă", ButtonStyle.Green, new Vector2(640, 140), Icon.Restart, 58);
             ((RectTransform)retry.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 230), new Vector2(640, 140));
             retry.OnClick = () => { Controller.AcceptFailure(); Close(); Controller.Restart(); };
             var quit = UI.Button(Body, "Ieșire", ButtonStyle.White, new Vector2(460, 110), Icon.Home, 48);
             ((RectTransform)quit.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 80), new Vector2(460, 110));
             quit.OnClick = () => { Controller.AcceptFailure(); Close(); Controller.QuitToMap(); };
-            UI.Text(Body, "Reîncercarea costă o viață", 34, Theme.InkSoft).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 330), new Vector2(700, 44));
+            UI.Text(Body, "Reîncercarea costă o viață", 34, new Color(1, 1, 1, 0.8f)).rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 330), new Vector2(700, 44));
         }
 
         void AddBooster(BoosterType type, Icon icon, ref float y)
@@ -117,10 +113,11 @@ namespace VoxelBloom
     {
         public ConveyorController Controller;
         protected override string Title => "Pauză";
-        protected override Vector2 Size => new Vector2(860, 900);
+        protected override Vector2 Size => new Vector2(860, 1080);
 
         protected override void OnBuild()
         {
+            VB.VioletPanel(Panel);
             Add("Continuă", ButtonStyle.Green, Icon.Play, 0, () => { Close(); Controller.Resume(); });
             Add("Reia nivelul", ButtonStyle.Blue, Icon.Restart, 1, () => Router.Open<ConfirmDialog>(d =>
             {
@@ -128,8 +125,9 @@ namespace VoxelBloom
                 d.YesLabel = "Da";
                 d.OnYes = () => { Router.CloseAllDialogs(); Controller.Resume(); Controller.Restart(); };
             }));
-            Add("Setări", ButtonStyle.Purple, Icon.Gear, 2, () => Router.Open<SettingsDialog>());
-            Add("Ieși din nivel", ButtonStyle.White, Icon.Home, 3, () => { Router.CloseAllDialogs(); Controller.QuitToMap(); });
+            Add("Setări", ButtonStyle.Purple, Icon.Gear, 2, () => Router.Open<SettingsVioletDialog>());
+            Add("Cum se joacă?", ButtonStyle.Gold, Icon.Info, 3, () => Router.Open<HowToPlayDialog>());
+            Add("Ieși din nivel", ButtonStyle.White, Icon.Home, 4, () => { Router.CloseAllDialogs(); Controller.QuitToMap(); });
         }
 
         void Add(string label, ButtonStyle style, Icon icon, int row, Action a)

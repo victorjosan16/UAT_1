@@ -14,5 +14,7 @@ namespace VoxelBloom.Core
         Undo = 4,
         /// <summary>Conveyor: opens a green "plus" station (extra placement capacity).</summary>
         ExtraStation = 5,
+        /// <summary>Conveyor "Amestecă culorile": reorders the colours of the cubes on the belt and in the feeder.</summary>
+        ColorShuffle = 6,
     }
 }

@@ -11,6 +11,7 @@ const out = process.argv[2] || '/tmp/diorama.png';
 const heroId = process.argv[3] || 'fox';
 const yaw = +(process.argv[4] ?? -22) * Math.PI / 180;
 const D = JSON.parse(fs.readFileSync('Assets/VoxelBloom/Data/Resources/VoxelBloom/Home/diorama.json', 'utf8'));
+if (process.env.VB_HOME) { D.camera = D.homeCamera; D.parts = D.parts.filter((p) => p.model !== 'pedestal'); }
 const [W, H] = D.camera.texture;
 
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -47,7 +48,7 @@ function addModel(m, cells, pos, size, rot = 0) {
 }
 const decode = (s) => Int8Array.from(s, (ch) => ch === '.' ? -1 : ch <= '9' ? ch.charCodeAt(0) - 48 : ch.charCodeAt(0) - 87);
 for (const p of D.parts) { const m = D.models[p.model]; addModel(m, decode(m.cells), p.pos, p.size); }
-const hero = buildAll().find((m) => m.id === heroId);
+const hero = process.env.VB_HOME ? null : buildAll().find((m) => m.id === heroId);
 if (hero) { const g = hero.grid, vs = 1.6 / Math.max(g.X, g.Y, g.Z); addModel({ X: g.X, Y: g.Y, Z: g.Z, palette: hero.palette }, Array.from(g.v), [0, 0, 0], vs, yaw); }
 faces.sort((a, b) => b[0] - a[0]);
 console.log(faces.length, 'faces');

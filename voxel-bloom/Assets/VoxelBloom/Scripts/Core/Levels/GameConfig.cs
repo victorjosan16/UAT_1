@@ -103,6 +103,7 @@ namespace VoxelBloom.Core
             ReadBooster(b, "eliminate", BoosterType.Eliminate, cfg);
             ReadBooster(b, "undo", BoosterType.Undo, cfg);
             ReadBooster(b, "extraStation", BoosterType.ExtraStation, cfg);
+            ReadBooster(b, "colorShuffle", BoosterType.ColorShuffle, cfg);
             return cfg;
         }
 

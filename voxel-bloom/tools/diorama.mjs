@@ -7,6 +7,8 @@ import fs from 'fs';
 
 const OUT = 'Assets/VoxelBloom/Data/Resources/VoxelBloom/Home/diorama.json';
 export const CAMERA = { pos: [0, 1.85, -8.6], look: [0, -0.1, 0], fov: 40, texture: [900, 1950] };
+// Home / title backdrop of the reference mockup: no pedestal or mascot, looking at the waterfall cliffs
+export const HOME_CAMERA = { pos: [1.2, 1.6, -6.0], look: [2.6, 1.0, 7.0], fov: 46, texture: [900, 1950] };
 
 function hash(x, y, z) { let h = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791)) >>> 0; h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995) >>> 0; return (h & 1023) / 1023; }
 
@@ -211,7 +213,7 @@ export function buildDiorama() {
   for (const [k, prt, pos, s] of F) add(k, prt, pos, s);
   // fluffy clouds beside the logo
   add('cloud1', cloud(1, 22), [-3.3, 3.3, 18], 0.09); add('cloud2', cloud(2, 20), [3.5, 3.7, 19], 0.09);
-  return { camera: CAMERA, models, parts };
+  return { camera: CAMERA, homeCamera: HOME_CAMERA, models, parts };
 }
 
 if (process.argv[1] && process.argv[1].endsWith('diorama.mjs')) {

@@ -925,7 +925,7 @@
       "voxels": 12
     },
     "shuffle": {
-      "price": 300,
+      "price": 200,
       "startCount": 3
     },
     "colorBomb": {
@@ -943,6 +943,10 @@
     },
     "extraStation": {
       "price": 500,
+      "startCount": 3
+    },
+    "colorShuffle": {
+      "price": 300,
       "startCount": 3
     }
   },

@@ -154,7 +154,7 @@ namespace VoxelBloom
         /// with tools/preview-diorama.mjs). Returns false if the file is missing or invalid; the camera from the file is
         /// written to <paramref name="camPos"/>, <paramref name="camLook"/>, <paramref name="fov"/>.
         /// </summary>
-        public static bool AddDiorama(Transform parent, out Vector3 camPos, out Vector3 camLook, out float fov)
+        public static bool AddDiorama(Transform parent, out Vector3 camPos, out Vector3 camLook, out float fov, bool homeBackdrop = false)
         {
             camPos = new Vector3(0, 1.85f, -8.6f); camLook = new Vector3(0, -0.1f, 0); fov = 40f;
             var ta = Resources.Load<TextAsset>("VoxelBloom/Home/diorama");
@@ -162,7 +162,7 @@ namespace VoxelBloom
             try
             {
                 var root = MiniJson.Obj(MiniJson.Parse(ta.text));
-                var cam = MiniJson.GetObj(root, "camera");
+                var cam = MiniJson.GetObj(root, homeBackdrop ? "homeCamera" : "camera") ?? MiniJson.GetObj(root, "camera");
                 if (cam != null)
                 {
                     camPos = V3(MiniJson.GetArr(cam, "pos"), camPos);
@@ -175,6 +175,7 @@ namespace VoxelBloom
                 {
                     var part = MiniJson.Obj(po);
                     string key = MiniJson.GetString(part, "model");
+                    if (homeBackdrop && key == "pedestal") continue; // the backdrop has no mascot pedestal
                     if (!built.TryGetValue(key, out var m))
                     {
                         var md = MiniJson.GetObj(models, key);

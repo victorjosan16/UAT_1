@@ -49,7 +49,7 @@ namespace VoxelBloom
             }
             Router.Create();
             State.TryTransition(GameState.Home);
-            Router.Instance.Show<HomeScreen>();
+            Router.Instance.Show<TitleScreen>();
         }
 
         void OnApplicationPause(bool paused)

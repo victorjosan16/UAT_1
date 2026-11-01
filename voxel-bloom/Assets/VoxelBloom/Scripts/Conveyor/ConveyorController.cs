@@ -64,6 +64,11 @@ namespace VoxelBloom
             view.LevelText.text = "Nivel <color=#FFD84A>" + def.Id + "</color>";
             RefreshAll();
             App.State.ForceReset(GameState.Ready);
+            if (def.Tutorial && !Services.Save.HowToPlaySeen)
+            {
+                paused = true; // "Cum se joacă?" before the first level
+                Router.Instance.Open<HowToPlayDialog>(d => d.Closed = () => paused = false);
+            }
         }
 
         // ------------------------------------------------------------------ input
@@ -152,6 +157,8 @@ namespace VoxelBloom
                         break;
                     case ConveyorEventType.Land:
                         Services.Audio.Play(Sfx.Pop, 1f + e.Compartment * 0.08f, 0.7f);
+                        Services.Events.OnCubesDelivered(1); // "Misiune Specială"
+                        Services.Save.CubesDelivered++;
                         RefreshStation(e.Station);
                         var cell = view.Stations[e.Station].Cells[Mathf.Clamp(e.Compartment, 0, view.Stations[e.Station].Cells.Length - 1)];
                         Tween.Pop(cell.transform, 0.25f, 0.18f);
@@ -332,17 +339,17 @@ namespace VoxelBloom
             bool ok;
             switch (t)
             {
-                case BoosterType.Undo:
-                    ok = session.UndoLast();
-                    if (!ok) Router.Instance.Toast("Nu ai ce anula încă", Icon.Restart);
-                    break;
                 case BoosterType.Shuffle:
                     ok = session.Shuffle(new DeterministicRandom(level.Id * 7919 + session.Tick));
-                    if (!ok) Router.Instance.Toast("Nu există o altă ordine bună acum", Icon.Shuffle);
+                    if (!ok) Router.Instance.Toast("Nu există o altă ordine bună acum", Icon.Refresh);
+                    break;
+                case BoosterType.ColorShuffle:
+                    ok = session.ShuffleColors(new DeterministicRandom(level.Id * 104729 + session.Tick));
+                    if (!ok) Router.Instance.Toast("Nu există o altă aranjare bună acum", Icon.ColorSwap);
                     break;
                 case BoosterType.ExtraStation:
                     ok = session.ExtraStation();
-                    if (!ok) Router.Instance.Toast("Nu există stații + pe acest nivel", Icon.Plus);
+                    if (!ok) Router.Instance.Toast("Nu există sloturi + pe acest nivel", Icon.CubesPlus);
                     break;
                 default: ok = false; break;
             }
@@ -360,26 +367,17 @@ namespace VoxelBloom
 
         void OfferBooster(BoosterType t)
         {
-            int price = Services.Config.Booster(t).Price;
-            Router.Instance.Open<ConfirmDialog>(d =>
-            {
-                d.Message = BoosterName(t) + "\nCumperi 1 pentru " + price + " monede?";
-                d.YesLabel = "Cumpără";
-                d.OnYes = () =>
-                {
-                    if (Services.Boosters.Buy(t, Services.Config, Services.Wallet) != PurchaseResult.Success) { Router.Instance.Toast("Nu ai destule monede", Icon.Coin); return; }
-                    Services.Commit();
-                    RefreshHud();
-                };
-            });
+            paused = true;
+            Router.Instance.Open<BoostersInfoDialog>(d => { d.Changed = RefreshHud; d.Closed = () => paused = false; });
         }
 
-        public static string BoosterName(BoosterType t) => t == BoosterType.Undo ? "Anulează mutarea" : t == BoosterType.Shuffle ? "Amestecă tăvile" : t == BoosterType.ExtraStation ? "Stație extra" : t.ToString();
+        public static string BoosterName(BoosterType t) => t == BoosterType.Shuffle ? "Reîmprospătează" : t == BoosterType.ColorShuffle ? "Amestecă culorile" : t == BoosterType.ExtraStation ? "Adaugă o tavă" : t == BoosterType.Undo ? "Anulează mutarea" : t.ToString();
 
         // ------------------------------------------------------------------ win / loss
         void Win()
         {
             var receipt = Services.Progress.CompleteConveyor(level, session.BoostersUsed, TotalLevels);
+            Services.Events.OnLevelCompleted(receipt.Stars, Services.Now); // "Provocarea Zilnică" and the season
             Services.Commit();
             Services.Audio.Play(Sfx.Win);
             Router.Instance.Open<ConveyorWinDialog>(d => { d.Receipt = receipt; d.Level = level; });
@@ -441,14 +439,14 @@ namespace VoxelBloom
         {
             if (!finished) SaveProgress();
             paused = false;
-            Router.Instance.Show<ConveyorLevelsScreen>();
+            Router.Instance.Show<MapScreen>();
         }
 
         public void NextLevel()
         {
             int next = level.Id + 1;
             if (next <= TotalLevels && Services.Progress.IsConveyorUnlocked(next, TotalLevels)) StartLevel(next);
-            else Router.Instance.Show<ConveyorLevelsScreen>();
+            else Router.Instance.Show<MapScreen>();
         }
 
         public void OnScreenHidden()
