@@ -108,6 +108,26 @@ namespace VoxelBloom
             return ToSprite(p, "Glow");
         });
 
+        /// <summary>Soft sun rays (16 wedges fading outwards), for static backgrounds.</summary>
+        public static Sprite Rays() => Cached("rays", () =>
+        {
+            const int S = 256;
+            var t = new Texture2D(S, S, TextureFormat.RGBA32, false) { name = "Rays", wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[S * S];
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float dx = (x + 0.5f) / S * 2f - 1f, dy = (y + 0.5f) / S * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy), a = Mathf.Atan2(dy, dx);
+                    float wedge = Mathf.SmoothStep(0.25f, 0.75f, 0.5f + 0.5f * Mathf.Cos(a * 16f));
+                    float fade = Mathf.Clamp01(1f - r) * Mathf.Clamp01(r * 6f);
+                    float glow = Mathf.Clamp01(1f - r * 2.2f) * 0.6f;
+                    px[x + y * S] = new Color32(255, 255, 255, (byte)(255 * Mathf.Clamp01(wedge * fade * 0.8f + glow)));
+                }
+            t.SetPixels32(px); t.Apply();
+            return Sprite.Create(t, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 100f);
+        });
+
         // ------------------------------------------------------------------ icons
         public static Sprite Get(Icon icon) => Cached("icon" + icon, () =>
         {

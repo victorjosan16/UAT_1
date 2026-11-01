@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VoxelBloom.Core;
 
 namespace VoxelBloom
 {
@@ -147,5 +148,59 @@ namespace VoxelBloom
             }
             return b.Spawn(parent, "Bush", pos, size);
         }
+
+        /// <summary>
+        /// Builds the Home diorama from Resources/VoxelBloom/Home/diorama.json (authored by tools/diorama.mjs and previewed
+        /// with tools/preview-diorama.mjs). Returns false if the file is missing or invalid; the camera from the file is
+        /// written to <paramref name="camPos"/>, <paramref name="camLook"/>, <paramref name="fov"/>.
+        /// </summary>
+        public static bool AddDiorama(Transform parent, out Vector3 camPos, out Vector3 camLook, out float fov)
+        {
+            camPos = new Vector3(0, 1.85f, -8.6f); camLook = new Vector3(0, -0.1f, 0); fov = 40f;
+            var ta = Resources.Load<TextAsset>("VoxelBloom/Home/diorama");
+            if (ta == null) return false;
+            try
+            {
+                var root = MiniJson.Obj(MiniJson.Parse(ta.text));
+                var cam = MiniJson.GetObj(root, "camera");
+                if (cam != null)
+                {
+                    camPos = V3(MiniJson.GetArr(cam, "pos"), camPos);
+                    camLook = V3(MiniJson.GetArr(cam, "look"), camLook);
+                    fov = (float)MiniJson.GetDouble(cam, "fov", fov);
+                }
+                var models = MiniJson.GetObj(root, "models");
+                var built = new Dictionary<string, (sbyte[] cells, int x, int y, int z, Color32[] pal)>();
+                foreach (var po in MiniJson.GetArr(root, "parts"))
+                {
+                    var part = MiniJson.Obj(po);
+                    string key = MiniJson.GetString(part, "model");
+                    if (!built.TryGetValue(key, out var m))
+                    {
+                        var md = MiniJson.GetObj(models, key);
+                        var palList = MiniJson.GetArr(md, "palette");
+                        var pal = new Color32[palList.Count];
+                        for (int k = 0; k < pal.Length; k++) pal[k] = ColorUtility.TryParseHtmlString((string)palList[k], out var col) ? (Color32)col : new Color32(255, 0, 255, 255);
+                        m = (VoxelGrid.Decode(MiniJson.GetString(md, "cells", "")), MiniJson.GetInt(md, "X"), MiniJson.GetInt(md, "Y"), MiniJson.GetInt(md, "Z"), pal);
+                        if (m.cells.Length != m.x * m.y * m.z) throw new System.FormatException("diorama model " + key + " has a wrong size");
+                        built[key] = m;
+                    }
+                    var go = new GameObject(key, typeof(MeshFilter), typeof(MeshRenderer), typeof(VoxelModelView));
+                    go.transform.SetParent(parent, false);
+                    go.transform.localPosition = V3(MiniJson.GetArr(part, "pos"), Vector3.zero);
+                    go.GetComponent<VoxelModelView>().SetModel(m.cells, m.x, m.y, m.z, m.pal, (float)MiniJson.GetDouble(part, "size", 0.1));
+                }
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[Props] diorama.json ignored: " + e.Message);
+                for (int i = parent.childCount - 1; i >= 0; i--) Object.Destroy(parent.GetChild(i).gameObject);
+                return false;
+            }
+        }
+
+        static Vector3 V3(List<object> a, Vector3 fallback)
+            => a != null && a.Count == 3 ? new Vector3((float)(double)a[0], (float)(double)a[1], (float)(double)a[2]) : fallback;
     }
 }

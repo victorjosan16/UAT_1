@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using VoxelBloom.Core;
 
 namespace VoxelBloom.Tests
 {
@@ -23,6 +24,25 @@ namespace VoxelBloom.Tests
         {
             foreach (var p in Required)
                 Assert.IsNotNull(Resources.Load<Texture2D>("VBUI/" + p), "missing Resources/VBUI/" + p);
+        }
+
+        [Test]
+        public void HomeDiorama_ParsesAndEveryModelHasConsistentSize()
+        {
+            var ta = Resources.Load<TextAsset>("VoxelBloom/Home/diorama");
+            Assert.IsNotNull(ta, "Resources/VoxelBloom/Home/diorama.json (node tools/diorama.mjs)");
+            var root = MiniJson.Obj(MiniJson.Parse(ta.text));
+            var models = MiniJson.GetObj(root, "models");
+            Assert.IsNotNull(models);
+            foreach (var kv in models)
+            {
+                var m = MiniJson.Obj(kv.Value);
+                int n = MiniJson.GetInt(m, "X") * MiniJson.GetInt(m, "Y") * MiniJson.GetInt(m, "Z");
+                Assert.AreEqual(n, VoxelGrid.Decode(MiniJson.GetString(m, "cells", "")).Length, kv.Key);
+                Assert.LessOrEqual(MiniJson.GetArr(m, "palette").Count, 36, kv.Key);
+            }
+            foreach (var p in MiniJson.GetArr(root, "parts"))
+                Assert.IsTrue(models.ContainsKey(MiniJson.GetString(MiniJson.Obj(p), "model")));
         }
     }
 }

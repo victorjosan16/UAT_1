@@ -28,7 +28,11 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             catalog = new CharacterCatalog(Services.Config);
-            UI.Sky(Root, Theme.Hex("#3FA9F5"), Theme.Hex("#B8E4FF"));
+            UI.Sky(Root, Theme.Hex("#2F93F0"), Theme.Hex("#A6DCFF"));
+            var rays = UI.Image(Root, "SunRays", SpriteFactory.Rays(), new Color(1f, 1f, 1f, 0.35f), false);
+            rays.rectTransform.anchorMin = rays.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            rays.rectTransform.anchoredPosition = new Vector2(0, -470);
+            rays.rectTransform.sizeDelta = new Vector2(1500, 1500);
             painted = UIArt.Get("Backgrounds/home_background", default, false); // optional drop-in
             if (painted != null)
             {
@@ -54,6 +58,8 @@ namespace VoxelBloom
 
         public override bool FadeIn => false;
         Sprite painted;
+        Vector3 camPos, camLook;
+        float camFov;
 
         // ------------------------------------------------------------------ full-screen 3D landscape + pedestal (static)
         void BuildDiorama()
@@ -72,9 +78,16 @@ namespace VoxelBloom
             var scene = new GameObject("Scenery").transform;
             scene.SetParent(stage.transform, false);
             const float v = 0.085f;
-            if (painted == null) BuildScenery(scene, v);
-            // purple/gold display pedestal
-            Props.AddPedestal(scene, Vector3.zero, 13, v);
+            camPos = new Vector3(0, 1.85f, -8.6f); camLook = new Vector3(0, -0.1f, 0); camFov = 40f;
+            if (painted == null && Props.AddDiorama(scene, out camPos, out camLook, out camFov))
+            {
+                // data-driven landscape (tools/diorama.mjs): forest, waterfall cliffs, river, daisies, clouds, pedestal
+            }
+            else
+            {
+                if (painted == null) BuildScenery(scene, v);
+                Props.AddPedestal(scene, Vector3.zero, 13, v); // purple/gold display pedestal
+            }
             BuildStageView();
         }
 
@@ -106,7 +119,7 @@ namespace VoxelBloom
             hero = CharacterPreview.Create(stage.Pivot);
             hero.Static = true; // home page is static
             // camera: model in the upper middle of the screen (like the reference), looking slightly down
-            stage.SetCamera(new Vector3(0, 1.85f, -8.6f), new Vector3(0, -0.1f, 0), 40f); // pedestal sits just above the carousel strip
+            stage.SetCamera(camPos, camLook, camFov); // pedestal sits just above the carousel strip
             stage.TargetYaw = stage.Yaw = -22f;
 
             var raw = UI.Raw(Root, "Landscape", stage.Texture);
