@@ -1,37 +1,25 @@
-# Level validation & solver
+# Level validation & solver (rules v2: 4 columns, 4 launchers)
 
-All 100 levels are produced by `tools/build-data.mjs` with deterministic seeds and validated
-before they are written.
+All 120 levels are produced by `tools/build-data.mjs` with deterministic seeds and validated before they are written.
 
-## What is guaranteed
-* **Solvable**: every level stores a `witness` (the board slot tapped at each move). Replaying it
-  through the rules wins the level within `moveLimit`. Since the witness *is* a solution, solvability
-  is proven per level, not estimated. Checked by `node tools/test-rules.mjs` (JS rules) and by the
-  EditMode test `Witness_ReplaysToWin_WithIdenticalMovesAndScore_AllLevels` (C# rules). Identical moves
-  and score in both languages prove the two rule implementations agree.
-* **Distinct**: no two levels share the same (voxels, deck) configuration (checked at build time and by tests).
-* **Structurally valid**: every colour has at least as much attack power in the deck as it has voxels.
+## Guaranteed
+* **Solvable:** every level stores a `witness` (the column tapped at each move). `replay()` (JS) and
+  `GreedySolver.Replay` (C#) apply it as *settle → tap → … → resolve* and must win with the recorded score and
+  move count. Identical results in both languages prove the two rule implementations agree.
+* **Unique and multicolour:** one distinct object per level, at least 6 colours from the 12-colour palette.
+* **Structurally valid:** for every colour the blocks hold at least as many voxels as the model.
 
-## How the witness is found: a heuristic, not an exhaustive search
-`solveGreedy` (JS) / `GreedySolver` (C#) picks, at each move, the board block that maximises
-immediately useful destruction (prefers colours with exposed voxels and avoids overkill on almost finished
-colours). It is **not** a complete search:
-* if it fails, the level is regenerated with a new seed, even though a cleverer player might have won;
-* it does not prove that a level is *hard*, or that every line of play is winnable (most are not, by design).
+## How the witness is found (heuristic, not exhaustive)
+`bestColumn` taps the column whose top colour is visible and still needed (prefers colours with many exposed voxels).
+A win proves solvability; a failed search only means the heuristic missed — the level is regenerated.
 
-## Difficulty calibration
-* A casual player model (random taps, preferring playable colours 60% of the time) plays 32–64 games.
-* The move limit is binary-searched over the witness length so that this model wins about
-  `0.9 - 0.45·d` of games (d = 0 → 1 across the 100 levels).
-* **HARD levels (every 5th level)** target 0.3 lower (min 0.15) and pay **x2.5 coins**. Those coins buy
-  boosters, notably **Eliminare** (150 coins), which removes a jammed attack from the queue.
-* Later chapters add more colours, smaller attack powers (2–64), hidden cores (interior voxels
-  recoloured so they surprise the player when exposed) and bigger models.
+## Difficulty
+* **Inner colour layers:** voxels 2+ (and 4+) cells deep get colours that are not on the surface. Their blocks must
+  wait in a launcher until digging exposes them.
+* **Column order bias:** mostly-hidden colours are pushed towards the top of the columns, so loading them too early
+  can jam all 4 launchers.
+* A casual player model (random taps, 60% preferring visible colours) plays 24 games per candidate; the candidate
+  closest to the target win rate (`0.9 − 0.5·d`, HARD levels 0.3 lower) is kept. See `Docs/LevelReport.txt`.
 
-See `Docs/LevelReport.txt` for per-level numbers (voxels, colours, deck size, witness moves, move limit,
-casual win rate, reward).
-
-## Removal order (shared by both implementations)
-Within one attack, exposed voxels of the attack colour are removed by: highest `y` first, then
-farthest from the vertical axis, then lowest cell index. Exposure is evaluated when the attack fires
-and recomputed after each destruction.
+## Removal order
+Highest `y` first, then farthest from the vertical axis, then lowest index (per-colour priority heaps).

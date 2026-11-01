@@ -27,17 +27,17 @@ namespace VoxelBloom.Tests
             Assert.NotNull(c);
             Assert.AreEqual(GameState.Ready, App.State.Current);
 
-            foreach (int slot in c.Level.Witness)
+            // play like a player: whenever a launcher is free, tap the column the solver heuristic prefers
+            float guard = 0;
+            while (!c.Session.IsWon && App.State.Current != GameState.LevelFailed && guard < 90f)
             {
-                float guard = 0;
-                while (App.State.Current != GameState.Ready) // witness assumes each tap fully resolves
+                if (c.Session.FreeLauncher() >= 0)
                 {
-                    guard += Time.unscaledDeltaTime;
-                    Assert.Less(guard, 10f, "controller stalled");
-                    yield return null;
+                    int col = GreedySolver.BestColumn(c.Session);
+                    if (col >= 0) c.OnColumnTapped(col);
                 }
-                c.OnBlockTapped(slot);
-                yield return new WaitForSecondsRealtime(0.05f);
+                guard += Time.unscaledDeltaTime;
+                yield return new WaitForSecondsRealtime(0.1f);
             }
             float t = 0;
             while (App.State.Current != GameState.LevelComplete && t < 30f) { t += Time.unscaledDeltaTime; yield return null; }

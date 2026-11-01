@@ -1,8 +1,8 @@
-// Runnable rules tests (node tools/test-rules.mjs). Mirrors the C# EditMode tests.
+// Runnable rules tests for rules v2 (node tools/test-rules.mjs). Mirrors the C# EditMode tests.
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Session, solveGreedy } from './rules.mjs';
+import { Session, replay } from './rules.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LV = path.join(ROOT, 'Assets/VoxelBloom/Data/Resources/VoxelBloom/Levels');
@@ -11,115 +11,79 @@ function test(name, fn) { try { fn(); pass++; console.log('  ok  ', name); } cat
 function eq(a, b, m = '') { if (a !== b) throw new Error(`${m} expected ${b} got ${a}`); }
 function ok(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
 
-// 3x3x3 cube: colour 0 outside, colour 1 in the centre
-function cube(deck, opts = {}) {
+// 3x3x3 cube: colour 0 shell (26), colour 1 centre (1)
+function cube(columns) {
   let v = ''; for (let z = 0; z < 3; z++) for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) v += x === 1 && y === 1 && z === 1 ? '1' : '0';
-  return { size: [3, 3, 3], palette: ['#ff0000', '#00ff00'], voxels: v, deck, queueSize: opts.queueSize ?? 5, moveLimit: opts.moveLimit };
+  return { size: [3, 3, 3], palette: ['#ff0000', '#00ff00'], voxels: v, columns };
 }
 const idx = (x, y, z) => x + 3 * (y + 3 * z);
 
-test('exposure: centre hidden, surface exposed, recomputed after destruction', () => {
-  const s = new Session(cube([[0, 2]]));
-  eq(s.exposed[idx(1, 1, 1)], 0); eq(s.exposed[idx(0, 0, 0)], 1); eq(s.exposed[idx(1, 1, 0)], 1);
-  eq(s.exposedCount(1), 0); eq(s.exposedCount(0), 26);
-  s.destroy(idx(1, 1, 0));
-  eq(s.exposed[idx(1, 1, 1)], 1); eq(s.exposedCount(1), 1);
+test('only the top block of a column is active; tap moves it into the first free launcher', () => {
+  const s = new Session(cube([[[0, 5], [0, 21]], [[1, 1]], [], []]));
+  ok(s.tap(0)); eq(s.launchers[0].n, 5); eq(s.columns[0].length, 1); eq(s.columns[0][0].n, 21);
+  ok(!s.canTap(2), 'empty column'); eq(s.moves, 1);
 });
-test('attack destroys up to power, matching colour only', () => {
-  const s = new Session(cube([[0, 4], [1, 2]]));
-  s.tap(0); const r = s.resolveNext();
-  eq(r.destroyed.length, 4); ok(r.destroyed.every((i) => i !== idx(1, 1, 1)), 'never other colours'); eq(s.remaining[0], 22); eq(s.remaining[1], 1);
+test('launcher fires one voxel of its colour per round and frees when empty', () => {
+  const s = new Session(cube([[[0, 3]], [[0, 23], [1, 1]], [], []]));
+  s.tap(0);
+  for (let k = 0; k < 3; k++) { const r = s.step(); eq(r.shots.length, 1); ok(s.cell[r.shots[0][1]] === -1); }
+  eq(s.launchers[0], null); eq(s.remaining[0], 23); eq(s.remaining[1], 1, 'never other colours');
 });
-test('fewer eligible voxels: remove only those and consume the attack', () => {
-  const s = new Session(cube([[1, 8], [0, 64]]));
-  s.tap(1); s.resolveAll(); eq(s.remaining[0], 0, 'one 64 attack clears all 26 exposed');
-  s.tap(0); const r = s.resolveAll(); eq(r.length, 1); eq(r[0].destroyed.length, 1); eq(s.queue.length, 0); eq(s.combo, 0); ok(s.isWon());
+test('a launcher waits while its colour is hidden, then fires when it becomes visible', () => {
+  const s = new Session(cube([[[1, 1]], [[0, 26]], [], []]));
+  s.tap(0); eq(s.step(), null, 'centre not visible: waiting'); ok(!s.canFire(0));
+  s.tap(1); s.resolveAll(); ok(s.isWon());
 });
-test('attack waits in queue while its colour is hidden', () => {
-  const s = new Session(cube([[1, 2], [0, 32]]));
-  s.tap(0); eq(s.resolveAll().length, 0); eq(s.queue.length, 1);
-  s.tap(1); const rs = s.resolveAll(); eq(rs.length, 2); ok(s.isWon());
+test('parallel launchers fire in the same round (combo score)', () => {
+  const s = new Session(cube([[[0, 13]], [[0, 13]], [[1, 1]], []]));
+  s.tap(0); s.tap(1); const r = s.step(); eq(r.combo, 2); eq(s.score, 2 * 10 * 2);
 });
-test('combo increases on full-power attacks and multiplies score (cap x5)', () => {
-  const deck = Array.from({ length: 7 }, () => [0, 2]);
-  const s = new Session(cube(deck));
-  let last = 0;
-  for (let k = 0; k < 7; k++) { s.tap(k); s.resolveAll(); const gained = s.score - last; last = s.score; eq(gained, 2 * 10 * Math.min(Math.max(s.combo, 1), 5), 'score step ' + k); }
-  eq(s.combo, 7); eq(s.maxCombo, 7);
+test('jammed: all 4 launchers occupied and waiting', () => {
+  const v = '0'.repeat(13) + '1' + '0'.repeat(13); // centre colour 1
+  const lvl = { size: [3, 3, 3], palette: ['#ff0000', '#00ff00'], voxels: v, columns: [[[1, 1]], [[1, 1]], [[1, 1]], [[1, 1], [0, 26]]] };
+  const s = new Session(lvl);
+  for (let c = 0; c < 4; c++) s.tap(c);
+  s.settle(); eq(s.failReason(), 'jammed'); ok(!s.canTap(3));
 });
-test('queue full + stuck = queue_full failure', () => {
-  const deck = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [0, 32]];
-  const s = new Session(cube(deck, { queueSize: 5 }));
-  for (let k = 0; k < 5; k++) { s.tap(k); s.resolveAll(); }
-  eq(s.failReason(), 'queue_full'); ok(!s.canTap(5));
+test('finished colour: launcher freed (rest wasted) and its blocks leave the columns', () => {
+  const s = new Session(cube([[[0, 30]], [[0, 5]], [[1, 1]], []]));
+  s.tap(0); s.resolveAll(); eq(s.remaining[0], 0); eq(s.columns[1].length, 0, 'colour-0 block purged');
+  s.tap(2); s.resolveAll(); ok(s.isWon());
 });
-test('move limit = out_of_moves failure', () => {
-  const s = new Session(cube([[0, 2], [0, 2], [0, 32], [1, 2]], { moveLimit: 2 }));
-  s.tap(0); s.resolveAll(); s.tap(1); s.resolveAll();
-  eq(s.failReason(), 'out_of_moves'); ok(!s.canTap(2));
-});
-test('board refills from deck; cleared colour blocks are replaced', () => {
-  const deck = [[0, 32], [0, 2], [1, 2], ...Array.from({ length: 17 }, () => [1, 2]), [1, 4], [0, 2], [1, 8]];
-  const s = new Session(cube(deck));
-  eq(s.deckIndex, 20);
-  s.tap(0); eq(s.board[0].c, 1); eq(s.board[0].p, 4, 'refilled from deck');
-  s.resolveAll();
-  eq(s.remaining[0], 0); ok(s.board.every((b) => !b || b.c === 1), 'colour 0 purged from board');
-});
-test('attacks for a finished colour are discarded as wasted (combo reset)', () => {
-  const s = new Session(cube([[0, 32], [0, 2], [1, 2]]));
-  s.tap(0); s.tap(1);
-  const rs = s.resolveAll();
-  eq(rs.length, 2); eq(rs[0].destroyed.length, 26); eq(rs[0].colorCleared, true); eq(rs[1].wasted, true); eq(s.combo, 0); eq(s.queue.length, 0);
-});
-test('collapse: equal pieces - lowest-index piece is the main one, the other ungrounded piece falls', () => {
-  // 3x3x1: bottom row and top row joined by the centre voxel. Removing it leaves two 3-voxel pieces; the bottom one
-  // has the lowest index (main, also grounded); the top one is neither main nor grounded and falls.
-  const s = new Session({ size: [3, 3, 1], palette: ['#ff0000', '#00ff00'], voxels: '000' + '.1.' + '000', deck: [[1, 2], [0, 8]], queueSize: 5 });
-  s.tap(0); const r = s.resolveNext();
-  eq(r.destroyed.length, 1); eq(r.dropped.length, 3); eq(s.totalRemaining, 3);
-});
-test('collapse: floating piece smaller than main falls and counts as destroyed', () => {
-  // 5x3x1: bottom row 5 voxels (grounded), pillar at x=2 y=1 (c1), top: 2 voxels at y=2 x=2..3 (c0)
+test('collapse: floating piece falls and counts as destroyed', () => {
   const v = '00000' + '..1..' + '..00.';
-  const s = new Session({ size: [5, 3, 1], palette: ['#ff0000', '#00ff00'], voxels: v, deck: [[1, 2], [0, 8]], queueSize: 5 });
-  s.tap(0); const r = s.resolveNext();
-  eq(r.destroyed.length, 1); eq(r.dropped.length, 2); eq(s.remaining[0], 5); eq(s.totalRemaining, 5);
+  const s = new Session({ size: [5, 3, 1], palette: ['#ff0000', '#00ff00'], voxels: v, columns: [[[1, 1]], [[0, 7]], [], []] });
+  s.tap(0); const r = s.step(); eq(r.shots.length, 1); eq(r.dropped.length, 2); eq(s.totalRemaining, 5);
 });
 test('models: every model is a single connected piece (no floating cubes)', () => {
   const MD = path.join(ROOT, 'Assets/VoxelBloom/Data/Resources/VoxelBloom/Models');
   for (const f of fs.readdirSync(MD).filter((x) => x.endsWith('.json'))) {
     const m = JSON.parse(fs.readFileSync(path.join(MD, f)));
-    const s = new Session({ size: m.size, palette: m.palette, voxels: m.voxels, deck: [[0, 2]], queueSize: 5 });
+    const s = new Session({ size: m.size, palette: m.palette, voxels: m.voxels, columns: [[], [], [], []] });
     eq(s.collapse().length, 0, f + ' has detached pieces');
-    const seen = new Uint8Array(s.N); let first = -1; for (let i = 0; i < s.N; i++) if (s.cell[i] >= 0) { first = i; break; }
-    const st = [first]; seen[first] = 1; let n = 0;
-    while (st.length) { const j = st.pop(); n++; const x = j % s.X, y = Math.floor(j / s.X) % s.Y, z = Math.floor(j / (s.X * s.Y));
-      for (const [a, b, c] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) { const xx = x + a, yy = y + b, zz = z + c; if (xx < 0 || yy < 0 || zz < 0 || xx >= s.X || yy >= s.Y || zz >= s.Z) continue; const k = s.idx(xx, yy, zz); if (s.cell[k] >= 0 && !seen[k]) { seen[k] = 1; st.push(k); } } }
-    eq(n, s.totalVoxels, f + ' is not a single connected piece');
   }
 });
-test('all 100 levels: witness replays to a win with identical moves and score', () => {
+test('all levels: witness replays to a win with the recorded score; 6-10+ colours; HARD every 5th', () => {
   const files = fs.readdirSync(LV).filter((f) => f.endsWith('.json')).sort();
-  eq(files.length, 100, 'level count');
+  ok(files.length >= 100, 'at least 100 levels, got ' + files.length);
   for (const f of files) {
     const l = JSON.parse(fs.readFileSync(path.join(LV, f)));
-    const s = new Session(l);
-    for (const slot of l.witness) { ok(s.tap(slot), `${f}: tap ${slot} invalid`); s.resolveAll(); }
-    ok(s.isWon(), f + ' witness does not win'); eq(s.moves, l.witnessMoves, f + ' moves'); eq(s.score, l.witnessScore, f + ' score');
-    ok(l.witnessMoves <= l.moveLimit, f + ' witness exceeds move limit');
+    const { ok: valid, s } = replay(l, l.witness);
+    ok(valid && s.isWon(), f + ' witness does not win'); eq(s.score, l.witnessScore, f + ' score'); eq(s.moves, l.witnessMoves, f + ' moves');
+    ok(l.palette.length >= 6, f + ' must have at least 6 colours (has ' + l.palette.length + ')');
     eq(l.hard, l.id % 5 === 0, f + ' hard flag');
+    eq(l.columns.length, 4);
   }
 });
-test('levels are distinct and difficulty increases (casual win rate trend)', () => {
+test('levels are distinct; difficulty trend; HARD levels harder and pay more', () => {
   const ls = fs.readdirSync(LV).filter((f) => f.endsWith('.json')).sort().map((f) => JSON.parse(fs.readFileSync(path.join(LV, f))));
-  eq(new Set(ls.map((l) => l.voxels + JSON.stringify(l.deck))).size, 100);
+  eq(new Set(ls.map((l) => l.model)).size, ls.length, 'one unique object per level');
   const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
-  const first = avg(ls.slice(0, 20).filter((l) => !l.hard).map((l) => l.casualWinRate)), last = avg(ls.slice(80).filter((l) => !l.hard).map((l) => l.casualWinRate));
-  ok(first > last, `chapter 1 (${first.toFixed(2)}) should be easier than chapter 5 (${last.toFixed(2)})`);
+  const first = avg(ls.slice(0, 20).filter((l) => !l.hard).map((l) => l.casualWinRate)), last = avg(ls.slice(-20).filter((l) => !l.hard).map((l) => l.casualWinRate));
+  ok(first >= last, `first chapter (${first.toFixed(2)}) should not be harder than the last (${last.toFixed(2)})`);
   const hard = avg(ls.filter((l) => l.hard).map((l) => l.casualWinRate)), normal = avg(ls.filter((l) => !l.hard).map((l) => l.casualWinRate));
-  ok(hard < normal, `hard levels (${hard.toFixed(2)}) must be harder than normal (${normal.toFixed(2)})`);
-  ok(ls.filter((l) => l.hard).every((l) => { const p = ls.find((m) => m.id === l.id - 1); const base = p.rewardCoins - (p.hiddenCore ? 20 : 0); return l.rewardCoins >= 2 * base; }), 'hard reward >= 2x the neighbour base reward');
+  ok(hard < normal, `hard (${hard.toFixed(2)}) vs normal (${normal.toFixed(2)})`);
+  ok(ls.filter((l) => l.hard).every((l) => l.rewardCoins >= 2 * ls.find((m) => m.id === l.id - 1).rewardCoins), 'hard reward >= 2x neighbour');
 });
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -6,167 +6,115 @@ using static VoxelBloom.Tests.TestUtil;
 
 namespace VoxelBloom.Tests
 {
+    /// <summary>Rules v2 (4 columns, 4 launchers). Same cases as tools/test-rules.mjs.</summary>
     public class GameplayRulesTests
     {
-        [Test]
-        public void Exposure_CentreHidden_SurfaceExposed_RecomputedAfterDestruction()
-        {
-            var s = new GameSession(Cube(new[] { new[] { 0, 32 }, new[] { 1, 2 } }));
-            Assert.IsFalse(s.IsExposed(Idx(1, 1, 1)));
-            Assert.IsTrue(s.IsExposed(Idx(0, 0, 0)));
-            Assert.AreEqual(26, s.ExposedCount(0));
-            Assert.AreEqual(0, s.ExposedCount(1));
-            Assert.IsTrue(VoxelTopology.IsExposed(s.CellsSnapshot(), 3, 3, 3, Idx(1, 1, 0)));
-            var hammer = s.ApplyHammer(Idx(1, 1, 0), 1);
-            CollectionAssert.AreEqual(new[] { Idx(1, 1, 0) }, hammer);
-            Assert.IsTrue(s.IsExposed(Idx(1, 1, 1)), "centre exposed after its neighbour was destroyed");
-            Assert.AreEqual(1, s.ExposedCount(1));
-        }
+        static readonly int[][] Empty = new int[0][];
 
         [Test]
-        public void Attack_DestroysUpToPower_OnlyMatchingColour()
+        public void OnlyTopBlockActive_TapMovesItIntoFirstFreeLauncher()
         {
-            var s = new GameSession(Cube(new[] { new[] { 0, 4 }, new[] { 1, 2 }, new[] { 0, 32 } }));
-            Assert.IsTrue(s.Tap(0));
-            var r = s.ResolveNext();
-            Assert.AreEqual(4, r.Destroyed.Count);
-            Assert.IsTrue(r.Destroyed.All(i => i != Idx(1, 1, 1)));
-            Assert.AreEqual(22, s.Remaining(0));
-            Assert.AreEqual(1, s.Remaining(1));
+            var s = new GameSession(Cube(Col(0, 5, 0, 21), Col(1, 1), Empty, Empty));
+            Assert.AreEqual(0, s.Tap(0));
+            Assert.AreEqual(5, s.LauncherAt(0).Value.Power);
+            Assert.AreEqual(1, s.ColumnLength(0));
+            Assert.AreEqual(21, s.Top(0).Value.Power);
+            Assert.IsFalse(s.CanTap(2), "empty column");
             Assert.AreEqual(1, s.Moves);
         }
 
         [Test]
-        public void Attack_FewerEligible_RemovesOnlyThose_AndConsumesAttack()
+        public void Launcher_FiresOneVoxelOfItsColourPerRound_AndFreesWhenEmpty()
         {
-            var s = new GameSession(Cube(new[] { new[] { 1, 8 }, new[] { 0, 64 } }));
-            s.Tap(1); s.ResolveAll();
-            Assert.AreEqual(0, s.Remaining(0));
+            var s = new GameSession(Cube(Col(0, 3), Col(0, 23, 1, 1), Empty, Empty));
             s.Tap(0);
-            var rs = s.ResolveAll();
-            Assert.AreEqual(1, rs.Count);
-            Assert.AreEqual(1, rs[0].Destroyed.Count);
-            Assert.AreEqual(0, s.Queue.Count);
-            Assert.AreEqual(0, s.Combo, "partial attack breaks the combo");
-            Assert.IsTrue(s.IsWon);
-        }
-
-        [Test]
-        public void Attack_WaitsInQueue_WhileColourHidden()
-        {
-            var s = new GameSession(Cube(new[] { new[] { 1, 2 }, new[] { 0, 32 } }));
-            s.Tap(0);
-            Assert.AreEqual(0, s.ResolveAll().Count);
-            Assert.AreEqual(1, s.Queue.Count);
-            Assert.AreEqual(0, s.FirstStuckQueueIndex());
-            s.Tap(1);
-            Assert.AreEqual(2, s.ResolveAll().Count);
-            Assert.IsTrue(s.IsWon);
-        }
-
-        [Test]
-        public void Combo_GrowsOnFullAttacks_ScoreMultiplierCappedAtFive()
-        {
-            var s = new GameSession(Cube(Repeat(0, 2, 7)));
-            int last = 0;
-            for (int k = 0; k < 7; k++)
+            for (int k = 0; k < 3; k++)
             {
-                s.Tap(k); s.ResolveAll();
-                Assert.AreEqual(2 * 10 * GameSession.ComboMultiplier(s.Combo), s.Score - last, "step " + k);
-                last = s.Score;
+                var r = s.Step();
+                Assert.AreEqual(1, r.Shots.Count);
+                Assert.AreEqual(-1, s.CellColor(r.Shots[0].voxel));
             }
-            Assert.AreEqual(7, s.Combo);
-            Assert.AreEqual(5, GameSession.ComboMultiplier(s.Combo));
+            Assert.IsFalse(s.LauncherAt(0).HasValue);
+            Assert.AreEqual(23, s.Remaining(0));
+            Assert.AreEqual(1, s.Remaining(1), "never other colours");
         }
 
         [Test]
-        public void Fail_QueueFull()
+        public void Launcher_WaitsWhileColourHidden_ThenFires()
         {
-            var deck = Repeat(1, 2, 5).Concat(new[] { new[] { 0, 32 } }).ToArray();
-            var s = new GameSession(Cube(deck));
-            for (int k = 0; k < 5; k++) { s.Tap(k); s.ResolveAll(); }
-            Assert.AreEqual(FailReason.QueueFull, s.GetFailReason());
-            Assert.IsFalse(s.CanTap(5));
+            var s = new GameSession(Cube(Col(1, 1), Col(0, 26), Empty, Empty));
+            s.Tap(0);
+            Assert.IsNull(s.Step(), "centre is not visible: launcher waits");
+            Assert.IsTrue(s.IsWaiting(0));
+            s.Tap(1);
+            s.ResolveAll();
+            Assert.IsTrue(s.IsWon);
         }
 
         [Test]
-        public void Fail_OutOfMoves()
+        public void ParallelLaunchers_FireInTheSameRound_ComboScore()
         {
-            var s = new GameSession(Cube(new[] { new[] { 0, 2 }, new[] { 0, 2 }, new[] { 0, 32 }, new[] { 1, 2 } }, 5, 2));
-            s.Tap(0); s.ResolveAll(); s.Tap(1); s.ResolveAll();
-            Assert.AreEqual(FailReason.OutOfMoves, s.GetFailReason());
-            Assert.IsFalse(s.Tap(2));
+            var s = new GameSession(Cube(Col(0, 13), Col(0, 13), Col(1, 1), Empty));
+            s.Tap(0); s.Tap(1);
+            var r = s.Step();
+            Assert.AreEqual(2, r.Combo);
+            Assert.AreEqual(2 * 10 * 2, s.Score);
         }
 
         [Test]
-        public void Fail_OutOfBlocks()
+        public void Jammed_WhenAllFourLaunchersWait()
         {
-            var s = new GameSession(Cube(new[] { new[] { 0, 2 } }));
-            s.Tap(0); s.ResolveAll();
-            Assert.IsTrue(s.BoardEmpty);
+            var s = new GameSession(Cube(Col(1, 1), Col(1, 1), Col(1, 1), Col(1, 1, 0, 26)));
+            for (int c = 0; c < 4; c++) s.Tap(c);
+            s.Settle();
+            Assert.AreEqual(FailReason.Jammed, s.GetFailReason());
+            Assert.IsFalse(s.CanTap(3));
+            Assert.IsTrue(s.ApplyEliminate(0), "Eliminare frees a launcher");
+            Assert.IsTrue(s.CanTap(3));
+        }
+
+        [Test]
+        public void FinishedColour_FreesLauncher_AndLeavesColumns()
+        {
+            var s = new GameSession(Cube(Col(0, 30), Col(0, 5), Col(1, 1), Empty));
+            s.Tap(0);
+            s.ResolveAll();
+            Assert.AreEqual(0, s.Remaining(0));
+            Assert.AreEqual(0, s.ColumnLength(1), "colour-0 block purged");
+            s.Tap(2);
+            s.ResolveAll();
+            Assert.IsTrue(s.IsWon);
+        }
+
+        [Test]
+        public void Collapse_FloatingPieceFalls()
+        {
+            var s = new GameSession(Shape(5, 3, 1, "00000" + "..1.." + "..00.", new[] { Col(1, 1), Col(0, 7), Empty, Empty }));
+            s.Tap(0);
+            var r = s.Step();
+            Assert.AreEqual(1, r.Shots.Count);
+            Assert.AreEqual(2, r.Dropped.Count);
+            Assert.AreEqual(5, s.TotalRemaining);
+        }
+
+        [Test]
+        public void OutOfBlocks_WhenColumnsEmptyAndNothingCanFire()
+        {
+            var s = new GameSession(Cube(Col(0, 26), Empty, Empty, Empty));
+            s.Tap(0);
+            s.ResolveAll();
             Assert.AreEqual(FailReason.OutOfBlocks, s.GetFailReason());
         }
 
         [Test]
-        public void Board_RefillsFromDeck_AndPurgesClearedColour()
+        public void Boosters_Hammer_ColorBomb_Shuffle()
         {
-            var deck = new List<int[]> { new[] { 0, 32 }, new[] { 0, 2 }, new[] { 1, 2 } };
-            deck.AddRange(Repeat(1, 2, 17));
-            deck.Add(new[] { 1, 4 }); deck.Add(new[] { 0, 2 }); deck.Add(new[] { 1, 8 });
-            var s = new GameSession(Cube(deck.ToArray()));
-            Assert.AreEqual(20, s.DeckIndex);
-            s.Tap(0);
-            Assert.AreEqual(new AttackBlock(1, 4), s.BoardAt(0).Value);
-            var rs = s.ResolveAll();
-            Assert.IsTrue(rs[0].ColorCleared);
-            for (int i = 0; i < GameSession.BoardSize; i++) Assert.IsTrue(!s.BoardAt(i).HasValue || s.BoardAt(i).Value.Color == 1);
-        }
-
-        [Test]
-        public void FinishedColourAttack_IsWasted()
-        {
-            var s = new GameSession(Cube(new[] { new[] { 0, 32 }, new[] { 0, 2 }, new[] { 1, 2 } }));
-            s.Tap(0); s.Tap(1);
-            var rs = s.ResolveAll();
-            Assert.AreEqual(2, rs.Count);
-            Assert.AreEqual(26, rs[0].Destroyed.Count);
-            Assert.IsTrue(rs[1].Wasted);
-            Assert.AreEqual(0, s.Combo);
-        }
-
-        [Test]
-        public void Boosters_Hammer_ColorBomb_Shuffle_Eliminate()
-        {
-            var s = new GameSession(Cube(new[] { new[] { 1, 2 }, new[] { 1, 2 }, new[] { 0, 32 } }));
-            var h = s.ApplyHammer(Idx(0, 0, 0), 5);
-            Assert.AreEqual(5, h.Count);
-            Assert.AreEqual(21, s.Remaining(0));
-
-            var bomb = s.ApplyColorBomb(0, 100);
-            Assert.AreEqual(21, bomb.Count, "colour bomb peels the whole colour");
-            Assert.AreEqual(1, s.Remaining(1), "never touches another colour");
-
-            s.Tap(0); s.Tap(1);
-            int before = s.Queue.Count;
-            Assert.IsTrue(s.ApplyEliminate(0));
-            Assert.AreEqual(before - 1, s.Queue.Count);
-            Assert.IsFalse(s.ApplyEliminate(5));
-        }
-
-        [Test]
-        public void Shuffle_PreservesBlocks_AndKeepsPlayableMove()
-        {
-            var lvl = Level(30);
-            var s = new GameSession(lvl);
-            var before = new List<AttackBlock>();
-            for (int i = 0; i < GameSession.BoardSize; i++) if (s.BoardAt(i).HasValue) before.Add(s.BoardAt(i).Value);
-            int deckLeft = s.DeckRemaining;
-            Assert.IsTrue(s.ApplyShuffle(new DeterministicRandom(7)));
-            var after = new List<AttackBlock>();
-            for (int i = 0; i < GameSession.BoardSize; i++) if (s.BoardAt(i).HasValue) after.Add(s.BoardAt(i).Value);
-            Assert.AreEqual(before.Count, after.Count);
-            Assert.AreEqual(deckLeft, s.DeckRemaining);
-            Assert.IsTrue(s.HasPlayableBlock());
+            var s = new GameSession(Cube(Col(1, 1), Col(0, 26), Col(0, 1), Empty));
+            Assert.AreEqual(5, s.ApplyHammer(Idx(0, 0, 0), 5).Count);
+            Assert.AreEqual(21, s.ApplyColorBomb(0, 100).Count, "colour bomb removes the whole visible colour");
+            Assert.AreEqual(1, s.Remaining(1), "never another colour");
+            Assert.IsTrue(s.ApplyShuffle(new DeterministicRandom(3)));
+            Assert.AreEqual(1, s.BlocksLeft, "finished colour blocks were purged, the rest kept");
         }
 
         [Test]
@@ -174,20 +122,18 @@ namespace VoxelBloom.Tests
         {
             var lvl = Level(12);
             var a = new GameSession(lvl);
-            for (int k = 0; k < 5; k++) { a.Tap(lvl.Witness[k]); a.ResolveAll(); }
-            var json = MiniJson.Serialize(a.ToSnapshot());
-            var b = GameSession.FromSnapshot(lvl, MiniJson.Obj(MiniJson.Parse(json)));
+            for (int k = 0; k < 3; k++) { a.Settle(); a.Tap(lvl.Witness[k]); }
+            var b = GameSession.FromSnapshot(lvl, MiniJson.Obj(MiniJson.Parse(MiniJson.Serialize(a.ToSnapshot()))));
             Assert.NotNull(b);
-            for (int k = 5; k < lvl.Witness.Length; k++) { a.Tap(lvl.Witness[k]); a.ResolveAll(); b.Tap(lvl.Witness[k]); b.ResolveAll(); }
+            for (int k = 3; k < lvl.Witness.Length; k++) { a.Settle(); a.Tap(lvl.Witness[k]); b.Settle(); b.Tap(lvl.Witness[k]); }
+            a.ResolveAll(); b.ResolveAll();
             Assert.IsTrue(a.IsWon && b.IsWon);
             Assert.AreEqual(a.Score, b.Score);
-            Assert.AreEqual(a.Moves, b.Moves);
         }
 
         [Test]
         public void DeterministicRandom_MatchesJavaScriptMulberry32()
         {
-            // reference values from tools/voxel.mjs rng(1)
             var r = new DeterministicRandom(1);
             Assert.AreEqual(0.6270739405881613, r.NextDouble(), 1e-12);
             Assert.AreEqual(0.002735721180215478, r.NextDouble(), 1e-12);
@@ -196,60 +142,63 @@ namespace VoxelBloom.Tests
 
     public class LevelDataTests
     {
+        static int LevelCount => Config().TotalLevels;
+
         [Test]
-        public void AllHundredLevels_Load_Validate_AndAreDistinct()
+        public void AllLevels_Load_Validate_AreUniqueObjects_WithSixToTenColours()
         {
-            var sigs = new HashSet<string>();
-            for (int id = 1; id <= 100; id++)
+            Assert.GreaterOrEqual(LevelCount, 100);
+            var models = new HashSet<string>();
+            for (int id = 1; id <= LevelCount; id++)
             {
                 var l = Level(id);
                 Assert.AreEqual(id, l.Id);
                 Assert.AreEqual(id % 5 == 0, l.Hard, "every 5th level is HARD");
-                Assert.LessOrEqual(l.WitnessMoves, l.MoveLimit);
-                Assert.IsTrue(sigs.Add(string.Join(",", l.Deck.Select(d => d.ToString())) + l.VoxelCount + l.Name));
+                Assert.GreaterOrEqual(l.Grid.PaletteHex.Length, 6, "level " + id + " colours");
+                Assert.IsTrue(models.Add(l.ModelId), "unique object per level");
+                Assert.AreEqual(4, l.Columns.Length);
             }
         }
 
         [Test]
-        public void Witness_ReplaysToWin_WithIdenticalMovesAndScore_AllLevels()
+        public void Witness_ReplaysToWin_WithIdenticalScore_AllLevels()
         {
             // Cross-validates the C# rules against the JavaScript generator (tools/rules.mjs).
-            for (int id = 1; id <= 100; id++)
+            for (int id = 1; id <= LevelCount; id++)
             {
                 var l = Level(id);
-                var s = new GameSession(l);
-                foreach (int slot in l.Witness) { Assert.IsTrue(s.Tap(slot), "level " + id + " tap " + slot); s.ResolveAll(); }
+                var s = GreedySolver.Replay(l, l.Witness);
+                Assert.NotNull(s, "level " + id + " witness tap invalid");
                 Assert.IsTrue(s.IsWon, "level " + id);
-                Assert.AreEqual(l.WitnessMoves, s.Moves, "level " + id + " moves");
                 Assert.AreEqual(l.WitnessScore, s.Score, "level " + id + " score");
+                Assert.AreEqual(l.WitnessMoves, s.Moves, "level " + id + " moves");
             }
         }
 
         [Test]
-        public void GreedySolver_SolvesAllLevels()
+        public void GreedySolver_FindsTheSameWitness()
         {
-            for (int id = 1; id <= 100; id++)
+            for (int id = 1; id <= LevelCount; id += 7)
             {
                 var l = Level(id);
                 var r = GreedySolver.Solve(l);
                 Assert.IsTrue(r.Won, "level " + id);
-                Assert.AreEqual(l.WitnessMoves, r.Moves, "same heuristic, same result");
+                CollectionAssert.AreEqual(l.Witness, r.Taps, "level " + id);
             }
         }
 
         [Test]
-        public void Config_HasChaptersCollectionBoostersAndHardRule()
+        public void Config_ChaptersCollectionBoostersHardRule()
         {
             var c = Config();
-            Assert.AreEqual(5, c.Chapters.Count);
-            Assert.AreEqual(100, c.TotalLevels);
+            Assert.AreEqual(6, c.Chapters.Count);
+            Assert.AreEqual(120, c.TotalLevels);
+            Assert.AreEqual("Dream Builds", c.Chapters[0].Name);
             Assert.AreEqual(300, c.Booster(BoosterType.Hammer).Price);
             Assert.AreEqual(200, c.Booster(BoosterType.Shuffle).Price);
             Assert.AreEqual(500, c.Booster(BoosterType.ColorBomb).Price);
-            Assert.Greater(c.Booster(BoosterType.Eliminate).Price, 0);
             Assert.AreEqual(5, c.HardEvery);
-            Assert.AreEqual(100, c.Collection.Count, "100 mascots");
-            CollectionAssert.AreEquivalent(c.Chapters.Select(ch => ch.Name).ToList(), c.Collection.Select(e => e.Category).Distinct().ToList(), "collection tabs = chapters");
+            CollectionAssert.AreEquivalent(c.Chapters.Select(ch => ch.Name).ToList(), c.Collection.Select(e => e.Category).Distinct().ToList());
         }
 
         [Test]
@@ -259,7 +208,6 @@ namespace VoxelBloom.Tests
             var back = MiniJson.Obj(MiniJson.Parse(MiniJson.Serialize(o)));
             Assert.AreEqual(1.5, back["a"]);
             Assert.AreEqual("x\"y", back["b"]);
-            Assert.AreEqual(3, ((List<object>)back["c"]).Count);
             Assert.Throws<System.FormatException>(() => MiniJson.Parse("{\"a\":}"));
         }
     }

@@ -3,6 +3,7 @@
 import { Grid, rng, connectComponents } from './voxel.mjs';
 import { defineAnimals } from './animals.mjs';
 import { defineMascots } from './mascots.mjs';
+import { defineObjects } from './objects.mjs';
 
 const C = {
   yellow: '#FFD23F', gold: '#F5A623', white: '#F7F4EA', cream: '#FFF1C9', red: '#E8343A', orange: '#FF8A1F',
@@ -22,6 +23,7 @@ function model(id, name, category, colorNames, X, Y, Z, build) {
 // 1-10: detailed chibi heroes (animals.mjs); 11-100: parametric templates (mascots.mjs)
 defineAnimals(model);
 defineMascots(model);
+defineObjects(model); // 101-120: Colorful Builds
 
 // Converts anim meta from build space to trimmed model space; eyes become front-most cell indices.
 function exportAnim(a, g) {

@@ -29,12 +29,13 @@ namespace VoxelBloom
             return v;
         }
 
-        /// <summary>Blocks whose colour has no reachable voxel right now are dimmed.</summary>
-        public void SetPlayable(bool playable)
+        /// <summary>Row 0 is active (dimmed slightly when its colour is not visible yet); deeper rows are previews.</summary>
+        public void SetPlayable(bool visibleColour, int row = 0)
         {
             var cg = Root.GetComponent<CanvasGroup>();
             if (cg == null) cg = Root.gameObject.AddComponent<CanvasGroup>();
-            cg.alpha = playable ? 1f : 0.5f;
+            cg.alpha = row > 0 ? 0.45f : (visibleColour ? 1f : 0.75f);
+            Root.localScale = Vector3.one * (row > 0 ? 0.94f : 1f);
         }
 
         public void Set(AttackBlock? block, Color32[] palette)
@@ -100,9 +101,12 @@ namespace VoxelBloom
     public sealed class GameplayScreen : ScreenBase
     {
         public VoxelStage Stage { get; private set; }
-        public readonly BlockView[] Board = new BlockView[GameSession.BoardSize];
-        public readonly BlockView[] QueueBlocks = new BlockView[5];
-        public readonly RectTransform[] QueueSlots = new RectTransform[5];
+        public const int VisibleRows = 4;
+        /// <summary>Board[col * VisibleRows + row]; row 0 is the active top block of the column.</summary>
+        public readonly BlockView[] Board = new BlockView[GameSession.Columns * VisibleRows];
+        public readonly BlockView[] LauncherBlocks = new BlockView[GameSession.Launchers];
+        public readonly RectTransform[] LauncherSlots = new RectTransform[GameSession.Launchers];
+        public readonly Image[] LauncherGlow = new Image[GameSession.Launchers];
         public readonly VText[] BoosterCounts = new VText[4];
         public readonly UIButton[] BoosterButtons = new UIButton[4];
         public VText LevelText, CoinsText, MovesText, ProgressText, RemainingText, HintText;
@@ -159,7 +163,7 @@ namespace VoxelBloom
             var panel = UI.Panel(Root, "ModelPanel", Color.white, 56);
             ModelPanel = (RectTransform)panel.transform.parent;
             ModelPanel.anchorMin = Vector2.zero; ModelPanel.anchorMax = Vector2.one;
-            ModelPanel.offsetMin = new Vector2(40, 1080); ModelPanel.offsetMax = new Vector2(-40, -150);
+            ModelPanel.offsetMin = new Vector2(40, 1095); ModelPanel.offsetMax = new Vector2(-40, -150);
             panel.sprite = SpriteFactory.Rounded(56);
             var sky = UI.Image(panel.transform, "Sky", SpriteFactory.VerticalGradient(Theme.Hex("#6FC2FF"), Theme.Hex("#CFEFFF")), Color.white, false);
             sky.rectTransform.Stretch(10, 10, 10, 10);
@@ -196,7 +200,7 @@ namespace VoxelBloom
 
             ComboLayer = UI.Rect(ModelPanel, "Combo").Stretch();
 
-            var prog = UI.Rect(Root, "ProgressRow").BottomBand(1000, 70, 60);
+            var prog = UI.Rect(Root, "ProgressRow").BottomBand(1015, 70, 60);
             var cube = UI.Icon(prog, Icon.Cube, 70);
             cube.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(70, 70));
             Progress = UI.Progress(prog, Theme.Green, 44);
@@ -207,44 +211,50 @@ namespace VoxelBloom
 
         void BuildQueue()
         {
-            var row = UI.Rect(Root, "Queue").BottomBand(845, 150, 70);
-            float slot = 150f, gap = (940f - 5 * slot) / 4f;
-            for (int i = 0; i < 5; i++)
+            // 4 launchers: a block moved here fires coloured projectiles at its colour until its count reaches 0
+            var row = UI.Rect(Root, "Launchers").BottomBand(790, 170, 60);
+            float w = 200f, gap = (960f - 4 * w) / 3f;
+            for (int i = 0; i < GameSession.Launchers; i++)
             {
-                var s = UI.Image(row, "Slot" + i, SpriteFactory.Rounded(32), Theme.SlotEmpty);
-                QueueSlots[i] = s.rectTransform;
-                QueueSlots[i].Place(new Vector2(0, 0.5f), new Vector2(slot / 2 + i * (slot + gap), 0), new Vector2(slot, slot));
-                var inner = UI.Image(s.transform, "Inner", SpriteFactory.Rounded(26), new Color(1, 1, 1, 0.35f));
-                inner.rectTransform.Stretch(8, 8, 8, 14);
-                var qb = BlockView.Create(s.transform, new Vector2(slot - 10, slot - 10), "Queued" + i);
-                qb.Root.Place(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(slot - 10, slot - 10));
-                qb.Button.Interactable = true;
-                int qi = i;
-                qb.Button.OnClick = () => controller.OnQueueTapped(qi);
-                qb.Button.Sound = Sfx.Button;
-                QueueBlocks[i] = qb;
+                var basePanel = UI.Panel(row, "Launcher" + i, new Color(0.2f, 0.17f, 0.34f, 0.85f), 36, true, 6f);
+                var slot = (RectTransform)basePanel.transform.parent;
+                slot.Place(new Vector2(0, 0.5f), new Vector2(w / 2 + i * (w + gap), -10), new Vector2(w, 150));
+                LauncherSlots[i] = slot;
+                var glow = UI.Image(slot, "Glow", SpriteFactory.Glow(), new Color(1, 1, 1, 0f), false);
+                glow.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(220, 160));
+                LauncherGlow[i] = glow;
+                var lb = BlockView.Create(slot, new Vector2(w - 24, 120), "Loaded" + i);
+                lb.Root.Place(new Vector2(0.5f, 0.5f), new Vector2(0, 8), new Vector2(w - 24, 120));
+                int li = i;
+                lb.Button.Sound = Sfx.Button;
+                lb.Button.OnClick = () => controller.OnLauncherTapped(li);
+                LauncherBlocks[i] = lb;
             }
-            RemainingText = UI.Text(Root, "", 38, Theme.InkSoft);
-            RemainingText.rectTransform.BottomBand(790, 50, 60);
+            RemainingText = UI.Text(Root, "", 36, Theme.InkSoft);
+            RemainingText.rectTransform.BottomBand(965, 45, 60);
         }
 
         void BuildBoard()
         {
-            var panel = UI.Panel(Root, "BoardPanel", new Color(1, 1, 1, 0.55f), 48, false);
+            var panel = UI.Panel(Root, "BoardPanel", new Color(0.18f, 0.15f, 0.3f, 0.88f), 48, true);
             BoardRoot = (RectTransform)panel.transform.parent;
-            BoardRoot.BottomBand(190, 4 * 130 + 3 * 12 + 40, 40);
-            float w = (1000f - 40f - 4 * 16f) / 5f, h = 130f;
-            for (int s = 0; s < GameSession.BoardSize; s++)
-            {
-                int col = s % GameSession.BoardCols, row = s / GameSession.BoardCols;
-                var bv = BlockView.Create(BoardRoot, new Vector2(w, h), "Block" + s);
-                bv.Root.Place(new Vector2(0, 1), new Vector2(20 + w / 2 + col * (w + 16), -20 - h / 2 - row * (h + 12)), new Vector2(w, h));
-                int slot = s;
-                bv.Button.OnClick = () => controller.OnBlockTapped(slot);
-                bv.Button.OnPress = () => controller.PreviewBlock(slot);
-                bv.Button.OnRelease = () => controller.ClearPreview();
-                Board[s] = bv;
-            }
+            BoardRoot.BottomBand(190, VisibleRows * 125 + (VisibleRows - 1) * 12 + 40, 40);
+            float w = (1000f - 40f - 3 * 16f) / 4f, h = 125f;
+            for (int col = 0; col < GameSession.Columns; col++)
+                for (int row = 0; row < VisibleRows; row++)
+                {
+                    var bv = BlockView.Create(BoardRoot, new Vector2(w, h), "Block" + col + "_" + row);
+                    bv.Root.Place(new Vector2(0, 1), new Vector2(20 + w / 2 + col * (w + 16), -20 - h / 2 - row * (h + 12)), new Vector2(w, h));
+                    int c = col;
+                    if (row == 0)
+                    {
+                        bv.Button.OnClick = () => controller.OnColumnTapped(c);
+                        bv.Button.OnPress = () => controller.PreviewColumn(c);
+                        bv.Button.OnRelease = () => controller.ClearPreview();
+                    }
+                    else bv.Button.Interactable = false;
+                    Board[col * VisibleRows + row] = bv;
+                }
         }
 
         void BuildBoosters()

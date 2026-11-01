@@ -109,6 +109,14 @@ namespace VoxelBloom
                 Vector3 mid = (shotFrom[i] + shotTo[i]) * 0.5f + Vector3.up * Vector3.Distance(shotFrom[i], shotTo[i]) * 0.35f;
                 Vector3 p = Vector3.Lerp(Vector3.Lerp(shotFrom[i], mid, k), Vector3.Lerp(mid, shotTo[i], k), k);
                 float s = shotSize[i] * 0.8f;
+                // glowing trail: tiny bright sparks left behind the projectile
+                if (!Services.ReducedEffects && Random.value < 0.35f && count < Capacity)
+                {
+                    int t = count++;
+                    pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 2f; rot[t] = Random.rotation; spin[t] = Vector3.zero;
+                    life[t] = 0.25f; size[t] = shotSize[i] * 0.35f;
+                    color[t] = Vector4.Lerp(shotColor[i], Vector4.one, 0.6f);
+                }
                 matrices[n] = Matrix4x4.TRS(p, Quaternion.Euler(k * 360f, k * 540f, 0), new Vector3(s, s, s));
                 batchColors[n] = shotColor[i];
                 n++;

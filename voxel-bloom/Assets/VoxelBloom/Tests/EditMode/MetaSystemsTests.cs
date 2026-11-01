@@ -152,13 +152,13 @@ namespace VoxelBloom.Tests
             var l1 = Level(1);
             Assert.IsTrue(p.IsLevelUnlocked(1));
             Assert.IsFalse(p.IsLevelUnlocked(2));
-            var r = p.CompleteLevel(l1, l1.StarsThree, 1000, 2);
+            var r = p.CompleteLevel(l1, 10, l1.StarScoreThree, 2);
             Assert.AreEqual(3, r.Stars);
             Assert.IsTrue(r.FirstClear);
             Assert.IsTrue(p.IsLevelUnlocked(2));
             Assert.AreEqual(r.Coins, w.Coins);
             Assert.IsTrue(p.IsModelUnlocked(l1.ModelId));
-            var replay = p.CompleteLevel(l1, l1.MoveLimit, 10, 0);
+            var replay = p.CompleteLevel(l1, 10, 0, 0);
             Assert.IsFalse(replay.FirstClear);
             Assert.AreEqual(3, p.StarsFor(1), "best stars kept");
             Assert.Less(replay.Coins, r.Coins);

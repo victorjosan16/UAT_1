@@ -6,23 +6,26 @@ using VoxelBloom.Core;
 namespace VoxelBloom
 {
     /// <summary>
-    /// Drives one level: applies player input to the authoritative GameSession, sequences attack
-    /// animations through the state machine, handles boosters, win/fail and progress saving.
-    /// Game logic is applied immediately; visuals catch up (input can never desync the rules).
+    /// Drives one level (rules v2): tapping a column moves its top block into a free launcher; launchers fire
+    /// glowing projectiles every tick at their colour; a launcher whose colour is not visible yet waits.
+    /// Logic is applied immediately on the GameSession; visuals (projectile flight, voxel pop) follow.
     /// </summary>
     public sealed class GameplayController : MonoBehaviour
     {
         public static GameplayController Active { get; private set; }
         static GameStateMachine SM => App.State;
+        const float Tick = 0.07f, Flight = 0.24f;
 
         GameplayScreen view;
         LevelDefinition level;
         GameSession session;
         Color32[] palette;
-        Coroutine resolveRoutine;
+        Coroutine fireRoutine;
         bool paused, finished, failShown;
         BoosterType? targeting;
         int shownCoins = -1;
+        float lastComboFx;
+        readonly List<(float at, int voxel, Color32 color)> pendingPops = new List<(float, int, Color32)>();
 
         public LevelDefinition Level => level;
         public GameSession Session => session;
@@ -47,12 +50,13 @@ namespace VoxelBloom
         public void Begin(LevelDefinition def, Dictionary<string, object> snapshot)
         {
             StopAllCoroutines();
+            fireRoutine = null;
+            pendingPops.Clear();
             Time.timeScale = 1f;
             Active = this;
             SM.ForceReset(GameState.LevelLoading);
             level = def;
-            session = snapshot != null ? GameSession.FromSnapshot(def, snapshot) : null;
-            if (session == null) session = new GameSession(def);
+            session = (snapshot != null ? GameSession.FromSnapshot(def, snapshot) : null) ?? new GameSession(def);
             palette = VoxelMeshBuilder.ToColors(def.Grid.Palette);
             paused = finished = failShown = false;
             targeting = null;
@@ -60,7 +64,7 @@ namespace VoxelBloom
 
             view.Stage.ShowModel(session.CellsSnapshot(), def.Grid.X, def.Grid.Y, def.Grid.Z, palette, 2.1f);
             view.Stage.TargetYaw = view.Stage.Yaw = -30f;
-            view.Stage.TurntableSpeed = Services.Save.Settings.AutoRotate ? (Services.ReducedEffects ? 8f : 14f) : 0f; // 360° turntable while playing
+            view.Stage.TurntableSpeed = Services.Save.Settings.AutoRotate ? (Services.ReducedEffects ? 8f : 14f) : 0f;
             view.Stage.Pivot.localScale = Vector3.one;
             view.ModelInput.OnTapUv = OnModelTapped;
             view.LevelText.text = "Lv. " + def.Id;
@@ -69,49 +73,41 @@ namespace VoxelBloom
             view.Progress.Set(session.Progress, true);
             RefreshAll();
             SM.TryTransition(GameState.Ready);
-            // a restored session may still have queued attacks to resolve
-            if (session.Queue.Count > 0) StartResolve();
+            StartFiring();
         }
 
         // ------------------------------------------------------------------ input
-        public void OnBlockTapped(int slot)
+        public void OnColumnTapped(int col)
         {
             if (session == null || finished || paused) return;
-            if (targeting == BoosterType.ColorBomb)
-            {
-                var b = session.BoardAt(slot);
-                if (b.HasValue) ApplyColorBomb(b.Value.Color);
-                return;
-            }
+            var top = session.Top(col);
+            if (targeting == BoosterType.ColorBomb) { if (top.HasValue) ApplyColorBomb(top.Value.Color); return; }
             if (!SM.AcceptsBoardInput) return;
-            if (!session.CanTap(slot))
+            if (!session.CanTap(col))
             {
-                if (session.Queue.Count >= session.QueueSize) { Services.Audio.Play(Sfx.Error); view.FloatText("Queue full!", Theme.Red, new Vector2(0, -200)); }
+                if (session.FreeLauncher() < 0) { Services.Audio.Play(Sfx.Error); view.FloatText("All launchers busy!", Theme.Red, new Vector2(0, -200)); }
                 return;
             }
-            var block = session.BoardAt(slot).Value;
-            int targetSlot = session.Queue.Count;
-            bool wasReady = SM.Current == GameState.Ready;
-            if (wasReady) { SM.TryTransition(GameState.BlockSelected); SM.TryTransition(GameState.AttackQueued); }
-            session.Tap(slot);
-            Services.Audio.Play(Sfx.Launch, 1f + targetSlot * 0.05f);
-            FlyBlock(view.Board[slot], targetSlot, block);
-            view.Board[slot].Set(session.BoardAt(slot), palette);
-            Tween.Scale(view.Board[slot].Root, Vector3.one * 0.4f, Vector3.one, 0.25f, Ease.OutBack);
+            var block = top.Value;
+            int li = session.Tap(col);
+            Services.Audio.Play(Sfx.Launch, 1f + li * 0.05f);
+            FlyBlock(view.Board[col * GameplayScreen.VisibleRows], li, block);
+            RefreshBoard();
             RefreshHud();
-            StartResolve();
+            if (SM.Current == GameState.Ready) SM.TryTransition(GameState.Attacking);
+            StartFiring();
         }
 
-        /// <summary>Press-and-hold on a board block: show on the model exactly which voxels it would remove.</summary>
-        public void PreviewBlock(int slot)
+        /// <summary>Press-and-hold a column: highlight the voxels its top block will remove first.</summary>
+        public void PreviewColumn(int col)
         {
             if (session == null || finished || paused) return;
-            var b = session.BoardAt(slot);
+            var b = session.Top(col);
             if (!b.HasValue) return;
             var targets = session.PreviewTargets(b.Value.Color, b.Value.Power);
-            if (targets.Count == 0) { view.HintText.text = "No reachable voxels of this colour yet"; return; }
+            if (targets.Count == 0) { view.HintText.text = "This colour is not visible yet - it will wait"; return; }
             view.Stage.Model.SetHighlight(targets, Theme.Lighter(palette[b.Value.Color], 0.55f));
-            view.HintText.text = targets.Count + " voxels will be removed";
+            view.HintText.text = b.Value.Power + " voxels of this colour";
         }
 
         public void ClearPreview()
@@ -121,129 +117,123 @@ namespace VoxelBloom
             if (targeting == null) view.HintText.text = "";
         }
 
-        public void OnQueueTapped(int index)
+        public void OnLauncherTapped(int li)
         {
-            if (targeting == BoosterType.Eliminate) ApplyEliminate(index);
+            if (targeting == BoosterType.Eliminate) ApplyEliminate(li);
         }
 
-        /// <summary>World point just below the model view, horizontally aligned with the queue slot.</summary>
-        Vector3 QueueOriginWorld(int queueIndex)
-        {
-            var cam = view.Stage.Camera;
-            float x = 0.5f + (Mathf.Clamp(queueIndex, 0, 4) - 2) * 0.17f;
-            float dist = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
-            return cam.ViewportToWorldPoint(new Vector3(x, -0.08f, dist * 0.8f));
-        }
-
-        void FlyBlock(BlockView from, int queueIndex, AttackBlock block)
+        void FlyBlock(BlockView from, int launcher, AttackBlock block)
         {
             var layer = view.Root;
             var ghost = BlockView.Create(layer, from.Root.rect.size, "Flying");
             ghost.Set(block, palette);
             ghost.Button.Interactable = false;
             var start = (Vector2)layer.InverseTransformPoint(from.Root.position);
-            var end = (Vector2)layer.InverseTransformPoint(view.QueueSlots[Mathf.Clamp(queueIndex, 0, 4)].position);
+            var end = (Vector2)layer.InverseTransformPoint(view.LauncherSlots[launcher].position);
             ghost.Root.anchorMin = ghost.Root.anchorMax = new Vector2(0.5f, 0.5f);
             ghost.Root.anchoredPosition = start;
-            var mid = (start + end) * 0.5f + new Vector2(0, 120);
-            Tween.Value(0.22f, k =>
+            Tween.Value(0.2f, k =>
             {
                 if (ghost.Root == null) return;
-                var a = Vector2.Lerp(start, mid, k); var b2 = Vector2.Lerp(mid, end, k);
-                ghost.Root.anchoredPosition = Vector2.Lerp(a, b2, k);
+                ghost.Root.anchoredPosition = Vector2.Lerp(start, end, k) + new Vector2(0, Mathf.Sin(k * Mathf.PI) * 60f);
                 ghost.Root.localScale = Vector3.one * Mathf.Lerp(1f, 0.85f, k);
             }, Ease.InOutQuad, () =>
             {
                 if (ghost.Root != null) Destroy(ghost.Root.gameObject);
-                RefreshQueue();
+                RefreshLaunchers();
+                Tween.Pop(view.LauncherSlots[launcher], 0.15f);
             });
         }
 
-        // ------------------------------------------------------------------ resolution
-        void StartResolve()
+        // ------------------------------------------------------------------ firing loop
+        void StartFiring()
         {
-            if (resolveRoutine == null && !finished) resolveRoutine = StartCoroutine(ResolveLoop());
+            if (fireRoutine == null && !finished) fireRoutine = StartCoroutine(FireLoop());
         }
 
-        IEnumerator ResolveLoop()
+        IEnumerator FireLoop()
         {
-            yield return new WaitForSeconds(0.2f); // let the block land in the queue
-            while (true)
+            yield return new WaitForSeconds(0.15f);
+            while (!finished)
             {
                 while (paused) yield return null;
-                var r = session.ResolveNext();
+                var r = session.Step();
                 if (r == null) break;
-                if (SM.Current != GameState.Attacking) SM.TryTransition(GameState.Attacking);
-                yield return AnimateAttack(r);
+                AnimateRound(r);
                 if (session.IsWon) break;
+                yield return new WaitForSeconds(Tick);
             }
-            while (paused) yield return null;
-            SM.TryTransition(GameState.Resolving);
-            resolveRoutine = null;
+            fireRoutine = null;
+            yield return new WaitForSeconds(Flight + 0.05f);
             Settle();
         }
 
-        IEnumerator AnimateAttack(AttackResult r)
+        void AnimateRound(RoundResult r)
         {
-            RefreshQueue();
-            if (r.Wasted)
-            {
-                view.FloatText("Wasted", Theme.InkSoft, new Vector2(0, -160));
-                yield return new WaitForSeconds(0.12f);
-                yield break;
-            }
-            var color = palette[r.Attack.Color];
             var model = view.Stage.Model;
-            int n = r.Destroyed.Count;
-            // 1) show where the colour goes: targets pulse and coloured cubes fly from the queue slot to them
-            model.SetHighlight(r.Destroyed, Theme.Lighter(color, 0.6f));
-            Vector3 origin = QueueOriginWorld(r.QueueIndex);
-            int shotsEvery = Mathf.Max(1, n / (Services.ReducedEffects ? 6 : 24));
-            const float flight = 0.28f;
-            for (int k = 0; k < n; k += shotsEvery)
-                view.Stage.Fragments.Shoot(origin, model.VoxelWorldPosition(r.Destroyed[k]), color, model.VoxelSize, flight, k * 0.004f);
-            Services.Audio.Play(Sfx.Launch, 1.1f);
-            yield return new WaitForSeconds(flight);
-            model.ClearHighlight();
-            // 2) pop the voxels
-            Services.Audio.Play(Sfx.Pop, 1f + Mathf.Min(r.Combo, 5) * 0.06f);
-            int bursts = view.Stage.Fragments.MaxPerBurst;
-            float duration = Mathf.Lerp(0.15f, 0.35f, Mathf.Clamp01(n / 64f));
-            int perStep = Mathf.Max(1, Mathf.CeilToInt(n / (duration / 0.03f)));
-            int every = Mathf.Max(1, n / Mathf.Max(1, bursts));
-            for (int k = 0; k < n; k++)
+            foreach (var (li, voxel) in r.Shots)
             {
-                int idx = r.Destroyed[k];
-                if (k % every == 0) view.Stage.Fragments.Burst(model.VoxelWorldPosition(idx), color, model.VoxelSize, 2);
-                model.RemoveVoxel(idx);
-                if ((k + 1) % perStep == 0) yield return new WaitForSeconds(0.03f);
+                var c = palette[level.Grid.Get(voxel)];
+                view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, model.VoxelSize * 1.1f, Flight);
+                pendingPops.Add((Time.time + Flight, voxel, c));
+                var g = view.LauncherGlow[li];
+                g.color = new Color(c.r / 255f, c.g / 255f, c.b / 255f, 0.9f);
             }
-            // 3) detached pieces fall (physics debris) - no part stays floating
-            if (r.Dropped.Count > 0)
+            if (r.Shots.Count > 0) Services.Audio.Play(Sfx.Pop, 0.9f + r.Shots.Count * 0.08f, 0.6f);
+            foreach (int idx in r.Dropped)
             {
-                foreach (int idx in r.Dropped)
-                {
-                    view.Stage.Debris.Spawn(model.VoxelWorldPosition(idx), model.ColorOf(level.Grid.Get(idx)), model.VoxelSize);
-                    model.RemoveVoxel(idx);
-                }
-                Services.Audio.Play(Sfx.Whoosh, 0.8f);
+                view.Stage.Debris.Spawn(model.VoxelWorldPosition(idx), model.ColorOf(level.Grid.Get(idx)), model.VoxelSize);
+                model.RemoveVoxel(idx);
+            }
+            foreach (int li in r.Freed) Tween.Pop(view.LauncherSlots[li], 0.2f);
+            if (r.Combo >= 3 && Time.time - lastComboFx > 1.2f)
+            {
+                lastComboFx = Time.time;
+                view.ShowCombo(r.Combo);
+                Services.Audio.Play(Sfx.Combo, 1f + (r.Combo - 3) * 0.1f);
+                view.Stage.Shake(0.25f);
+                if (r.Combo >= 4) Haptics.Light();
             }
             view.Progress.Set(session.Progress);
+            RefreshLaunchers();
+            if (r.Freed.Count > 0 || r.Dropped.Count > 0) RefreshBoard();
             RefreshHud();
-            if (r.Combo >= 2)
+        }
+
+        void Update()
+        {
+            // voxels pop when their projectile arrives
+            for (int i = pendingPops.Count - 1; i >= 0; i--)
             {
-                view.ShowCombo(r.Combo);
-                Services.Audio.Play(Sfx.Combo, 1f + (r.Combo - 2) * 0.08f);
-                view.Stage.Shake(0.2f + r.Combo * 0.08f);
-                if (r.Combo >= 3) Haptics.Light();
+                if (Time.time < pendingPops[i].at) continue;
+                var p = pendingPops[i];
+                pendingPops.RemoveAt(i);
+                if (view == null) continue;
+                var model = view.Stage.Model;
+                if (Random.value < 0.5f) view.Stage.Fragments.Burst(model.VoxelWorldPosition(p.voxel), p.color, model.VoxelSize, 2);
+                model.RemoveVoxel(p.voxel);
             }
-            if (r.ColorCleared)
+            // waiting launchers pulse red, firing ones fade their glow
+            if (session != null && view != null)
             {
-                view.FloatText("Colour cleared!", Color.white, new Vector2(0, -100));
-                foreach (int s in r.RefilledSlots) Tween.Pop(view.Board[s].Root, 0.2f);
+                for (int li = 0; li < GameSession.Launchers; li++)
+                {
+                    var g = view.LauncherGlow[li];
+                    if (session.IsWaiting(li)) g.color = new Color(1f, 0.3f, 0.35f, 0.35f + 0.3f * Mathf.Sin(Time.unscaledTime * 6f));
+                    else g.color = new Color(g.color.r, g.color.g, g.color.b, Mathf.MoveTowards(g.color.a, 0f, Time.deltaTime * 2.5f));
+                }
+                int c = Services.Wallet.Coins;
+                if (c != shownCoins) { shownCoins = c; view.CoinsText.text = c.ToString("N0"); RefreshHud(); }
             }
-            RefreshAll();
-            yield return new WaitForSeconds(0.08f);
+        }
+
+        /// <summary>World point just below the model view, aligned with the launcher on screen.</summary>
+        Vector3 LauncherOriginWorld(int li)
+        {
+            var cam = view.Stage.Camera;
+            float x = 0.5f + (Mathf.Clamp(li, 0, 3) - 1.5f) * 0.22f;
+            float dist = Vector3.Distance(cam.transform.position, view.Stage.Model.transform.position);
+            return cam.ViewportToWorldPoint(new Vector3(x, -0.06f, dist * 0.8f));
         }
 
         void Settle()
@@ -252,18 +242,18 @@ namespace VoxelBloom
             if (session.IsWon) { StartCoroutine(Win()); return; }
             var fail = session.GetFailReason();
             if (fail != FailReason.None) { Fail(fail); return; }
-            SM.TryTransition(GameState.Ready);
+            if (SM.Current == GameState.Attacking) { SM.TryTransition(GameState.Resolving); SM.TryTransition(GameState.Ready); }
             SaveProgress();
         }
 
         IEnumerator Win()
         {
             finished = true;
-            SM.TryTransition(GameState.LevelComplete);
+            SM.ForceReset(GameState.LevelComplete);
             var receipt = Services.Progress.CompleteLevel(level, session.Moves, session.Score, session.MaxCombo);
             Services.Commit();
             Services.Audio.Play(Sfx.Win);
-            // celebration: show the intact model spinning with confetti
+            yield return new WaitForSecondsRealtime(0.35f);
             view.Stage.ShowModel(level.Grid.CopyCells(), level.Grid.X, level.Grid.Y, level.Grid.Z, palette, 2.1f);
             view.Stage.TurntableSpeed = 0f;
             view.Stage.AutoRotateSpeed = 90f;
@@ -282,13 +272,12 @@ namespace VoxelBloom
         {
             if (failShown) return;
             failShown = true;
-            SM.TryTransition(GameState.LevelFailed);
+            SM.ForceReset(GameState.LevelFailed);
             Services.Audio.Play(Sfx.Fail);
             SaveProgress();
             Router.Instance.Open<LevelFailedDialog>(d => { d.Reason = reason; d.Controller = this; });
         }
 
-        /// <summary>Called by the fail dialog when the player gives up (retry/home): costs one life, once.</summary>
         public void AcceptFailure()
         {
             if (finished) return;
@@ -298,18 +287,17 @@ namespace VoxelBloom
             Services.Commit();
         }
 
-        /// <summary>Continue after a queue-full failure by eliminating a stuck attack.</summary>
+        /// <summary>Continue after a jam by eliminating a waiting launcher (consumes one Eliminare).</summary>
         public bool ContinueWithEliminate()
         {
-            if (finished || session.GetFailReason() != FailReason.QueueFull) return false;
-            int idx = session.FirstStuckQueueIndex();
-            if (idx < 0) idx = 0;
-            if (idx >= session.Queue.Count || !Services.Boosters.TryConsume(BoosterType.Eliminate)) return false;
-            session.ApplyEliminate(idx);
+            if (finished || session.GetFailReason() != FailReason.Jammed) return false;
+            int li = session.FirstWaitingLauncher();
+            if (li < 0 || !Services.Boosters.TryConsume(BoosterType.Eliminate)) return false;
+            session.ApplyEliminate(li);
             failShown = false;
             SM.ForceReset(GameState.Ready);
             RefreshAll();
-            StartResolve();
+            StartFiring();
             return true;
         }
 
@@ -319,27 +307,21 @@ namespace VoxelBloom
             if (session == null || finished || paused) return;
             if (!BoosterAllowed(t)) { Router.Instance.Toast("This booster unlocks in a later level", Icon.Lock); return; }
             if (targeting == t) { CancelTargeting(); return; }
-            if (Services.Boosters.Count(t) <= 0)
-            {
-                Router.Instance.Open<BoostersDialog>(d => d.Focus = t);
-                return;
-            }
-            if (resolveRoutine != null) { Router.Instance.Toast("Wait for the attacks to finish"); return; }
+            if (Services.Boosters.Count(t) <= 0) { Router.Instance.Open<BoostersDialog>(d => d.Focus = t); return; }
             switch (t)
             {
                 case BoosterType.Hammer: BeginTargeting(t, "Tap the model to smash voxels"); break;
-                case BoosterType.ColorBomb: BeginTargeting(t, "Tap a block or a voxel to pick a colour"); break;
+                case BoosterType.ColorBomb: BeginTargeting(t, "Tap a top block or a voxel to pick a colour"); break;
                 case BoosterType.Eliminate:
-                    if (session.Queue.Count == 0) { Router.Instance.Toast("The queue is empty", Icon.Eliminate); return; }
-                    int stuck = session.FirstStuckQueueIndex();
-                    if (stuck >= 0 && session.Queue.Count == 1) ApplyEliminate(stuck);
-                    else BeginTargeting(t, "Tap a queued attack to eliminate it");
+                    int waiting = session.FirstWaitingLauncher();
+                    if (waiting < 0) { Router.Instance.Toast("No launcher is waiting", Icon.Eliminate); return; }
+                    BeginTargeting(t, "Tap a launcher to empty it");
                     break;
                 case BoosterType.Shuffle:
                     if (session.ApplyShuffle(new DeterministicRandom(level.Seed + session.Moves * 31 + Services.Boosters.Count(t))))
                     {
                         Services.Boosters.TryConsume(t);
-                        for (int s = 0; s < GameSession.BoardSize; s++) Tween.Pop(view.Board[s].Root, 0.15f);
+                        foreach (var b in view.Board) Tween.Pop(b.Root, 0.15f);
                         Services.Audio.Play(Sfx.Whoosh);
                         RefreshAll();
                         SaveProgress();
@@ -357,7 +339,7 @@ namespace VoxelBloom
         void BeginTargeting(BoosterType t, string hint)
         {
             targeting = t;
-            view.Stage.NotifyInteraction(30f); // hold still while the player aims
+            view.Stage.NotifyInteraction(30f);
             view.HintText.text = hint;
             Tween.Pop(view.HintText.transform, 0.2f);
         }
@@ -379,13 +361,10 @@ namespace VoxelBloom
             {
                 int count = Mathf.Max(1, Services.Config.Booster(BoosterType.Hammer).Voxels);
                 var destroyed = session.ApplyHammer(voxel, count);
-                if (destroyed.Count > 0 && Services.Boosters.TryConsume(BoosterType.Hammer)) StartCoroutine(AnimateBooster(destroyed, Sfx.Booster));
+                if (destroyed.Count > 0 && Services.Boosters.TryConsume(BoosterType.Hammer)) StartCoroutine(AnimateBooster(destroyed));
                 CancelTargeting();
             }
-            else if (targeting == BoosterType.ColorBomb)
-            {
-                ApplyColorBomb(session.CellColor(voxel));
-            }
+            else if (targeting == BoosterType.ColorBomb) ApplyColorBomb(session.CellColor(voxel));
         }
 
         void ApplyColorBomb(int color)
@@ -393,27 +372,27 @@ namespace VoxelBloom
             if (color < 0) return;
             int count = Mathf.Max(1, Services.Config.Booster(BoosterType.ColorBomb).Voxels);
             var destroyed = session.ApplyColorBomb(color, count);
-            if (destroyed.Count > 0 && Services.Boosters.TryConsume(BoosterType.ColorBomb)) StartCoroutine(AnimateBooster(destroyed, Sfx.Booster));
-            else if (destroyed.Count == 0) Router.Instance.Toast("No reachable voxels of that colour yet");
+            if (destroyed.Count > 0 && Services.Boosters.TryConsume(BoosterType.ColorBomb)) StartCoroutine(AnimateBooster(destroyed));
+            else if (destroyed.Count == 0) Router.Instance.Toast("That colour is not visible yet");
             CancelTargeting();
         }
 
-        void ApplyEliminate(int index)
+        void ApplyEliminate(int li)
         {
-            if (index < 0 || index >= session.Queue.Count) return;
+            if (!session.LauncherAt(li).HasValue) return;
             if (!Services.Boosters.TryConsume(BoosterType.Eliminate)) return;
-            session.ApplyEliminate(index);
+            session.ApplyEliminate(li);
             CancelTargeting();
             Services.Audio.Play(Sfx.Whoosh);
-            Tween.Pop(view.QueueSlots[Mathf.Min(index, 4)], 0.25f);
+            Tween.Pop(view.LauncherSlots[li], 0.25f);
             RefreshAll();
             SaveProgress();
-            StartResolve();
+            StartFiring();
         }
 
-        IEnumerator AnimateBooster(List<int> destroyed, Sfx sfx)
+        IEnumerator AnimateBooster(List<int> destroyed)
         {
-            Services.Audio.Play(sfx);
+            Services.Audio.Play(Sfx.Booster);
             view.Stage.Shake(0.4f);
             for (int k = 0; k < destroyed.Count; k++)
             {
@@ -425,15 +404,15 @@ namespace VoxelBloom
             }
             view.Progress.Set(session.Progress);
             RefreshAll();
-            if (session.IsWon) { SM.ForceReset(GameState.Resolving); StartCoroutine(Win()); }
-            else { StartResolve(); SaveProgress(); }
+            if (session.IsWon) StartCoroutine(Win());
+            else { StartFiring(); SaveProgress(); }
         }
 
         // ------------------------------------------------------------------ pause / restart / quit
         public void Pause()
         {
             if (session == null || finished || paused || Router.Instance.HasDialog) return;
-            if (!SM.TryTransition(GameState.Paused)) return;
+            if (!SM.TryTransition(GameState.Paused)) SM.ForceReset(GameState.Paused);
             paused = true;
             Time.timeScale = 0f;
             Services.Audio.PauseMusic(true);
@@ -446,7 +425,7 @@ namespace VoxelBloom
             paused = false;
             Time.timeScale = 1f;
             Services.Audio.PauseMusic(false);
-            if (!SM.Resume()) SM.ForceReset(resolveRoutine != null ? GameState.Attacking : GameState.Ready);
+            if (!SM.Resume()) SM.ForceReset(fireRoutine != null ? GameState.Attacking : GameState.Ready);
         }
 
         public void Restart()
@@ -454,7 +433,6 @@ namespace VoxelBloom
             paused = false;
             Time.timeScale = 1f;
             Services.Audio.PauseMusic(false);
-            if (resolveRoutine != null) { StopCoroutine(resolveRoutine); resolveRoutine = null; }
             if (!finished && session != null && session.Moves > 0) Services.Lives.TryConsume(Services.Now);
             Services.Save.ActiveLevel = null;
             Services.Commit();
@@ -468,7 +446,8 @@ namespace VoxelBloom
             paused = false;
             Time.timeScale = 1f;
             Services.Audio.PauseMusic(false);
-            if (resolveRoutine != null) { StopCoroutine(resolveRoutine); resolveRoutine = null; }
+            StopAllCoroutines();
+            fireRoutine = null;
             if (!finished) SaveProgress();
             SM.ForceReset(GameState.Home);
             var grid = Router.Instance.Show<LevelGridScreen>();
@@ -479,7 +458,7 @@ namespace VoxelBloom
         public void OnScreenHidden()
         {
             StopAllCoroutines();
-            resolveRoutine = null;
+            fireRoutine = null;
             Time.timeScale = 1f;
             if (Active == this) Active = null;
         }
@@ -492,41 +471,31 @@ namespace VoxelBloom
         }
 
         // ------------------------------------------------------------------ view refresh
-        void RefreshAll()
+        void RefreshAll() { RefreshBoard(); RefreshLaunchers(); RefreshHud(); }
+
+        void RefreshBoard()
         {
-            for (int s = 0; s < GameSession.BoardSize; s++)
-            {
-                var b = session.BoardAt(s);
-                view.Board[s].Set(b, palette);
-                if (b.HasValue) view.Board[s].SetPlayable(session.ExposedCount(b.Value.Color) > 0);
-            }
-            RefreshQueue();
-            RefreshHud();
+            for (int col = 0; col < GameSession.Columns; col++)
+                for (int row = 0; row < GameplayScreen.VisibleRows; row++)
+                {
+                    var bv = view.Board[col * GameplayScreen.VisibleRows + row];
+                    var b = session.BlockAt(col, row);
+                    bv.Set(b, palette);
+                    if (b.HasValue) bv.SetPlayable(session.ExposedCount(b.Value.Color) > 0, row);
+                }
         }
 
-        void RefreshQueue()
+        void RefreshLaunchers()
         {
-            int stuck = -1;
-            for (int i = 0; i < 5; i++)
-            {
-                bool has = i < session.Queue.Count && i < session.QueueSize;
-                view.QueueBlocks[i].Set(has ? session.Queue[i] : (AttackBlock?)null, palette);
-                view.QueueSlots[i].gameObject.SetActive(i < session.QueueSize);
-                if (has && session.ExposedCount(session.Queue[i].Color) == 0 && stuck < 0) stuck = i;
-            }
-            for (int i = 0; i < 5; i++)
-            {
-                var img = view.QueueSlots[i].GetComponent<UnityEngine.UI.Image>();
-                img.color = i == stuck ? Theme.Lighter(Theme.Red, 0.55f) : Theme.SlotEmpty;
-            }
+            for (int li = 0; li < GameSession.Launchers; li++) view.LauncherBlocks[li].Set(session.LauncherAt(li), palette);
         }
 
         void RefreshHud()
         {
-            view.MovesText.text = session.MovesLeft.ToString();
+            view.MovesText.text = session.BlocksLeft.ToString();
             view.ProgressText.text = Mathf.FloorToInt(session.Progress * 100f) + "%";
-            view.RemainingText.text = session.TotalRemaining + " voxels left  ·  " + session.DeckRemaining + " blocks in deck";
-            int projected = session.Moves <= level.StarsThree ? 3 : session.Moves <= level.StarsTwo ? 2 : 1;
+            view.RemainingText.text = session.TotalRemaining + " voxels left  ·  " + session.BlocksLeft + " blocks";
+            int projected = level.StarsForScore(session.Score);
             for (int i = 0; i < 3; i++) view.Stars[i].sprite = SpriteFactory.Get(i < projected ? Icon.Star : Icon.StarEmpty);
             for (int i = 0; i < 4; i++)
             {
@@ -535,13 +504,6 @@ namespace VoxelBloom
                 view.BoosterCounts[i].text = n > 0 ? n.ToString() : "+";
                 view.BoosterButtons[i].SetInteractable(BoosterAllowed(t));
             }
-        }
-
-        void Update()
-        {
-            if (view == null || session == null) return;
-            int c = Services.Wallet.Coins;
-            if (c != shownCoins) { shownCoins = c; view.CoinsText.text = c.ToString("N0"); RefreshHud(); }
         }
     }
 }

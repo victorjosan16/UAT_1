@@ -56,7 +56,7 @@ namespace VoxelBloom.Core
         /// <summary>Records a win exactly once per call and grants coins. Replays pay 25% of the reward.</summary>
         public CompletionReceipt CompleteLevel(LevelDefinition level, int moves, int score, int maxCombo)
         {
-            int stars = level.StarsForMoves(moves);
+            int stars = level.StarsForScore(score);
             bool first = !IsCompleted(level.Id);
             int prev = StarsFor(level.Id);
             if (stars > prev) save.Stars[level.Id] = stars;

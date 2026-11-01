@@ -158,8 +158,8 @@ namespace VoxelBloom
 
         protected override void OnBuild()
         {
-            string msg = Reason == FailReason.QueueFull ? "The attack queue is jammed:\nno queued colour can reach the model."
-                : Reason == FailReason.OutOfMoves ? "You ran out of moves." : "No blocks left on the board.";
+            string msg = Reason == FailReason.Jammed ? "All 4 launchers are waiting:\nnone of their colours is visible."
+                : "No blocks left on the board.";
             var t = UI.Text(Body, msg, 46, Theme.Ink);
             t.Wrap = true;
             t.rectTransform.TopBand(80, 200, 10);
@@ -167,7 +167,7 @@ namespace VoxelBloom
             UI.Text(Body, "-1", 70, Theme.Red).rectTransform.Place(new Vector2(0.5f, 1), new Vector2(60, -350), new Vector2(160, 100));
 
             float y = 420;
-            if (Reason == FailReason.QueueFull)
+            if (Reason == FailReason.Jammed)
             {
                 int have = Services.Boosters.Count(BoosterType.Eliminate);
                 int price = Services.Config.Booster(BoosterType.Eliminate).Price;
@@ -216,9 +216,9 @@ namespace VoxelBloom
         static readonly (BoosterType t, Icon i, string name, string desc)[] Items =
         {
             (BoosterType.Hammer, Icon.Hammer, "Hammer", "Destroy selected cubes (any colour)."),
-            (BoosterType.Shuffle, Icon.Shuffle, "Shuffle", "Mix and refresh the blocks."),
+            (BoosterType.Shuffle, Icon.Shuffle, "Shuffle", "Mix the blocks of the 4 columns."),
             (BoosterType.ColorBomb, Icon.ColorBomb, "Color Bomb", "Remove a large group of the same colour."),
-            (BoosterType.Eliminate, Icon.Eliminate, "Eliminare", "Remove a stuck attack from the queue."),
+            (BoosterType.Eliminate, Icon.Eliminate, "Eliminare", "Empty a waiting launcher."),
         };
 
         protected override void OnBuild()

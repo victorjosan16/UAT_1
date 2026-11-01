@@ -21,36 +21,27 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
 Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈1 min), then
 `node tools/test-rules.mjs`. Mascot contact sheets: `COLS=5 node tools/preview.mjs out.png id,id,...` (see `Docs/Mascots_*.png`).
 
-## Gameplay rules
-* Tap a block on the 5×4 board → it flies into the 5-slot FIFO attack queue and the slot refills from the level deck.
-* The first queued attack with a reachable target fires: it removes up to *power* exposed voxels of its colour.
-  A voxel is exposed if one of its 6 neighbours is empty or outside the model. Exposure is recomputed after every destruction.
-  Fewer targets → only those are removed and the attack is consumed. Attacks never hit other colours.
-* Attacks whose colour is not reachable yet **wait** in the queue. Queue full with nothing able to fire = fail.
-* Consecutive full-power attacks → **COMBO x2…x5** (score multiplier, effects, coins).
-* **No floating parts:** after every destruction the largest connected piece stays (it rests on the pedestal) together
-  with any piece touching the floor; every other detached piece falls (pooled Rigidbody debris) and counts as destroyed.
-  Same rule in `tools/rules.mjs` and `GameSession.Collapse`, so solver witnesses still replay exactly.
-* **See where the colour goes:** hold a block to highlight on the model exactly which voxels it would remove; when an
-  attack fires, its targets pulse and coloured cubes fly from the queue slot to them. Blocks with no reachable voxel are dimmed.
-* Fail: queue jammed, move limit reached, or no blocks left. Stars: moves ≤ 3★ / 2★ thresholds.
-* **HARD levels: every 5th level** (5, 10, …, 100). Tighter move limit, **x2.5 coins**, red HARD badge, own
-  Events track. Coins buy boosters, including **Eliminare** (150): it removes a stuck attack from the queue,
-  and the fail dialog offers "continue with Eliminare" when the queue is jammed.
-
-Boosters: Hammer (300, smash 12 voxels of any colour where you tap the model), Shuffle (200, mixes board + deck and
-keeps a playable move), Color Bomb (500, 48 voxels of one colour), Eliminare (150). Coins are deducted only together
-with the grant and can never go negative.
+## Gameplay rules (v2 — 4 columns, 4 launchers)
+* The board has **4 columns** of numbered colour blocks; **only the top block of each column is active**.
+* Tap a top block → it moves into one of the **4 launchers** above the board.
+* Every launcher **fires glowing projectiles** (visible trajectory) at the model: one voxel of its colour per shot,
+  counting down its number (e.g. 180 → 0). Launchers fire in parallel (2-4 at once = combo score).
+* If its colour is **not visible yet** (inside the object), the launcher **waits** (pulsing red) until digging exposes it.
+* A voxel is visible if one of its 6 neighbours is empty or outside; exposure is recomputed after every hit.
+  Detached pieces fall (pooled Rigidbody debris) and count as destroyed. Finished colours leave the columns.
+* **Fail:** all 4 launchers are waiting (jammed) — continue with **Eliminare** (empties a waiting launcher) — or no blocks left.
+* Stars from score (combos); every 5th level is HARD (×2.5 coins). Hold a top block to preview the voxels it will hit.
+* Levels are **multicolour objects (6-10 colours from the 12-colour palette)**; later levels have inner colour layers
+  that only appear while digging, so loading them too early jams the launchers.
 
 ## Content
-* **100 original voxel mascots, one per level** (level N unlocks mascot N), following `Docs/reference` (100-mascot sheet):
-  1-10 detailed chibi heroes (`tools/animals.mjs`), 11-100 built from five parametric chibi templates — quadruped,
-  bird, fish, reptile/amphibian, bug — plus specials (jellyfish, octopus, crab, seahorse, snake, bat, snail) in
-  `tools/mascots.mjs`. Every mascot is one connected piece, has big 2×3 eyes and an idle-animation profile.
-  Contact sheets: `Docs/Mascots_001-025.png` … `Docs/Mascots_076-100.png`, front views of 1-10 in `Docs/AnimalsFront.png`.
-* **5 chapters = mascot groups:** Happy Friends (1-20), Wild Safari (21-40), Sky & Sea (41-60), Tiny Wonders (61-80),
-  Wild North (81-100). Collection tabs are the same groups. From level 26 every 3rd level adds a hidden core, every 5th
-  level is HARD. Each level is solver-validated, see `Docs/Solver.md` and `Docs/LevelReport.txt`.
+* **120 levels, one unique multicolour object each.** Chapter 1 "Dream Builds" = the 20 objects of the reference image
+  (castle, house, sports car, cake, rocket, windmill, train, robot, excavator, ship, plane, balloon, ferris wheel, stadium,
+  lighthouse, dragon, elephant, bear, dolphin, pyramid); chapters 2-6 use the other mascots and objects.
+  Level colours are generated from the 12-colour reference palette (`multicolor` in `tools/build-data.mjs`); the
+  Home carousel and Collection show the original-colour models.
+* 124 voxel models: 100 chibi mascots (`tools/animals.mjs`, `tools/mascots.mjs`) + objects (`tools/objects.mjs`).
+  Each level is solver-validated (witness replay), see `Docs/Solver.md` and `Docs/LevelReport.txt`.
 
 ## Home screen
 Follows the premium mockup: HUD (avatar with player level, lives, coins +, settings), dimensional logo with rays, leaves and
