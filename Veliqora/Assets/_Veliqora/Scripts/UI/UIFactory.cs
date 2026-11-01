@@ -30,7 +30,7 @@ namespace Veliqora.UI
                 Background.color = on ? Color.white : new Color(0.62f, 0.62f, 0.62f, 0.85f);
                 return;
             }
-            var pill = SpriteLibrary.Pill(Kind);
+            var pill = UIStyle.Modern ? null : SpriteLibrary.Pill(Kind);
             if (pill != null)
             {
                 // Authored pill: the art carries fill, edge and gloss; disabled = desaturated tint.
@@ -229,6 +229,15 @@ namespace Veliqora.UI
                 sh.rectTransform.anchoredPosition = new Vector2(0, -10);
             }
             var bg = Image(holder, "Fill", SpriteLibrary.Rounded(radius), color, true);
+            if (UIStyle.Modern)
+            {
+                // glass sheen on the upper half + thin light outline
+                var sheen = Image(bg.transform, "Sheen", SpriteLibrary.Rounded(radius), new Color(1f, 1f, 1f, 0.035f));
+                sheen.rectTransform.anchorMin = new Vector2(0f, 0.55f);
+                sheen.rectTransform.anchorMax = Vector2.one;
+                sheen.rectTransform.offsetMin = sheen.rectTransform.offsetMax = Vector2.zero;
+                AddOutline(bg, UIStyle.GlassOutline, 2f);
+            }
             return bg;
         }
 
@@ -250,8 +259,9 @@ namespace Veliqora.UI
             var face = Rect("Face", root);
             h.Edge = Image(face, "Edge", SpriteLibrary.Rounded(size.y * 0.45f), UIStyle.ButtonEdge(kind));
             h.Background = Image(face, "Fill", SpriteLibrary.Rounded(size.y * 0.45f), UIStyle.ButtonFill(kind), true);
-            h.Background.rectTransform.offsetMin = new Vector2(0, 8);
-            var gloss = Image(face, "Gloss", SpriteLibrary.Rounded(size.y * 0.4f), new Color(1, 1, 1, kind == UIStyle.ButtonKind.Ghost ? 0f : 0.22f));
+            h.Background.rectTransform.offsetMin = new Vector2(0, UIStyle.Modern ? 5 : 8);
+            if (UIStyle.Modern && kind != UIStyle.ButtonKind.Ghost) AddOutline(h.Background, new Color(1f, 1f, 1f, 0.16f), 1.5f);
+            var gloss = Image(face, "Gloss", SpriteLibrary.Rounded(size.y * 0.4f), new Color(1, 1, 1, kind == UIStyle.ButtonKind.Ghost ? 0f : (UIStyle.Modern ? 0.1f : 0.22f)));
             gloss.rectTransform.anchorMin = new Vector2(0, 0.55f);
             gloss.rectTransform.offsetMin = new Vector2(14, 0);
             gloss.rectTransform.offsetMax = new Vector2(-14, -8);
@@ -297,16 +307,18 @@ namespace Veliqora.UI
             Stretch(sh.rectTransform, -10);
             sh.rectTransform.anchoredPosition = new Vector2(0, -8);
             var face = Rect("Face", root);
-            h.Edge = Image(face, "Edge", SpriteLibrary.Circle, UIStyle.Darken(fill, 0.2f));
-            h.Background = Image(face, "Fill", SpriteLibrary.Circle, fill, true);
-            h.Background.rectTransform.offsetMin = new Vector2(0, 6);
-            var gloss = Image(face, "Gloss", SpriteLibrary.Circle, new Color(1, 1, 1, 0.2f));
-            gloss.rectTransform.anchorMin = new Vector2(0.18f, 0.52f);
-            gloss.rectTransform.anchorMax = new Vector2(0.82f, 0.92f);
+            var shapeSprite = UIStyle.Modern ? SpriteLibrary.Rounded(size * 0.3f) : SpriteLibrary.Circle;
+            h.Edge = Image(face, "Edge", shapeSprite, UIStyle.Darken(fill, UIStyle.Modern ? 0.32f : 0.2f));
+            h.Background = Image(face, "Fill", shapeSprite, fill, true);
+            h.Background.rectTransform.offsetMin = new Vector2(0, UIStyle.Modern ? 5 : 6);
+            if (UIStyle.Modern) AddOutline(h.Background, new Color(1f, 1f, 1f, 0.18f), 1.5f);
+            var gloss = Image(face, "Gloss", UIStyle.Modern ? SpriteLibrary.Rounded(size * 0.24f) : SpriteLibrary.Circle, new Color(1, 1, 1, UIStyle.Modern ? 0.12f : 0.2f));
+            gloss.rectTransform.anchorMin = UIStyle.Modern ? new Vector2(0.1f, 0.56f) : new Vector2(0.18f, 0.52f);
+            gloss.rectTransform.anchorMax = UIStyle.Modern ? new Vector2(0.9f, 0.94f) : new Vector2(0.82f, 0.92f);
             h.Icon = Image(face, "Icon", SpriteLibrary.Get(icon), iconColor ?? Color.white);
             Stretch(h.Icon.rectTransform, size * 0.24f);
             h.Icon.rectTransform.anchoredPosition = new Vector2(0, 3);
-            var art = SpriteLibrary.ButtonArt(icon);
+            var art = UIStyle.Modern ? null : SpriteLibrary.ButtonArt(icon);
             if (art != null)
             {
                 // Authored round button: one image replaces circle, edge, gloss and glyph.
@@ -345,7 +357,7 @@ namespace Veliqora.UI
         /// </summary>
         public static Text TitleBanner(Transform parent, string text, Vector2 size, Color fallback)
         {
-            var sign = SpriteLibrary.TitleSign();
+            var sign = UIStyle.Modern ? null : SpriteLibrary.TitleSign();
             Image bg;
             if (sign != null)
             {
@@ -355,7 +367,13 @@ namespace Veliqora.UI
             }
             else
             {
-                bg = Image(parent, "Ribbon", SpriteLibrary.Rounded(UIStyle.RadiusMedium), fallback);
+                bg = Image(parent, "Ribbon", SpriteLibrary.Rounded(size.y * 0.5f), UIStyle.Modern ? UIStyle.Ivory : fallback);
+                if (UIStyle.Modern)
+                {
+                    AddOutline(bg, UIStyle.WithAlpha(fallback, 0.85f), 2.5f);
+                    var accent = Image(bg.transform, "Accent", SpriteLibrary.Rounded(4), UIStyle.WithAlpha(fallback, 0.9f));
+                    Place(accent.rectTransform, new Vector2(0.5f, 0f), new Vector2(size.x * 0.4f, 6), new Vector2(0, 10), new Vector2(0.5f, 0f));
+                }
             }
             bg.rectTransform.sizeDelta = size;
             AddShadow(bg, UIStyle.Shadow, new Vector2(0, -8));

@@ -35,6 +35,12 @@ namespace Veliqora.UI
         public static readonly Color Danger = Hex("#E5484D");
         /// <summary>Accent of the active visual theme (set by ThemeService); used for highlights and glows.</summary>
         public static Color ThemeAccent = Hex("#3995F6");
+        /// <summary>
+        /// Modern premium UI (default "Clean Midnight" theme): squircle buttons with a subtle depth, glass panels with a
+        /// thin light outline, clean pill banners; the illustrated cartoon button/sign art is used only by illustrated themes.
+        /// </summary>
+        public static bool Modern = true;
+        public static readonly Color GlassOutline = new Color(1f, 1f, 1f, 0.14f);
 
         // ---------- button variants ----------
         public enum ButtonKind { Primary, Secondary, Accent, Danger, Ghost, Gold }

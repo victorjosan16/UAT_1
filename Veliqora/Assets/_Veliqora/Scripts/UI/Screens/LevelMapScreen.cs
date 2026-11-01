@@ -57,11 +57,23 @@ namespace Veliqora.UI.Screens
             Canvas.ForceUpdateCanvases();
             _width = Full.rect.width;
 
-            // Repeating valley tile background (one draw call)
-            var tex = BackgroundArt.MapTile(theme);
-            var bg = UIFactory.Raw(_content, "Tiles", tex, Color.white);
             float tileH = _width * (BackgroundArt.MapTileHeight / (float)BackgroundArt.MapTileWidth);
-            bg.uvRect = new Rect(0, 0, 1, height / tileH);
+            if (theme.Flat)
+            {
+                // Modern map: the current chapter's scene stays fixed behind the scrolling path (with a soft veil).
+                var chapterBg = FullBackground(Full, BackgroundArt.Chapter(Core.Progression.Chapters.IndexOf(prog.CurrentLevel)));
+                chapterBg.transform.SetAsFirstSibling();
+                var veil = UIFactory.Image(Full, "Veil", SpriteLibrary.Pixel, new Color(0.04f, 0.06f, 0.12f, 0.25f));
+                UIFactory.Stretch(veil.rectTransform);
+                veil.transform.SetSiblingIndex(1);
+            }
+            else
+            {
+                // Repeating valley tile background (one draw call)
+                var tex = BackgroundArt.MapTile(theme);
+                var bg = UIFactory.Raw(_content, "Tiles", tex, Color.white);
+                bg.uvRect = new Rect(0, 0, 1, height / tileH);
+            }
 
             for (int n = 1; n <= count; n++)
             {

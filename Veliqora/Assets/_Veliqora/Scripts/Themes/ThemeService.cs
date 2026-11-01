@@ -25,6 +25,7 @@ namespace Veliqora.Presentation
             if (!IsValid(_selection.Theme, CosmeticKind.Theme)) _selection.Theme = FirstOwned(CosmeticKind.Theme);
             if (!IsValid(_selection.Bottle, CosmeticKind.BottleSkin)) _selection.Bottle = FirstOwned(CosmeticKind.BottleSkin);
             UIStyle.ThemeAccent = Theme.Accent;
+            UIStyle.Modern = Theme.OwnBackgrounds;
         }
 
         private bool IsValid(string id, CosmeticKind kind)
@@ -61,7 +62,7 @@ namespace Veliqora.Presentation
         {
             var item = _config.FindCosmetic(id);
             if (item == null || !_economy.Owns(id)) return false;
-            if (item.Kind == CosmeticKind.Theme) { _selection.Theme = id; UIStyle.ThemeAccent = Theme.Accent; }
+            if (item.Kind == CosmeticKind.Theme) { _selection.Theme = id; UIStyle.ThemeAccent = Theme.Accent; UIStyle.Modern = Theme.OwnBackgrounds; }
             else _selection.Bottle = id;
             _onChanged?.Invoke();
             Changed?.Invoke();

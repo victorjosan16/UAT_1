@@ -81,6 +81,16 @@ namespace Veliqora.UI.Screens
             var pause = UIFactory.IconButton(bar, Icon.Pause, UIStyle.Violet, 116, OpenPause);
             UIFactory.Place(pause.Rect, new Vector2(0, 0.5f), pause.Rect.sizeDelta, Vector2.zero, new Vector2(0, 0.5f));
             AddCoins(bar);
+            if (UIStyle.Modern && !light)
+            {
+                // Modern header: glass pill for stage + level, a smaller pill for the move counter.
+                var head = UIFactory.Image(bar, "HeaderPill", SpriteLibrary.Rounded(44), UIStyle.WithAlpha(UIStyle.Ivory, 0.78f));
+                UIFactory.Place(head.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(380, 116), new Vector2(-40, 38));
+                UIFactory.AddOutline(head, UIStyle.GlassOutline, 2f);
+                var movesPill = UIFactory.Image(bar, "MovesPill", SpriteLibrary.Rounded(26), UIStyle.WithAlpha(UIStyle.Card, 0.85f));
+                UIFactory.Place(movesPill.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(420, 52), new Vector2(-40, -44));
+                UIFactory.AddOutline(movesPill, UIStyle.WithAlpha(UIStyle.ThemeAccent, 0.6f), 1.5f);
+            }
             _levelText = UIFactory.Text(bar, Loc.F("Level {0}", number), UIStyle.FontHeading, hudText);
             var stageText = UIFactory.Text(bar, Loc.F("Stage {0}", _level.Stage), UIStyle.FontCaption, UIStyle.WithAlpha(hudText, 0.7f), TextAnchor.MiddleCenter, FontStyle.Normal);
             UIFactory.Place(stageText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(300, 44), new Vector2(-40, 66));
@@ -128,6 +138,14 @@ namespace Veliqora.UI.Screens
             // Booster bar
             var boosterBar = UIFactory.Rect("Boosters", Safe);
             UIFactory.Band(boosterBar, 0f, 300, 40, 40, 0f);
+            if (UIStyle.Modern && !light)
+            {
+                var tray = UIFactory.Image(boosterBar, "Tray", SpriteLibrary.Rounded(64), UIStyle.WithAlpha(UIStyle.Ivory, 0.72f));
+                UIFactory.Stretch(tray.rectTransform);
+                tray.rectTransform.offsetMin = new Vector2(-10, 6);
+                tray.rectTransform.offsetMax = new Vector2(10, -6);
+                UIFactory.AddOutline(tray, UIStyle.GlassOutline, 2f);
+            }
             AddBooster(boosterBar, BoosterType.Undo, Icon.Undo, Loc.T("Undo"), UIStyle.Hex("#3D8BFF"), 0.1f);
             AddBooster(boosterBar, BoosterType.ExtraBottle, Icon.BottlePlus, Loc.T("Add bottle"), UIStyle.Hex("#36B0C9"), 0.3f);
             AddBooster(boosterBar, BoosterType.Shuffle, Icon.Shuffle, Loc.T("Shuffle"), UIStyle.Hex("#8E5CF7"), 0.5f);
