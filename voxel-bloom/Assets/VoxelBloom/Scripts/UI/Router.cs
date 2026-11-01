@@ -224,11 +224,11 @@ namespace VoxelBloom
             playerLevel.fontStyle = FontStyle.Bold;
             playerLevel.rectTransform.Stretch();
 
-            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 200, 80);
-            lr.Place(new Vector2(0, 0.5f), new Vector2(232, 0), new Vector2(200, 80));
+            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 214, 80);
+            lr.Place(new Vector2(0, 0.5f), new Vector2(236, 0), new Vector2(214, 80));
 
-            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 260, 80);
-            cr.Place(new Vector2(0, 0.5f), new Vector2(478, 0), new Vector2(260, 80));
+            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 250, 80);
+            cr.Place(new Vector2(0, 0.5f), new Vector2(482, 0), new Vector2(250, 80));
 
             gems = UI.Pill(rt, Icon.Gem, "0", out var gr, 220, 80);
             gr.Place(new Vector2(0, 0.5f), new Vector2(740, 0), new Vector2(220, 80));
@@ -260,8 +260,8 @@ namespace VoxelBloom
             if (l != shownLives || secs != shownSeconds)
             {
                 shownLives = l; shownSeconds = secs;
-                lives.text = l >= Services.Lives.Max ? "Full" : l + "  " + (secs / 60).ToString("00") + ":" + (secs % 60).ToString("00");
-                lives.fontSize = l >= Services.Lives.Max ? 40 : 32;
+                lives.text = l >= Services.Lives.Max ? "Full" : l + " · " + (secs / 60).ToString("00") + ":" + (secs % 60).ToString("00");
+                lives.fontSize = l >= Services.Lives.Max ? 40 : 30;
             }
         }
     }

@@ -29,6 +29,9 @@ namespace VoxelBloom
         {
             catalog = new CharacterCatalog(Services.Config);
             UI.Sky(Root, Theme.Hex("#5DB8FF"), Theme.Hex("#BDE6FF"));
+            // meadow behind the bottom controls (fills the extra height of tall phones)
+            var meadow = UI.Image(Root, "Meadow", SpriteFactory.VerticalGradient(Theme.Hex("#8EDB6A"), Theme.Hex("#5DBE4C")), Color.white, false);
+            meadow.rectTransform.BottomBand(0, 1000, 0);
             BuildDiorama();
             var top = TopBar.Create(Root);
             top.OnSettings = () => Router.Open<SettingsDialog>();
@@ -64,21 +67,18 @@ namespace VoxelBloom
 
             hero = CharacterPreview.Create(stage.Pivot);
             hero.Static = true; // home page is static
-            stage.FrameScene(3.9f, 3.0f, 0.95f);
+            stage.FrameScene(3.4f, 2.6f, 0.75f); // model ~45% of the square, pedestal wider than the model
             stage.TargetYaw = stage.Yaw = -22f;
 
             var raw = UI.Raw(Root, "Diorama", stage.Texture);
-            raw.rectTransform.anchorMin = Vector2.zero; raw.rectTransform.anchorMax = Vector2.one;
-            raw.rectTransform.offsetMin = new Vector2(0, 760); raw.rectTransform.offsetMax = new Vector2(0, -300);
-            var arf = raw.gameObject.AddComponent<AspectRatioFitter>();
-            arf.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-            arf.aspectRatio = 1f;
+            // fixed-size square anchored to the top: identical framing on every phone (canvas width is always 1080)
+            raw.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -880), new Vector2(1180, 1180));
             raw.raycastTarget = true;
             var input = raw.gameObject.AddComponent<ModelInput>();
             input.Stage = stage; // drag to rotate 360° (only moves when the player drags)
 
             // "360°" label on the pedestal front
-            var badge = UI.Rect(Root, "Label360").Place(new Vector2(0.5f, 0), new Vector2(0, 870), new Vector2(380, 80));
+            var badge = UI.Rect(Root, "Label360").Place(new Vector2(0.5f, 1), new Vector2(0, -1065), new Vector2(380, 80)); // on the pedestal ring
             var bl = UI.Icon(badge, Icon.ArrowLeft, 56); bl.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(56, 56));
             var br = UI.Icon(badge, Icon.ArrowRight, 56); br.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(56, 56));
             var t360 = UI.Text(badge, "360°", 62, Color.white, TextAnchor.MiddleCenter, 0.25f, Theme.PurpleDark);
@@ -86,17 +86,17 @@ namespace VoxelBloom
 
             // round purple arrows beside the model
             var left = UI.IconButton(Root, Icon.ArrowLeft, 118, ButtonStyle.Purple);
-            ((RectTransform)left.transform).Place(new Vector2(0, 0), new Vector2(170, 1090), new Vector2(118, 118));
+            ((RectTransform)left.transform).Place(new Vector2(0, 1), new Vector2(150, -860), new Vector2(118, 118));
             left.OnClick = () => Select(catalog.Step(selected, -1));
             var right = UI.IconButton(Root, Icon.ArrowRight, 118, ButtonStyle.Purple);
-            ((RectTransform)right.transform).Place(new Vector2(1, 0), new Vector2(-170, 1090), new Vector2(118, 118));
+            ((RectTransform)right.transform).Place(new Vector2(1, 1), new Vector2(-150, -860), new Vector2(118, 118));
             right.OnClick = () => Select(catalog.Step(selected, +1));
         }
 
         // ------------------------------------------------------------------ logo
         void BuildLogo()
         {
-            var root = UI.Rect(Root, "Logo").Place(new Vector2(0.5f, 1), new Vector2(0, -300), new Vector2(920, 320));
+            var root = UI.Rect(Root, "Logo").Place(new Vector2(0.5f, 1), new Vector2(0, -335), new Vector2(920, 320));
             AddIcon(root, Icon.Leaf, new Vector2(-370, 40), 150, 200);
             AddIcon(root, Icon.Leaf, new Vector2(370, 70), 150, -20);
             AddIcon(root, Icon.Leaf, new Vector2(400, -20), 110, 20);
@@ -104,11 +104,11 @@ namespace VoxelBloom
             Word(root, "Bloom", 170, new Vector2(-60, -50), Color.white, Theme.Lavender, Theme.PurpleDark);
             var three = Word(root, "3D", 150, new Vector2(300, -60), Theme.Lighter(Theme.Gold, 0.55f), Theme.GoldDark, Theme.Darker(Theme.Orange, 0.8f));
             three.localRotation = Quaternion.Euler(0, 0, 5);
-            AddIcon(root, Icon.Crown, new Vector2(-250, 150), 150, -14);
+            AddIcon(root, Icon.Crown, new Vector2(-235, 108), 118, -14);
             AddIcon(root, Icon.CubeBlue, new Vector2(-400, -90), 96, -10);
             AddIcon(root, Icon.CubePink, new Vector2(400, 110), 96, 14);
             var rib = UI.Ribbon(Root, "Puzzle cu Obiecte 3D", 680, 120);
-            rib.Place(new Vector2(0.5f, 1), new Vector2(0, -510), rib.sizeDelta);
+            rib.Place(new Vector2(0.5f, 1), new Vector2(0, -540), rib.sizeDelta);
             rib.localRotation = Quaternion.Euler(0, 0, -2);
         }
 
@@ -176,7 +176,7 @@ namespace VoxelBloom
             var grid = Services.Data.GetModel(e.Id);
             if (grid != null)
             {
-                float vs = 2.0f / Mathf.Max(grid.X, Mathf.Max(grid.Y, grid.Z));
+                float vs = 1.6f / Mathf.Max(grid.X, Mathf.Max(grid.Y, grid.Z));
                 hero.Show(grid, Services.Data.GetAnim(e.Id), vs, !unlocked, selected);
                 stage.SetShadowSize(Mathf.Max(grid.X, grid.Z) * vs * 1.2f);
             }
