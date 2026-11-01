@@ -248,8 +248,8 @@ namespace VoxelBloom.Tests
             Assert.AreEqual(500, c.Booster(BoosterType.ColorBomb).Price);
             Assert.Greater(c.Booster(BoosterType.Eliminate).Price, 0);
             Assert.AreEqual(5, c.HardEvery);
-            Assert.GreaterOrEqual(c.Collection.Count, 22);
-            CollectionAssert.IsSubsetOf(new[] { "Animals", "Food", "Vehicles", "Buildings" }, c.Collection.Select(e => e.Category).Distinct().ToList());
+            Assert.AreEqual(100, c.Collection.Count, "100 mascots");
+            CollectionAssert.AreEquivalent(c.Chapters.Select(ch => ch.Name).ToList(), c.Collection.Select(e => e.Category).Distinct().ToList(), "collection tabs = chapters");
         }
 
         [Test]

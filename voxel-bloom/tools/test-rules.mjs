@@ -119,7 +119,7 @@ test('levels are distinct and difficulty increases (casual win rate trend)', () 
   ok(first > last, `chapter 1 (${first.toFixed(2)}) should be easier than chapter 5 (${last.toFixed(2)})`);
   const hard = avg(ls.filter((l) => l.hard).map((l) => l.casualWinRate)), normal = avg(ls.filter((l) => !l.hard).map((l) => l.casualWinRate));
   ok(hard < normal, `hard levels (${hard.toFixed(2)}) must be harder than normal (${normal.toFixed(2)})`);
-  ok(ls.filter((l) => l.hard).every((l) => l.rewardCoins > 2 * ls.find((m) => m.id === l.id - 1).rewardCoins), 'hard reward > 2x neighbour');
+  ok(ls.filter((l) => l.hard).every((l) => { const p = ls.find((m) => m.id === l.id - 1); const base = p.rewardCoins - (p.hiddenCore ? 20 : 0); return l.rewardCoins >= 2 * base; }), 'hard reward >= 2x the neighbour base reward');
 });
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

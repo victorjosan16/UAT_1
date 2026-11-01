@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const out = process.argv[2] || 'models.png';
 const only = process.argv[3] ? process.argv[3].split(',') : null;
 const models = buildAll().filter((m) => !only || only.includes(m.id)).map((m) => ({ id: m.id, palette: m.palette, X: m.grid.X, Y: m.grid.Y, Z: m.grid.Z, v: Array.from(m.grid.v) }));
-const cols = Math.min(6, models.length), cell = 260, rows = Math.ceil(models.length / cols);
+const cols = Math.min(+(process.env.COLS || 6), models.length), cell = 260, rows = Math.ceil(models.length / cols);
 const html = `<canvas id=c width=${cols * cell} height=${rows * cell}></canvas><script>
 const M=${JSON.stringify(models)};const ctx=c.getContext('2d');ctx.fillStyle='#dff1ff';ctx.fillRect(0,0,c.width,c.height);
 function sh(h,f){const n=parseInt(h.slice(1),16);return 'rgb('+[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.min(255,v*f|0)).join(',')+')'}

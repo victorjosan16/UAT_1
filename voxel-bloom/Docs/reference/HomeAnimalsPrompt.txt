@@ -1,0 +1,98 @@
+MASTER PROMPT — VOXEL BLOOM 3D PREMIUM
+HOME SCREEN REDESIGN + RECOGNIZABLE 3D VOXEL ANIMALS + FULL FUNCTIONAL INTEGRATION
+
+ROLE
+You are a senior Unity 6 Android developer, mobile game art director, voxel technical artist, UI/UX engineer, animator and QA engineer. Work inside the EXISTING Voxel Bloom 3D Unity project. The attached latest premium home-screen mockup is the PRIMARY visual reference; the earlier game videos and gameplay mockup define existing gameplay and interaction requirements. Recreate the reference as closely as practical using original assets, not a screenshot used as the UI. Preserve all working gameplay, saved progression, level data and scene links.
+
+GOAL
+Deliver a production-quality, functional, responsive portrait Android home screen, polished and recognizable voxel animal models, working character carousel, navigation, and consistent transition into actual voxel-destruction levels. No placeholders, fake buttons or static animal cutouts in the final deliverable.
+
+1. AUDIT BEFORE MODIFYING
+- Inspect Unity version, URP, scenes, scripts, prefabs, textures, save format, model format, level mappings, UI navigation and existing character selection.
+- Report current components and issues; back up or use version control before destructive edits.
+- Reuse working code. Avoid broad rewrites, broken references, duplicate managers and changing public APIs unnecessarily.
+
+2. REFERENCE FIDELITY — HOME SCREEN
+- Portrait 1080x1920 reference layout, responsive Canvas Scaler, Screen.safeArea, support 16:9/19.5:9/20:9.
+- Top HUD: rounded avatar, full hearts, coins with add button, glossy settings button; all display real state.
+- Prominent Voxel Bloom 3D logo with legible white/lilac dimensional letters, warm golden 3D, leaves and restrained highlights.
+- Center: large adorable orange voxel fox on floating grassy island; landscape has stylized voxel trees, flowers, distant cliffs, waterfall, sky and clouds. Keep subject readable; background should not overpower the UI.
+- Character selection: left/right arrows and six visible character thumbnails, selected state highlighted; scrollable collection if more animals. Tapping changes the large preview, with transition animation.
+- Level badge with current unlocked level, large glossy bright-green PLAY button.
+- Bottom row: Collection, Rewards, Shop, Events, with icons, labels and real navigation.
+- All elements anchored consistently; no text clipping, excessive bloom, overly heavy shadows, stretched sprites or overlapping elements.
+- Use cohesive palette: sky blue, fresh grass green, lavender/purple, golden yellow, coral accents and warm whites. Use original or properly licensed fonts and graphics.
+
+3. 3D ANIMAL ART DIRECTION
+Create ORIGINAL, recognizable, high-quality voxel characters: fox, panda, yellow chick, white rabbit, lion, gray cat, brown bear, dog, penguin and elephant. Start by perfecting the first six visible in the mockup; build the others to the same standard.
+Each character must have:
+- Strong recognizable silhouette from front and three-quarter views.
+- Anatomically suggestive but cute proportions, big expressive eyes, distinctive ears/beak/muzzle/tail/mane/trunk as applicable.
+- Clean voxel grid construction, no random floating cubes, consistent cube size and material language.
+- Thoughtful color blocking, polished nonmetallic materials, subtle specular highlights, ambient shading, soft contact shadows.
+- Stable pivot, sensible bounds, correct scale and camera framing.
+- A model data asset usable in Home preview AND as a destructible voxel model in Gameplay (or a documented conversion pipeline if separate optimized meshes are needed).
+- Thumbnail rendered from the actual model, not an unrelated image.
+- Unique idle animation: gentle breathing, blink, head tilt, ear twitch or tail wag as appropriate. Touch reaction; smooth 360-degree preview rotation with drag.
+- Respect mobile performance: mesh batching/instancing, limited animated objects, avoid Rigidbody on each idle voxel.
+
+4. HOME SCENE INTERACTIONS
+- Play launches the correct current level; never show a fake level.
+- Character carousel arrows wrap or stop consistently, animate selection, update model and highlight; persistence of preview selection.
+- If a model is locked, preview it appropriately and show clear unlock criteria; do not accidentally grant access.
+- Collection opens actual unlocked/locked model collection and 3D previews.
+- Rewards opens daily reward panel with real claim rules and persistence.
+- Shop shows valid coin/booster offerings; no fake transactions. If real-money purchases are not integrated, label them unavailable and do not pretend to charge.
+- Events opens functioning event content if available; otherwise create a clear empty-state screen, not a broken button.
+- Settings opens music, SFX, vibration, graphics and reduced-effects toggles; changes apply and persist.
+- HUD coin and life counts bind to save data, update from events and survive scene changes.
+- Back navigation and pause behavior work on Android.
+
+5. GAMEPLAY CONSISTENCY
+Preserve the established reference gameplay: rotating voxel model, colored numbered block board, five attack slots, color-matched attacks, progress, combos, boosters, win/fail and level select.
+- Character models selected for preview must not silently override the actual level's model; use level-defined models and an explicit preview-selection rule.
+- The same recognizable animal design language must appear in gameplay models.
+- No model parts remain suspended unintentionally after destruction. Separate logical voxels from pooled physical fragments.
+- Progress must equal destroyed target voxels / initial target voxels; freshly started level 1 starts at 0%, resumed levels restore actual progress.
+- Block values represent exact maximum target-voxel destruction; target eligibility and queue behavior remain deterministic.
+- Use a hybrid destruction system: optimized intact geometry, pooled Rigidbody fragments with gravity, collisions and controlled lifetime; no thousands of active physics bodies.
+- Maintain solvable, validated level configurations and existing saves.
+
+6. VISUAL EFFECTS & ANIMATION
+- Fox preview idle: breathing, occasional blinking and gentle tail motion; avoid unnatural deformation of voxel geometry.
+- Gentle flower and leaf movement, waterfall animation, restrained parallax, floating decorative cubes and soft rays.
+- Button press scale/spring animation, hover/selected glow for thumbnails, short transitions between scenes.
+- Effects must not block taps or cause frame spikes; provide reduced-effects mode.
+- Original/licensed sound for selection, Play, navigation and character reaction; haptics optional.
+
+7. UNITY ARCHITECTURE
+Recommended modules (adapt to existing project): HomeScreenController, HomeCharacterCarousel, VoxelCharacterCatalog (ScriptableObject), CharacterPreviewRenderer, HomeHUDPresenter, NavigationService, AudioSettings, SaveService, ModelThumbnailRenderer, QualityManager.
+Use data-driven definitions for animal name, ID, model, thumbnail, animation profile, unlock conditions and associated level(s).
+Separate presentation from business logic. Avoid singleton proliferation and allocations in Update. Clean up subscriptions and coroutines on scene exit.
+
+8. PERFORMANCE & QUALITY
+- Target 60 FPS on mid-range Android, stable 30 FPS fallback, URP mobile settings.
+- Profile memory, draw calls, UI overdraw, particle budgets, texture sizes and loading times.
+- Pool reusable visual effects; compress textures appropriately; cache previews/thumbnails.
+- Preserve a crisp look at device resolutions; use nine-sliced UI assets and TextMeshPro.
+
+9. QA & TESTING
+Create tests for carousel order and locked-state logic, PLAY navigation, save/load, currency/lives HUD, settings persistence, screen scaling, scene transitions, level-model mapping and model voxel integrity.
+Check all ten animal silhouettes, pivots, bounds, materials, eyes and appendages.
+Capture Home screenshots at representative aspect ratios and compare side by side to the attached reference; fix differences in spacing, size, palette, lighting, background and character framing.
+Run EditMode and PlayMode tests where Unity Editor is available. Report unrun tests accurately. Validate Android compilation/AAB only if build tools are actually present.
+
+10. IMPLEMENTATION ORDER
+A. Audit and report.
+B. Create reusable visual design tokens and Home UI prefabs.
+C. Build high-quality fox and first six voxel animals with real thumbnails and animation.
+D. Build scenery, camera and responsive home composition.
+E. Connect all UI interactions to real systems.
+F. Finish remaining animals and collection links.
+G. Verify gameplay model consistency, destruction, progress and saves.
+H. Test, profile, screenshot-compare, fix and document.
+
+DEFINITION OF DONE
+The Home screen closely matches the attached premium reference, is fully interactive, adapts to Android screens, uses real recognizable original 3D voxel animals and has polished animation. Every visible control does what it claims. The Play button launches a functional puzzle level; the character assets and collection remain consistent with gameplay. No placeholder sprites, silent errors, fabricated test claims or regressions.
+
+Start by inspecting the repository and the attached premium Home mockup. Give a concise audit, then implement the project incrementally, compiling and testing after each phase. Do not stop after producing only a plan.

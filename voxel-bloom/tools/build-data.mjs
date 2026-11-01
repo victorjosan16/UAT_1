@@ -15,6 +15,7 @@ const OUT = path.join(ROOT, 'Assets/VoxelBloom/Data/Resources/VoxelBloom');
 for (const d of ['Models', 'Levels', 'Config']) fs.mkdirSync(path.join(OUT, d), { recursive: true });
 
 const models = Object.fromEntries(buildAll().map((m) => [m.id, m]));
+if (Object.keys(models).length !== 100) throw new Error('expected 100 mascots');
 
 // ---------------------------------------------------------------- variants (colour-name substitutions)
 const VARIANTS = {
@@ -55,13 +56,14 @@ const VARIANTS = {
 };
 
 // ---------------------------------------------------------------- the 100 levels
-const CHAPTERS = [
-  { id: 1, name: 'Happy Animals', list: ['chicken', 'bunny', 'penguin', 'bear', 'cat', 'fox', 'panda', 'dog', 'elephant', 'lion', 'chicken:golden', 'bunny:choco', 'penguin:royal', 'bear:polar', 'cat:ginger', 'fox:arctic', 'panda:red', 'sheep', 'wolf', 'deer'] },
-  { id: 2, name: 'Sweet World', list: ['icecream', 'candy', 'donut', 'cupcake', 'watermelon', 'cake', 'burger', 'candy:mint', 'donut:blue', 'icecream:berry', 'cupcake:lemon', 'cake:choco', 'watermelon#core', 'burger:veggie', 'donut:choco', 'icecream#core', 'cake:lemon', 'candy#core', 'cupcake#core', 'cake#core'] },
-  { id: 3, name: 'City Blocks', list: ['car', 'rocket', 'robot', 'lighthouse', 'windmill', 'bus', 'truck', 'house', 'car:blue', 'rocket:moon', 'lighthouse:blue', 'robot:gold', 'windmill:spring', 'bus:city', 'house:blue', 'car:mint', 'truck:ice', 'bus#core', 'house#core', 'truck#core'] },
-  { id: 4, name: 'Ocean Wonders', list: ['fish', 'crab', 'octopus', 'turtle', 'whale', 'fish:tang', 'crab:golden', 'octopus:pink', 'turtle:sea', 'whale:orca', 'fish#core', 'crab#core', 'octopus#core', 'turtle#core', 'whale#core', 'fish:tang#core', 'crab:golden#core', 'octopus:pink#core', 'turtle:sea#core', 'whale:orca#core'] },
-  { id: 5, name: 'Dream Collection', list: ['dragon', 'unicorn:night', 'castle', 'dragon:fire', 'rocket#core', 'robot#core', 'deer:snow', 'wolf:night', 'lion#core', 'castle:sunset', 'unicorn#core', 'dragon#core', 'panda#core', 'fox#core', 'penguin#core', 'lighthouse#core', 'windmill#core', 'castle#core', 'dragon:fire#core', 'castle:sunset#core'] },
-];
+import { MASCOT_ORDER } from './models.mjs';
+// 100 mascots, one per level (level N = mascot N). Later levels add hidden cores for difficulty.
+const ORDER = MASCOT_ORDER();
+const CH_NAMES = ['Happy Friends', 'Wild Safari', 'Sky & Sea', 'Tiny Wonders', 'Wild North'];
+const CHAPTERS = CH_NAMES.map((name, i) => ({
+  id: i + 1, name,
+  list: ORDER.slice(i * 20, i * 20 + 20).map((id, j) => { const n = i * 20 + j + 1; return n >= 26 && n % 3 === 0 ? id + '#core' : id; }),
+}));
 
 function hexDist(a, b) { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); const [x, y] = [p(a), p(b)]; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); }
 

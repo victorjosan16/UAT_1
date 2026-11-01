@@ -8,8 +8,8 @@ namespace VoxelBloom
     /// <summary>COLLECTION: category tabs, 3-column model grid, lock/check states, progress bar.</summary>
     public sealed class CollectionScreen : ScreenBase
     {
-        static readonly string[] Categories = { "Animals", "Food", "Vehicles", "Buildings" };
-        string category = "Animals";
+        string[] Categories;
+        string category;
         RectTransform grid;
         readonly List<UIButton> tabs = new List<UIButton>();
         VText progressText;
@@ -28,12 +28,17 @@ namespace VoxelBloom
             ((RectTransform)back.transform).Place(new Vector2(0, 1), new Vector2(90, -230), new Vector2(110, 110));
             back.OnClick = OnBack;
 
-            var tabRow = UI.Rect(Root, "Tabs").TopBand(330, 100, 40);
+            // tabs = mascot groups (one per chapter)
+            Categories = Services.Config.Chapters.ConvertAll(c => c.Name).ToArray();
+            if (Categories.Length == 0) Categories = new[] { "Happy Friends" };
+            category = Categories[0];
+            var tabRow = UI.Rect(Root, "Tabs").TopBand(330, 100, 30);
+            float tw = 1020f / Categories.Length - 8f;
             for (int i = 0; i < Categories.Length; i++)
             {
                 string c = Categories[i];
-                var b = UI.Button(tabRow, c, ButtonStyle.White, new Vector2(232, 90), null, 38);
-                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / Categories.Length, 0.5f), Vector2.zero, new Vector2(232, 90));
+                var b = UI.Button(tabRow, c, ButtonStyle.White, new Vector2(tw, 90), null, 28);
+                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / Categories.Length, 0.5f), Vector2.zero, new Vector2(tw, 90));
                 b.OnClick = () => { category = c; Rebuild(); };
                 tabs.Add(b);
             }
@@ -81,7 +86,9 @@ namespace VoxelBloom
             }
             UI.Layout(grid, Mathf.Ceil(n / 3f) * 344f);
             int got = Services.Progress.CollectedIn(category, out int total);
-            progressText.text = category + " collected: " + got + "/" + total;
+            int all = 0, allTotal = 0;
+            foreach (var cat in Categories) { all += Services.Progress.CollectedIn(cat, out int t); allTotal += t; }
+            progressText.text = category + ": " + got + "/" + total + "   ·   Mascots: " + all + "/" + allTotal;
             progress.Set(total == 0 ? 0 : (float)got / total);
         }
 

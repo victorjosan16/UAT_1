@@ -28,6 +28,7 @@ namespace VoxelBloom
         readonly List<Image> dots = new List<Image>();
         Transform playButton;
         int page = -1;
+        VText pageLabel;
 
         sealed class CarouselTile
         {
@@ -200,8 +201,15 @@ namespace VoxelBloom
                 b.OnClick = () => { if (tiles[slot].Index >= 0) Select(tiles[slot].Index, true); };
                 tiles.Add(t);
             }
-            var dotRow = UI.Rect(Root, "Dots").BottomBand(712, 30, 0);
-            for (int p = 0; p < catalog.PageCount; p++)
+            var dotRow = UI.Rect(Root, "Dots").BottomBand(706, 40, 0);
+            if (catalog.PageCount > 5)
+            {
+                // many mascots: compact "page / pages" indicator with mini dots for neighbouring pages
+                pageLabel = UI.Text(dotRow, "", 32, Theme.Purple, TextAnchor.MiddleCenter, 0.15f, Color.white);
+                pageLabel.fontStyle = FontStyle.Bold;
+                pageLabel.rectTransform.Stretch();
+            }
+            for (int p = 0; p < (catalog.PageCount > 5 ? 0 : catalog.PageCount); p++)
             {
                 var d = UI.Image(dotRow, "Dot", SpriteFactory.Circle(), Theme.Lavender, false);
                 d.rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2((p - (catalog.PageCount - 1) * 0.5f) * 48, 0), new Vector2(26, 26));
@@ -258,6 +266,7 @@ namespace VoxelBloom
                 if (pageChanged) Tween.Scale(t.Root, Vector3.one * 0.6f, Vector3.one * (sel ? 1.08f : 1f), 0.25f + i * 0.03f, Ease.OutBack);
             }
             for (int d = 0; d < dots.Count; d++) dots[d].color = d == p ? Theme.Purple : Theme.Lavender;
+            if (pageLabel != null) pageLabel.text = (selected + 1) + ". " + catalog.Characters[selected].Name + "   ·   " + (p + 1) + " / " + catalog.PageCount;
         }
 
         // ------------------------------------------------------------------ play / nav

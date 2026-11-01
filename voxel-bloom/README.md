@@ -19,7 +19,7 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
 5. Automated iOS/Android builds (Editor menu, `tools/build.sh`, GitHub Actions): see `Docs/BuildAutomation.md`.
 
 Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈1 min), then
-`node tools/test-rules.mjs`. Model contact sheet: `node tools/preview.mjs Docs/ModelSheet.png`.
+`node tools/test-rules.mjs`. Mascot contact sheets: `COLS=5 node tools/preview.mjs out.png id,id,...` (see `Docs/Mascots_*.png`).
 
 ## Gameplay rules
 * Tap a block on the 5×4 board → it flies into the 5-slot FIFO attack queue and the slot refills from the level deck.
@@ -43,20 +43,21 @@ keeps a playable move), Color Bomb (500, 48 voxels of one colour), Eliminare (15
 with the grant and can never go negative.
 
 ## Content
-* **36 original voxel models**. The 10 hero animals (fox, panda, chick, bunny, lion, cat, bear, puppy, penguin, elephant) are
-  chibi characters with big eyes and idle-animation profiles (`tools/animals.mjs`, front views in `Docs/AnimalsFront.png`); the rest
-  (`tools/models.mjs`): sheep, wolf, deer, clownfish, crab, octopus, turtle, whale, dragon, unicorn, cake, ice cream, candy, donut, cupcake, watermelon,
-  burger, car, bus, fire truck, rocket, robot, house, lighthouse, windmill, castle. See `Docs/ModelSheet.png`.
-* **100 levels in 5 chapters** (Happy Animals, Sweet World, City Blocks, Ocean Wonders, Dream Collection).
-  They use colour variants (e.g. Polar Bear, Orca, Fire Dragon) and **hidden cores** (interior recoloured).
-  Each level is solver-validated, see `Docs/Solver.md` and `Docs/LevelReport.txt`.
+* **100 original voxel mascots, one per level** (level N unlocks mascot N), following `Docs/reference` (100-mascot sheet):
+  1-10 detailed chibi heroes (`tools/animals.mjs`), 11-100 built from five parametric chibi templates — quadruped,
+  bird, fish, reptile/amphibian, bug — plus specials (jellyfish, octopus, crab, seahorse, snake, bat, snail) in
+  `tools/mascots.mjs`. Every mascot is one connected piece, has big 2×3 eyes and an idle-animation profile.
+  Contact sheets: `Docs/Mascots_001-025.png` … `Docs/Mascots_076-100.png`, front views of 1-10 in `Docs/AnimalsFront.png`.
+* **5 chapters = mascot groups:** Happy Friends (1-20), Wild Safari (21-40), Sky & Sea (41-60), Tiny Wonders (61-80),
+  Wild North (81-100). Collection tabs are the same groups. From level 26 every 3rd level adds a hidden core, every 5th
+  level is HARD. Each level is solver-validated, see `Docs/Solver.md` and `Docs/LevelReport.txt`.
 
 ## Home screen
 Follows the premium mockup: HUD (avatar with player level, lives, coins +, settings), dimensional logo with rays, leaves and
 floating cubes, a 3D diorama (floating grass island, layered voxel trees, swaying flowers, cliffs with an animated waterfall)
 with the selected character (idle breathing, blink, look-around, head tilt, tail wag, happy squint; tap = heart eyes + hop + spin +
 coloured sparkles; drag to rotate 360°; the same animated mascot is used in the Collection 3D preview),
-a 10-character carousel (6 per page, arrows wrap, page dots, locked characters shown as silhouettes with their unlock level),
+a 100-mascot carousel (6 per page, arrows wrap, page indicator, locked mascots shown as silhouettes with their unlock level),
 level badge, PLAY (always the latest unlocked level) and Collection / Rewards / Shop / Events. The Home selection is saved
 (save v3) but never changes which model a level uses.
 

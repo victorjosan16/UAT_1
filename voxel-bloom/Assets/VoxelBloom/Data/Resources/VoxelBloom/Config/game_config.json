@@ -3,297 +3,745 @@
   "chapters": [
     {
       "id": 1,
-      "name": "Happy Animals",
+      "name": "Happy Friends",
       "firstLevel": 1,
       "lastLevel": 20,
       "unlockStars": 0,
-      "thumbnailModel": "chicken"
+      "thumbnailModel": "fox"
     },
     {
       "id": 2,
-      "name": "Sweet World",
+      "name": "Wild Safari",
       "firstLevel": 21,
       "lastLevel": 40,
       "unlockStars": 30,
-      "thumbnailModel": "icecream"
+      "thumbnailModel": "dino"
     },
     {
       "id": 3,
-      "name": "City Blocks",
+      "name": "Sky & Sea",
       "firstLevel": 41,
       "lastLevel": 60,
       "unlockStars": 70,
-      "thumbnailModel": "car"
+      "thumbnailModel": "flamingo"
     },
     {
       "id": 4,
-      "name": "Ocean Wonders",
+      "name": "Tiny Wonders",
       "firstLevel": 61,
       "lastLevel": 80,
       "unlockStars": 110,
-      "thumbnailModel": "fish"
+      "thumbnailModel": "turtle"
     },
     {
       "id": 5,
-      "name": "Dream Collection",
+      "name": "Wild North",
       "firstLevel": 81,
       "lastLevel": 100,
       "unlockStars": 150,
-      "thumbnailModel": "dragon"
+      "thumbnailModel": "redpanda"
     }
   ],
   "collection": [
     {
       "id": "fox",
       "name": "Fox",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1575,
-      "unlockLevel": 6
+      "unlockLevel": 1
     },
     {
       "id": "panda",
       "name": "Panda",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1448,
-      "unlockLevel": 7
+      "unlockLevel": 2
     },
     {
       "id": "chicken",
       "name": "Chick",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1328,
-      "unlockLevel": 1
+      "unlockLevel": 3
     },
     {
       "id": "bunny",
       "name": "Bunny",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1579,
-      "unlockLevel": 2
+      "unlockLevel": 4
     },
     {
       "id": "lion",
       "name": "Lion",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 2451,
-      "unlockLevel": 10
+      "unlockLevel": 5
     },
     {
       "id": "cat",
       "name": "Cat",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1491,
-      "unlockLevel": 5
+      "unlockLevel": 6
     },
     {
       "id": "bear",
       "name": "Bear",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1432,
-      "unlockLevel": 4
+      "unlockLevel": 7
     },
     {
       "id": "dog",
       "name": "Puppy",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1617,
       "unlockLevel": 8
     },
     {
       "id": "penguin",
       "name": "Penguin",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1873,
-      "unlockLevel": 3
+      "unlockLevel": 9
     },
     {
       "id": "elephant",
       "name": "Elephant",
-      "category": "Animals",
+      "category": "Happy Friends",
       "voxels": 1475,
-      "unlockLevel": 9
-    },
-    {
-      "id": "sheep",
-      "name": "Sheep",
-      "category": "Animals",
-      "voxels": 690,
-      "unlockLevel": 18
-    },
-    {
-      "id": "wolf",
-      "name": "Wolf",
-      "category": "Animals",
-      "voxels": 600,
-      "unlockLevel": 19
+      "unlockLevel": 10
     },
     {
       "id": "deer",
-      "name": "Deer",
-      "category": "Animals",
-      "voxels": 415,
-      "unlockLevel": 20
-    },
-    {
-      "id": "fish",
-      "name": "Clownfish",
-      "category": "Animals",
-      "voxels": 341,
-      "unlockLevel": 61
-    },
-    {
-      "id": "crab",
-      "name": "Crab",
-      "category": "Animals",
-      "voxels": 403,
-      "unlockLevel": 62
-    },
-    {
-      "id": "octopus",
-      "name": "Octopus",
-      "category": "Animals",
-      "voxels": 597,
-      "unlockLevel": 63
-    },
-    {
-      "id": "turtle",
-      "name": "Turtle",
-      "category": "Animals",
-      "voxels": 518,
-      "unlockLevel": 64
-    },
-    {
-      "id": "whale",
-      "name": "Whale",
-      "category": "Animals",
-      "voxels": 684,
-      "unlockLevel": 65
-    },
-    {
-      "id": "cake",
-      "name": "Strawberry Cake",
-      "category": "Food",
-      "voxels": 1446,
-      "unlockLevel": 26
-    },
-    {
-      "id": "icecream",
-      "name": "Ice Cream",
-      "category": "Food",
-      "voxels": 614,
-      "unlockLevel": 21
-    },
-    {
-      "id": "candy",
-      "name": "Candy",
-      "category": "Food",
-      "voxels": 523,
-      "unlockLevel": 22
-    },
-    {
-      "id": "donut",
-      "name": "Donut",
-      "category": "Food",
-      "voxels": 896,
-      "unlockLevel": 23
-    },
-    {
-      "id": "cupcake",
-      "name": "Cupcake",
-      "category": "Food",
-      "voxels": 1087,
-      "unlockLevel": 24
-    },
-    {
-      "id": "watermelon",
-      "name": "Watermelon",
-      "category": "Food",
-      "voxels": 996,
-      "unlockLevel": 25
-    },
-    {
-      "id": "burger",
-      "name": "Burger",
-      "category": "Food",
-      "voxels": 1539,
-      "unlockLevel": 27
-    },
-    {
-      "id": "car",
-      "name": "Red Car",
-      "category": "Vehicles",
-      "voxels": 1096,
-      "unlockLevel": 41
-    },
-    {
-      "id": "bus",
-      "name": "School Bus",
-      "category": "Vehicles",
-      "voxels": 2211,
-      "unlockLevel": 46
-    },
-    {
-      "id": "truck",
-      "name": "Fire Truck",
-      "category": "Vehicles",
-      "voxels": 1786,
-      "unlockLevel": 47
-    },
-    {
-      "id": "rocket",
-      "name": "Rocket",
-      "category": "Vehicles",
-      "voxels": 813,
-      "unlockLevel": 42
-    },
-    {
-      "id": "house",
-      "name": "Cozy House",
-      "category": "Buildings",
-      "voxels": 2362,
-      "unlockLevel": 48
-    },
-    {
-      "id": "lighthouse",
-      "name": "Lighthouse",
-      "category": "Buildings",
-      "voxels": 1213,
-      "unlockLevel": 44
-    },
-    {
-      "id": "windmill",
-      "name": "Windmill",
-      "category": "Buildings",
-      "voxels": 1083,
-      "unlockLevel": 45
-    },
-    {
-      "id": "castle",
-      "name": "Dream Castle",
-      "category": "Buildings",
-      "voxels": 3026,
-      "unlockLevel": 83
-    },
-    {
-      "id": "robot",
-      "name": "Robo Buddy",
-      "category": "Vehicles",
-      "voxels": 1058,
-      "unlockLevel": 43
-    },
-    {
-      "id": "dragon",
-      "name": "Baby Dragon",
-      "category": "Animals",
-      "voxels": 754,
-      "unlockLevel": 81
+      "name": "Fawn",
+      "category": "Happy Friends",
+      "voxels": 1510,
+      "unlockLevel": 11
     },
     {
       "id": "unicorn",
       "name": "Unicorn",
-      "category": "Animals",
-      "voxels": 477,
+      "category": "Happy Friends",
+      "voxels": 1820,
+      "unlockLevel": 12
+    },
+    {
+      "id": "raccoon",
+      "name": "Raccoon",
+      "category": "Happy Friends",
+      "voxels": 1516,
+      "unlockLevel": 13
+    },
+    {
+      "id": "squirrel",
+      "name": "Squirrel",
+      "category": "Happy Friends",
+      "voxels": 1700,
+      "unlockLevel": 14
+    },
+    {
+      "id": "cow",
+      "name": "Cow",
+      "category": "Happy Friends",
+      "voxels": 1460,
+      "unlockLevel": 15
+    },
+    {
+      "id": "pig",
+      "name": "Piglet",
+      "category": "Happy Friends",
+      "voxels": 1483,
+      "unlockLevel": 16
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "category": "Happy Friends",
+      "voxels": 1438,
+      "unlockLevel": 17
+    },
+    {
+      "id": "tiger",
+      "name": "Tiger",
+      "category": "Happy Friends",
+      "voxels": 1448,
+      "unlockLevel": 18
+    },
+    {
+      "id": "koala",
+      "name": "Koala",
+      "category": "Happy Friends",
+      "voxels": 1435,
+      "unlockLevel": 19
+    },
+    {
+      "id": "dragon",
+      "name": "Dragon",
+      "category": "Happy Friends",
+      "voxels": 1563,
+      "unlockLevel": 20
+    },
+    {
+      "id": "dino",
+      "name": "Dino",
+      "category": "Wild Safari",
+      "voxels": 1324,
+      "unlockLevel": 21
+    },
+    {
+      "id": "giraffe",
+      "name": "Giraffe",
+      "category": "Wild Safari",
+      "voxels": 1600,
+      "unlockLevel": 22
+    },
+    {
+      "id": "zebra",
+      "name": "Zebra",
+      "category": "Wild Safari",
+      "voxels": 1598,
+      "unlockLevel": 23
+    },
+    {
+      "id": "hippo",
+      "name": "Hippo",
+      "category": "Wild Safari",
+      "voxels": 1430,
+      "unlockLevel": 24
+    },
+    {
+      "id": "rhino",
+      "name": "Rhino",
+      "category": "Wild Safari",
+      "voxels": 1426,
+      "unlockLevel": 25
+    },
+    {
+      "id": "crocodile",
+      "name": "Crocodile",
+      "category": "Wild Safari",
+      "voxels": 1330,
+      "unlockLevel": 26
+    },
+    {
+      "id": "wolf",
+      "name": "Wolf",
+      "category": "Wild Safari",
+      "voxels": 1575,
+      "unlockLevel": 27
+    },
+    {
+      "id": "monkey",
+      "name": "Monkey",
+      "category": "Wild Safari",
+      "voxels": 1443,
+      "unlockLevel": 28
+    },
+    {
+      "id": "gorilla",
+      "name": "Gorilla",
+      "category": "Wild Safari",
+      "voxels": 1408,
+      "unlockLevel": 29
+    },
+    {
+      "id": "capybara",
+      "name": "Capybara",
+      "category": "Wild Safari",
+      "voxels": 1442,
+      "unlockLevel": 30
+    },
+    {
+      "id": "sloth",
+      "name": "Sloth",
+      "category": "Wild Safari",
+      "voxels": 1404,
+      "unlockLevel": 31
+    },
+    {
+      "id": "beaver",
+      "name": "Beaver",
+      "category": "Wild Safari",
+      "voxels": 1443,
+      "unlockLevel": 32
+    },
+    {
+      "id": "hedgehog",
+      "name": "Hedgehog",
+      "category": "Wild Safari",
+      "voxels": 1511,
+      "unlockLevel": 33
+    },
+    {
+      "id": "otter",
+      "name": "Otter",
+      "category": "Wild Safari",
+      "voxels": 1439,
+      "unlockLevel": 34
+    },
+    {
+      "id": "walrus",
+      "name": "Walrus",
+      "category": "Wild Safari",
+      "voxels": 1446,
+      "unlockLevel": 35
+    },
+    {
+      "id": "seal",
+      "name": "Seal",
+      "category": "Wild Safari",
+      "voxels": 1439,
+      "unlockLevel": 36
+    },
+    {
+      "id": "emperor",
+      "name": "Emperor Penguin",
+      "category": "Wild Safari",
+      "voxels": 1304,
+      "unlockLevel": 37
+    },
+    {
+      "id": "owl",
+      "name": "Owl",
+      "category": "Wild Safari",
+      "voxels": 1328,
+      "unlockLevel": 38
+    },
+    {
+      "id": "eagle",
+      "name": "Eagle",
+      "category": "Wild Safari",
+      "voxels": 1364,
+      "unlockLevel": 39
+    },
+    {
+      "id": "parrot",
+      "name": "Parrot",
+      "category": "Wild Safari",
+      "voxels": 1400,
+      "unlockLevel": 40
+    },
+    {
+      "id": "flamingo",
+      "name": "Flamingo",
+      "category": "Sky & Sea",
+      "voxels": 1268,
+      "unlockLevel": 41
+    },
+    {
+      "id": "swan",
+      "name": "Swan",
+      "category": "Sky & Sea",
+      "voxels": 1326,
+      "unlockLevel": 42
+    },
+    {
+      "id": "duck",
+      "name": "Duckling",
+      "category": "Sky & Sea",
+      "voxels": 1310,
+      "unlockLevel": 43
+    },
+    {
+      "id": "goose",
+      "name": "Goose",
+      "category": "Sky & Sea",
+      "voxels": 1326,
+      "unlockLevel": 44
+    },
+    {
+      "id": "raven",
+      "name": "Raven",
+      "category": "Sky & Sea",
+      "voxels": 1304,
+      "unlockLevel": 45
+    },
+    {
+      "id": "crow",
+      "name": "Crow",
+      "category": "Sky & Sea",
+      "voxels": 1304,
+      "unlockLevel": 46
+    },
+    {
+      "id": "cuckoo",
+      "name": "Cuckoo",
+      "category": "Sky & Sea",
+      "voxels": 1400,
+      "unlockLevel": 47
+    },
+    {
+      "id": "goldfinch",
+      "name": "Goldfinch",
+      "category": "Sky & Sea",
+      "voxels": 1324,
+      "unlockLevel": 48
+    },
+    {
+      "id": "sparrow",
+      "name": "Sparrow",
+      "category": "Sky & Sea",
+      "voxels": 1304,
+      "unlockLevel": 49
+    },
+    {
+      "id": "pigeon",
+      "name": "Dove",
+      "category": "Sky & Sea",
+      "voxels": 1304,
+      "unlockLevel": 50
+    },
+    {
+      "id": "clownfish",
+      "name": "Clownfish",
+      "category": "Sky & Sea",
+      "voxels": 511,
+      "unlockLevel": 51
+    },
+    {
+      "id": "bluefish",
+      "name": "Blue Tang",
+      "category": "Sky & Sea",
+      "voxels": 511,
+      "unlockLevel": 52
+    },
+    {
+      "id": "shark",
+      "name": "Shark",
+      "category": "Sky & Sea",
+      "voxels": 578,
+      "unlockLevel": 53
+    },
+    {
+      "id": "dolphin",
+      "name": "Dolphin",
+      "category": "Sky & Sea",
+      "voxels": 577,
+      "unlockLevel": 54
+    },
+    {
+      "id": "whale",
+      "name": "Whale",
+      "category": "Sky & Sea",
+      "voxels": 663,
+      "unlockLevel": 55
+    },
+    {
+      "id": "jellyfish",
+      "name": "Jellyfish",
+      "category": "Sky & Sea",
+      "voxels": 1216,
+      "unlockLevel": 56
+    },
+    {
+      "id": "octopus",
+      "name": "Octopus",
+      "category": "Sky & Sea",
+      "voxels": 1012,
+      "unlockLevel": 57
+    },
+    {
+      "id": "crab",
+      "name": "Crab",
+      "category": "Sky & Sea",
+      "voxels": 680,
+      "unlockLevel": 58
+    },
+    {
+      "id": "seahorse",
+      "name": "Seahorse",
+      "category": "Sky & Sea",
+      "voxels": 628,
+      "unlockLevel": 59
+    },
+    {
+      "id": "seaturtle",
+      "name": "Sea Turtle",
+      "category": "Sky & Sea",
+      "voxels": 1868,
+      "unlockLevel": 60
+    },
+    {
+      "id": "turtle",
+      "name": "Turtle",
+      "category": "Tiny Wonders",
+      "voxels": 1868,
+      "unlockLevel": 61
+    },
+    {
+      "id": "frog",
+      "name": "Frog",
+      "category": "Tiny Wonders",
+      "voxels": 1122,
+      "unlockLevel": 62
+    },
+    {
+      "id": "treefrog",
+      "name": "Tree Frog",
+      "category": "Tiny Wonders",
+      "voxels": 1122,
+      "unlockLevel": 63
+    },
+    {
+      "id": "salamander",
+      "name": "Salamander",
+      "category": "Tiny Wonders",
+      "voxels": 1308,
+      "unlockLevel": 64
+    },
+    {
+      "id": "snake",
+      "name": "Snake",
+      "category": "Tiny Wonders",
+      "voxels": 1146,
+      "unlockLevel": 65
+    },
+    {
+      "id": "chameleon",
+      "name": "Chameleon",
+      "category": "Tiny Wonders",
+      "voxels": 1310,
+      "unlockLevel": 66
+    },
+    {
+      "id": "lizard",
+      "name": "Lizard",
+      "category": "Tiny Wonders",
+      "voxels": 1308,
+      "unlockLevel": 67
+    },
+    {
+      "id": "iguana",
+      "name": "Iguana",
+      "category": "Tiny Wonders",
+      "voxels": 1339,
+      "unlockLevel": 68
+    },
+    {
+      "id": "gecko",
+      "name": "Gecko",
+      "category": "Tiny Wonders",
+      "voxels": 1308,
+      "unlockLevel": 69
+    },
+    {
+      "id": "manticore",
+      "name": "Manticore",
+      "category": "Tiny Wonders",
+      "voxels": 1640,
+      "unlockLevel": 70
+    },
+    {
+      "id": "bat",
+      "name": "Bat",
+      "category": "Tiny Wonders",
+      "voxels": 1608,
+      "unlockLevel": 71
+    },
+    {
+      "id": "desertheg",
+      "name": "Desert Hedgehog",
+      "category": "Tiny Wonders",
+      "voxels": 1562,
+      "unlockLevel": 72
+    },
+    {
+      "id": "scorpion",
+      "name": "Scorpion",
+      "category": "Tiny Wonders",
+      "voxels": 852,
+      "unlockLevel": 73
+    },
+    {
+      "id": "spider",
+      "name": "Spider",
+      "category": "Tiny Wonders",
+      "voxels": 820,
+      "unlockLevel": 74
+    },
+    {
+      "id": "ant",
+      "name": "Ant",
+      "category": "Tiny Wonders",
+      "voxels": 1002,
+      "unlockLevel": 75
+    },
+    {
+      "id": "bee",
+      "name": "Bee",
+      "category": "Tiny Wonders",
+      "voxels": 890,
+      "unlockLevel": 76
+    },
+    {
+      "id": "butterfly",
+      "name": "Butterfly",
+      "category": "Tiny Wonders",
+      "voxels": 888,
+      "unlockLevel": 77
+    },
+    {
+      "id": "ladybug",
+      "name": "Ladybug",
+      "category": "Tiny Wonders",
+      "voxels": 1278,
+      "unlockLevel": 78
+    },
+    {
+      "id": "dragonfly",
+      "name": "Dragonfly",
+      "category": "Tiny Wonders",
+      "voxels": 1112,
+      "unlockLevel": 79
+    },
+    {
+      "id": "snail",
+      "name": "Snail",
+      "category": "Tiny Wonders",
+      "voxels": 2156,
+      "unlockLevel": 80
+    },
+    {
+      "id": "redpanda",
+      "name": "Red Panda",
+      "category": "Wild North",
+      "voxels": 1516,
+      "unlockLevel": 81
+    },
+    {
+      "id": "ferret",
+      "name": "Ferret",
+      "category": "Wild North",
+      "voxels": 1439,
       "unlockLevel": 82
+    },
+    {
+      "id": "pike",
+      "name": "Pike",
+      "category": "Wild North",
+      "voxels": 469,
+      "unlockLevel": 83
+    },
+    {
+      "id": "lynx",
+      "name": "Lynx",
+      "category": "Wild North",
+      "voxels": 1492,
+      "unlockLevel": 84
+    },
+    {
+      "id": "wildcat",
+      "name": "Wildcat",
+      "category": "Wild North",
+      "voxels": 1516,
+      "unlockLevel": 85
+    },
+    {
+      "id": "cheetah",
+      "name": "Cheetah",
+      "category": "Wild North",
+      "voxels": 1448,
+      "unlockLevel": 86
+    },
+    {
+      "id": "jaguar",
+      "name": "Jaguar",
+      "category": "Wild North",
+      "voxels": 1448,
+      "unlockLevel": 87
+    },
+    {
+      "id": "leopard",
+      "name": "Leopard",
+      "category": "Wild North",
+      "voxels": 1423,
+      "unlockLevel": 88
+    },
+    {
+      "id": "aurochs",
+      "name": "Wild Ox",
+      "category": "Wild North",
+      "voxels": 1494,
+      "unlockLevel": 89
+    },
+    {
+      "id": "moose",
+      "name": "Moose",
+      "category": "Wild North",
+      "voxels": 1466,
+      "unlockLevel": 90
+    },
+    {
+      "id": "mammoth",
+      "name": "Mammoth",
+      "category": "Wild North",
+      "voxels": 1450,
+      "unlockLevel": 91
+    },
+    {
+      "id": "stag",
+      "name": "Stag",
+      "category": "Wild North",
+      "voxels": 1506,
+      "unlockLevel": 92
+    },
+    {
+      "id": "polarwolf",
+      "name": "Arctic Wolf",
+      "category": "Wild North",
+      "voxels": 1575,
+      "unlockLevel": 93
+    },
+    {
+      "id": "polarbear",
+      "name": "Polar Bear",
+      "category": "Wild North",
+      "voxels": 1432,
+      "unlockLevel": 94
+    },
+    {
+      "id": "babypenguin",
+      "name": "Baby Penguin",
+      "category": "Wild North",
+      "voxels": 1318,
+      "unlockLevel": 95
+    },
+    {
+      "id": "reindeer",
+      "name": "Reindeer",
+      "category": "Wild North",
+      "voxels": 1506,
+      "unlockLevel": 96
+    },
+    {
+      "id": "alpaca",
+      "name": "Alpaca",
+      "category": "Wild North",
+      "voxels": 1791,
+      "unlockLevel": 97
+    },
+    {
+      "id": "camel",
+      "name": "Camel",
+      "category": "Wild North",
+      "voxels": 1562,
+      "unlockLevel": 98
+    },
+    {
+      "id": "llama",
+      "name": "Llama",
+      "category": "Wild North",
+      "voxels": 1710,
+      "unlockLevel": 99
+    },
+    {
+      "id": "bison",
+      "name": "Bison",
+      "category": "Wild North",
+      "voxels": 1448,
+      "unlockLevel": 100
     }
   ],
   "hardLevels": {

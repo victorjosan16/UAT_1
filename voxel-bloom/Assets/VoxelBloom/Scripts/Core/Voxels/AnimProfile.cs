@@ -31,10 +31,12 @@ namespace VoxelBloom.Core
             => Tail != null && x >= Tail[0] && x <= Tail[3] && y >= Tail[1] && y <= Tail[4] && z >= Tail[2] && z <= Tail[5];
     }
 
-    /// <summary>Home carousel characters: fixed order, starter, unlock rules and paging.</summary>
+    /// <summary>
+    /// Home carousel characters = the 100 mascots in mascot/level order (mascot N is unlocked by level N),
+    /// starter, unlock rules and paging.
+    /// </summary>
     public sealed class CharacterCatalog
     {
-        public static readonly string[] HomeOrder = { "fox", "panda", "chicken", "bunny", "lion", "cat", "bear", "dog", "penguin", "elephant" };
         public const string Starter = "fox";
         public const int PerPage = 6;
 
@@ -42,11 +44,12 @@ namespace VoxelBloom.Core
 
         public CharacterCatalog(GameConfig cfg)
         {
-            foreach (var id in HomeOrder)
-            {
-                var e = cfg?.Collection.Find(c => c.Id == id);
-                Characters.Add(e ?? new CollectionEntry { Id = id, Name = id, Category = "Animals" });
-            }
+            if (cfg != null) Characters.AddRange(cfg.Collection.FindAll(c => c.UnlockLevel > 0));
+            Characters.Sort((a, b) => a.UnlockLevel.CompareTo(b.UnlockLevel));
+            // the starter always leads the carousel
+            int s = Characters.FindIndex(c => c.Id == Starter);
+            if (s > 0) { var st = Characters[s]; Characters.RemoveAt(s); Characters.Insert(0, st); }
+            if (Characters.Count == 0) Characters.Add(new CollectionEntry { Id = Starter, Name = "Fox", Category = "Happy Friends", UnlockLevel = 1 });
         }
 
         public int Count => Characters.Count;

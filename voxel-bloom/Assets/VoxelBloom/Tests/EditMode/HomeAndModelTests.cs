@@ -56,7 +56,7 @@ namespace VoxelBloom.Tests
         {
             string dir = Path.Combine(DataDir, "Models");
             var files = Directory.GetFiles(dir, "*.json");
-            Assert.GreaterOrEqual(files.Length, 36);
+            Assert.AreEqual(100, files.Length, "100 mascots");
             foreach (var f in files)
             {
                 var d = MiniJson.Obj(MiniJson.Parse(File.ReadAllText(f)));
@@ -65,7 +65,6 @@ namespace VoxelBloom.Tests
                 var s = new GameSession(lvl);
                 Assert.AreEqual(0, s.Collapse(null), Path.GetFileName(f) + " has floating pieces");
                 string id = MiniJson.GetString(d, "id");
-                if (CharacterCatalog.HomeOrder.Contains(id))
                 {
                     var a = AnimProfile.FromJson(MiniJson.GetObj(d, "anim"));
                     Assert.NotNull(a, id + " anim");
@@ -84,17 +83,18 @@ namespace VoxelBloom.Tests
         {
             var cfg = Config();
             var cat = new CharacterCatalog(cfg);
-            Assert.AreEqual(10, cat.Count);
-            Assert.AreEqual("fox", cat.Characters[0].Id);
-            CollectionAssert.AreEqual(new[] { "fox", "panda", "chicken", "bunny", "lion", "cat" }, cat.Characters.Take(6).Select(c => c.Id).ToArray());
-            Assert.AreEqual(2, cat.PageCount);
-            Assert.AreEqual(9, cat.Step(0, -1), "left arrow wraps to the last character");
-            Assert.AreEqual(0, cat.Step(9, +1));
+            Assert.AreEqual(100, cat.Count, "all 100 mascots are in the carousel");
+            Assert.AreEqual("fox", cat.Characters[0].Id, "starter leads");
+            CollectionAssert.AreEqual(new[] { "fox", "panda", "chicken", "bunny", "lion", "cat" }, cat.Characters.Take(6).Select(c => c.Id).ToArray(), "mascot N = level N");
+            Assert.AreEqual(17, cat.PageCount);
+            Assert.AreEqual(99, cat.Step(0, -1), "left arrow wraps to the last character");
+            Assert.AreEqual(0, cat.Step(99, +1));
             Assert.AreEqual(1, CharacterCatalog.PageOf(7));
 
             var save = SaveData.CreateNew(cfg);
             Assert.IsTrue(cat.IsUnlocked("fox", save), "starter is free");
             Assert.IsFalse(cat.IsUnlocked("lion", save));
+            Assert.AreEqual(100, cat.Characters.Select(c => c.UnlockLevel).Distinct().Count(), "one mascot per level");
             Assert.AreEqual("fox", cat.ResolveSaved("lion", save), "locked selection is never persisted");
             save.CollectionUnlocked.Add("lion");
             Assert.AreEqual("lion", cat.ResolveSaved("lion", save));
@@ -117,10 +117,11 @@ namespace VoxelBloom.Tests
         public void LevelModels_AreLevelDefined_NotTheHomeSelection()
         {
             // the Home selection never changes which model a level uses
-            Assert.AreEqual("chicken", Level(1).ModelId);
-            Assert.AreEqual("fox", Level(6).ModelId);
+            Assert.AreEqual("fox", Level(1).ModelId);
+            Assert.AreEqual("chicken", Level(3).ModelId);
             Assert.AreEqual("dog", Level(8).ModelId);
-            Assert.AreEqual("elephant", Level(9).ModelId);
+            Assert.AreEqual("elephant", Level(10).ModelId);
+            Assert.AreEqual("bison", Level(100).ModelId);
         }
     }
 }
