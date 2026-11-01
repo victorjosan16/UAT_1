@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { buildAll, MASCOT_ORDER } from './models.mjs';
 import { Grid, rng, encode } from './voxel.mjs';
 import { solveGreedy, randomWinRate, replay } from './rules.mjs';
+import { RO, CHAPTERS_RO } from './names-ro.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'Assets/VoxelBloom/Data/Resources/VoxelBloom');
@@ -22,7 +23,8 @@ const EXTRA_DROP = new Set(['icecream', 'candy', 'watermelon', 'burger']); // ke
 const ORDER = FEATURED.concat(MASCOT_ORDER().filter((id) => !FEATURED.includes(id) && !EXTRA_DROP.has(id)));
 if (ORDER.length !== 120 || ORDER.some((id) => !models[id])) throw new Error('level order must list 120 existing models, got ' + ORDER.length);
 for (const id of EXTRA_DROP) delete models[id];
-const CH_NAMES = ['Dream Builds', 'Happy Friends', 'Wild Safari', 'Sky & Sea', 'Tiny Wonders', 'Wild North'];
+const CH_NAMES = CHAPTERS_RO; // Romanian UI
+for (const m of all) if (RO[m.id]) m.name = RO[m.id];
 const CHAPTERS = CH_NAMES.map((name, i) => ({ id: i + 1, name, list: ORDER.slice(i * 20, i * 20 + 20) }));
 const CATEGORY = Object.fromEntries(CHAPTERS.flatMap((c) => c.list.map((id) => [id, c.name])));
 

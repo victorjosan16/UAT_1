@@ -116,7 +116,7 @@ namespace VoxelBloom
                 Vector3 p = Vector3.Lerp(Vector3.Lerp(shotFrom[i], mid, k), Vector3.Lerp(mid, shotTo[i], k), k);
                 float s = shotSize[i] * 1.5f;
                 // glowing trail: bright sparks left behind the ball
-                if (!Services.ReducedEffects && count < Capacity)
+                if (!Services.ReducedEffects && count < Capacity && Random.value < 0.5f)
                 {
                     int t = count++;
                     pos[t] = p; vel[t] = Random.insideUnitSphere * shotSize[i] * 1.5f; rot[t] = Random.rotation; spin[t] = Vector3.zero;

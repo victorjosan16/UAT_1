@@ -34,8 +34,9 @@ namespace VoxelBloom
         {
             var cg = Root.GetComponent<CanvasGroup>();
             if (cg == null) cg = Root.gameObject.AddComponent<CanvasGroup>();
-            cg.alpha = row > 0 ? 0.45f : (visibleColour ? 1f : 0.75f);
-            Root.localScale = Vector3.one * (row > 0 ? 0.94f : 1f);
+            // inactive rows are only slightly faded (colours stay true, never grey)
+            cg.alpha = row > 0 ? 0.72f : (visibleColour ? 1f : 0.88f);
+            Root.localScale = Vector3.one * (row > 0 ? 0.96f : 1f);
         }
 
         public void Set(AttackBlock? block, Color32[] palette)
@@ -48,8 +49,9 @@ namespace VoxelBloom
             Lip.color = Theme.Darker(c, 0.72f);
             Label.text = block.Value.Power.ToString();
             float lum = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
-            Label.color = lum > 0.8f ? Theme.Ink : Color.white;
-            Label.outlineColor = lum > 0.8f ? new Color32(255, 255, 255, 255) : (Color32)Theme.Darker(c, 0.45f);
+            bool light = lum > 0.62f;
+            Label.color = light ? Theme.Navy : Color.white;
+            Label.outlineColor = light ? new Color(1, 1, 1, 0.6f) : (Color)Theme.Darker(c, 0.5f);
         }
     }
 
@@ -124,7 +126,7 @@ namespace VoxelBloom
         {
             controller = gameObject.AddComponent<GameplayController>();
             controller.Bind(this);
-            UI.Sky(Root, Theme.GameSkyTop, Theme.SkyBottom);
+            UI.Sky(Root, Theme.GameBackground, Theme.GameBackground);
             BuildHud();
             BuildModelArea();
             BuildQueue();
@@ -157,11 +159,14 @@ namespace VoxelBloom
             mr.gameObject.SetActive(false); // block count is shown under the progress bar (avoids overlapping the stars)
             CoinsText = UI.Pill(hud, Icon.Coin, "0", out var cr, 260, 76);
             cr.Place(new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(260, 76));
+            var addCoins = UI.IconButton(cr, Icon.Plus, 64, ButtonStyle.Green);
+            ((RectTransform)addCoins.transform).Place(new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(64, 64));
+            addCoins.OnClick = () => Router.Open<BoostersDialog>();
         }
 
         void BuildModelArea()
         {
-            var panel = UI.Panel(Root, "ModelPanel", Color.white, 56);
+            var panel = UI.Panel(Root, "ModelPanel", Theme.GamePanel, 56);
             ModelPanel = (RectTransform)panel.transform.parent;
             ModelPanel.anchorMin = Vector2.zero; ModelPanel.anchorMax = Vector2.one;
             ModelPanel.offsetMin = new Vector2(40, 1095); ModelPanel.offsetMax = new Vector2(-40, -150);
@@ -225,12 +230,14 @@ namespace VoxelBloom
             float w = 200f, gap = (960f - 4 * w) / 3f;
             for (int i = 0; i < GameSession.Launchers; i++)
             {
-                var basePanel = UI.Panel(row, "Launcher" + i, new Color(0.2f, 0.17f, 0.34f, 0.85f), 36, true, 6f);
+                var basePanel = UI.Panel(row, "Launcher" + i, Theme.SlotEmpty, 36, true, 6f);
+                var plus = UI.Text(basePanel.transform, "+", 72, new Color(0.55f, 0.65f, 0.82f, 1f));
+                plus.rectTransform.Stretch(0, 0, 0, 10);
                 var slot = (RectTransform)basePanel.transform.parent;
                 slot.Place(new Vector2(0, 0.5f), new Vector2(w / 2 + i * (w + gap), -10), new Vector2(w, 150));
                 LauncherSlots[i] = slot;
                 var glow = UI.Image(slot, "Glow", SpriteFactory.Glow(), new Color(1, 1, 1, 0f), false);
-                glow.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(220, 160));
+                glow.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, -10), new Vector2(170, 110)); // subtle, not neon
                 LauncherGlow[i] = glow;
                 var lb = BlockView.Create(slot, new Vector2(w - 24, 108), "Loaded" + i);
                 lb.Root.Place(new Vector2(0.5f, 0.5f), new Vector2(0, -6), new Vector2(w - 24, 108));
@@ -249,7 +256,7 @@ namespace VoxelBloom
 
         void BuildBoard()
         {
-            var panel = UI.Panel(Root, "BoardPanel", new Color(0.18f, 0.15f, 0.3f, 0.88f), 48, true);
+            var panel = UI.Panel(Root, "BoardPanel", Theme.GamePanel, 48, true);
             BoardRoot = (RectTransform)panel.transform.parent;
             BoardRoot.BottomBand(190, VisibleRows * 125 + (VisibleRows - 1) * 12 + 40, 40);
             float w = (1000f - 40f - 3 * 16f) / 4f, h = 125f;

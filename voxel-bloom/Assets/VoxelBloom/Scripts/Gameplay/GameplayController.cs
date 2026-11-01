@@ -178,7 +178,7 @@ namespace VoxelBloom
                 view.Stage.Fragments.Shoot(LauncherOriginWorld(li), model.VoxelWorldPosition(voxel), c, model.VoxelSize * 1.1f, Flight);
                 pendingPops.Add((Time.time + Flight, voxel, c));
                 var g = view.LauncherGlow[li];
-                g.color = new Color(c.r / 255f, c.g / 255f, c.b / 255f, 0.9f);
+                g.color = new Color(c.r / 255f, c.g / 255f, c.b / 255f, 0.35f);
             }
             if (r.Shots.Count > 0) Services.Audio.Play(Sfx.Pop, 0.9f + r.Shots.Count * 0.08f, 0.6f);
             foreach (int idx in r.Dropped)
@@ -241,7 +241,7 @@ namespace VoxelBloom
                     if (session.IsWaiting(li))
                     {
                         float w = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
-                        g.color = new Color(1f, 0.3f, 0.35f, 0.25f + 0.3f * w);
+                        g.color = new Color(1f, 0.3f, 0.35f, 0.12f + 0.15f * w);
                         orb.color = Color.Lerp(new Color(1f, 0.35f, 0.4f), Color.white, w * 0.3f);
                         orb.rectTransform.localScale = Vector3.one;
                     }

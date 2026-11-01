@@ -10,7 +10,7 @@ each block attacks the **exposed** voxels of its own colour, up to its power (2,
 > compile fixes in the Editor. See "Verification" below.
 
 ## Quick start
-1. Open this folder (`voxel-bloom/`) with **Unity 6.6** (6000.6.7f1, the version used by Unity Build Automation). Packages: URP 17.6, uGUI 2.6, Test Framework 1.8. Text uses UnityEngine.UI.Text + bundled Fredoka (no TMP Essentials needed).
+1. Open this folder (`voxel-bloom/`) with **Unity 6.6** (6000.6.7f1, the version used by Unity Build Automation). Packages: URP 17.6, uGUI 2.6, Test Framework 1.8. Text uses UnityEngine.UI.Text + bundled Baloo 2 (no TMP Essentials needed).
 2. Menu **Voxel Bloom → Setup Project (URP + Android + Scene)**. This creates and
    assigns a URP asset, configures Android (`com.animatix.voxelbloom3d`, IL2CPP, ARM64, portrait, AAB,
    min API 26; **signing is never touched**) and creates `Scenes/Bootstrap/Bootstrap.unity`.
@@ -59,7 +59,7 @@ Collection add twinkles around the mascot. Every face has blush cheeks and a sma
 Voxels render with bevelled edges and a 2×2 "small cubes" sub-grid (`VoxelLit.shader`), so models read as built from
 small cubes without increasing the number of gameplay voxels.
 
-**Text:** UI text uses `UnityEngine.UI.Text` + the bundled Fredoka font (`VText`), not TextMeshPro: Unity Build
+**Text:** UI text uses `UnityEngine.UI.Text` + the bundled Baloo 2 font (`VText`), not TextMeshPro: Unity Build
 Automation does not contain the imported TMP Essential Resources, and TMP text crashed the Home screen on device.
 
 ## Architecture
@@ -81,7 +81,7 @@ Assets/VoxelBloom/
     UI/Screens Home, LevelSelect, LevelGrid, Gameplay, Collection, Shop, Events
     UI/Dialogs Pause, LevelComplete, LevelFailed, Boosters, Settings, DailyRewards, NoLives, Profile, Confirm, ModelPreview
     Audio/     SfxSynth (procedurally synthesised SFX + music, original), AudioService, Haptics
-  Art/Resources/VoxelBloom/  Shaders/VoxelLit.shader (URP + Built-in), Fonts/Fredoka-SemiBold.ttf (SIL OFL)
+  Art/Resources/VoxelBloom/  Shaders/VoxelLit.shader (URP + Built-in), Fonts/Baloo2-ExtraBold.ttf (SIL OFL)
   Data/Resources/VoxelBloom/ Models/*.json, Levels/level_001..100.json, Config/game_config.json
   Editor/                    VoxelBloomSetup (menu), level validation
   Tests/EditMode, Tests/PlayMode
@@ -107,5 +107,5 @@ rewards from test providers. To ship ads, implement `IRewardedAdService` for you
 | Visual comparison with the mockup | `Docs/VisualQA.md` | **not measured** |
 
 ## Licences
-Code, models, levels, procedural art and audio are original to this project. Fredoka font: SIL Open Font License 1.1
+Code, models, levels, procedural art and audio are original to this project. Baloo 2 font: SIL Open Font License 1.1
 (`Art/Resources/VoxelBloom/Fonts/FONT_LICENSE.md`; add the full OFL.txt before shipping).

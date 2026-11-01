@@ -67,6 +67,7 @@ namespace VoxelBloom.Core
             if (!first) coins = Math.Max(5, coins / 4);
             wallet.Add(coins);
             save.Coins = wallet.Coins;
+            if (first && (level.Hard || IsHard(level.Id))) save.Gems += 10; // HARD levels also pay gems
             save.TotalScore += score;
             save.ActiveLevel = null;
             save.ReceiptCounter++;

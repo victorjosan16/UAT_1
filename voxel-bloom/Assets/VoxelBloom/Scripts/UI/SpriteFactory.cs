@@ -7,7 +7,7 @@ namespace VoxelBloom
     {
         Coin, Heart, Star, StarEmpty, Gear, Plus, Pause, Play, Close, Restart, ArrowLeft, ArrowRight, Lock, Check,
         Hammer, Shuffle, ColorBomb, Eliminate, Paw, Gift, Shop, Calendar, Avatar, Music, Sound, Vibrate, Trophy, Cube,
-        Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue,
+        Lightning, Video, Home, Sparkle, Eye, Leaf, Flower, CubePink, CubeBlue, Gem, Crown,
     }
 
     /// <summary>Generates and caches all UI sprites procedurally (see IconPainter).</summary>
@@ -44,7 +44,7 @@ namespace VoxelBloom
         {
             int s = radius * 2 + 40;
             var p = new IconPainter(s, s);
-            p.RoundRect(0, 0, s, s, radius, Color.white, IconPainter.Vertical(Color.white, new Color(0.86f, 0.86f, 0.9f, 1f), 0, s));
+            p.RoundRect(0, 0, s, s, radius, Color.white, IconPainter.Vertical(Color.white, new Color(0.94f, 0.94f, 0.96f, 1f), 0, s));
             p.RoundRect(6, s * 0.52f, s - 6, s - 5, radius - 6, new Color(1, 1, 1, 0.35f));
             return ToSprite(p, "Glossy" + radius, new Vector4(radius + 2, radius + 2, radius + 2, radius + 2));
         });
@@ -312,6 +312,18 @@ namespace VoxelBloom
                     OutlinedPoly(p, Theme.Hex("#59B8FF"), new float[] { 64, 118, 112, 92, 112, 36, 64, 10, 16, 36, 16, 92 });
                     p.Polygon(Theme.Hex("#A9DCFF"), new float[] { 64, 118, 112, 92, 64, 66, 16, 92 });
                     p.Polygon(Theme.Hex("#2F8FE0"), new float[] { 64, 66, 112, 92, 112, 36, 64, 10 });
+                    break;
+                case Icon.Gem:
+                    OutlinedPoly(p, Theme.Hex("#B347FF"), new float[] { 64, 10, 118, 74, 92, 104, 36, 104, 10, 74 });
+                    p.Polygon(Theme.Hex("#E2A8FF"), new float[] { 36, 104, 64, 74, 92, 104 });
+                    p.Polygon(Theme.Hex("#8A2BE2"), new float[] { 64, 10, 118, 74, 64, 74 });
+                    p.Polygon(new Color(1, 1, 1, 0.55f), new float[] { 40, 84, 54, 84, 64, 40 });
+                    break;
+                case Icon.Crown:
+                    OutlinedPoly(p, Theme.Gold, new float[] { 14, 30, 40, 70, 64, 22, 88, 70, 114, 30, 104, 100, 24, 100 });
+                    p.RoundRect(22, 22, 106, 38, 6, Theme.GoldDark);
+                    OutlinedCircle(p, 14, 104, 9, Theme.Gold, 4); OutlinedCircle(p, 64, 110, 10, Theme.Gold, 4); OutlinedCircle(p, 114, 104, 9, Theme.Gold, 4);
+                    p.Circle(64, 62, 9, Theme.Red); p.Circle(38, 58, 7, Theme.Blue); p.Circle(90, 58, 7, Theme.Green);
                     break;
                 case Icon.Eye:
                     OutlinedPoly(p, W, new float[] { 8, 64, 36, 92, 64, 100, 92, 92, 120, 64, 92, 36, 64, 28, 36, 36 });

@@ -13,6 +13,8 @@ namespace VoxelBloom
     public sealed class CharacterPreview : MonoBehaviour
     {
         public FragmentSystem Sparkles;
+        /// <summary>Static display (Home page): no idle animation, blinking, sparkles or transitions.</summary>
+        public bool Static;
         sbyte[] headHappy, headLove;
         float exprUntil = -1f, lookUntil = -1f, nextLook = 4f, lookYaw, nextHappy = 7f;
         Expression current = Expression.Open;
@@ -116,6 +118,7 @@ namespace VoxelBloom
         /// <summary>Tap reaction: heart eyes, hop, spin and a burst of coloured sparkle cubes.</summary>
         public void React()
         {
+            if (Static) return;
             if (react < 0f) react = 0f;
             SetExpression(Expression.Love, 1.2f);
             if (Sparkles != null && !Services.ReducedEffects)
@@ -139,6 +142,11 @@ namespace VoxelBloom
 
         void Update()
         {
+            if (Static)
+            {
+                if (swap >= 0f) { swap = -1f; root.localScale = Vector3.one; }
+                return;
+            }
             float dt = Time.unscaledDeltaTime;
             t += dt;
             bool calm = Services.ReducedEffects;

@@ -194,7 +194,8 @@ namespace VoxelBloom
     /// <summary>Top bar shown on meta screens: avatar, lives, coins (+), settings.</summary>
     public sealed class TopBar : MonoBehaviour
     {
-        VText lives, coins, playerLevel;
+        VText lives, coins, playerLevel, gems;
+        int shownGems = -1;
         int shownLevel = -1;
         int shownCoins = -1, shownLives = -1;
         long shownSeconds = -1;
@@ -221,16 +222,22 @@ namespace VoxelBloom
             playerLevel.fontStyle = FontStyle.Bold;
             playerLevel.rectTransform.Stretch();
 
-            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 250, 84);
-            lr.Place(new Vector2(0, 0.5f), new Vector2(150 + 125, 0), new Vector2(250, 84));
+            lives = UI.Pill(rt, Icon.Heart, "5", out var lr, 200, 80);
+            lr.Place(new Vector2(0, 0.5f), new Vector2(232, 0), new Vector2(200, 80));
 
-            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 300, 84);
-            cr.Place(new Vector2(1, 0.5f), new Vector2(-150 - 150, 0), new Vector2(300, 84));
+            coins = UI.Pill(rt, Icon.Coin, "0", out var cr, 260, 80);
+            cr.Place(new Vector2(0, 0.5f), new Vector2(478, 0), new Vector2(260, 80));
+
+            gems = UI.Pill(rt, Icon.Gem, "0", out var gr, 220, 80);
+            gr.Place(new Vector2(0, 0.5f), new Vector2(740, 0), new Vector2(220, 80));
+            var plusG = UI.IconButton(gr, Icon.Plus, 66, ButtonStyle.Green);
+            ((RectTransform)plusG.transform).Place(new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(66, 66));
+            plusG.OnClick = () => OnAddCoins?.Invoke();
             var plus = UI.IconButton(cr, Icon.Plus, 72, ButtonStyle.Green);
             ((RectTransform)plus.transform).Place(new Vector2(1, 0.5f), new Vector2(-10, 0), new Vector2(72, 72));
             plus.OnClick = () => OnAddCoins?.Invoke();
 
-            var gear = UI.IconButton(rt, Icon.Gear, 100, ButtonStyle.White);
+            var gear = UI.IconButton(rt, Icon.Gear, 100, ButtonStyle.Purple);
             ((RectTransform)gear.transform).Place(new Vector2(1, 0.5f), new Vector2(-50, 0), new Vector2(100, 100));
             gear.OnClick = () => OnSettings?.Invoke();
         }
@@ -244,6 +251,8 @@ namespace VoxelBloom
             if (pl != shownLevel) { shownLevel = pl; playerLevel.text = pl.ToString(); }
             int c = Services.Wallet.Coins;
             if (c != shownCoins) { shownCoins = c; coins.text = c.ToString("N0"); }
+            int gm = Services.Save.Gems;
+            if (gm != shownGems) { shownGems = gm; gems.text = gm.ToString(); }
             int l = Services.Lives.Count;
             long secs = Services.Lives.SecondsToNext(now);
             if (l != shownLives || secs != shownSeconds)

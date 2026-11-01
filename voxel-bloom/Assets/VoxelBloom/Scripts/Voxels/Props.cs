@@ -115,6 +115,27 @@ namespace VoxelBloom
             return b.Spawn(parent, "Cliffs", pos, size);
         }
 
+        /// <summary>Display pedestal: purple base with a glowing golden top ring (top surface at local y = 0).</summary>
+        public static VoxelModelView AddPedestal(Transform parent, Vector3 pos, int radius, float size)
+        {
+            int X = radius * 2 + 1, Y = 4, Z = X;
+            var b = new Builder(X, Y, Z);
+            var purple = new Color32(124, 82, 230, 255); var purpleDark = new Color32(92, 58, 190, 255);
+            var gold = new Color32(255, 196, 60, 255); var goldLight = new Color32(255, 226, 120, 255);
+            for (int x = 0; x < X; x++) for (int z = 0; z < Z; z++)
+            {
+                float d = Mathf.Sqrt((x - radius) * (x - radius) + (z - radius) * (z - radius));
+                if (d > radius + 0.3f) continue;
+                for (int y = 0; y < Y; y++)
+                {
+                    Color32 c = y == Y - 1 ? (d > radius - 1.6f ? gold : (d > radius - 2.6f ? goldLight : gold)) : (y == Y - 2 && d > radius - 1.2f ? purpleDark : purple);
+                    if (y == Y - 1 && d < radius - 2.6f) c = goldLight;
+                    b.Set(x, y, z, c);
+                }
+            }
+            return b.Spawn(parent, "Pedestal", pos - new Vector3(0, Y * size, 0), size);
+        }
+
         public static VoxelModelView AddBush(Transform parent, Vector3 pos, float size)
         {
             const int X = 6, Y = 4, Z = 5;

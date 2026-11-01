@@ -25,7 +25,10 @@ namespace VoxelBloom
         public static readonly Color GoldDark = Hex("#E59A0E");
         public static readonly Color Red = Hex("#FF4D5E");
         public static readonly Color Orange = Hex("#FF9A2E");
-        public static readonly Color SlotEmpty = Hex("#C9D9F2");
+        public static readonly Color SlotEmpty = Hex("#DCE9FA");
+        public static readonly Color GameBackground = Hex("#EAF6FF");
+        public static readonly Color GamePanel = Hex("#F8FAFF");
+        public static readonly Color Navy = Hex("#1F2A5C");
         public static readonly Color Shadow = new Color(0.24f, 0.16f, 0.45f, 0.22f);
         public static readonly Color Backdrop = new Color(0.12f, 0.08f, 0.22f, 0.55f);
 

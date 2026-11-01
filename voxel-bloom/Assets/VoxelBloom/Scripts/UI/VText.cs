@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace VoxelBloom
 {
     /// <summary>
-    /// UI text built on UnityEngine.UI.Text with the bundled Fredoka font. It needs no imported
+    /// UI text built on UnityEngine.UI.Text with the bundled Baloo 2 font. It needs no imported
     /// TextMeshPro resources (TMP Essentials are not available in cloud builds). It adds a float font size,
     /// an outline, a vertical gradient and a wrap toggle.
     /// </summary>

@@ -18,7 +18,7 @@ Nothing here claims pixel-perfect reproduction.
 ## Known differences from the reference
 * All icons are drawn procedurally at runtime (`SpriteFactory` / `IconPainter`). They follow the
   reference's style (bold outline, glossy fill) but are simpler than hand-painted art.
-* Logo uses Fredoka SemiBold (OFL) with vertex gradients instead of a custom lettering asset.
+* Logo uses Baloo 2 ExtraBold (OFL) with vertex gradients instead of a custom lettering asset.
 * Thumbnails and the model view are rendered from the real voxel data, so they differ in pose from the mockup.
 
 ## How to do the measured comparison

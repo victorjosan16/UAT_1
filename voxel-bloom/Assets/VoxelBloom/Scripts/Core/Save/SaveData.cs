@@ -35,6 +35,8 @@ namespace VoxelBloom.Core
         public bool LastReceiptDoubled;
         public long ReceiptCounter;
         public int TotalScore;
+        /// <summary>Premium gem balance (shown in the HUD; earned from HARD levels).</summary>
+        public int Gems = 50;
         /// <summary>Character shown on the Home screen (v3).</summary>
         public string HomeCharacter = CharacterCatalog.Starter;
 
@@ -93,6 +95,7 @@ namespace VoxelBloom.Core
                 { "lastReceiptDoubled", s.LastReceiptDoubled },
                 { "receiptCounter", (double)s.ReceiptCounter },
                 { "totalScore", (double)s.TotalScore },
+                { "gems", (double)s.Gems },
                 { "homeCharacter", s.HomeCharacter ?? CharacterCatalog.Starter },
             };
             return MiniJson.Serialize(d);
@@ -138,6 +141,7 @@ namespace VoxelBloom.Core
             s.LastReceiptDoubled = MiniJson.GetBool(d, "lastReceiptDoubled");
             s.ReceiptCounter = MiniJson.GetLong(d, "receiptCounter");
             s.TotalScore = MiniJson.GetInt(d, "totalScore");
+            s.Gems = System.Math.Max(0, MiniJson.GetInt(d, "gems", 50));
             s.HomeCharacter = MiniJson.GetString(d, "homeCharacter", CharacterCatalog.Starter);
 
             // ---- migrations

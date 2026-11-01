@@ -8,7 +8,7 @@
   "chapters": [
     {
       "id": 1,
-      "name": "Dream Builds",
+      "name": "Construcții de Vis",
       "firstLevel": 1,
       "lastLevel": 20,
       "unlockStars": 0,
@@ -16,7 +16,7 @@
     },
     {
       "id": 2,
-      "name": "Happy Friends",
+      "name": "Prieteni Veseli",
       "firstLevel": 21,
       "lastLevel": 40,
       "unlockStars": 30,
@@ -24,7 +24,7 @@
     },
     {
       "id": 3,
-      "name": "Wild Safari",
+      "name": "Safari Sălbatic",
       "firstLevel": 41,
       "lastLevel": 60,
       "unlockStars": 70,
@@ -32,7 +32,7 @@
     },
     {
       "id": 4,
-      "name": "Sky & Sea",
+      "name": "Cer și Mare",
       "firstLevel": 61,
       "lastLevel": 80,
       "unlockStars": 110,
@@ -40,7 +40,7 @@
     },
     {
       "id": 5,
-      "name": "Tiny Wonders",
+      "name": "Minuni Mici",
       "firstLevel": 81,
       "lastLevel": 100,
       "unlockStars": 150,
@@ -48,7 +48,7 @@
     },
     {
       "id": 6,
-      "name": "Wild North",
+      "name": "Nordul Sălbatic",
       "firstLevel": 101,
       "lastLevel": 120,
       "unlockStars": 190,
@@ -58,841 +58,841 @@
   "collection": [
     {
       "id": "fox",
-      "name": "Fox",
-      "category": "Happy Friends",
+      "name": "Vulpe",
+      "category": "Prieteni Veseli",
       "voxels": 1575,
       "unlockLevel": 21
     },
     {
       "id": "panda",
       "name": "Panda",
-      "category": "Happy Friends",
+      "category": "Prieteni Veseli",
       "voxels": 1448,
       "unlockLevel": 22
     },
     {
       "id": "chicken",
-      "name": "Chick",
-      "category": "Happy Friends",
+      "name": "Pui",
+      "category": "Prieteni Veseli",
       "voxels": 1328,
       "unlockLevel": 23
     },
     {
       "id": "bunny",
-      "name": "Bunny",
-      "category": "Happy Friends",
+      "name": "Iepuraș",
+      "category": "Prieteni Veseli",
       "voxels": 1579,
       "unlockLevel": 24
     },
     {
       "id": "lion",
-      "name": "Lion",
-      "category": "Happy Friends",
+      "name": "Leu",
+      "category": "Prieteni Veseli",
       "voxels": 2451,
       "unlockLevel": 25
     },
     {
       "id": "cat",
-      "name": "Cat",
-      "category": "Happy Friends",
+      "name": "Pisică",
+      "category": "Prieteni Veseli",
       "voxels": 1491,
       "unlockLevel": 26
     },
     {
       "id": "bear",
-      "name": "Bear",
-      "category": "Dream Builds",
+      "name": "Urs",
+      "category": "Construcții de Vis",
       "voxels": 1432,
       "unlockLevel": 18
     },
     {
       "id": "dog",
-      "name": "Puppy",
-      "category": "Happy Friends",
+      "name": "Cățel",
+      "category": "Prieteni Veseli",
       "voxels": 1617,
       "unlockLevel": 27
     },
     {
       "id": "penguin",
-      "name": "Penguin",
-      "category": "Happy Friends",
+      "name": "Pinguin",
+      "category": "Prieteni Veseli",
       "voxels": 1873,
       "unlockLevel": 28
     },
     {
       "id": "elephant",
-      "name": "Elephant",
-      "category": "Dream Builds",
+      "name": "Elefant",
+      "category": "Construcții de Vis",
       "voxels": 1475,
       "unlockLevel": 17
     },
     {
       "id": "deer",
-      "name": "Fawn",
-      "category": "Happy Friends",
+      "name": "Căprioară",
+      "category": "Prieteni Veseli",
       "voxels": 1510,
       "unlockLevel": 29
     },
     {
       "id": "unicorn",
       "name": "Unicorn",
-      "category": "Happy Friends",
+      "category": "Prieteni Veseli",
       "voxels": 1820,
       "unlockLevel": 30
     },
     {
       "id": "raccoon",
-      "name": "Raccoon",
-      "category": "Happy Friends",
+      "name": "Raton",
+      "category": "Prieteni Veseli",
       "voxels": 1516,
       "unlockLevel": 31
     },
     {
       "id": "squirrel",
-      "name": "Squirrel",
-      "category": "Happy Friends",
+      "name": "Veveriță",
+      "category": "Prieteni Veseli",
       "voxels": 1700,
       "unlockLevel": 32
     },
     {
       "id": "cow",
-      "name": "Cow",
-      "category": "Happy Friends",
+      "name": "Văcuță",
+      "category": "Prieteni Veseli",
       "voxels": 1460,
       "unlockLevel": 33
     },
     {
       "id": "pig",
-      "name": "Piglet",
-      "category": "Happy Friends",
+      "name": "Porcușor",
+      "category": "Prieteni Veseli",
       "voxels": 1483,
       "unlockLevel": 34
     },
     {
       "id": "sheep",
-      "name": "Sheep",
-      "category": "Happy Friends",
+      "name": "Oaie",
+      "category": "Prieteni Veseli",
       "voxels": 1438,
       "unlockLevel": 35
     },
     {
       "id": "tiger",
-      "name": "Tiger",
-      "category": "Happy Friends",
+      "name": "Tigru",
+      "category": "Prieteni Veseli",
       "voxels": 1448,
       "unlockLevel": 36
     },
     {
       "id": "koala",
       "name": "Koala",
-      "category": "Happy Friends",
+      "category": "Prieteni Veseli",
       "voxels": 1435,
       "unlockLevel": 37
     },
     {
       "id": "dragon",
       "name": "Dragon",
-      "category": "Dream Builds",
+      "category": "Construcții de Vis",
       "voxels": 1563,
       "unlockLevel": 16
     },
     {
       "id": "dino",
-      "name": "Dino",
-      "category": "Happy Friends",
+      "name": "Dinozaur",
+      "category": "Prieteni Veseli",
       "voxels": 1324,
       "unlockLevel": 38
     },
     {
       "id": "giraffe",
-      "name": "Giraffe",
-      "category": "Happy Friends",
+      "name": "Girafă",
+      "category": "Prieteni Veseli",
       "voxels": 1600,
       "unlockLevel": 39
     },
     {
       "id": "zebra",
-      "name": "Zebra",
-      "category": "Happy Friends",
+      "name": "Zebră",
+      "category": "Prieteni Veseli",
       "voxels": 1598,
       "unlockLevel": 40
     },
     {
       "id": "hippo",
-      "name": "Hippo",
-      "category": "Wild Safari",
+      "name": "Hipopotam",
+      "category": "Safari Sălbatic",
       "voxels": 1430,
       "unlockLevel": 41
     },
     {
       "id": "rhino",
-      "name": "Rhino",
-      "category": "Wild Safari",
+      "name": "Rinocer",
+      "category": "Safari Sălbatic",
       "voxels": 1426,
       "unlockLevel": 42
     },
     {
       "id": "crocodile",
-      "name": "Crocodile",
-      "category": "Wild Safari",
+      "name": "Crocodil",
+      "category": "Safari Sălbatic",
       "voxels": 1330,
       "unlockLevel": 43
     },
     {
       "id": "wolf",
-      "name": "Wolf",
-      "category": "Wild Safari",
+      "name": "Lup",
+      "category": "Safari Sălbatic",
       "voxels": 1575,
       "unlockLevel": 44
     },
     {
       "id": "monkey",
-      "name": "Monkey",
-      "category": "Wild Safari",
+      "name": "Maimuță",
+      "category": "Safari Sălbatic",
       "voxels": 1443,
       "unlockLevel": 45
     },
     {
       "id": "gorilla",
-      "name": "Gorilla",
-      "category": "Wild Safari",
+      "name": "Gorilă",
+      "category": "Safari Sălbatic",
       "voxels": 1408,
       "unlockLevel": 46
     },
     {
       "id": "capybara",
-      "name": "Capybara",
-      "category": "Wild Safari",
+      "name": "Capibara",
+      "category": "Safari Sălbatic",
       "voxels": 1442,
       "unlockLevel": 47
     },
     {
       "id": "sloth",
-      "name": "Sloth",
-      "category": "Wild Safari",
+      "name": "Leneș",
+      "category": "Safari Sălbatic",
       "voxels": 1404,
       "unlockLevel": 48
     },
     {
       "id": "beaver",
-      "name": "Beaver",
-      "category": "Wild Safari",
+      "name": "Castor",
+      "category": "Safari Sălbatic",
       "voxels": 1443,
       "unlockLevel": 49
     },
     {
       "id": "hedgehog",
-      "name": "Hedgehog",
-      "category": "Wild Safari",
+      "name": "Arici",
+      "category": "Safari Sălbatic",
       "voxels": 1511,
       "unlockLevel": 50
     },
     {
       "id": "otter",
-      "name": "Otter",
-      "category": "Wild Safari",
+      "name": "Vidră",
+      "category": "Safari Sălbatic",
       "voxels": 1439,
       "unlockLevel": 51
     },
     {
       "id": "walrus",
-      "name": "Walrus",
-      "category": "Wild Safari",
+      "name": "Morsă",
+      "category": "Safari Sălbatic",
       "voxels": 1446,
       "unlockLevel": 52
     },
     {
       "id": "seal",
-      "name": "Seal",
-      "category": "Wild Safari",
+      "name": "Focă",
+      "category": "Safari Sălbatic",
       "voxels": 1439,
       "unlockLevel": 53
     },
     {
       "id": "emperor",
-      "name": "Emperor Penguin",
-      "category": "Wild Safari",
+      "name": "Pinguin Imperial",
+      "category": "Safari Sălbatic",
       "voxels": 1304,
       "unlockLevel": 54
     },
     {
       "id": "owl",
-      "name": "Owl",
-      "category": "Wild Safari",
+      "name": "Bufniță",
+      "category": "Safari Sălbatic",
       "voxels": 1328,
       "unlockLevel": 55
     },
     {
       "id": "eagle",
-      "name": "Eagle",
-      "category": "Wild Safari",
+      "name": "Vultur",
+      "category": "Safari Sălbatic",
       "voxels": 1364,
       "unlockLevel": 56
     },
     {
       "id": "parrot",
-      "name": "Parrot",
-      "category": "Wild Safari",
+      "name": "Papagal",
+      "category": "Safari Sălbatic",
       "voxels": 1400,
       "unlockLevel": 57
     },
     {
       "id": "flamingo",
       "name": "Flamingo",
-      "category": "Wild Safari",
+      "category": "Safari Sălbatic",
       "voxels": 1268,
       "unlockLevel": 58
     },
     {
       "id": "swan",
-      "name": "Swan",
-      "category": "Wild Safari",
+      "name": "Lebădă",
+      "category": "Safari Sălbatic",
       "voxels": 1326,
       "unlockLevel": 59
     },
     {
       "id": "duck",
-      "name": "Duckling",
-      "category": "Wild Safari",
+      "name": "Rață",
+      "category": "Safari Sălbatic",
       "voxels": 1310,
       "unlockLevel": 60
     },
     {
       "id": "goose",
-      "name": "Goose",
-      "category": "Sky & Sea",
+      "name": "Gâscă",
+      "category": "Cer și Mare",
       "voxels": 1326,
       "unlockLevel": 61
     },
     {
       "id": "raven",
-      "name": "Raven",
-      "category": "Sky & Sea",
+      "name": "Corb",
+      "category": "Cer și Mare",
       "voxels": 1304,
       "unlockLevel": 62
     },
     {
       "id": "crow",
-      "name": "Crow",
-      "category": "Sky & Sea",
+      "name": "Cioară",
+      "category": "Cer și Mare",
       "voxels": 1304,
       "unlockLevel": 63
     },
     {
       "id": "cuckoo",
-      "name": "Cuckoo",
-      "category": "Sky & Sea",
+      "name": "Cuc",
+      "category": "Cer și Mare",
       "voxels": 1400,
       "unlockLevel": 64
     },
     {
       "id": "goldfinch",
-      "name": "Goldfinch",
-      "category": "Sky & Sea",
+      "name": "Sticlete",
+      "category": "Cer și Mare",
       "voxels": 1324,
       "unlockLevel": 65
     },
     {
       "id": "sparrow",
-      "name": "Sparrow",
-      "category": "Sky & Sea",
+      "name": "Vrăbiuță",
+      "category": "Cer și Mare",
       "voxels": 1304,
       "unlockLevel": 66
     },
     {
       "id": "pigeon",
-      "name": "Dove",
-      "category": "Sky & Sea",
+      "name": "Porumbel",
+      "category": "Cer și Mare",
       "voxels": 1304,
       "unlockLevel": 67
     },
     {
       "id": "clownfish",
-      "name": "Clownfish",
-      "category": "Sky & Sea",
+      "name": "Pește Clovn",
+      "category": "Cer și Mare",
       "voxels": 511,
       "unlockLevel": 68
     },
     {
       "id": "bluefish",
-      "name": "Blue Tang",
-      "category": "Sky & Sea",
+      "name": "Pește Albastru",
+      "category": "Cer și Mare",
       "voxels": 511,
       "unlockLevel": 69
     },
     {
       "id": "shark",
-      "name": "Shark",
-      "category": "Sky & Sea",
+      "name": "Rechin",
+      "category": "Cer și Mare",
       "voxels": 578,
       "unlockLevel": 70
     },
     {
       "id": "dolphin",
-      "name": "Dolphin",
-      "category": "Dream Builds",
+      "name": "Delfin",
+      "category": "Construcții de Vis",
       "voxels": 577,
       "unlockLevel": 19
     },
     {
       "id": "whale",
-      "name": "Whale",
-      "category": "Sky & Sea",
+      "name": "Balenă",
+      "category": "Cer și Mare",
       "voxels": 663,
       "unlockLevel": 71
     },
     {
       "id": "jellyfish",
-      "name": "Jellyfish",
-      "category": "Sky & Sea",
+      "name": "Meduză",
+      "category": "Cer și Mare",
       "voxels": 1216,
       "unlockLevel": 72
     },
     {
       "id": "octopus",
-      "name": "Octopus",
-      "category": "Sky & Sea",
+      "name": "Caracatiță",
+      "category": "Cer și Mare",
       "voxels": 1012,
       "unlockLevel": 73
     },
     {
       "id": "crab",
       "name": "Crab",
-      "category": "Sky & Sea",
+      "category": "Cer și Mare",
       "voxels": 680,
       "unlockLevel": 74
     },
     {
       "id": "seahorse",
-      "name": "Seahorse",
-      "category": "Sky & Sea",
+      "name": "Căluț de Mare",
+      "category": "Cer și Mare",
       "voxels": 628,
       "unlockLevel": 75
     },
     {
       "id": "seaturtle",
-      "name": "Sea Turtle",
-      "category": "Sky & Sea",
+      "name": "Țestoasă Marină",
+      "category": "Cer și Mare",
       "voxels": 1868,
       "unlockLevel": 76
     },
     {
       "id": "turtle",
-      "name": "Turtle",
-      "category": "Sky & Sea",
+      "name": "Țestoasă",
+      "category": "Cer și Mare",
       "voxels": 1868,
       "unlockLevel": 77
     },
     {
       "id": "frog",
-      "name": "Frog",
-      "category": "Sky & Sea",
+      "name": "Broască",
+      "category": "Cer și Mare",
       "voxels": 1122,
       "unlockLevel": 78
     },
     {
       "id": "treefrog",
-      "name": "Tree Frog",
-      "category": "Sky & Sea",
+      "name": "Brotăcel",
+      "category": "Cer și Mare",
       "voxels": 1122,
       "unlockLevel": 79
     },
     {
       "id": "salamander",
-      "name": "Salamander",
-      "category": "Sky & Sea",
+      "name": "Salamandră",
+      "category": "Cer și Mare",
       "voxels": 1308,
       "unlockLevel": 80
     },
     {
       "id": "snake",
-      "name": "Snake",
-      "category": "Tiny Wonders",
+      "name": "Șarpe",
+      "category": "Minuni Mici",
       "voxels": 1146,
       "unlockLevel": 81
     },
     {
       "id": "chameleon",
-      "name": "Chameleon",
-      "category": "Tiny Wonders",
+      "name": "Cameleon",
+      "category": "Minuni Mici",
       "voxels": 1310,
       "unlockLevel": 82
     },
     {
       "id": "lizard",
-      "name": "Lizard",
-      "category": "Tiny Wonders",
+      "name": "Șopârlă",
+      "category": "Minuni Mici",
       "voxels": 1308,
       "unlockLevel": 83
     },
     {
       "id": "iguana",
       "name": "Iguana",
-      "category": "Tiny Wonders",
+      "category": "Minuni Mici",
       "voxels": 1339,
       "unlockLevel": 84
     },
     {
       "id": "gecko",
       "name": "Gecko",
-      "category": "Tiny Wonders",
+      "category": "Minuni Mici",
       "voxels": 1308,
       "unlockLevel": 85
     },
     {
       "id": "manticore",
-      "name": "Manticore",
-      "category": "Tiny Wonders",
+      "name": "Manticoră",
+      "category": "Minuni Mici",
       "voxels": 1640,
       "unlockLevel": 86
     },
     {
       "id": "bat",
-      "name": "Bat",
-      "category": "Tiny Wonders",
+      "name": "Liliac",
+      "category": "Minuni Mici",
       "voxels": 1608,
       "unlockLevel": 87
     },
     {
       "id": "desertheg",
-      "name": "Desert Hedgehog",
-      "category": "Tiny Wonders",
+      "name": "Arici de Deșert",
+      "category": "Minuni Mici",
       "voxels": 1562,
       "unlockLevel": 88
     },
     {
       "id": "scorpion",
       "name": "Scorpion",
-      "category": "Tiny Wonders",
+      "category": "Minuni Mici",
       "voxels": 852,
       "unlockLevel": 89
     },
     {
       "id": "spider",
-      "name": "Spider",
-      "category": "Tiny Wonders",
+      "name": "Păianjen",
+      "category": "Minuni Mici",
       "voxels": 820,
       "unlockLevel": 90
     },
     {
       "id": "ant",
-      "name": "Ant",
-      "category": "Tiny Wonders",
+      "name": "Furnică",
+      "category": "Minuni Mici",
       "voxels": 1002,
       "unlockLevel": 91
     },
     {
       "id": "bee",
-      "name": "Bee",
-      "category": "Tiny Wonders",
+      "name": "Albină",
+      "category": "Minuni Mici",
       "voxels": 890,
       "unlockLevel": 92
     },
     {
       "id": "butterfly",
-      "name": "Butterfly",
-      "category": "Tiny Wonders",
+      "name": "Fluture",
+      "category": "Minuni Mici",
       "voxels": 888,
       "unlockLevel": 93
     },
     {
       "id": "ladybug",
-      "name": "Ladybug",
-      "category": "Tiny Wonders",
+      "name": "Buburuză",
+      "category": "Minuni Mici",
       "voxels": 1278,
       "unlockLevel": 94
     },
     {
       "id": "dragonfly",
-      "name": "Dragonfly",
-      "category": "Tiny Wonders",
+      "name": "Libelulă",
+      "category": "Minuni Mici",
       "voxels": 1112,
       "unlockLevel": 95
     },
     {
       "id": "snail",
-      "name": "Snail",
-      "category": "Tiny Wonders",
+      "name": "Melc",
+      "category": "Minuni Mici",
       "voxels": 2156,
       "unlockLevel": 96
     },
     {
       "id": "redpanda",
-      "name": "Red Panda",
-      "category": "Tiny Wonders",
+      "name": "Panda Roșu",
+      "category": "Minuni Mici",
       "voxels": 1516,
       "unlockLevel": 97
     },
     {
       "id": "ferret",
-      "name": "Ferret",
-      "category": "Tiny Wonders",
+      "name": "Dihor",
+      "category": "Minuni Mici",
       "voxels": 1439,
       "unlockLevel": 98
     },
     {
       "id": "pike",
-      "name": "Pike",
-      "category": "Tiny Wonders",
+      "name": "Știucă",
+      "category": "Minuni Mici",
       "voxels": 469,
       "unlockLevel": 99
     },
     {
       "id": "lynx",
-      "name": "Lynx",
-      "category": "Tiny Wonders",
+      "name": "Râs",
+      "category": "Minuni Mici",
       "voxels": 1492,
       "unlockLevel": 100
     },
     {
       "id": "wildcat",
-      "name": "Wildcat",
-      "category": "Wild North",
+      "name": "Pisică Sălbatică",
+      "category": "Nordul Sălbatic",
       "voxels": 1516,
       "unlockLevel": 101
     },
     {
       "id": "cheetah",
-      "name": "Cheetah",
-      "category": "Wild North",
+      "name": "Ghepard",
+      "category": "Nordul Sălbatic",
       "voxels": 1448,
       "unlockLevel": 102
     },
     {
       "id": "jaguar",
       "name": "Jaguar",
-      "category": "Wild North",
+      "category": "Nordul Sălbatic",
       "voxels": 1448,
       "unlockLevel": 103
     },
     {
       "id": "leopard",
       "name": "Leopard",
-      "category": "Wild North",
+      "category": "Nordul Sălbatic",
       "voxels": 1423,
       "unlockLevel": 104
     },
     {
       "id": "aurochs",
-      "name": "Wild Ox",
-      "category": "Wild North",
+      "name": "Zimbru",
+      "category": "Nordul Sălbatic",
       "voxels": 1494,
       "unlockLevel": 105
     },
     {
       "id": "moose",
-      "name": "Moose",
-      "category": "Wild North",
+      "name": "Elan",
+      "category": "Nordul Sălbatic",
       "voxels": 1466,
       "unlockLevel": 106
     },
     {
       "id": "mammoth",
-      "name": "Mammoth",
-      "category": "Wild North",
+      "name": "Mamut",
+      "category": "Nordul Sălbatic",
       "voxels": 1450,
       "unlockLevel": 107
     },
     {
       "id": "stag",
-      "name": "Stag",
-      "category": "Wild North",
+      "name": "Cerb",
+      "category": "Nordul Sălbatic",
       "voxels": 1506,
       "unlockLevel": 108
     },
     {
       "id": "polarwolf",
-      "name": "Arctic Wolf",
-      "category": "Wild North",
+      "name": "Lup Polar",
+      "category": "Nordul Sălbatic",
       "voxels": 1575,
       "unlockLevel": 109
     },
     {
       "id": "polarbear",
-      "name": "Polar Bear",
-      "category": "Wild North",
+      "name": "Urs Polar",
+      "category": "Nordul Sălbatic",
       "voxels": 1432,
       "unlockLevel": 110
     },
     {
       "id": "babypenguin",
-      "name": "Baby Penguin",
-      "category": "Wild North",
+      "name": "Pinguin Mic",
+      "category": "Nordul Sălbatic",
       "voxels": 1318,
       "unlockLevel": 111
     },
     {
       "id": "reindeer",
-      "name": "Reindeer",
-      "category": "Wild North",
+      "name": "Ren",
+      "category": "Nordul Sălbatic",
       "voxels": 1506,
       "unlockLevel": 112
     },
     {
       "id": "alpaca",
       "name": "Alpaca",
-      "category": "Wild North",
+      "category": "Nordul Sălbatic",
       "voxels": 1791,
       "unlockLevel": 113
     },
     {
       "id": "camel",
-      "name": "Camel",
-      "category": "Wild North",
+      "name": "Cămilă",
+      "category": "Nordul Sălbatic",
       "voxels": 1562,
       "unlockLevel": 114
     },
     {
       "id": "llama",
-      "name": "Llama",
-      "category": "Wild North",
+      "name": "Lama",
+      "category": "Nordul Sălbatic",
       "voxels": 1710,
       "unlockLevel": 115
     },
     {
       "id": "bison",
-      "name": "Bison",
-      "category": "Wild North",
+      "name": "Bizon",
+      "category": "Nordul Sălbatic",
       "voxels": 1448,
       "unlockLevel": 116
     },
     {
       "id": "cake",
-      "name": "Strawberry Cake",
-      "category": "Dream Builds",
+      "name": "Tort Festiv",
+      "category": "Construcții de Vis",
       "voxels": 1446,
       "unlockLevel": 4
     },
     {
       "id": "donut",
-      "name": "Donut",
-      "category": "Wild North",
+      "name": "Gogoașă",
+      "category": "Nordul Sălbatic",
       "voxels": 896,
       "unlockLevel": 117
     },
     {
       "id": "cupcake",
-      "name": "Cupcake",
-      "category": "Wild North",
+      "name": "Brioșă",
+      "category": "Nordul Sălbatic",
       "voxels": 1087,
       "unlockLevel": 118
     },
     {
       "id": "car",
-      "name": "Red Car",
-      "category": "Dream Builds",
+      "name": "Mașină Sport",
+      "category": "Construcții de Vis",
       "voxels": 1096,
       "unlockLevel": 3
     },
     {
       "id": "bus",
-      "name": "School Bus",
-      "category": "Wild North",
+      "name": "Autobuz Școlar",
+      "category": "Nordul Sălbatic",
       "voxels": 2211,
       "unlockLevel": 119
     },
     {
       "id": "truck",
-      "name": "Fire Truck",
-      "category": "Wild North",
+      "name": "Mașină de Pompieri",
+      "category": "Nordul Sălbatic",
       "voxels": 1786,
       "unlockLevel": 120
     },
     {
       "id": "rocket",
-      "name": "Rocket",
-      "category": "Dream Builds",
+      "name": "Rachetă Spațială",
+      "category": "Construcții de Vis",
       "voxels": 813,
       "unlockLevel": 5
     },
     {
       "id": "house",
-      "name": "Cozy House",
-      "category": "Dream Builds",
+      "name": "Casă Modernă",
+      "category": "Construcții de Vis",
       "voxels": 2362,
       "unlockLevel": 2
     },
     {
       "id": "lighthouse",
-      "name": "Lighthouse",
-      "category": "Dream Builds",
+      "name": "Far",
+      "category": "Construcții de Vis",
       "voxels": 1213,
       "unlockLevel": 15
     },
     {
       "id": "windmill",
-      "name": "Windmill",
-      "category": "Dream Builds",
+      "name": "Moară",
+      "category": "Construcții de Vis",
       "voxels": 1083,
       "unlockLevel": 6
     },
     {
       "id": "castle",
-      "name": "Dream Castle",
-      "category": "Dream Builds",
+      "name": "Castel Regal",
+      "category": "Construcții de Vis",
       "voxels": 3026,
       "unlockLevel": 1
     },
     {
       "id": "robot",
-      "name": "Robo Buddy",
-      "category": "Dream Builds",
+      "name": "Robot",
+      "category": "Construcții de Vis",
       "voxels": 1058,
       "unlockLevel": 8
     },
     {
       "id": "pyramid",
-      "name": "Rainbow Pyramid",
-      "category": "Dream Builds",
+      "name": "Piramidă",
+      "category": "Construcții de Vis",
       "voxels": 1777,
       "unlockLevel": 20
     },
     {
       "id": "balloon",
-      "name": "Hot-Air Balloon",
-      "category": "Dream Builds",
+      "name": "Balon",
+      "category": "Construcții de Vis",
       "voxels": 1742,
       "unlockLevel": 12
     },
     {
       "id": "train",
-      "name": "Steam Train",
-      "category": "Dream Builds",
+      "name": "Tren",
+      "category": "Construcții de Vis",
       "voxels": 1649,
       "unlockLevel": 7
     },
     {
       "id": "ship",
-      "name": "Cruise Ship",
-      "category": "Dream Builds",
+      "name": "Vapor",
+      "category": "Construcții de Vis",
       "voxels": 1340,
       "unlockLevel": 10
     },
     {
       "id": "excavator",
       "name": "Excavator",
-      "category": "Dream Builds",
+      "category": "Construcții de Vis",
       "voxels": 1467,
       "unlockLevel": 9
     },
     {
       "id": "plane",
-      "name": "Jet Plane",
-      "category": "Dream Builds",
+      "name": "Avion",
+      "category": "Construcții de Vis",
       "voxels": 593,
       "unlockLevel": 11
     },
     {
       "id": "ferriswheel",
-      "name": "Ferris Wheel",
-      "category": "Dream Builds",
+      "name": "Roată Mare",
+      "category": "Construcții de Vis",
       "voxels": 926,
       "unlockLevel": 13
     },
     {
       "id": "stadium",
-      "name": "Stadium",
-      "category": "Dream Builds",
+      "name": "Stadion",
+      "category": "Construcții de Vis",
       "voxels": 1470,
       "unlockLevel": 14
     }
