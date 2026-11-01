@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "chapters": [
+    {
+      "id": 1,
+      "name": "Happy Animals",
+      "firstLevel": 1,
+      "lastLevel": 20,
+      "unlockStars": 0,
+      "thumbnailModel": "chicken"
+    },
+    {
+      "id": 2,
+      "name": "Sweet World",
+      "firstLevel": 21,
+      "lastLevel": 40,
+      "unlockStars": 30,
+      "thumbnailModel": "icecream"
+    },
+    {
+      "id": 3,
+      "name": "City Blocks",
+      "firstLevel": 41,
+      "lastLevel": 60,
+      "unlockStars": 70,
+      "thumbnailModel": "car"
+    },
+    {
+      "id": 4,
+      "name": "Ocean Wonders",
+      "firstLevel": 61,
+      "lastLevel": 80,
+      "unlockStars": 110,
+      "thumbnailModel": "fish"
+    },
+    {
+      "id": 5,
+      "name": "Dream Collection",
+      "firstLevel": 81,
+      "lastLevel": 100,
+      "unlockStars": 150,
+      "thumbnailModel": "dragon"
+    }
+  ],
+  "collection": [
+    {
+      "id": "chicken",
+      "name": "Chicken",
+      "category": "Animals",
+      "voxels": 655,
+      "unlockLevel": 1
+    },
+    {
+      "id": "fox",
+      "name": "Fox",
+      "category": "Animals",
+      "voxels": 620,
+      "unlockLevel": 6
+    },
+    {
+      "id": "cat",
+      "name": "Cat",
+      "category": "Animals",
+      "voxels": 441,
+      "unlockLevel": 5
+    },
+    {
+      "id": "bear",
+      "name": "Bear",
+      "category": "Animals",
+      "voxels": 682,
+      "unlockLevel": 4
+    },
+    {
+      "id": "bunny",
+      "name": "Bunny",
+      "category": "Animals",
+      "voxels": 502,
+      "unlockLevel": 2
+    },
+    {
+      "id": "panda",
+      "name": "Panda",
+      "category": "Animals",
+      "voxels": 634,
+      "unlockLevel": 7
+    },
+    {
+      "id": "penguin",
+      "name": "Penguin",
+      "category": "Animals",
+      "voxels": 557,
+      "unlockLevel": 3
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "category": "Animals",
+      "voxels": 689,
+      "unlockLevel": 8
+    },
+    {
+      "id": "wolf",
+      "name": "Wolf",
+      "category": "Animals",
+      "voxels": 600,
+      "unlockLevel": 9
+    },
+    {
+      "id": "deer",
+      "name": "Deer",
+      "category": "Animals",
+      "voxels": 414,
+      "unlockLevel": 10
+    },
+    {
+      "id": "lion",
+      "name": "Lion",
+      "category": "Animals",
+      "voxels": 593,
+      "unlockLevel": 11
+    },
+    {
+      "id": "fish",
+      "name": "Clownfish",
+      "category": "Animals",
+      "voxels": 341,
+      "unlockLevel": 61
+    },
+    {
+      "id": "crab",
+      "name": "Crab",
+      "category": "Animals",
+      "voxels": 401,
+      "unlockLevel": 62
+    },
+    {
+      "id": "octopus",
+      "name": "Octopus",
+      "category": "Animals",
+      "voxels": 575,
+      "unlockLevel": 63
+    },
+    {
+      "id": "turtle",
+      "name": "Turtle",
+      "category": "Animals",
+      "voxels": 518,
+      "unlockLevel": 64
+    },
+    {
+      "id": "whale",
+      "name": "Whale",
+      "category": "Animals",
+      "voxels": 680,
+      "unlockLevel": 65
+    },
+    {
+      "id": "cake",
+      "name": "Strawberry Cake",
+      "category": "Food",
+      "voxels": 1446,
+      "unlockLevel": 26
+    },
+    {
+      "id": "icecream",
+      "name": "Ice Cream",
+      "category": "Food",
+      "voxels": 614,
+      "unlockLevel": 21
+    },
+    {
+      "id": "candy",
+      "name": "Candy",
+      "category": "Food",
+      "voxels": 523,
+      "unlockLevel": 22
+    },
+    {
+      "id": "donut",
+      "name": "Donut",
+      "category": "Food",
+      "voxels": 896,
+      "unlockLevel": 23
+    },
+    {
+      "id": "cupcake",
+      "name": "Cupcake",
+      "category": "Food",
+      "voxels": 1087,
+      "unlockLevel": 24
+    },
+    {
+      "id": "watermelon",
+      "name": "Watermelon",
+      "category": "Food",
+      "voxels": 996,
+      "unlockLevel": 25
+    },
+    {
+      "id": "burger",
+      "name": "Burger",
+      "category": "Food",
+      "voxels": 1539,
+      "unlockLevel": 27
+    },
+    {
+      "id": "car",
+      "name": "Red Car",
+      "category": "Vehicles",
+      "voxels": 1096,
+      "unlockLevel": 41
+    },
+    {
+      "id": "bus",
+      "name": "School Bus",
+      "category": "Vehicles",
+      "voxels": 2211,
+      "unlockLevel": 46
+    },
+    {
+      "id": "truck",
+      "name": "Fire Truck",
+      "category": "Vehicles",
+      "voxels": 1786,
+      "unlockLevel": 47
+    },
+    {
+      "id": "rocket",
+      "name": "Rocket",
+      "category": "Vehicles",
+      "voxels": 813,
+      "unlockLevel": 42
+    },
+    {
+      "id": "house",
+      "name": "Cozy House",
+      "category": "Buildings",
+      "voxels": 2362,
+      "unlockLevel": 48
+    },
+    {
+      "id": "lighthouse",
+      "name": "Lighthouse",
+      "category": "Buildings",
+      "voxels": 1213,
+      "unlockLevel": 44
+    },
+    {
+      "id": "windmill",
+      "name": "Windmill",
+      "category": "Buildings",
+      "voxels": 1070,
+      "unlockLevel": 45
+    },
+    {
+      "id": "castle",
+      "name": "Dream Castle",
+      "category": "Buildings",
+      "voxels": 3026,
+      "unlockLevel": 83
+    },
+    {
+      "id": "robot",
+      "name": "Robo Buddy",
+      "category": "Vehicles",
+      "voxels": 1058,
+      "unlockLevel": 43
+    },
+    {
+      "id": "dragon",
+      "name": "Baby Dragon",
+      "category": "Animals",
+      "voxels": 750,
+      "unlockLevel": 81
+    },
+    {
+      "id": "unicorn",
+      "name": "Unicorn",
+      "category": "Animals",
+      "voxels": 474,
+      "unlockLevel": 20
+    }
+  ],
+  "hardLevels": {
+    "every": 5,
+    "rewardMultiplier": 2.5,
+    "note": "every 5th level is HARD: tighter move limit, bigger reward"
+  },
+  "economy": {
+    "startCoins": 500,
+    "startLives": 5,
+    "maxLives": 5,
+    "lifeRegenMinutes": 30,
+    "dailyRewards": [
+      100,
+      150,
+      200,
+      250,
+      300,
+      400,
+      600
+    ],
+    "comboCoinBonus": 5
+  },
+  "boosters": {
+    "hammer": {
+      "price": 300,
+      "startCount": 3,
+      "voxels": 12
+    },
+    "shuffle": {
+      "price": 200,
+      "startCount": 3
+    },
+    "colorBomb": {
+      "price": 500,
+      "startCount": 1,
+      "voxels": 48
+    },
+    "eliminate": {
+      "price": 150,
+      "startCount": 2
+    }
+  },
+  "stars": {
+    "note": "stars[0] = max moves for 3 stars, stars[1] = max moves for 2 stars, otherwise 1 star"
+  }
+}

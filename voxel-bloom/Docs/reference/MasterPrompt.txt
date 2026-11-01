@@ -1,0 +1,140 @@
+MASTER PROMPT — VOXEL BLOOM 3D PREMIUM
+Unity Android — Complete Game Development
+
+You are a senior Unity mobile game developer, technical artist, UI/UX designer, gameplay programmer, and QA engineer.
+
+Your mission is to develop a complete, fully functional, production-quality Android puzzle game called Voxel Bloom 3D, based on the attached visual reference. The attached mockup is the mandatory visual specification.
+
+Do not redesign the game. Do not replace the art direction with generic Unity UI. Do not simplify the gameplay into a prototype. Build a real playable game.
+
+1. PROJECT REQUIREMENTS
+- Unity 6 LTS or compatible installed version; Android portrait; 1080 x 1920 reference; URP; Unity UI + TextMeshPro.
+- Target 60 FPS on mid-range devices; stable 30 FPS minimum on supported low-end devices.
+- Offline gameplay, local saves, touch controls, no paid third-party assets or mandatory online services.
+- Audit existing project first; preserve working settings, packages, scenes, and functionality.
+
+2. STRICT VISUAL REPRODUCTION
+The attached image contains eight mandatory screens: HOME, LEVEL SELECT, GAMEPLAY, GAMEPLAY COMBO, PAUSE, LEVEL COMPLETE, BOOSTERS, COLLECTION.
+Reproduce layout, colors, proportions, hierarchy, icons, typography style, buttons, panels, spacing and shadows as closely as technically possible.
+- Light pastel backgrounds, soft sky-blue gradients, clean white rounded panels, glossy colorful voxel models.
+- Bright green primary buttons, purple ribbons, blue secondary buttons, gold coins and stars, soft shadows and smooth animations.
+- No dark redesign, placeholder gray rectangles, default Unity buttons or emoji substituting for game icons.
+- Create separate sprites, nine-sliced panels, prefabs, materials and voxel models. Never use the full reference as a fake interactive background.
+- Use a consistent design system and properly licensed fonts.
+- Adapt to 16:9, 19.5:9, 20:9, safe areas, notches and tablets where practical using Canvas Scaler and Screen.safeArea.
+
+3. HOME
+Top bar: avatar, lives, coins, add coins, settings.
+Center: Voxel Bloom 3D logo, animated voxel fox, grassy platform, decorative trees/flowers, large green PLAY.
+Bottom navigation: Collection, Rewards, Shop, Events.
+All buttons must work. PLAY opens latest unlocked level; currency and lives persist. Provide subtle character idle animations and background parallax.
+
+4. LEVEL SELECT
+Five chapters, each with 20 levels:
+1 Happy Animals (1-20); 2 Sweet World (21-40); 3 City Blocks (41-60); 4 Ocean Wonders (61-80); 5 Dream Collection (81-100).
+Each chapter card shows thumbnail, progress, stars, lock state and play action. Unlocked chapters open level grid; locked chapters show unlock requirements. Level cards show number, stars, completion/current/locked state.
+
+5. CORE GAMEPLAY
+Top: pause, level number, three-star indicator, coins.
+Upper area: rotating real 3D voxel model, blue background, left/right rotation buttons, pedestal, progress bar.
+Middle: five attack queue slots and remaining destruction indicator.
+Bottom: five-column by four-row numbered block board, Hammer, Shuffle and Color Bomb boosters.
+
+Each voxel has unique ID, integer grid coordinate, color ID, active/destroyed state and surface accessibility state.
+Each board block has a color and attack power from 2, 4, 8, 16, 32, 64.
+On tapping a valid block: validate move; reserve block; animate into queue; identify accessible voxels of matching color; remove up to attack power voxels; animate destruction; update progress and board; check win/lose; save progress.
+If fewer eligible voxels exist, remove only those and consume attack. Normal attacks never destroy other colors.
+A voxel is exposed if one of six orthogonal neighbors is empty or outside the model. Recompute exposure after destruction.
+Board generation uses level data and deterministic seed, with solvability validation. Avoid dead-end random boards.
+Five slots form a visible FIFO attack queue. Use a controlled state machine and prevent conflicting input.
+Allow horizontal drag and left/right buttons to rotate model smoothly without accidentally selecting board tiles.
+
+6. VOXEL MODEL SYSTEM
+Implement actual 3D voxel geometry, model data, colors, optimized mesh generation/instancing, exposed-face detection, destruction, pooled falling fragments, rotation and completion progress.
+Avoid thousands of separate Update-driven GameObjects.
+Create original recognizable voxel models: chicken, fox, cat, bear, bunny, panda, penguin, sheep, wolf, deer, lion, cake, ice cream, candy, car, bus, house, fish, crab, castle, robot and dragon.
+Shapes must be recognizable by silhouette, not merely color. Store reusable voxel data assets.
+
+7. COMBO
+Implement consecutive efficient attacks triggering x2, x3, x4 and x5 combos. Show animated COMBO text, controlled particles, fragments, score, subtle screen shake and optional haptics. Pool effects and support reduced-effects setting.
+
+8. PAUSE
+Semi-transparent dark overlay and white rounded dialog with purple Pause ribbon. Buttons: green Resume, blue Restart, purple Settings and Close. Resume retains state; Restart restores level start; Settings opens audio/vibration/quality. Freeze timers and gameplay input while paused.
+
+9. LEVEL COMPLETE
+Purple Level Complete ribbon, three animated stars, completed voxel model, coins, Continue and Double Reward. Compute 1-3 stars from configurable efficiency thresholds. Continue unlocks next level. Double Reward uses verified rewarded-ad completion callback only; show unavailable state if no provider. Prevent duplicate claims; persist immediately.
+
+10. BOOSTERS
+Hammer: destroy configurable selected voxels regardless of color (300 coins).
+Shuffle: rearrange board while preserving a valid move when possible (200 coins).
+Color Bomb: destroy a group of selected-color voxels (500 coins).
+Every booster has proper icon, description, price, confirmation, actual effect, animation, sound and persistent inventory. Never deduct coins without granting effect; never allow negative balances.
+
+11. COLLECTION
+Categories: Animals, Food, Vehicles, Buildings. Three-column model grid with thumbnails, names, lock/checkmark states and progress bar. Unlocked models open rotatable/zoomable 3D preview; locked models display requirements.
+
+12. LEVEL SYSTEM — 100 REAL LEVELS
+Create 100 actual playable, distinct configurations, not renamed copies. Each defines ID, model, colors, board, voxel count, difficulty, move target, star thresholds, rewards, booster availability, seed, win/fail conditions.
+Use ScriptableObjects or validated JSON. Level 1 starts as a complete playable puzzle without forced blocking tutorial. Difficulty rises gradually through colors, shapes, moves and hidden layers.
+Implement a solver/validation simulation and reject unsolvable generated configurations. Document the solver's limitations; do not falsely claim mathematical proof if heuristic.
+
+13. ECONOMY
+Persistent coins, stars, lives, daily rewards, level rewards, booster purchases and optional rewarded ads. No negative coins or double claims. Offline play works without backend. Use a consistent daily reset policy.
+
+14. MONETIZATION
+Create provider-independent rewarded-ad service with placements: double reward, extra booster, optional extra life. Integrate actual SDK only when available and configured. Do not invent credentials. Test mode may use explicitly labeled mock provider. Never grant production rewards from mock callbacks. No forced interstitials.
+
+15. AUDIO
+Add properly licensed/original SFX for buttons, selection, launch, voxel destruction, combo, coins, stars, win/fail, boosters; background music; music/sound/vibration toggles; graphics quality and reduced effects settings.
+
+16. ARCHITECTURE
+Assets/VoxelBloom/
+  Art/{UI,Icons,Backgrounds,VoxelModels,Materials,Particles}/
+  Audio/{Music,SFX}/
+  Prefabs/{UI,Blocks,Voxels,Effects}/
+  Scenes/{Bootstrap,Home,LevelSelect,Gameplay,Collection,Shop,Events}/
+  Scripts/{Core,Gameplay,Voxels,Board,Levels,UI,Economy,Boosters,Monetization,Audio,Save,Utilities}/
+  Data/{Levels,Models,Config}/
+  Tests/{EditMode,PlayMode}/
+Use modular testable classes, event-driven communication, clean lifecycle handling and low allocations. Avoid monolithic GameManager.
+
+17. GAME STATE MACHINE
+BOOT, HOME, LEVEL_LOADING, READY, BLOCK_SELECTED, ATTACK_QUEUED, ATTACKING, RESOLVING, PAUSED, LEVEL_COMPLETE, LEVEL_FAILED.
+Validate transitions, block incompatible input, prevent duplicate attacks, cancel asynchronous operations safely on restart/scene unload.
+
+18. SAVE SYSTEM
+Persist current level, completed levels, stars, coins, lives, boosters, collection unlocks, settings, daily rewards and active level progress. Versioned JSON under Application.persistentDataPath with atomic replacement/backup recovery where feasible. Handle corruption and migrations; preserve progress on app update.
+
+19. PERFORMANCE
+Object pooling, batching, instancing, optimized voxel meshes, low transparent overdraw, limited particles, efficient canvases, avoid costly per-frame allocations and needless physics. Profile frame time, CPU/GPU and memory. Provide Low/Medium/High presets; High should best match reference.
+
+20. AUTOMATED TESTS
+Implement EditMode/PlayMode tests for level loading, selection, attack power, color matching, exposed voxel detection, destruction, combos, board refill, solvability, win/fail, boosters, purchases, rewards, save/load, restart, pause, progression, collections and navigation.
+Tests must assert actual behavior. Run available tests, fix compilation failures, and report unavailable Editor/SDK steps honestly.
+
+21. VISUAL QA
+Compare all eight running screens to attached reference: composition, element sizes, colors, panels, typography, model positions, backgrounds, icons, navigation, board spacing, effects and dialogs. Capture screenshots where environment supports. Document remaining differences. Never claim pixel-perfect reproduction without measured comparison.
+
+22. ANDROID BUILD
+Portrait; IL2CPP; ARM64; suitable minimum API; optimized textures; Android App Bundle; package com.animatix.voxelbloom3d. Preserve existing signing; never fabricate credentials. Minimize permissions and prepare for Play submission.
+
+23. IMPLEMENTATION PHASES
+1 Audit project and architecture.
+2 Visual design system and reusable UI.
+3 Home and Level Select.
+4 Voxel renderer and original models.
+5 Board and attack mechanics.
+6 Destruction, particles, combos and camera.
+7 100 complete levels.
+8 Boosters, collection, economy, saves.
+9 Pause, win/fail, rewards and settings.
+10 Audio, animation, optimization, Android settings.
+11 Automated testing and visual QA.
+12 Compilation and build validation.
+After each phase check compilation, run tests, fix errors, record functionality/blockers, then proceed. Do not stop after skeleton.
+
+24. DEFINITION OF DONE
+All eight screens implemented and interactive; real 3D voxels; matching-color numbered attacks; destruction; 100 valid playable levels; progression; rewards; boosters; collection; saves; pause/restart; settings; offline gameplay; available tests passing; Android configured; no known critical blockers.
+The result must be a polished playable mobile game, not a static mockup or unfinished demo.
+
+START NOW: Audit the existing Unity project and attached reference image, produce a brief implementation plan, and execute the phases step by step. Preserve visual fidelity and actual functionality throughout.

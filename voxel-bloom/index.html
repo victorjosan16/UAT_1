@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voxel Bloom</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <header id="hud">
+    <h1>Voxel Bloom</h1>
+    <div class="stats">
+      <span title="Polen colectat">🌼 <b id="pollen">0</b> / <span id="goal">150</span></span>
+      <span title="Semințe">🌱 <b id="seeds">0</b></span>
+      <span title="Apă în stropitoare">💧 <b id="water">0</b></span>
+      <span title="Flori înflorite">🌸 <b id="blooms">0</b></span>
+    </div>
+  </header>
+
+  <nav id="tools">
+    <button data-tool="seed" class="active">🌱 Sădește <kbd>1</kbd></button>
+    <button data-tool="water">💧 Udă <kbd>2</kbd></button>
+    <button data-tool="shovel">⛏️ Plivește <kbd>3</kbd></button>
+  </nav>
+
+  <div id="hint">Sădește semințe, udă-le (umple stropitoarea din iaz), smulge buruienile. Albinele adună polen de la florile înflorite.</div>
+
+  <div id="overlay" class="hidden">
+    <div class="panel">
+      <h2 id="overlay-title"></h2>
+      <p id="overlay-text"></p>
+      <button id="restart">Joacă din nou <kbd>R</kbd></button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
