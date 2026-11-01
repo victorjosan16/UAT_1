@@ -44,6 +44,9 @@ Regenerate data after changing models or rules: `node tools/build-data.mjs` (≈
   Each level is solver-validated (witness replay), see `Docs/Solver.md` and `Docs/LevelReport.txt`.
 
 ## Home screen
+**Premium artwork:** the logo, HUD, buttons, nav, boosters, progress bar and block style come from the reference asset sheet
+(`Docs/ArtAssets.md`), with procedural fallbacks. Home is static.
+
 Follows the premium mockup: HUD (avatar with player level, lives, coins +, settings), dimensional logo with rays, leaves and
 floating cubes, a 3D diorama (floating grass island, layered voxel trees, swaying flowers, cliffs with an animated waterfall)
 with the selected character (idle breathing, blink, look-around, head tilt, tail wag, happy squint; tap = heart eyes + hop + spin +
@@ -101,7 +104,7 @@ rewards from test providers. To ship ads, implement `IRewardedAdService` for you
 |---|---|---|
 | Rules (exposure, power, colour matching, queue, combos, fails, refill, wasted attacks) | `node tools/test-rules.mjs` | **11/11 pass** |
 | 100 levels solvable (witness replays to a win within the move limit), distinct, difficulty trend, HARD levels harder and pay more | same | **pass** |
-| C# syntax (48 files) | tree-sitter C# parser | **0 syntax errors** |
+| C# syntax (57 files) | tree-sitter C# parser | **0 syntax errors** |
 | C# compile + EditMode/PlayMode tests (≈40 tests) | Unity Test Runner | **not run (no Editor here)** |
 | Android build | Unity | **not run** |
 | Visual comparison with the mockup | `Docs/VisualQA.md` | **not measured** |

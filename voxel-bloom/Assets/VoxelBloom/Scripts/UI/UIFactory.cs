@@ -256,6 +256,7 @@ namespace VoxelBloom
     public sealed class ProgressBar : MonoBehaviour
     {
         public RectTransform Fill;
+        public float Inset = 8f, MinWidth = 24f;
         float shown, target;
 
         public void Set(float value, bool instant = false)
@@ -274,9 +275,10 @@ namespace VoxelBloom
         void Apply()
         {
             var parent = (RectTransform)Fill.parent;
-            float w = Mathf.Max(0, parent.rect.width - 8f);
+            float w = Mathf.Max(0, parent.rect.width - Inset);
             Fill.anchorMax = new Vector2(0, 1);
-            Fill.sizeDelta = new Vector2(Mathf.Max(shown > 0 ? 24f : 0f, w * shown), Fill.sizeDelta.y);
+            Fill.sizeDelta = new Vector2(Mathf.Max(shown > 0 ? MinWidth : 0f, w * shown), Fill.sizeDelta.y);
+            Fill.gameObject.SetActive(shown > 0.001f);
         }
     }
 }

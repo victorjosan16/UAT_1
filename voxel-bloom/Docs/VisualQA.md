@@ -15,7 +15,17 @@ Nothing here claims pixel-perfect reproduction.
 | 7 Boosters | `BoostersDialog` | Hammer 300, Shuffle 200, Color Bomb 500 (+ Eliminare 150), icons, descriptions, prices, confirmation | — |
 | 8 Collection | `CollectionScreen` | ribbon, Animals/Food/Vehicles/Buildings tabs, 3-col grid, checkmarks/locks, progress bar | — |
 
-## Known differences from the reference
+## Premium artwork pass (asset sheet)
+Home and Gameplay now use the artwork extracted from `Docs/reference/asset-sheet-green.png`: logo, HUD pills, Joacă, Nivel badge,
+nav, 360° label, arrows, boosters, stars, progress bar, glossy blocks. See `Docs/ArtAssets.md` (inventory, layout spec, what could not be
+extracted). `Docs/HomeLayoutCheck.png` compares the art placement with the mockup. It is **not** a Unity screenshot: a real
+Unity capture is still needed before claiming fidelity.
+
+Known Home differences still open: background (3D voxel landscape instead of the painted one, needs a full-res source), carousel
+tiles are procedural, the Recompense "!" is always shown, and the 3D fox and pedestal framing must be checked on device. The Home
+stays **static**, as you asked earlier (no idle/float animations even though the design prompt lists subtle animations).
+
+## Known differences from the reference (earlier passes)
 * All icons are drawn procedurally at runtime (`SpriteFactory` / `IconPainter`). They follow the
   reference's style (bold outline, glossy fill) but are simpler than hand-painted art.
 * Logo uses Baloo 2 ExtraBold (OFL) with vertex gradients instead of a custom lettering asset.

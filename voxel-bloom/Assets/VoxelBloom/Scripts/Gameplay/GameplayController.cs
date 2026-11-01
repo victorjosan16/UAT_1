@@ -625,7 +625,7 @@ namespace VoxelBloom
             view.ProgressText.text = Mathf.FloorToInt(session.Progress * 100f) + "%";
             view.RemainingText.text = session.TotalRemaining + " voxels left  ·  " + session.BlocksLeft + " blocks";
             int projected = level.StarsForScore(session.Score);
-            for (int i = 0; i < 3; i++) view.Stars[i].sprite = SpriteFactory.Get(i < projected ? Icon.Star : Icon.StarEmpty);
+            for (int i = 0; i < 3; i++) view.SetStar(i, i < projected);
             for (int i = 0; i < 4; i++)
             {
                 var t = GameplayScreen.BoosterOrder[i];

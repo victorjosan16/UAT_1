@@ -26,7 +26,35 @@ namespace VoxelBloom
             v.Lip = b.transform.Find("Lip").GetComponent<Image>();
             v.Label = b.Face.Find("Label").GetComponent<VText>();
             v.Label.fontStyle = FontStyle.Bold;
+            v.ApplyArt();
             return v;
+        }
+
+        /// <summary>
+        /// Glossy block from the artwork template: Blocks/block_face is white in its body, so tinting it with the palette
+        /// colour shows exactly the voxel colour; Blocks/block_gloss adds the untinted highlights. Falls back to the
+        /// procedural face if the art is missing.
+        /// </summary>
+        void ApplyArt()
+        {
+            var border = new Vector4(66, 88, 66, 66); // left, bottom (lip + corner), right, top
+            var face = UIArt.Get("Blocks/block_face", border);
+            var gloss = UIArt.Get("Blocks/block_gloss", border);
+            if (face == null || gloss == null) return;
+            foreach (var n in new[] { "Shadow", "Lip" })
+            {
+                var t = Root.Find(n);
+                if (t != null) t.gameObject.SetActive(false);
+            }
+            Face.sprite = face; Face.type = Image.Type.Sliced; Face.pixelsPerUnitMultiplier = 2f;
+            var fr = (RectTransform)Face.transform;
+            fr.offsetMin = Vector2.zero; fr.offsetMax = Vector2.zero;
+            var g = UI.Image(Face.transform, "Gloss", gloss, Color.white, true);
+            g.pixelsPerUnitMultiplier = 2f;
+            g.rectTransform.Stretch();
+            g.transform.SetSiblingIndex(0); // under the number
+            var lr = Label.rectTransform;
+            lr.offsetMin = new Vector2(lr.offsetMin.x, Root.sizeDelta.y * 0.1f); // keep the number above the lip
         }
 
         /// <summary>Row 0 is active (dimmed slightly when its colour is not visible yet); deeper rows are previews.</summary>
@@ -123,6 +151,7 @@ namespace VoxelBloom
         GameplayController controller;
 
         public static readonly BoosterType[] BoosterOrder = { BoosterType.Hammer, BoosterType.Shuffle, BoosterType.ColorBomb, BoosterType.Eliminate };
+        static readonly string[] BoosterArt = { "Boosters/hammer", "Boosters/shuffle", "Boosters/color_bomb", "Boosters/remove" };
 
         protected override void OnBuild()
         {
@@ -156,12 +185,41 @@ namespace VoxelBloom
             {
                 Stars[i] = UI.Icon(sr, Icon.Star, 64);
                 Stars[i].rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 66, i == 1 ? 6 : 0), new Vector2(64, 64));
+                Stars[i].preserveAspect = true;
+                SetStar(i, false);
             }
-            CoinsText = UI.Pill(hud, Icon.Coin, "0", out var cr, 260, 76);
-            cr.Place(new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(260, 76));
-            var addCoins = UI.IconButton(cr, Icon.Plus, 64, ButtonStyle.Green);
-            ((RectTransform)addCoins.transform).Place(new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(64, 64));
-            addCoins.OnClick = () => Router.Open<BoostersDialog>();
+            if (UIArt.Has("HUD/pill_coins_blank"))
+            {
+                // reference coins pill (coin + navy body + green "+"); the number is live text
+                var pill = UIArt.Picture(hud, "HUD/pill_coins_blank", 280, true);
+                var pr = pill.rectTransform;
+                pr.anchorMin = pr.anchorMax = new Vector2(1, 0.5f); pr.pivot = new Vector2(1, 0.5f); pr.anchoredPosition = Vector2.zero;
+                CoinsText = UI.Text(pr, "0", 44, Color.white, TextAnchor.MiddleCenter, 0.18f, Theme.Hex("#0E1430"));
+                CoinsText.fontStyle = FontStyle.Bold;
+                CoinsText.resizeTextForBestFit = true; CoinsText.resizeTextMinSize = 18; CoinsText.resizeTextMaxSize = 44;
+                var ct = CoinsText.rectTransform;
+                ct.anchorMin = new Vector2(0.31f, 0.14f); ct.anchorMax = new Vector2(0.73f, 0.86f); ct.offsetMin = ct.offsetMax = Vector2.zero;
+                var hit = UI.Rect(pr, "Plus");
+                hit.anchorMin = new Vector2(0.74f, 0); hit.anchorMax = Vector2.one; hit.offsetMin = hit.offsetMax = Vector2.zero;
+                var hitImg = hit.gameObject.AddComponent<Image>(); hitImg.color = new Color(1, 1, 1, 0);
+                var hb = hit.gameObject.AddComponent<UIButton>(); hb.Face = hit;
+                hb.OnClick = () => Router.Open<BoostersDialog>();
+            }
+            else
+            {
+                CoinsText = UI.Pill(hud, Icon.Coin, "0", out var cr, 260, 76);
+                cr.Place(new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(260, 76));
+                var addCoins = UI.IconButton(cr, Icon.Plus, 64, ButtonStyle.Green);
+                ((RectTransform)addCoins.transform).Place(new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(64, 64));
+                addCoins.OnClick = () => Router.Open<BoostersDialog>();
+            }
+        }
+
+        /// <summary>Gold / empty star from the reference artwork (procedural icons if the art is missing).</summary>
+        public void SetStar(int i, bool on)
+        {
+            var art = UIArt.Get(on ? "Icons/star_gold" : "Icons/star_empty");
+            Stars[i].sprite = art != null ? art : SpriteFactory.Get(on ? Icon.Star : Icon.StarEmpty);
         }
 
         void BuildModelArea()
@@ -218,10 +276,26 @@ namespace VoxelBloom
             var prog = UI.Rect(Root, "ProgressRow").BottomBand(1015, 70, 60);
             var cube = UI.Icon(prog, Icon.Cube, 70);
             cube.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(70, 70));
+            var cubeArt = UIArt.Get("Icons/cube");
+            if (cubeArt != null) { cube.sprite = cubeArt; cube.preserveAspect = true; }
             Progress = UI.Progress(prog, Theme.Green, 44);
-            ((RectTransform)Progress.transform).Stretch(90, 150, 13, 13);
-            ProgressText = UI.Text(prog, "0%", 42, Theme.Ink, TextAnchor.MiddleRight);
-            ProgressText.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(0, 0), new Vector2(140, 60), new Vector2(1, 0.5f));
+            bool artBar = UIArt.SkinProgress(Progress);
+            ((RectTransform)Progress.transform).Stretch(90, 165, artBar ? 10 : 13, artBar ? 10 : 13);
+            if (UIArt.Has("HUD/percent_pill_blank"))
+            {
+                var pp = UIArt.Picture(prog, "HUD/percent_pill_blank", 150);
+                pp.rectTransform.anchorMin = pp.rectTransform.anchorMax = new Vector2(1, 0.5f);
+                pp.rectTransform.pivot = new Vector2(1, 0.5f);
+                pp.rectTransform.anchoredPosition = Vector2.zero;
+                ProgressText = UI.Text(pp.transform, "0%", 40, Color.white, TextAnchor.MiddleCenter, 0.18f, Theme.Hex("#2A0C66"));
+                ProgressText.fontStyle = FontStyle.Bold;
+                ProgressText.rectTransform.Stretch(10, 10, 4, 10);
+            }
+            else
+            {
+                ProgressText = UI.Text(prog, "0%", 42, Theme.Ink, TextAnchor.MiddleRight);
+                ProgressText.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(0, 0), new Vector2(140, 60), new Vector2(1, 0.5f));
+            }
         }
 
         void BuildQueue()
@@ -292,14 +366,31 @@ namespace VoxelBloom
             Icon[] icons = { Icon.Hammer, Icon.Shuffle, Icon.ColorBomb, Icon.Eliminate };
             for (int i = 0; i < 4; i++)
             {
-                var b = UI.IconButton(row, icons[i], 140, ButtonStyle.White);
-                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / 4f, 0.5f), Vector2.zero, new Vector2(140, 140));
+                bool art = UIArt.Has(BoosterArt[i]);
+                var b = art ? UI.Button(row, null, ButtonStyle.White, new Vector2(150, 150)) : UI.IconButton(row, icons[i], 140, ButtonStyle.White);
+                float bs = art ? 150 : 140;
+                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / 4f, 0.5f), Vector2.zero, new Vector2(bs, bs));
+                if (art) UIArt.Skin(b, BoosterArt[i]);
                 b.Sound = Sfx.Booster;
                 var t = BoosterOrder[i];
                 b.OnClick = () => controller.UseBooster(t);
-                var badge = UI.Image(b.transform, "Count", SpriteFactory.Circle(), Theme.Red, false);
-                badge.rectTransform.Place(new Vector2(1, 0), new Vector2(-14, 18), new Vector2(60, 60));
-                BoosterCounts[i] = UI.Text(badge.transform, "0", 36, Color.white);
+                Image badge;
+                if (art)
+                {
+                    // live count badge drawn exactly over the badge painted in the artwork (white ring + red disc)
+                    var ring = UI.Image(b.Face, "CountRing", SpriteFactory.Circle(), Color.white, false);
+                    ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0.8f, 0.22f);
+                    ring.rectTransform.sizeDelta = new Vector2(bs * 0.42f, bs * 0.42f);
+                    badge = UI.Image(ring.transform, "Count", SpriteFactory.Circle(), Theme.Hex("#E8202E"), false);
+                    badge.rectTransform.Stretch(5, 5, 5, 5);
+                }
+                else
+                {
+                    badge = UI.Image(b.transform, "Count", SpriteFactory.Circle(), Theme.Red, false);
+                    badge.rectTransform.Place(new Vector2(1, 0), new Vector2(-14, 18), new Vector2(60, 60));
+                }
+                BoosterCounts[i] = UI.Text(badge.transform, "0", 36, Color.white, TextAnchor.MiddleCenter, 0.15f, Theme.Hex("#7A0A14"));
+                BoosterCounts[i].fontStyle = FontStyle.Bold;
                 BoosterCounts[i].rectTransform.Stretch();
                 BoosterButtons[i] = b;
             }

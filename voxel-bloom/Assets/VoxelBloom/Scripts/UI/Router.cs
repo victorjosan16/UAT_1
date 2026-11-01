@@ -213,6 +213,7 @@ namespace VoxelBloom
 
         void Build(RectTransform rt)
         {
+            if (UIArt.Has("HUD/pill_coins_blank")) { BuildArt(rt); return; }
             var avatarBtn = UI.IconButton(rt, Icon.Avatar, 110, ButtonStyle.White);
             ((RectTransform)avatarBtn.transform).Place(new Vector2(0, 0.5f), new Vector2(55, 0), new Vector2(110, 110));
             avatarBtn.OnClick = () => OnAvatar?.Invoke();
@@ -244,6 +245,72 @@ namespace VoxelBloom
             gear.OnClick = () => OnSettings?.Invoke();
         }
 
+        /// <summary>
+        /// HUD from the reference artwork (sheet scale ≈ canvas scale): avatar with level badge, lives pill, coins pill (+),
+        /// gems pill (+), purple settings button. The baked numbers were removed from the pills; values are live text.
+        /// </summary>
+        void BuildArt(RectTransform rt)
+        {
+            const float k = 0.96f;
+            RectTransform PlaceArt(Image img, float x, float w)
+            {
+                var r = img.rectTransform;
+                float h = w * img.sprite.rect.height / img.sprite.rect.width;
+                r.anchorMin = r.anchorMax = new Vector2(0, 0.5f);
+                r.pivot = new Vector2(0, 0.5f);
+                r.anchoredPosition = new Vector2(x, 0);
+                r.sizeDelta = new Vector2(w, h);
+                return r;
+            }
+            VText Value(RectTransform pill, float cx, float w, Color color, Color outline)
+            {
+                var t = UI.Text(pill, "0", 46, color, TextAnchor.MiddleCenter, 0.18f, outline);
+                t.fontStyle = FontStyle.Bold;
+                t.resizeTextForBestFit = true; t.resizeTextMinSize = 18; t.resizeTextMaxSize = 46;
+                t.rectTransform.anchorMin = new Vector2(cx - w / 2, 0.14f);
+                t.rectTransform.anchorMax = new Vector2(cx + w / 2, 0.86f);
+                t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
+                return t;
+            }
+            void Hit(RectTransform parent, Vector2 aMin, Vector2 aMax, Action onClick)
+            {
+                var b = UI.Rect(parent, "Hit");
+                b.anchorMin = aMin; b.anchorMax = aMax; b.offsetMin = b.offsetMax = Vector2.zero;
+                var img = b.gameObject.AddComponent<Image>(); img.color = new Color(1, 1, 1, 0);
+                var btn = b.gameObject.AddComponent<UIButton>(); btn.Face = b; btn.OnClick = onClick;
+            }
+
+            var avatar = PlaceArt(UIArt.Picture(rt, "HUD/avatar", 146 * k, true), 0, 146 * k);
+            Hit(avatar, Vector2.zero, Vector2.one, () => OnAvatar?.Invoke());
+            // live player-level badge drawn over the reference badge (gold ring + navy disc)
+            var ring = UI.Image(avatar, "LevelBadge", SpriteFactory.Circle(), Theme.Gold, false);
+            ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0.79f, 0.2f);
+            ring.rectTransform.sizeDelta = new Vector2(58, 58);
+            var disc = UI.Image(ring.transform, "Disc", SpriteFactory.Circle(), Theme.Hex("#171A2E"), false);
+            disc.rectTransform.Stretch(5, 5, 5, 5);
+            playerLevel = UI.Text(disc.transform, "1", 32, Color.white);
+            playerLevel.fontStyle = FontStyle.Bold;
+            playerLevel.rectTransform.Stretch();
+
+            var hearts = PlaceArt(UIArt.Picture(rt, "HUD/pill_hearts_blank", 215 * k), 150 * k, 215 * k);
+            lives = Value(hearts, 0.687f, 0.44f, Theme.Hex("#3B1A78"), new Color(1, 1, 1, 0.5f));
+
+            var coinPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_coins_blank", 278 * k, true), 370 * k, 278 * k);
+            coins = Value(coinPill, 0.52f, 0.43f, Color.white, Theme.Hex("#0E1430"));
+            Hit(coinPill, new Vector2(0.74f, 0), Vector2.one, () => OnAddCoins?.Invoke());
+
+            var gemPill = PlaceArt(UIArt.Picture(rt, "HUD/pill_gems_blank", 250 * k, true), 652 * k, 250 * k);
+            gems = Value(gemPill, 0.535f, 0.35f, Color.white, Theme.Hex("#0E1430"));
+            Hit(gemPill, new Vector2(0.72f, 0), Vector2.one, () => OnAddCoins?.Invoke());
+
+            var gear = UI.Button(rt, null, ButtonStyle.Purple, new Vector2(104, 101));
+            var gr = (RectTransform)gear.transform;
+            gr.anchorMin = gr.anchorMax = new Vector2(1, 0.5f); gr.pivot = new Vector2(1, 0.5f);
+            gr.anchoredPosition = Vector2.zero; gr.sizeDelta = new Vector2(104, 101);
+            UIArt.Skin(gear, "Buttons/settings");
+            gear.OnClick = () => OnSettings?.Invoke();
+        }
+
         void Update()
         {
             if (!Services.Initialized) return;
@@ -261,7 +328,7 @@ namespace VoxelBloom
             {
                 shownLives = l; shownSeconds = secs;
                 lives.text = l >= Services.Lives.Max ? "Full" : l + " · " + (secs / 60).ToString("00") + ":" + (secs % 60).ToString("00");
-                lives.fontSize = l >= Services.Lives.Max ? 40 : 30;
+                if (!lives.resizeTextForBestFit) lives.fontSize = l >= Services.Lives.Max ? 40 : 30;
             }
         }
     }

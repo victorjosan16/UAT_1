@@ -29,6 +29,16 @@ namespace VoxelBloom
         {
             catalog = new CharacterCatalog(Services.Config);
             UI.Sky(Root, Theme.Hex("#3FA9F5"), Theme.Hex("#B8E4FF"));
+            painted = UIArt.Get("Backgrounds/home_background", default, false); // optional drop-in
+            if (painted != null)
+            {
+                // full-screen painted landscape (drop-in: Art/Backgrounds/Resources/VBUI/Backgrounds/home_background.png)
+                var bg = UI.Image(Root, "HomeBackground", painted, Color.white, false);
+                bg.rectTransform.Stretch();
+                var fit = bg.gameObject.AddComponent<AspectRatioFitter>();
+                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fit.aspectRatio = painted.rect.width / painted.rect.height;
+            }
 
             BuildDiorama();
             var top = TopBar.Create(Root);
@@ -43,12 +53,13 @@ namespace VoxelBloom
         }
 
         public override bool FadeIn => false;
+        Sprite painted;
 
         // ------------------------------------------------------------------ full-screen 3D landscape + pedestal (static)
         void BuildDiorama()
         {
             // static clouds in the UI sky (the 3D render has a transparent background)
-            foreach (var (x, y, w) in new[] { (0.12f, 0.93f, 300f), (0.86f, 0.9f, 340f), (0.6f, 0.97f, 260f), (0.3f, 0.82f, 220f), (0.9f, 0.78f, 240f) })
+            if (painted == null) foreach (var (x, y, w) in new[] { (0.12f, 0.93f, 300f), (0.86f, 0.9f, 340f), (0.6f, 0.97f, 260f), (0.3f, 0.82f, 220f), (0.9f, 0.78f, 240f) })
             {
                 var c = UI.Image(Root, "Cloud", SpriteFactory.Glow(), new Color(1, 1, 1, 0.9f), false);
                 c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(x, y);
@@ -61,6 +72,14 @@ namespace VoxelBloom
             var scene = new GameObject("Scenery").transform;
             scene.SetParent(stage.transform, false);
             const float v = 0.085f;
+            if (painted == null) BuildScenery(scene, v);
+            // purple/gold display pedestal
+            Props.AddPedestal(scene, Vector3.zero, 13, v);
+            BuildStageView();
+        }
+
+        void BuildScenery(Transform scene, float v)
+        {
             // ground: wide grass island, raised ledges at the sides
             Props.AddIsland(scene, new Vector3(0, -0.36f, 2.5f), 40, 0.13f);
             Props.AddIsland(scene, new Vector3(-3.4f, 0.4f, 4.5f), 12, 0.13f);
@@ -80,13 +99,14 @@ namespace VoxelBloom
             Props.AddFlower(scene, new Vector3(-1.9f, 0.4f, 2.6f), v * 1.3f, new Color32(190, 120, 255, 255), new Color32(255, 214, 64, 255));
             Props.AddBush(scene, new Vector3(-1.5f, -0.36f, 1.0f), v * 1.3f);
             Props.AddBush(scene, new Vector3(1.6f, -0.36f, 1.2f), v * 1.3f);
-            // purple/gold display pedestal
-            Props.AddPedestal(scene, Vector3.zero, 13, v);
+        }
 
+        void BuildStageView()
+        {
             hero = CharacterPreview.Create(stage.Pivot);
             hero.Static = true; // home page is static
             // camera: model in the upper middle of the screen (like the reference), looking slightly down
-            stage.SetCamera(new Vector3(0, 2.0f, -8.6f), new Vector3(0, 0.05f, 0), 40f);
+            stage.SetCamera(new Vector3(0, 1.85f, -8.6f), new Vector3(0, -0.1f, 0), 40f); // pedestal sits just above the carousel strip
             stage.TargetYaw = stage.Yaw = -22f;
 
             var raw = UI.Raw(Root, "Landscape", stage.Texture);
@@ -101,23 +121,51 @@ namespace VoxelBloom
             // "360°" on the pedestal front and round purple arrows beside the model (anchored to screen fractions,
             // matching the full-screen render)
             var badge = UI.Rect(Root, "Label360");
-            badge.anchorMin = badge.anchorMax = new Vector2(0.5f, 0.445f); badge.sizeDelta = new Vector2(420, 84);
-            var bl = UI.Icon(badge, Icon.ArrowLeft, 60); bl.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(60, 60));
-            var br = UI.Icon(badge, Icon.ArrowRight, 60); br.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(60, 60));
-            var t360 = UI.Text(badge, "360°", 66, Color.white, TextAnchor.MiddleCenter, 0.3f, Theme.PurpleDark);
-            t360.rectTransform.Stretch();
+            badge.anchorMin = badge.anchorMax = new Vector2(0.5f, 0.474f); badge.sizeDelta = new Vector2(420, 120);
+            if (UIArt.Has("Icons/label_360"))
+            {
+                // reference artwork: swoosh arrows around "360°" (sheet → canvas scale 1.39)
+                const float s = 1.39f;
+                ArtAt(badge, "Icons/rotate_left", new Vector2(-137, 0), 76 * s);
+                ArtAt(badge, "Icons/label_360", new Vector2(2, 0), 116 * s);
+                ArtAt(badge, "Icons/rotate_right", new Vector2(132, 0), 82 * s);
+            }
+            else
+            {
+                var bl = UI.Icon(badge, Icon.ArrowLeft, 60); bl.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(60, 60));
+                var br = UI.Icon(badge, Icon.ArrowRight, 60); br.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(60, 60));
+                var t360 = UI.Text(badge, "360°", 66, Color.white, TextAnchor.MiddleCenter, 0.3f, Theme.PurpleDark);
+                t360.rectTransform.Stretch();
+            }
 
             var left = UI.IconButton(Root, Icon.ArrowLeft, 118, ButtonStyle.Purple);
-            var lr = (RectTransform)left.transform; lr.anchorMin = lr.anchorMax = new Vector2(0.16f, 0.57f); lr.sizeDelta = new Vector2(118, 118);
+            var lr = (RectTransform)left.transform; lr.anchorMin = lr.anchorMax = new Vector2(0.17f, 0.568f); lr.sizeDelta = new Vector2(118, 118);
+            UIArt.Skin(left, "Buttons/back");
             left.OnClick = () => Select(catalog.Step(selected, -1));
             var right = UI.IconButton(Root, Icon.ArrowRight, 118, ButtonStyle.Purple);
-            var rr = (RectTransform)right.transform; rr.anchorMin = rr.anchorMax = new Vector2(0.84f, 0.57f); rr.sizeDelta = new Vector2(118, 118);
+            var rr = (RectTransform)right.transform; rr.anchorMin = rr.anchorMax = new Vector2(0.83f, 0.568f); rr.sizeDelta = new Vector2(118, 118);
+            if (UIArt.Skin(right, "Buttons/back") != null)
+            {
+                right.Face.localScale = new Vector3(-1, 1, 1); // same artwork, mirrored
+                var ic = right.Face.Find("Icon_" + Icon.ArrowRight);
+                if (ic != null) ic.gameObject.SetActive(false);
+            }
+            var icl = left.Face.Find("Icon_" + Icon.ArrowLeft);
+            if (icl != null && UIArt.Has("Buttons/back")) icl.gameObject.SetActive(false);
             right.OnClick = () => Select(catalog.Step(selected, +1));
         }
 
         // ------------------------------------------------------------------ logo
         void BuildLogo()
         {
+            if (UIArt.Has("Logo/logo"))
+            {
+                // the exact reference logo (crown, leaves, cubes, ribbon "Puzzle cu Obiecte 3D"), mockup ×1.148
+                var logo = UIArt.Picture(Root, "Logo/logo", 790);
+                logo.rectTransform.anchorMin = logo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                logo.rectTransform.anchoredPosition = new Vector2(-6, -312);
+                return;
+            }
             var root = UI.Rect(Root, "Logo").Place(new Vector2(0.5f, 1), new Vector2(0, -335), new Vector2(920, 320));
             AddIcon(root, Icon.Leaf, new Vector2(-370, 40), 150, 200);
             AddIcon(root, Icon.Leaf, new Vector2(370, 70), 150, -20);
@@ -150,6 +198,14 @@ namespace VoxelBloom
             return holder;
         }
 
+        static Image ArtAt(Transform parent, string path, Vector2 pos, float width)
+        {
+            var img = UIArt.Picture(parent, path, width);
+            img.rectTransform.anchorMin = img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            img.rectTransform.anchoredPosition = pos;
+            return img;
+        }
+
         static RectTransform AddIcon(Transform parent, Icon icon, Vector2 pos, float size, float rot)
         {
             var img = UI.Icon(parent, icon, size);
@@ -163,7 +219,7 @@ namespace VoxelBloom
         {
             var strip = UI.Panel(Root, "CarouselStrip", new Color(0.93f, 0.95f, 1f, 0.55f), 44, true, 6f);
             var row = (RectTransform)strip.transform.parent;
-            row.BottomBand(650, 176, 24);
+            row.BottomBand(700, 176, 24);
             for (int i = 0; i < CharacterCatalog.PerPage; i++)
             {
                 var t = new CarouselTile();
@@ -186,12 +242,24 @@ namespace VoxelBloom
                 b.OnClick = () => { if (tiles[slot].Index >= 0) Select(tiles[slot].Index); };
                 tiles.Add(t);
             }
-            caption = UI.Text(Root, "", 42, Theme.Navy, TextAnchor.MiddleCenter, 0.2f, Color.white);
-            caption.rectTransform.BottomBand(600, 54, 0);
+            if (UIArt.Has("HUD/caption_pill_blank"))
+            {
+                var pill = UIArt.Picture(Root, "HUD/caption_pill_blank", 360);
+                pill.rectTransform.anchorMin = pill.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+                pill.rectTransform.anchoredPosition = new Vector2(0, 672);
+                caption = UI.Text(pill.transform, "", 34, Theme.Hex("#2A1466"), TextAnchor.MiddleCenter, 0.12f, Color.white);
+                caption.resizeTextForBestFit = true; caption.resizeTextMinSize = 16; caption.resizeTextMaxSize = 34;
+                caption.rectTransform.Stretch(18, 18, 6, 10);
+            }
+            else
+            {
+                caption = UI.Text(Root, "", 42, Theme.Navy, TextAnchor.MiddleCenter, 0.2f, Color.white);
+                caption.rectTransform.BottomBand(645, 54, 0);
+            }
             foreach (var x in new[] { -250f, 250f })
             {
                 var sp = UI.Icon(Root, Icon.Sparkle, 40); sp.color = Theme.Gold;
-                sp.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(x, 627), new Vector2(40, 40));
+                sp.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(x, 672), new Vector2(40, 40));
             }
         }
 
@@ -239,17 +307,34 @@ namespace VoxelBloom
         // ------------------------------------------------------------------ play / level / nav
         void BuildPlay()
         {
-            var glow = UI.Image(Root, "PlayGlow", SpriteFactory.Glow(), new Color(0.75f, 1f, 0.4f, 0.45f), false);
-            glow.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 508), new Vector2(880, 300));
-            var play = UI.Button(Root, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110);
-            ((RectTransform)play.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 508), new Vector2(700, 176));
+            var glow = UI.Image(Root, "PlayGlow", SpriteFactory.Glow(), new Color(1f, 0.95f, 0.45f, 0.5f), false);
+            glow.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 540), new Vector2(880, 320));
+            bool art = UIArt.Has("Buttons/play");
+            var play = art ? UI.Button(Root, null, ButtonStyle.Green, new Vector2(680, 244))
+                           : UI.Button(Root, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110);
+            ((RectTransform)play.transform).Place(new Vector2(0.5f, 0), new Vector2(0, art ? 540 : 508), art ? new Vector2(680, 244) : new Vector2(700, 176));
+            if (art) UIArt.Skin(play, "Buttons/play"); // the reference button (label "Joacă" is part of the artwork)
             play.OnClick = () => GameplayController.StartLevel(Services.Progress.LatestPlayableLevel());
             play.Sound = Sfx.Whoosh;
 
-            var lv = UI.Button(Root, "Nivel 1", ButtonStyle.Purple, new Vector2(380, 92), Icon.Star, 50);
-            ((RectTransform)lv.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 372), new Vector2(380, 92));
-            lv.OnClick = () => Router.Show<LevelSelectScreen>();
-            levelLabel = lv.Face.Find("Label").GetComponent<VText>();
+            if (UIArt.Has("Buttons/level_badge_blank"))
+            {
+                var lv = UI.Button(Root, null, ButtonStyle.Purple, new Vector2(460, 162));
+                ((RectTransform)lv.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 407), new Vector2(460, 162));
+                UIArt.Skin(lv, "Buttons/level_badge_blank"); // laurels + star from the artwork, live level number
+                levelLabel = UI.Text(lv.Face, "Nivel 1", 64, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Hex("#2A0C66"));
+                levelLabel.fontStyle = FontStyle.Bold;
+                levelLabel.resizeTextForBestFit = true; levelLabel.resizeTextMinSize = 24; levelLabel.resizeTextMaxSize = 64;
+                var lr = levelLabel.rectTransform;
+                lr.anchorMin = new Vector2(0.35f, 0.22f); lr.anchorMax = new Vector2(0.84f, 0.8f);
+                lr.offsetMin = lr.offsetMax = Vector2.zero;
+                lv.OnClick = () => Router.Show<LevelSelectScreen>();
+                return;
+            }
+            var lvb = UI.Button(Root, "Nivel 1", ButtonStyle.Purple, new Vector2(380, 92), Icon.Star, 50);
+            ((RectTransform)lvb.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 372), new Vector2(380, 92));
+            lvb.OnClick = () => Router.Show<LevelSelectScreen>();
+            levelLabel = lvb.Face.Find("Label").GetComponent<VText>();
             // golden laurels
             var l1 = UI.Icon(Root, Icon.Leaf, 84); l1.color = Theme.Gold; l1.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(-232, 372), new Vector2(84, 84)); l1.rectTransform.localRotation = Quaternion.Euler(0, 0, 230);
             var l2 = UI.Icon(Root, Icon.Leaf, 84); l2.color = Theme.Gold; l2.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(232, 372), new Vector2(84, 84)); l2.rectTransform.localRotation = Quaternion.Euler(0, 0, -50);
@@ -257,6 +342,16 @@ namespace VoxelBloom
 
         void BuildNav()
         {
+            if (UIArt.Has("Buttons/nav_collection"))
+            {
+                // reference nav buttons (labels are part of the artwork); mockup centres ×1.148
+                ArtNav("Buttons/nav_collection", -393, () => Router.Show<CollectionScreen>());
+                ArtNav("Buttons/nav_rewards", -131, () => Router.Open<RewardsDialog>());
+                ArtNav("Buttons/nav_shop", 131, () => Router.Show<ShopScreen>());
+                ArtNav("Buttons/nav_events", 393, () => Router.Show<EventsScreen>());
+                rewardsBadge = null; // the "!" badge is painted into the artwork
+                return;
+            }
             var bar = UI.Rect(Root, "Nav").BottomBand(60, 230, 28);
             var hl = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
             hl.spacing = 20; hl.childForceExpandWidth = true; hl.childControlWidth = true; hl.childControlHeight = true;
@@ -268,6 +363,20 @@ namespace VoxelBloom
             badge.rectTransform.Place(new Vector2(1, 1), new Vector2(-16, -10), new Vector2(64, 64));
             UI.Text(badge.transform, "!", 46, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Darker(Theme.Red, 0.6f)).rectTransform.Stretch();
             rewardsBadge = badge.gameObject;
+        }
+
+        void ArtNav(string path, float x, System.Action onClick)
+        {
+            var sp = UIArt.Get(path);
+            float w = 240f * sp.rect.width / 180f, h = w * sp.rect.height / sp.rect.width;
+            var b = UI.Button(Root, null, ButtonStyle.Purple, new Vector2(w, h));
+            var r = (RectTransform)b.transform;
+            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f);
+            r.pivot = new Vector2(0.5f, 0f);
+            r.anchoredPosition = new Vector2(x, 88);
+            r.sizeDelta = new Vector2(w, h);
+            UIArt.Skin(b, path);
+            b.OnClick = onClick;
         }
 
         RectTransform AddNav(Transform parent, Icon icon, string label, System.Action onClick)
@@ -286,7 +395,7 @@ namespace VoxelBloom
         {
             stage.SetActive(true);
             levelLabel.text = "Nivel " + Services.Progress.LatestPlayableLevel();
-            rewardsBadge.SetActive(Services.Daily.CanClaim(Services.Now));
+            if (rewardsBadge != null) rewardsBadge.SetActive(Services.Daily.CanClaim(Services.Now));
             App.State.ForceReset(GameState.Home);
             Select(catalog.IndexOf(catalog.ResolveSaved(Services.Save.HomeCharacter, Services.Save)));
         }
