@@ -181,7 +181,8 @@ namespace VoxelBloom
             mask.gameObject.AddComponent<Mask>().showMaskGraphic = false;
             sky.transform.SetParent(mask.transform, true);
 
-            Stage = VoxelStage.Create("Gameplay", 1024, true);
+            Stage = VoxelStage.Create("Gameplay", 1024, false); // no platform: the object floats in the air
+            Stage.Floating = true;
             var raw = UI.Raw(mask.transform, "Model", Stage.Texture);
             raw.rectTransform.Stretch();
             var arf = raw.gameObject.AddComponent<AspectRatioFitter>();

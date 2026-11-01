@@ -28,6 +28,9 @@ namespace VoxelBloom
         public float Yaw = -30f;
         public float Bob;
         float bobTime;
+        /// <summary>Floating in the air (gameplay): no pedestal/shadow/floor, gentle hover.</summary>
+        public bool Floating;
+        float floatTime;
         float shake;
         Vector3 camBase;
 
@@ -111,7 +114,7 @@ namespace VoxelBloom
             PedestalRoot.localScale = Vector3.one * (footprint * 0.62f / 9f);
             PedestalRoot.localPosition = new Vector3(0, -PedestalRoot.localScale.y * 3f, 0);
             Frame(Mathf.Max(x, z) * size, y * size);
-            Debris.SetFloor(transform.position.y);
+            Debris.SetFloor(Floating ? transform.position.y - 100f : transform.position.y); // floating: pieces fall away
             float fp = Mathf.Max(x, z) * size;
             shadow.localPosition = new Vector3(0, 0.004f, 0);
             shadow.localScale = new Vector3(fp * 1.25f, 1, fp * 1.25f);
@@ -192,6 +195,12 @@ namespace VoxelBloom
             if (TurntableSpeed > 0f && Time.unscaledTime >= turntablePausedUntil) TargetYaw += TurntableSpeed * dt;
             Yaw = Mathf.LerpAngle(Yaw, TargetYaw, 1f - Mathf.Exp(-10f * dt));
             Pivot.localRotation = Quaternion.Euler(0, Yaw, 0);
+            if (Floating)
+            {
+                floatTime += dt;
+                if (shadow.gameObject.activeSelf) shadow.gameObject.SetActive(false);
+                Pivot.localPosition = new Vector3(0, Mathf.Sin(floatTime * 1.1f) * 0.06f, 0);
+            }
             if (Bob > 0)
             {
                 bobTime += dt;
