@@ -137,7 +137,7 @@ namespace VoxelBloom.Tests
                 Assert.AreEqual(l.WitnessTicks, s.Tick, "level " + l.Id + ": C# and JS rules agree tick for tick");
                 Assert.AreEqual(l.TotalCubes, s.Delivered, "level " + l.Id + ": no cube lost or duplicated");
             }
-            Assert.GreaterOrEqual(n, 20, "20 shipped levels");
+            Assert.GreaterOrEqual(n, 50, "50 shipped levels");
         }
 
         [Test]

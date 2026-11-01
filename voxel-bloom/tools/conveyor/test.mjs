@@ -116,7 +116,7 @@ t('no cube is ever duplicated or lost (all levels, witness replay)', () => {
 
 t('all levels validate (supply == demand, stations, trays)', () => {
   const files = fs.readdirSync('Assets/VoxelBloom/Data/Resources/VoxelBloom/Conveyor');
-  ok(files.length >= 20, '20 levels');
+  ok(files.length >= 50, '50 levels');
   for (const f of files) validate(JSON.parse(fs.readFileSync('Assets/VoxelBloom/Data/Resources/VoxelBloom/Conveyor/' + f)));
 });
 

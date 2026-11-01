@@ -58,7 +58,7 @@
     It carries a level signature and a cube-conservation check, so it is never restored onto different level data.
 
 ## Levels (`tools/conveyor/build-levels.mjs`)
-20 levels are generated from **hand-set parameters** (colours, trays, tray sizes, stations, visible queue, cube clumping,
+50 levels are generated from **hand-set parameters** (1-20 one by one, 21-50 from a parameter ramp with an easier "breather" level every 5 levels) (colours, trays, tray sizes, stations, visible queue, cube clumping,
 locks) and then **validated by simulation**. They were not hand-played. For each level:
 * supply equals demand per colour, no empty or over-long trays, at least one free station, stations far enough apart;
 * a rollout solver finds a winning **witness** (tap tick plus queue index). The JS and C# replays must win on the same tick
@@ -66,12 +66,12 @@ locks) and then **validated by simulation**. They were not hand-played. For each
 * a casual player (random visible tray after a random delay) plays 16 games; the candidate closest to the target win
   rate is kept. Results: `Docs/ConveyorLevelReport.txt`.
 Level 1 is the integrated tutorial: an arrow points at the best tray, with a two-line hint, until two trays are placed.
-The generator scales to more levels, but 100+ levels are **not** shipped yet.
+The generator scales to more levels; 50 are shipped (not 100+).
 
 ## Tests
 * `node tools/conveyor/test.mjs`: loop continuity and constant spacing, matching/non-matching transfer, transfer
   timing, order of compartments, unique reservation, double tap, completion and leaving, queue advance, numbered lock and plus slot,
   deadlock, undo rollback, cube conservation at every tick of every witness, level validation.
-* `Tests/EditMode/ConveyorRulesTests.cs`: the same rules in C#, witness replay of all levels with identical tick counts,
+* `Tests/EditMode/ConveyorRulesTests.cs`: the same rules in C#, witness replay of all 50 levels with identical tick counts,
   snapshot round trip, rejection of saves from another level version.
 * **Not run here:** Unity compile, EditMode/PlayMode in the Editor, Android build, device performance, real Unity screenshots.

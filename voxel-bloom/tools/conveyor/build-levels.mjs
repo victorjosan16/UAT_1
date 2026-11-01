@@ -52,7 +52,32 @@ const SPECS = [
   { k: 8, n: 31, size: [4, 4], st: 5, vis: 6, fill: 1, clump: 13, target: 0.46 },
   { k: 8, n: 32, size: [4, 4], st: 6, vis: 6, fill: 1, clump: 14, target: 0.44, locks: [[4, 'completed', 6], [5, 'booster']] },
   { k: 8, n: 32, size: [4, 4], st: 5, vis: 5, fill: 1, clump: 14, target: 0.42, locks: [[4, 'booster']] },
+  ...moreSpecs(),
 ];
+
+/** Levels 21-50: slowly harder (more trays, bigger clumps, lower target win rate) with an easier "breather" level
+ * every 5 levels; locks vary (numbered tiles, green plus slots). */
+function moreSpecs() {
+  const out = [];
+  for (let id = 21; id <= 50; id++) {
+    const t = (id - 21) / 29, breather = id % 5 === 1;
+    const st = 5 + (id % 3 === 0 ? 1 : 0);
+    const locks = [];
+    if (id % 4 === 0) locks.push([4, 'booster']);
+    else if (id % 4 === 2) locks.push([4, 'completed', 3 + (id % 3)]);
+    if (st >= 6 && id % 2 === 0) locks.push([5, 'completed', 6]);
+    out.push({
+      k: id < 30 ? 7 + (id % 2) : 8,
+      n: Math.round(30 + t * 8) - (breather ? 6 : 0),
+      size: id % 2 ? [3, 4] : [4, 4],
+      st, vis: id % 3 === 2 ? 5 : 6, fill: 1,
+      clump: Math.round(12 + t * 6) - (breather ? 3 : 0),
+      target: +(breather ? 0.62 - 0.1 * t : 0.46 - 0.14 * t).toFixed(2),
+      locks,
+    });
+  }
+  return out;
+}
 
 export function generateFor(id, spec, seed) { return generate(id, spec, seed); }
 function generate(id, spec, seed) {
@@ -132,10 +157,10 @@ function build(id) {
 
 if (process.argv[1] && process.argv[1].endsWith('build-levels.mjs')) {
   fs.mkdirSync(OUT, { recursive: true });
-  const only = process.env.VB_ONLY ? +process.env.VB_ONLY : 0;
+  const only = process.env.VB_ONLY ? +process.env.VB_ONLY : 0, from = process.env.VB_FROM ? +process.env.VB_FROM : 1;
   const report = [];
   for (let id = 1; id <= SPECS.length; id++) {
-    if (only && id !== only) continue;
+    if ((only && id !== only) || id < from) continue;
     const t0 = Date.now();
     const l = build(id);
     fs.writeFileSync(`${OUT}/level_${String(id).padStart(3, '0')}.json`, JSON.stringify(l));
@@ -143,5 +168,12 @@ if (process.argv[1] && process.argv[1].endsWith('build-levels.mjs')) {
     const line = `L${String(id).padStart(2)}  colours ${l.colors.length}  trays ${l.queue.length}  cubes ${cubes}  belt ${l.belt.filter((c) => c >= 0).length}/${l.slots}  hopper ${l.hopper.length}  stations ${l.stations.length}  witness ${(l.witnessTicks / 60).toFixed(0)}s  casual ${l.casualWinRate}  (${Date.now() - t0} ms)`;
     console.log(line); report.push(line);
   }
-  if (!only) fs.writeFileSync('Docs/ConveyorLevelReport.txt', report.join('\n') + '\n');
+  // report from all level files (also when only some levels were rebuilt)
+  const lines = [];
+  for (let id = 1; fs.existsSync(`${OUT}/level_${String(id).padStart(3, '0')}.json`); id++) {
+    const l = JSON.parse(fs.readFileSync(`${OUT}/level_${String(id).padStart(3, '0')}.json`));
+    const cubes = l.queue.reduce((a, t) => a + t.length, 0);
+    lines.push(`L${String(id).padStart(2)}  colours ${l.colors.length}  trays ${l.queue.length}  cubes ${cubes}  belt ${l.belt.filter((c) => c >= 0).length}/${l.slots}  hopper ${l.hopper.length}  stations ${l.stations.length}  witness ${(l.witnessTicks / 60).toFixed(0)}s  casual ${l.casualWinRate}`);
+  }
+  fs.writeFileSync('Docs/ConveyorLevelReport.txt', lines.join('\n') + '\n');
 }
