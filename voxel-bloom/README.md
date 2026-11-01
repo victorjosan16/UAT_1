@@ -54,7 +54,8 @@ with the grant and can never go negative.
 ## Home screen
 Follows the premium mockup: HUD (avatar with player level, lives, coins +, settings), dimensional logo with rays, leaves and
 floating cubes, a 3D diorama (floating grass island, layered voxel trees, swaying flowers, cliffs with an animated waterfall)
-with the selected character (breathing, blinking, head tilt, tail wag, hop and spin on tap, drag to rotate 360°),
+with the selected character (idle breathing, blink, look-around, head tilt, tail wag, happy squint; tap = heart eyes + hop + spin +
+coloured sparkles; drag to rotate 360°; the same animated mascot is used in the Collection 3D preview),
 a 10-character carousel (6 per page, arrows wrap, page dots, locked characters shown as silhouettes with their unlock level),
 level badge, PLAY (always the latest unlocked level) and Collection / Rewards / Shop / Events. The Home selection is saved
 (save v3) but never changes which model a level uses.

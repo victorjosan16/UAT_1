@@ -51,7 +51,7 @@ function chibi(g, k, o) {
   // head
   const hy0 = o.headY ?? 9;
   rbox(g, 1, hy0, 2, 14, hy0 + 10, 10, 2.6, o.head ?? body);
-  if (o.face) rbox(g, 3, hy0, 1, 12, hy0 + 6, 3, 1.6, o.face, 'paint');
+  if (o.face) rbox(g, 1, hy0, 0, 14, hy0 + (o.faceTop ?? 6), 4, 1.6, o.face, 'paint');
   // muzzle
   if (o.muzzle !== null) rbox(g, 5, hy0 + 1, 0, 10, hy0 + 4, 2, 1.2, o.muzzle ?? belly);
   // nose + mouth
@@ -74,7 +74,7 @@ export function defineAnimals(model) {
     rbox(g, 2, h.hy0, 1, 13, h.hy0 + 4, 3, 1.4, k.white, 'paint'); // white cheeks
     g.box(7, h.hy0 + 3, 0, 8, h.hy0 + 4, 0, k.black);
     // pointy ears with dark tips and cream inner
-    pointyEar(g, h.top - 1, k.orange, k.darkBrown, k.cream, 5);
+    pointyEar(g, h.top - 1, k.orange, k.orange, k.cream, 5);
     // big fluffy tail curling up on the right side, white tip
     rbox(g, 11, 1, 11, 15, 5, 17, 2, k.orange);
     rbox(g, 12, 5, 14, 15, 10, 18, 1.8, k.orange);
@@ -128,34 +128,28 @@ export function defineAnimals(model) {
     rbox(g, 6, 2, 14, 9, 5, 16, 1.4, k.white);
   });
 
-  model('lion', 'Lion', 'Animals', ['yellow', 'orange', 'darkBrown', 'black', 'cream', 'white'], X + 2, 26, 20, (g, k) => {
+  model('lion', 'Lion', 'Animals', ['gold', 'rust', 'rustDark', 'black', 'cream', 'white', 'yellow'], X + 2, 26, 20, (g, k) => {
     // lion is built on a 16-wide head with a mane ring 1 voxel larger on each side (shift by 1)
     const off = 1;
     const sub = { base: g, offsetX: off, op: (m, x, y, z, c) => g.op(m, x + off, y, z, c), front: (x, y, c) => g.front(x + off, y, c), box: (...a) => { a[0] += off; a[3] += off; return g.box(...a); } };
     // mane behind/around the head
-    rbox(g, 0, 7, 4, 17, 22, 12, 3.5, k.orange);
-    rbox(g, 0, 7, 9, 17, 22, 12, 3.5, k.darkBrown, 'paint');
-    const h = chibi(sub, k, { body: k.yellow, belly: k.cream, paw: k.yellow, muzzle: k.cream, nose: k.darkBrown });
+    rbox(g, 0, 7, 4, 17, 22, 12, 3.5, k.rust);
+    rbox(g, 0, 7, 9, 17, 22, 12, 3.5, k.rustDark, 'paint');
+    const h = chibi(sub, k, { body: k.yellow, belly: k.cream, paw: k.yellow, muzzle: k.cream, nose: k.rustDark });
     // mane tufts on top
-    for (const x of [3, 7, 10, 14]) rbox(g, x, 22, 6, x + 1, 23, 8, 0.6, k.orange);
+    for (const x of [3, 7, 10, 14]) rbox(g, x, 22, 6, x + 1, 23, 8, 0.6, k.rust);
     // small round ears
     sym((f) => rbox(g, Math.min(f(2), f(4)) + off, h.top - 1, 6, Math.max(f(2), f(4)) + off, h.top + 1, 7, 0.8, k.yellow));
     // tail with dark tuft
-    g.box(13, 2, 13, 15, 2, 13, k.yellow); g.box(16, 2, 13, 16, 8, 13, k.yellow); rbox(g, 15, 8, 12, 17, 10, 14, 0.8, k.darkBrown);
+    g.box(13, 2, 13, 15, 2, 13, k.yellow); g.box(16, 2, 13, 16, 8, 13, k.yellow); rbox(g, 15, 8, 12, 17, 10, 14, 0.8, k.rustDark);
     setTail(g, [15, 3, 12, 17, 10, 14]);
   });
 
   model('cat', 'Cat', 'Animals', ['grey', 'darkGrey', 'white', 'pink', 'black', 'lightGrey'], X, 26, 20, (g, k) => {
-    const h = chibi(g, k, { body: k.grey, belly: k.white, paw: k.white, muzzle: k.white, nose: k.pink, blush: k.pink });
+    const h = chibi(g, k, { body: k.grey, belly: k.white, paw: k.white, muzzle: k.white, face: k.white, faceTop: 4, nose: k.pink, blush: k.pink });
     g.box(7, h.hy0 + 3, 0, 8, h.hy0 + 3, 0, k.pink); g.box(7, h.hy0 + 4, 0, 8, h.hy0 + 4, 0, k.white, 'paint');
-    // forehead stripes
-    for (const x of [6, 9]) g.box(x, h.top - 2, 0, x, h.top, 3, k.darkGrey, 'paint');
-    g.box(7, h.top - 1, 0, 8, h.top, 3, k.darkGrey, 'paint');
-    // body stripes
-    for (const y of [3, 6]) g.box(4, y, 9, 11, y, 13, k.darkGrey, 'paint');
-    // pointy ears with pink inner
     pointyEar(g, h.top - 1, k.grey, k.grey, k.pink, 4);
-    // tail curling up behind
+    // tail curling up behind, darker tip
     g.box(11, 1, 14, 13, 1, 14, k.grey); g.box(13, 1, 15, 13, 9, 15, k.grey); g.box(12, 9, 15, 12, 11, 15, k.darkGrey);
     setTail(g, [12, 2, 15, 13, 11, 15]);
   });
@@ -166,51 +160,53 @@ export function defineAnimals(model) {
     rbox(g, 6, 2, 13, 9, 4, 15, 1, k.brown);
   });
 
-  model('dog', 'Puppy', 'Animals', ['cream', 'brown', 'black', 'pink', 'red', 'gold', 'white'], X, 24, 18, (g, k) => {
-    const h = chibi(g, k, { body: k.cream, belly: k.white, paw: k.white, muzzle: k.white, nose: k.black });
-    // brown patch over one eye
-    for (let x = 10; x <= 13; x++) for (let y = h.hy0 + 4; y <= h.hy0 + 8; y++) if (!(x === 13 && y === h.hy0 + 8)) g.front(x, y, k.brown);
-    sym((f) => { for (let x = 3; x <= 4; x++) for (let y = h.hy0 + 5; y <= h.hy0 + 7; y++) g.front(f(x), y, k.black); });
+  model('dog', 'Puppy', 'Animals', ['white', 'brown', 'black', 'pink', 'red', 'gold', 'cream'], X, 24, 18, (g, k) => {
+    const h = chibi(g, k, { body: k.white, belly: k.white, paw: k.white, muzzle: k.white, nose: k.black });
+    // brown head top and eye sides, white blaze down the middle
+    for (let x = 0; x < X; x++) for (let y = h.hy0 + 5; y <= h.top + 1; y++) for (let z = 0; z < 18; z++) {
+      const blaze = x >= 6 && x <= 9 && y <= h.hy0 + 8;
+      if (!blaze) g.paint(x, y, z, k.brown);
+    }
+    rbox(g, 4, 6, 9, 11, 9, 13, 1.5, k.brown, 'paint'); // back patch
+    // eyes again on top of the brown paint
+    for (const f of [(x) => x, mx]) for (let x = 3; x <= 4; x++) for (let y = h.hy0 + 5; y <= h.hy0 + 7; y++) g.front(f(x), y, k.black);
     g.front(3, h.hy0 + 7, k.white); g.front(mx(4), h.hy0 + 7, k.white);
-    // tongue
-    g.box(7, h.hy0, 0, 8, h.hy0 + 1, 1, k.pink);
-    // floppy brown ears hanging at the sides
+    g.box(7, h.hy0, 0, 8, h.hy0 + 1, 1, k.pink); // tongue
+    // floppy brown ears
     sym((f) => { boxS(g, f, 0, h.hy0 + 3, 4, 1, h.top, 8, k.brown); boxS(g, f, 1, h.top - 1, 4, 3, h.top + 1, 8, k.brown); });
-    // red collar with gold tag
-    rbox(g, 4, 9, 4, 11, 9, 12, 1, k.red, 'paint'); g.box(7, 8, 3, 8, 9, 4, k.gold);
-    // wagging tail up
-    g.box(7, 4, 14, 8, 5, 15, k.cream); g.box(7, 6, 16, 8, 9, 16, k.cream); g.box(7, 10, 16, 8, 10, 16, k.brown);
+    rbox(g, 4, 9, 4, 11, 9, 12, 1, k.red, 'paint'); g.box(7, 8, 3, 8, 9, 4, k.gold); // collar + tag
+    g.box(7, 4, 14, 8, 5, 15, k.white); g.box(7, 6, 16, 8, 9, 16, k.white); g.box(7, 10, 16, 8, 10, 16, k.brown);
     setTail(g, [7, 6, 16, 8, 10, 16]);
   });
 
-  model('penguin', 'Penguin', 'Animals', ['navy', 'black', 'white', 'orange', 'pink', 'sky'], X, 22, 16, (g, k) => {
-    rbox(g, 2, 1, 2, 13, 19, 13, 4.5, k.navy);
+  model('penguin', 'Penguin', 'Animals', ['ink', 'white', 'orange', 'pink', 'blue', 'darkGrey'], X, 22, 16, (g, k) => {
+    rbox(g, 2, 1, 2, 13, 19, 13, 4.5, k.ink);
     rbox(g, 3, 1, 1, 12, 12, 4, 3, k.white, 'paint');
     rbox(g, 3, 11, 1, 12, 17, 4, 2.4, k.white, 'paint'); // face mask
-    g.box(7, 14, 1, 8, 15, 4, k.navy, 'paint'); // widow's peak
-    sym((f) => { for (let x = 4; x <= 5; x++) for (let y = 13; y <= 15; y++) g.front(f(x), y, k.black); });
+    g.box(7, 14, 1, 8, 15, 4, k.ink, 'paint'); // widow's peak
+    sym((f) => { for (let x = 4; x <= 5; x++) for (let y = 13; y <= 15; y++) g.front(f(x), y, k.blue); });
     g.front(4, 15, k.white); g.front(mx(5), 15, k.white);
     sym((f) => g.front(f(3), 12, k.pink));
     g.box(6, 11, 0, 9, 12, 1, k.orange); g.box(7, 10, 0, 8, 10, 0, k.orange);
-    sym((f) => { boxS(g, f, 0, 5, 6, 1, 11, 9, k.navy); boxS(g, f, 0, 4, 7, 0, 5, 8, k.navy); });
+    sym((f) => { boxS(g, f, 0, 5, 6, 1, 11, 9, k.ink); boxS(g, f, 0, 4, 7, 0, 5, 8, k.ink); });
     sym((f) => boxS(g, f, 3, 0, 1, 6, 0, 6, k.orange));
-    g.box(6, 2, 14, 9, 3, 14, k.navy);
+    g.box(6, 2, 14, 9, 3, 14, k.ink);
     setAnim(g, 11, 13, k.white, 4);
   });
 
-  model('elephant', 'Elephant', 'Animals', ['grey', 'lightGrey', 'pink', 'black', 'white', 'sky'], X + 4, 24, 18, (g, k) => {
+  model('elephant', 'Elephant', 'Animals', ['elephant', 'elephantLight', 'pink', 'black', 'white', 'darkGrey'], X + 4, 24, 18, (g, k) => {
     const off = 2;
     const sub = { base: g, offsetX: off, op: (m, x, y, z, c) => g.op(m, x + off, y, z, c), front: (x, y, c) => g.front(x + off, y, c), box: (...a) => { a[0] += off; a[3] += off; return g.box(...a); } };
-    const h = chibi(sub, k, { body: k.sky, belly: k.lightGrey, paw: k.lightGrey, muzzle: null, nose: null, blush: k.pink });
+    const h = chibi(sub, k, { body: k.elephant, belly: k.elephantLight, paw: k.elephantLight, muzzle: null, nose: null, blush: k.pink });
     // big round ears
-    for (const s of [0, 1]) { const x0 = s ? 16 : 0; rbox(g, x0, h.hy0 + 1, 6, x0 + 3, h.top + 1, 8, 2, k.sky); rbox(g, x0 + (s ? 0 : 1), h.hy0 + 2, 5, x0 + (s ? 2 : 3), h.top, 5, 1.2, k.pink); }
+    for (const s of [0, 1]) { const x0 = s ? 16 : 0; rbox(g, x0, h.hy0 + 1, 6, x0 + 3, h.top + 1, 8, 2, k.elephant); rbox(g, x0 + (s ? 0 : 1), h.hy0 + 2, 5, x0 + (s ? 2 : 3), h.top, 5, 1.2, k.pink); }
     // trunk curling down and forward
-    rbox(g, 8, h.hy0 + 1, 0, 11, h.hy0 + 4, 2, 1, k.sky);
-    g.box(9, h.hy0 - 3, 0, 10, h.hy0, 1, k.sky); g.box(9, h.hy0 - 4, -1 < 0 ? 0 : 0, 10, h.hy0 - 4, 0, k.sky);
-    g.box(9, h.hy0 - 4, 0, 10, h.hy0 - 4, 0, k.lightGrey, 'paint');
+    rbox(g, 8, h.hy0 + 1, 0, 11, h.hy0 + 4, 2, 1, k.elephant);
+    g.box(9, h.hy0 - 3, 0, 10, h.hy0, 1, k.elephant); g.box(9, h.hy0 - 4, -1 < 0 ? 0 : 0, 10, h.hy0 - 4, 0, k.elephant);
+    g.box(9, h.hy0 - 4, 0, 10, h.hy0 - 4, 0, k.elephantLight, 'paint');
     // tusks
     for (const x of [7, 12]) g.box(x, h.hy0, 0, x, h.hy0 + 1, 1, k.white);
     // tail
-    g.box(10, 3, 14, 10, 6, 15, k.sky); g.box(10, 2, 15, 10, 2, 15, k.black);
+    g.box(10, 3, 14, 10, 6, 15, k.elephant); g.box(10, 2, 15, 10, 2, 15, k.black);
   });
 }

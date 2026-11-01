@@ -95,7 +95,11 @@ namespace VoxelBloom
             var raw = UI.Raw(bg.transform, "Thumb", ThumbnailRenderer.Get(e.Id));
             raw.rectTransform.Stretch(6, 6, 6, 6);
             raw.color = unlocked ? Color.white : new Color(0.25f, 0.22f, 0.35f, 0.55f);
-            UI.Text(face, unlocked ? e.Name : "???", 32, Theme.Ink).rectTransform.BottomBand(14, 50, 8);
+            var pill = UI.Image(face, "NamePill", SpriteFactory.Rounded(26), unlocked ? Theme.Purple : Theme.InkSoft);
+            pill.rectTransform.BottomBand(10, 56, 18);
+            var nm = UI.Text(pill.transform, unlocked ? e.Name : "???", 32, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.PurpleDark);
+            nm.fontStyle = FontStyle.Bold;
+            nm.rectTransform.Stretch();
             var badge = UI.Icon(face, unlocked ? Icon.Check : Icon.Lock, 72);
             badge.rectTransform.Place(new Vector2(1, 0), new Vector2(-30, 90), new Vector2(72, 72));
             b.OnClick = () =>
@@ -113,6 +117,7 @@ namespace VoxelBloom
     {
         [System.NonSerialized] public CollectionEntry Entry;
         static VoxelStage stage;
+        static CharacterPreview preview;
         protected override string Title => Entry != null ? Entry.Name : "Model";
         protected override Vector2 Size => new Vector2(940, 1240);
 
@@ -121,7 +126,22 @@ namespace VoxelBloom
             if (stage == null) stage = VoxelStage.Create("Preview", 1024, true);
             stage.SetActive(true);
             var g = Services.Data.GetModel(Entry.Id);
-            if (g != null) stage.ShowModel(g, 2f);
+            var anim = Services.Data.GetAnim(Entry.Id);
+            if (preview == null) { preview = CharacterPreview.Create(stage.Pivot); preview.Sparkles = stage.Fragments; }
+            if (g != null && anim != null)
+            {
+                // animated mascot (same model as gameplay): hide the static model, show the animated one
+                stage.ShowModel(g, 2f);
+                stage.Model.gameObject.SetActive(false);
+                preview.gameObject.SetActive(true);
+                preview.Show(g, anim, 2f / Mathf.Max(g.X, Mathf.Max(g.Y, g.Z)), false);
+            }
+            else if (g != null)
+            {
+                stage.Model.gameObject.SetActive(true);
+                preview.gameObject.SetActive(false);
+                stage.ShowModel(g, 2f);
+            }
             stage.Pivot.localScale = Vector3.one;
             stage.AutoRotateSpeed = 20f;
             var bg = UI.Image(Body, "Bg", SpriteFactory.VerticalGradient(Theme.Hex("#7CC8FF"), Theme.Hex("#E2F4FF")), Color.white, false);
@@ -133,8 +153,9 @@ namespace VoxelBloom
             arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1;
             var input = raw.gameObject.AddComponent<ModelInput>();
             input.Stage = stage; input.AllowZoom = true;
+            input.OnTapUv = _ => { if (preview != null && preview.gameObject.activeSelf) { preview.React(); Services.Audio.Play(Sfx.Star, 1.2f); } };
             int vox = g != null ? g.CountSolid() : 0;
-            var info = UI.Text(Body, Entry.Category + "  ·  " + vox + " voxels\nDrag to rotate · pinch or scroll to zoom", 36, Theme.InkSoft);
+            var info = UI.Text(Body, Entry.Category + "  ·  " + vox + " voxels\nDrag to rotate 360° · pinch or scroll to zoom · tap to play", 36, Theme.InkSoft);
             info.rectTransform.BottomBand(30, 120, 0);
         }
 

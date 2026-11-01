@@ -9,6 +9,7 @@ const C = {
   grey: '#9AA3B0', darkGrey: '#5E6673', lightGrey: '#D3D8DF', blue: '#3D8BFF', sky: '#8FD3FF', navy: '#2E4A8C',
   green: '#4CC35A', darkGreen: '#2E8B45', lime: '#A6E35A', purple: '#9B5DE5', lavender: '#C9A7FF', teal: '#2EC4B6',
   mint: '#9BF0D6', choco: '#6B3E26', waffle: '#E0A458', glass: '#BDE8FF',
+  rust: '#C9572B', rustDark: '#8E3B1E', ink: '#25232E', elephant: '#A7AEBD', elephantLight: '#C9CEDA',
 };
 
 const MODELS = [];

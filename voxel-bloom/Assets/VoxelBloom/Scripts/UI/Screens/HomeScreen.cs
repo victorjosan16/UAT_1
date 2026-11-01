@@ -102,6 +102,7 @@ namespace VoxelBloom
             anim.Add(f1, 0f); anim.Add(f2, 1.3f); anim.Add(f3, 2.1f); anim.Add(f4, 3.4f);
 
             hero = CharacterPreview.Create(stage.Pivot);
+            hero.Sparkles = stage.Fragments;
             stage.FrameScene(4.4f, 3.1f, 0.85f);
             stage.TargetYaw = stage.Yaw = -18f;
 

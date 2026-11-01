@@ -1,19 +1,19 @@
   1 ch1 Chick                vox=1328 colors=7 deck= 45 witness= 20 limit=28      reward=40 stars=20,24 casual=0.97 core=0 tries=1
   2 ch1 Bunny                vox=1579 colors=5 deck= 52 witness= 26 limit=36      reward=41 stars=26,31 casual=1 core=0 tries=1
-  3 ch1 Penguin              vox=1873 colors=5 deck= 57 witness= 29 limit=39      reward=42 stars=29,34 casual=1 core=0 tries=1
+  3 ch1 Penguin              vox=1873 colors=5 deck= 57 witness= 29 limit=37      reward=42 stars=29,33 casual=0.84 core=0 tries=1
   4 ch1 Bear                 vox=1432 colors=5 deck= 54 witness= 23 limit=38      reward=42 stars=23,31 casual=0.95 core=0 tries=1
-  5 ch1 Cat                  vox=1491 colors=5 deck= 57 witness= 26 limit=38 HARD reward=108 stars=26,32 casual=0.72 core=0 tries=1
-  6 ch1 Fox                  vox=1575 colors=5 deck= 53 witness= 24 limit=34      reward=44 stars=24,29 casual=0.91 core=0 tries=1
+  5 ch1 Cat                  vox=1491 colors=5 deck= 55 witness= 27 limit=36 HARD reward=108 stars=27,32 casual=0.66 core=0 tries=1
+  6 ch1 Fox                  vox=1575 colors=5 deck= 53 witness= 26 limit=34      reward=44 stars=26,30 casual=0.94 core=0 tries=1
   7 ch1 Panda                vox=1448 colors=5 deck= 52 witness= 24 limit=33      reward=45 stars=24,29 casual=0.7 core=0 tries=1
-  8 ch1 Puppy                vox=1617 colors=7 deck= 63 witness= 23 limit=37      reward=46 stars=23,30 casual=0.88 core=0 tries=1
-  9 ch1 Elephant             vox=1475 colors=5 deck= 56 witness= 26 limit=37      reward=46 stars=26,32 casual=1 core=0 tries=1
- 10 ch1 Lion                 vox=2451 colors=6 deck= 69 witness= 38 limit=43 HARD reward=118 stars=38,41 casual=0.61 core=0 tries=1
+  8 ch1 Puppy                vox=1617 colors=6 deck= 60 witness= 20 limit=32      reward=46 stars=20,26 casual=0.84 core=0 tries=1
+  9 ch1 Elephant             vox=1475 colors=5 deck= 56 witness= 25 limit=38      reward=46 stars=25,32 casual=0.92 core=0 tries=1
+ 10 ch1 Lion                 vox=2451 colors=6 deck= 69 witness= 39 limit=44 HARD reward=118 stars=39,42 casual=0.66 core=0 tries=1
  11 ch1 Golden Chick         vox=1328 colors=6 deck= 50 witness= 21 limit=32      reward=48 stars=21,27 casual=0.86 core=0 tries=1
  12 ch1 Chocolate Bunny      vox=1579 colors=5 deck= 63 witness= 32 limit=42      reward=49 stars=32,37 casual=0.83 core=0 tries=1
- 13 ch1 Royal Penguin        vox=1873 colors=5 deck= 64 witness= 33 limit=47      reward=50 stars=33,40 casual=0.95 core=0 tries=1
+ 13 ch1 Royal Penguin        vox=1873 colors=5 deck= 65 witness= 31 limit=43      reward=50 stars=31,37 casual=0.75 core=0 tries=1
  14 ch1 Polar Bear           vox=1432 colors=5 deck= 54 witness= 25 limit=37      reward=51 stars=25,31 casual=0.91 core=0 tries=1
- 15 ch1 Ginger Cat           vox=1491 colors=5 deck= 51 witness= 24 limit=35 HARD reward=128 stars=24,30 casual=0.73 core=0 tries=1
- 16 ch1 Arctic Fox           vox=1575 colors=5 deck= 64 witness= 32 limit=42      reward=52 stars=32,37 casual=0.83 core=0 tries=1
+ 15 ch1 Ginger Cat           vox=1491 colors=5 deck= 54 witness= 23 limit=34 HARD reward=128 stars=23,29 casual=0.66 core=0 tries=2
+ 16 ch1 Arctic Fox           vox=1575 colors=5 deck= 65 witness= 33 limit=43      reward=52 stars=33,38 casual=0.92 core=0 tries=1
  17 ch1 Red Panda            vox=1448 colors=5 deck= 55 witness= 27 limit=32      reward=53 stars=27,30 casual=0.83 core=0 tries=1
  18 ch1 Sheep                vox= 690 colors=4 deck= 37 witness= 16 limit=25      reward=54 stars=16,21 casual=0.83 core=0 tries=1
  19 ch1 Wolf                 vox= 600 colors=4 deck= 33 witness= 14 limit=24      reward=55 stars=14,19 casual=0.75 core=0 tries=1
@@ -86,13 +86,13 @@
  86 ch5 Robo Buddy ✦         vox=1058 colors=6 deck= 54 witness= 20 limit=39      reward=129 stars=20,30 casual=0.44 core=279 tries=2
  87 ch5 Snow Deer            vox= 415 colors=4 deck= 25 witness= 10 limit=15      reward=109 stars=10,13 casual=0.63 core=0 tries=1
  88 ch5 Night Wolf           vox= 600 colors=3 deck= 34 witness= 13 limit=26      reward=110 stars=13,20 casual=0.52 core=0 tries=1
- 89 ch5 Lion ✦               vox=2451 colors=6 deck= 60 witness= 39 limit=45      reward=131 stars=39,42 casual=0.66 core=1022 tries=2
+ 89 ch5 Lion ✦               vox=2451 colors=6 deck= 59 witness= 37 limit=45      reward=131 stars=37,41 casual=0.48 core=1022 tries=1
  90 ch5 Sunset Castle        vox=3026 colors=7 deck= 72 witness= 43 limit=50 HARD reward=280 stars=43,47 casual=0.39 core=0 tries=1
  91 ch5 Unicorn ✦            vox= 477 colors=7 deck= 40 witness= 11 limit=28      reward=133 stars=11,20 casual=0.31 core=76 tries=3
  92 ch5 Baby Dragon ✦        vox= 754 colors=7 deck= 47 witness= 14 limit=33      reward=134 stars=14,24 casual=0.59 core=215 tries=1
  93 ch5 Panda ✦              vox=1448 colors=5 deck= 51 witness= 30 limit=36      reward=134 stars=30,33 casual=0.58 core=507 tries=1
- 94 ch5 Fox ✦                vox=1575 colors=5 deck= 44 witness= 24 limit=33      reward=135 stars=24,29 casual=0.47 core=536 tries=1
- 95 ch5 Penguin ✦            vox=1873 colors=5 deck= 59 witness= 36 limit=46 HARD reward=340 stars=36,41 casual=0.22 core=791 tries=1
+ 94 ch5 Fox ✦                vox=1575 colors=5 deck= 44 witness= 26 limit=34      reward=135 stars=26,30 casual=0.59 core=536 tries=1
+ 95 ch5 Penguin ✦            vox=1873 colors=5 deck= 59 witness= 37 limit=46 HARD reward=340 stars=37,42 casual=0.13 core=791 tries=1
  96 ch5 Lighthouse ✦         vox=1213 colors=6 deck= 75 witness= 26 limit=49      reward=137 stars=26,38 casual=0.52 core=413 tries=1
  97 ch5 Windmill ✦           vox=1083 colors=7 deck= 64 witness= 21 limit=39      reward=138 stars=21,30 casual=0.3 core=295 tries=1
  98 ch5 Dream Castle ✦       vox=3026 colors=7 deck= 75 witness= 42 limit=52      reward=138 stars=42,47 casual=0.59 core=1164 tries=2
