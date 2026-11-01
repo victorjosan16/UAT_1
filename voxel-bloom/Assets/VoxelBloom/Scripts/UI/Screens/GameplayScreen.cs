@@ -61,7 +61,7 @@ namespace VoxelBloom
         public bool AllowZoom;
         bool dragging;
 
-        public void OnBeginDrag(PointerEventData e) { dragging = true; }
+        public void OnBeginDrag(PointerEventData e) { dragging = true; if (Stage != null) Stage.NotifyInteraction(); }
         public void OnDrag(PointerEventData e)
         {
             if (Stage == null) return;
@@ -74,6 +74,7 @@ namespace VoxelBloom
                 return;
             }
             Stage.TargetYaw -= e.delta.x * 0.35f;
+            Stage.NotifyInteraction();
         }
         public void OnEndDrag(PointerEventData e) { dragging = false; }
         public void OnScroll(PointerEventData e) { if (AllowZoom) Zoom(1f + e.scrollDelta.y * 0.08f); }
@@ -179,10 +180,10 @@ namespace VoxelBloom
 
             var left = UI.IconButton(ModelPanel, Icon.ArrowLeft, 100, ButtonStyle.White);
             ((RectTransform)left.transform).Place(new Vector2(0, 0.5f), new Vector2(80, 0), new Vector2(100, 100));
-            left.OnClick = () => Stage.TargetYaw += 45f;
+            left.OnClick = () => { Stage.TargetYaw += 45f; Stage.NotifyInteraction(); };
             var right = UI.IconButton(ModelPanel, Icon.ArrowRight, 100, ButtonStyle.White);
             ((RectTransform)right.transform).Place(new Vector2(1, 0.5f), new Vector2(-80, 0), new Vector2(100, 100));
-            right.OnClick = () => Stage.TargetYaw -= 45f;
+            right.OnClick = () => { Stage.TargetYaw -= 45f; Stage.NotifyInteraction(); };
 
             var hb = UI.Image(ModelPanel, "HardBadge", SpriteFactory.Rounded(28), Theme.Red);
             HardBadge = hb.rectTransform;

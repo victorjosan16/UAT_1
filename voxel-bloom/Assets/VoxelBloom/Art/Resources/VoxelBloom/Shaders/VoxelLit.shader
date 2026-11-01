@@ -9,7 +9,8 @@ Shader "VoxelBloom/VoxelLit"
         _LightDir ("Key Light Direction", Vector) = (0.45, 0.8, -0.4, 0)
         _SkyColor ("Sky Ambient", Color) = (0.84, 0.92, 1, 1)
         _GroundColor ("Ground Ambient", Color) = (0.64, 0.6, 0.7, 1)
-        _Rim ("Rim Strength", Range(0, 1)) = 0.22
+        _Rim ("Rim Strength", Range(0, 1)) = 0.28
+        _RimColor ("Rim Colour", Color) = (1, 0.92, 0.8, 1)
         _Tint ("Tint", Color) = (1, 1, 1, 1)
         _Bevel ("Bevel Width", Range(0, 0.3)) = 0.09
         _Subdiv ("Small Cube Subdivision", Range(1, 4)) = 2
@@ -31,7 +32,7 @@ Shader "VoxelBloom/VoxelLit"
             #include "UnityCG.cginc"
 
             float4 _LightDir;
-            fixed4 _SkyColor, _GroundColor, _Tint, _Highlight;
+            fixed4 _SkyColor, _GroundColor, _Tint, _Highlight, _RimColor;
             half _Rim, _Bevel, _Subdiv, _SubLine;
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -87,7 +88,8 @@ Shader "VoxelBloom/VoxelLit"
                 fixed3 c = base * (amb * 0.6 + diff * 0.55) * shade + lip;
                 half rim = pow(1 - saturate(dot(n, v)), 3) * _Rim;
                 half spec = pow(saturate(dot(reflect(-l, n), v)), 28) * 0.22 * edge;
-                c = (c + rim + spec) * _Tint.rgb;
+                half bounce = saturate(-n.y) * 0.08; // warm light bouncing off the ground/pedestal
+                c = (c + rim * _RimColor.rgb + spec + bounce * fixed3(1, 0.9, 0.75)) * _Tint.rgb;
                 c = lerp(c, _Highlight.rgb, _Highlight.a);
                 return fixed4(c, 1);
             }

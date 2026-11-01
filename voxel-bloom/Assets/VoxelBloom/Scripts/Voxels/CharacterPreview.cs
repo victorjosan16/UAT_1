@@ -16,6 +16,7 @@ namespace VoxelBloom
         sbyte[] headHappy, headLove;
         float exprUntil = -1f, lookUntil = -1f, nextLook = 4f, lookYaw, nextHappy = 7f;
         Expression current = Expression.Open;
+        float nextTwinkle = 1f;
         VoxelModelView body, head, tail;
         Transform headPivot, tailPivot, root;
         sbyte[] headCells, headBlink;
@@ -160,6 +161,13 @@ namespace VoxelBloom
                 else if (!blinking && t >= nextHappy) { nextHappy = t + Random.Range(8f, 14f); SetExpression(Expression.Happy, 0.9f); }
             }
 
+            // premium twinkles around the mascot
+            if (Sparkles != null && !calm && t >= nextTwinkle)
+            {
+                nextTwinkle = t + Random.Range(0.35f, 0.8f);
+                var p = transform.TransformPoint(new Vector3(Random.Range(-0.7f, 0.7f) * X, Random.Range(0.3f, 1.05f) * Y, Random.Range(-0.6f, 0.1f) * Z) * size);
+                Sparkles.Burst(p, Random.value < 0.5f ? new Color32(255, 255, 255, 255) : new Color32(255, 220, 110, 255), size * 0.7f, 1);
+            }
             // change-character transition: pop in
             if (swap >= 0f)
             {

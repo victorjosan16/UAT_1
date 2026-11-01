@@ -281,7 +281,7 @@ namespace VoxelBloom
     public sealed class SettingsDialog : DialogBase
     {
         protected override string Title => "Settings";
-        protected override Vector2 Size => new Vector2(900, 1260);
+        protected override Vector2 Size => new Vector2(900, 1420);
 
         protected override void OnBuild()
         {
@@ -290,15 +290,16 @@ namespace VoxelBloom
             Toggle(1, Icon.Sound, "Sound", () => st.Sound, v => st.Sound = v);
             Toggle(2, Icon.Vibrate, "Vibration", () => st.Vibration, v => st.Vibration = v);
             Toggle(3, Icon.Sparkle, "Reduced effects", () => st.ReducedEffects, v => st.ReducedEffects = v);
+            Toggle(4, Icon.Restart, "Rotate model 360°", () => st.AutoRotate, v => st.AutoRotate = v);
             var q = UI.Text(Body, "Graphics quality", 44, Theme.Ink, TextAnchor.MiddleLeft);
-            q.rectTransform.TopBand(4 * 170 + 70, 60, 20);
+            q.rectTransform.TopBand(5 * 170 + 70, 60, 20);
             string[] names = { "Low", "Medium", "High" };
             var buttons = new UIButton[3];
             for (int i = 0; i < 3; i++)
             {
                 int preset = i;
                 buttons[i] = UI.Button(Body, names[i], st.Quality == i ? ButtonStyle.Purple : ButtonStyle.White, new Vector2(240, 110), null, 44);
-                ((RectTransform)buttons[i].transform).Place(new Vector2(0.5f, 1), new Vector2((i - 1) * 260, -(4 * 170 + 200)), new Vector2(240, 110));
+                ((RectTransform)buttons[i].transform).Place(new Vector2(0.5f, 1), new Vector2((i - 1) * 260, -(5 * 170 + 200)), new Vector2(240, 110));
                 buttons[i].OnClick = () => { st.Quality = preset; Services.NotifySettingsChanged(); Close(); Router.Open<SettingsDialog>(); };
             }
             var ver = UI.Text(Body, "Voxel Bloom 3D · " + Application.version + " · Ads: " + Services.Ads.ProviderName, 28, Theme.InkSoft);

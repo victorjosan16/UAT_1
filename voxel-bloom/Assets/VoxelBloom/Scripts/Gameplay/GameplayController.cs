@@ -60,6 +60,7 @@ namespace VoxelBloom
 
             view.Stage.ShowModel(session.CellsSnapshot(), def.Grid.X, def.Grid.Y, def.Grid.Z, palette, 2.1f);
             view.Stage.TargetYaw = view.Stage.Yaw = -30f;
+            view.Stage.TurntableSpeed = Services.Save.Settings.AutoRotate ? (Services.ReducedEffects ? 8f : 14f) : 0f; // 360° turntable while playing
             view.Stage.Pivot.localScale = Vector3.one;
             view.ModelInput.OnTapUv = OnModelTapped;
             view.LevelText.text = "Lv. " + def.Id;
@@ -264,6 +265,7 @@ namespace VoxelBloom
             Services.Audio.Play(Sfx.Win);
             // celebration: show the intact model spinning with confetti
             view.Stage.ShowModel(level.Grid.CopyCells(), level.Grid.X, level.Grid.Y, level.Grid.Z, palette, 2.1f);
+            view.Stage.TurntableSpeed = 0f;
             view.Stage.AutoRotateSpeed = 90f;
             for (int i = 0; i < (Services.ReducedEffects ? 6 : 30); i++)
             {
@@ -355,6 +357,7 @@ namespace VoxelBloom
         void BeginTargeting(BoosterType t, string hint)
         {
             targeting = t;
+            view.Stage.NotifyInteraction(30f); // hold still while the player aims
             view.HintText.text = hint;
             Tween.Pop(view.HintText.transform, 0.2f);
         }
@@ -362,6 +365,7 @@ namespace VoxelBloom
         void CancelTargeting()
         {
             targeting = null;
+            view.Stage.NotifyInteraction(1.5f);
             view.HintText.text = "";
         }
 

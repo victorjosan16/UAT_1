@@ -5,7 +5,7 @@ namespace VoxelBloom.Core
 {
     public sealed class SettingsData
     {
-        public bool Music = true, Sound = true, Vibration = true, ReducedEffects;
+        public bool Music = true, Sound = true, Vibration = true, ReducedEffects, AutoRotate = true;
         public int Quality = 2; // 0 Low, 1 Medium, 2 High
         public float MusicVolume = 0.6f, SoundVolume = 0.9f;
     }
@@ -84,7 +84,7 @@ namespace VoxelBloom.Core
                 { "settings", new Dictionary<string, object>
                     {
                         { "music", st.Music }, { "sound", st.Sound }, { "vibration", st.Vibration },
-                        { "reducedEffects", st.ReducedEffects }, { "quality", (double)st.Quality },
+                        { "reducedEffects", st.ReducedEffects }, { "quality", (double)st.Quality }, { "autoRotate", st.AutoRotate },
                         { "musicVolume", (double)st.MusicVolume }, { "soundVolume", (double)st.SoundVolume },
                     }
                 },
@@ -128,6 +128,7 @@ namespace VoxelBloom.Core
                 s.Settings.Sound = MiniJson.GetBool(st, "sound", true);
                 s.Settings.Vibration = MiniJson.GetBool(st, "vibration", true);
                 s.Settings.ReducedEffects = MiniJson.GetBool(st, "reducedEffects");
+                s.Settings.AutoRotate = MiniJson.GetBool(st, "autoRotate", true);
                 s.Settings.Quality = Math.Max(0, Math.Min(2, MiniJson.GetInt(st, "quality", 2)));
                 s.Settings.MusicVolume = (float)MiniJson.GetDouble(st, "musicVolume", 0.6);
                 s.Settings.SoundVolume = (float)MiniJson.GetDouble(st, "soundVolume", 0.9);

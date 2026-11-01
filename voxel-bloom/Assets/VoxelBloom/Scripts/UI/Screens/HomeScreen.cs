@@ -232,7 +232,12 @@ namespace VoxelBloom
             var e = catalog.Characters[selected];
             bool unlocked = catalog.IsUnlocked(e.Id, Services.Save);
             var grid = Services.Data.GetModel(e.Id);
-            if (grid != null) hero.Show(grid, Services.Data.GetAnim(e.Id), 2.0f / Mathf.Max(grid.X, Mathf.Max(grid.Y, grid.Z)), !unlocked, selected);
+            if (grid != null)
+            {
+                float vs = 2.0f / Mathf.Max(grid.X, Mathf.Max(grid.Y, grid.Z));
+                hero.Show(grid, Services.Data.GetAnim(e.Id), vs, !unlocked, selected);
+                stage.SetShadowSize(Mathf.Max(grid.X, grid.Z) * vs * 1.3f);
+            }
             if (unlocked && Services.Save.HomeCharacter != e.Id) { Services.Save.HomeCharacter = e.Id; Services.Commit(); }
             lockPill.gameObject.SetActive(!unlocked);
             lockLabel.text = e.Name + " - " + catalog.UnlockText(e);

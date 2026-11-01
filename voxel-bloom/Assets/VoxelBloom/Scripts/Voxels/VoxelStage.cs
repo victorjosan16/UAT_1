@@ -20,6 +20,10 @@ namespace VoxelBloom
         public Transform PedestalRoot { get; private set; }
 
         public float AutoRotateSpeed = 0f;
+        /// <summary>Turntable speed (deg/s) used in gameplay; pauses after user interaction.</summary>
+        public float TurntableSpeed = 0f;
+        float turntablePausedUntil;
+        Transform shadow;
         public float TargetYaw = -30f;
         public float Yaw = -30f;
         public float Bob;
@@ -64,6 +68,7 @@ namespace VoxelBloom
             Camera.allowHDR = false;
             Camera.allowMSAA = Texture.antiAliasing > 1;
 
+            shadow = CreateShadow(transform);
             Fragments = new GameObject("Fragments").AddComponent<FragmentSystem>();
             Fragments.transform.SetParent(transform, false);
             Debris = new GameObject("Debris").AddComponent<PhysicsDebris>();
@@ -86,12 +91,12 @@ namespace VoxelBloom
                 {
                     int i = x + X * (y + H * z);
                     if (grass) cells[i] = (sbyte)(y == H - 1 ? (((x * 7 + z * 13) % 5 == 0) ? 1 : 0) : 2);
-                    else cells[i] = (sbyte)(y == H - 1 ? 0 : (d > R - 1.2f ? 1 : 0));
+                    else cells[i] = (sbyte)(d > R - 1.2f ? (y == H - 1 ? 2 : 1) : (y == H - 1 ? 0 : 3));
                 }
             }
             var palette = grass
                 ? new Color32[] { new Color32(108, 205, 92, 255), new Color32(150, 228, 104, 255), new Color32(170, 120, 74, 255) }
-                : new Color32[] { new Color32(246, 244, 255, 255), new Color32(214, 206, 240, 255) };
+                : new Color32[] { new Color32(250, 248, 255, 255), new Color32(236, 170, 40, 255), new Color32(255, 214, 90, 255), new Color32(226, 220, 246, 255) }; // white top, golden rim
             var go = new GameObject("PedestalMesh", typeof(MeshFilter), typeof(MeshRenderer), typeof(VoxelModelView));
             go.transform.SetParent(PedestalRoot, false);
             go.GetComponent<VoxelModelView>().SetModel(cells, X, H, Z, palette, 1f);
@@ -107,6 +112,9 @@ namespace VoxelBloom
             PedestalRoot.localPosition = new Vector3(0, -PedestalRoot.localScale.y * 3f, 0);
             Frame(Mathf.Max(x, z) * size, y * size);
             Debris.SetFloor(transform.position.y);
+            float fp = Mathf.Max(x, z) * size;
+            shadow.localPosition = new Vector3(0, 0.004f, 0);
+            shadow.localScale = new Vector3(fp * 1.25f, 1, fp * 1.25f);
         }
 
         public void ShowModel(VoxelGrid g, float span = 2f)
@@ -131,6 +139,30 @@ namespace VoxelBloom
             Camera.transform.LookAt(transform.position + new Vector3(0, height * 0.45f, 0));
         }
 
+        /// <summary>Soft contact shadow under the model (transparent quad, built-in sprite shader).</summary>
+        static Transform CreateShadow(Transform parent)
+        {
+            var go = new GameObject("ContactShadow", typeof(MeshFilter), typeof(MeshRenderer));
+            go.transform.SetParent(parent, false);
+            var m = new Mesh { name = "ShadowQuad" };
+            m.vertices = new[] { new Vector3(-0.5f, 0, -0.5f), new Vector3(-0.5f, 0, 0.5f), new Vector3(0.5f, 0, 0.5f), new Vector3(0.5f, 0, -0.5f) };
+            m.uv = new[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0) };
+            m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            m.RecalculateBounds();
+            go.GetComponent<MeshFilter>().sharedMesh = m;
+            var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit");
+            var mat = new Material(shader) { name = "ContactShadow", mainTexture = SpriteFactory.Glow().texture, color = new Color(0.18f, 0.12f, 0.32f, 0.45f) };
+            var r = go.GetComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            return go.transform;
+        }
+
+        public void SetShadowSize(float footprint) { shadow.localPosition = new Vector3(0, 0.004f, 0); shadow.localScale = new Vector3(footprint, 1, footprint); }
+
+        /// <summary>Call when the player drags/taps the model: the turntable waits before resuming.</summary>
+        public void NotifyInteraction(float pauseSeconds = 2.5f) => turntablePausedUntil = Time.unscaledTime + pauseSeconds;
+
         public void ScalePedestal(float k)
         {
             PedestalRoot.localScale *= k;
@@ -143,6 +175,7 @@ namespace VoxelBloom
         {
             float dt = Time.unscaledDeltaTime;
             TargetYaw += AutoRotateSpeed * dt;
+            if (TurntableSpeed > 0f && Time.unscaledTime >= turntablePausedUntil) TargetYaw += TurntableSpeed * dt;
             Yaw = Mathf.LerpAngle(Yaw, TargetYaw, 1f - Mathf.Exp(-10f * dt));
             Pivot.localRotation = Quaternion.Euler(0, Yaw, 0);
             if (Bob > 0)

@@ -61,6 +61,10 @@ a 100-mascot carousel (6 per page, arrows wrap, page indicator, locked mascots s
 level badge, PLAY (always the latest unlocked level) and Collection / Rewards / Shop / Events. The Home selection is saved
 (save v3) but never changes which model a level uses.
 
+In gameplay the model turns slowly on a 360° turntable (pauses while you drag it or aim a booster; toggle
+"Rotate model 360°" in Settings). Mascots stand on a golden-rimmed pedestal with a soft contact shadow; Home and
+Collection add twinkles around the mascot. Every face has blush cheeks and a small "w" smile.
+
 Voxels render with bevelled edges and a 2×2 "small cubes" sub-grid (`VoxelLit.shader`), so models read as built from
 small cubes without increasing the number of gameplay voxels.
 

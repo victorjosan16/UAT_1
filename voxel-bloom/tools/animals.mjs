@@ -69,7 +69,13 @@ export function chibi(g, k, o) {
   });
   setAnim(g, hy0, ey, o.lid ?? o.head ?? body);
   g.front(3, ey + 2, k.white); g.front(mx(4), ey + 2, k.white);
-  if (o.blush) sym((f) => g.front(f(2), ey - 1, o.blush));
+  if (o.blush != null) sym((f) => { g.front(f(2), ey - 1, o.blush); g.front(f(3), ey - 1, o.blush); });
+  // cute "w" smile under the nose (premium character look)
+  const mouth = o.mouthColor ?? k.black ?? k.ink ?? k.darkBrown;
+  if (o.smile !== false && o.muzzle !== null && mouth != null) {
+    g.front(7, hy0 + 2, mouth); g.front(8, hy0 + 2, mouth);
+    g.front(6, hy0 + 1, mouth); g.front(9, hy0 + 1, mouth);
+  }
   return { hy0, top: hy0 + 10 };
 }
 
@@ -166,7 +172,7 @@ export function defineAnimals(model) {
   });
 
   model('dog', 'Puppy', 'Happy Friends', ['white', 'brown', 'black', 'pink', 'red', 'gold', 'cream'], X, 24, 18, (g, k) => {
-    const h = chibi(g, k, { body: k.white, belly: k.white, paw: k.white, muzzle: k.white, nose: k.black });
+    const h = chibi(g, k, { body: k.white, belly: k.white, paw: k.white, muzzle: k.white, nose: k.black, smile: false, blush: k.pink });
     // brown head top and eye sides, white blaze down the middle
     for (let x = 0; x < X; x++) for (let y = h.hy0 + 5; y <= h.top + 1; y++) for (let z = 0; z < 18; z++) {
       const blaze = x >= 6 && x <= 9 && y <= h.hy0 + 8;
