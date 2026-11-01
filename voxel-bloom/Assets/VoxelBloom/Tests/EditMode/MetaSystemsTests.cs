@@ -79,7 +79,7 @@ namespace VoxelBloom.Tests
             var s = m.Load();
             Assert.AreEqual(LoadSource.New, m.LoadedFrom);
             s.Coins = 1234; s.Stars[1] = 3; s.Stars[2] = 2; s.HighestUnlockedLevel = 3;
-            s.Boosters[BoosterType.Eliminate] = 4; s.CollectionUnlocked.Add("fox"); s.Settings.Music = false; s.Settings.Quality = 1; s.Settings.AutoRotate = false;
+            s.Boosters[BoosterType.Eliminate] = 4; s.CollectionUnlocked.Add("fox"); s.Settings.Music = false; s.Settings.Quality = 1; s.Settings.AutoRotate = false; s.Settings.FireSpeed = 2;
             s.ActiveLevel = new GameSession(Level(1)).ToSnapshot();
             m.Save();
             var m2 = new SaveManager(store, cfg);
@@ -92,6 +92,7 @@ namespace VoxelBloom.Tests
             Assert.IsFalse(s2.Settings.Music);
             Assert.AreEqual(1, s2.Settings.Quality);
             Assert.IsFalse(s2.Settings.AutoRotate, "turntable preference persists");
+            Assert.AreEqual(2, s2.Settings.FireSpeed, "fire speed persists");
             Assert.NotNull(GameSession.FromSnapshot(Level(1), s2.ActiveLevel));
         }
 

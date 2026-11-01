@@ -7,6 +7,9 @@ namespace VoxelBloom.Core
     {
         public bool Music = true, Sound = true, Vibration = true, ReducedEffects, AutoRotate = true;
         public int Quality = 2; // 0 Low, 1 Medium, 2 High
+        /// <summary>Launcher fire speed: 0 Normal, 1 Fast (x1.6), 2 Very fast (x2.5).</summary>
+        public int FireSpeed;
+        public static readonly float[] FireSpeedFactor = { 1f, 1.6f, 2.5f };
         public float MusicVolume = 0.6f, SoundVolume = 0.9f;
     }
 
@@ -86,7 +89,7 @@ namespace VoxelBloom.Core
                 { "settings", new Dictionary<string, object>
                     {
                         { "music", st.Music }, { "sound", st.Sound }, { "vibration", st.Vibration },
-                        { "reducedEffects", st.ReducedEffects }, { "quality", (double)st.Quality }, { "autoRotate", st.AutoRotate },
+                        { "reducedEffects", st.ReducedEffects }, { "quality", (double)st.Quality }, { "autoRotate", st.AutoRotate }, { "fireSpeed", (double)st.FireSpeed },
                         { "musicVolume", (double)st.MusicVolume }, { "soundVolume", (double)st.SoundVolume },
                     }
                 },
@@ -132,6 +135,7 @@ namespace VoxelBloom.Core
                 s.Settings.Vibration = MiniJson.GetBool(st, "vibration", true);
                 s.Settings.ReducedEffects = MiniJson.GetBool(st, "reducedEffects");
                 s.Settings.AutoRotate = MiniJson.GetBool(st, "autoRotate", true);
+                s.Settings.FireSpeed = Math.Max(0, Math.Min(2, MiniJson.GetInt(st, "fireSpeed", 0)));
                 s.Settings.Quality = Math.Max(0, Math.Min(2, MiniJson.GetInt(st, "quality", 2)));
                 s.Settings.MusicVolume = (float)MiniJson.GetDouble(st, "musicVolume", 0.6);
                 s.Settings.SoundVolume = (float)MiniJson.GetDouble(st, "soundVolume", 0.9);

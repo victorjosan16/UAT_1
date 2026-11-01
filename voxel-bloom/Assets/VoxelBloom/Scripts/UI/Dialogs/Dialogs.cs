@@ -281,7 +281,7 @@ namespace VoxelBloom
     public sealed class SettingsDialog : DialogBase
     {
         protected override string Title => "Settings";
-        protected override Vector2 Size => new Vector2(900, 1420);
+        protected override Vector2 Size => new Vector2(900, 1640);
 
         protected override void OnBuild()
         {
@@ -301,6 +301,16 @@ namespace VoxelBloom
                 buttons[i] = UI.Button(Body, names[i], st.Quality == i ? ButtonStyle.Purple : ButtonStyle.White, new Vector2(240, 110), null, 44);
                 ((RectTransform)buttons[i].transform).Place(new Vector2(0.5f, 1), new Vector2((i - 1) * 260, -(5 * 170 + 200)), new Vector2(240, 110));
                 buttons[i].OnClick = () => { st.Quality = preset; Services.NotifySettingsChanged(); Close(); Router.Open<SettingsDialog>(); };
+            }
+            var sp = UI.Text(Body, "Viteză tragere", 44, Theme.Ink, TextAnchor.MiddleLeft);
+            sp.rectTransform.TopBand(5 * 170 + 290, 60, 20);
+            string[] speeds = { "Normal", "Rapid", "F. rapid" };
+            for (int i = 0; i < 3; i++)
+            {
+                int v = i;
+                var b = UI.Button(Body, speeds[i], st.FireSpeed == i ? ButtonStyle.Green : ButtonStyle.White, new Vector2(240, 110), null, 42);
+                ((RectTransform)b.transform).Place(new Vector2(0.5f, 1), new Vector2((i - 1) * 260, -(5 * 170 + 420)), new Vector2(240, 110));
+                b.OnClick = () => { st.FireSpeed = v; Services.NotifySettingsChanged(); Close(); Router.Open<SettingsDialog>(); };
             }
             var ver = UI.Text(Body, "Voxel Bloom 3D · " + Application.version + " · Ads: " + Services.Ads.ProviderName, 28, Theme.InkSoft);
             ver.rectTransform.BottomBand(10, 40, 0);

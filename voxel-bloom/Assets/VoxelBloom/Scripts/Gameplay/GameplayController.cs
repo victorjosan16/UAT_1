@@ -14,7 +14,10 @@ namespace VoxelBloom
     {
         public static GameplayController Active { get; private set; }
         static GameStateMachine SM => App.State;
-        const float Tick = 0.12f, Flight = 0.32f; // slow enough to follow every ball to its cube
+        const float BaseTick = 0.12f, BaseFlight = 0.32f; // Normal speed: slow enough to follow every ball to its cube
+        static float SpeedFactor => SettingsData.FireSpeedFactor[Mathf.Clamp(Services.Save.Settings.FireSpeed, 0, 2)];
+        static float Tick => BaseTick / SpeedFactor;
+        static float Flight => BaseFlight / Mathf.Sqrt(SpeedFactor); // balls fly a bit faster too, but stay visible
 
         GameplayScreen view;
         LevelDefinition level;
