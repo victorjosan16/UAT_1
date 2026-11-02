@@ -183,14 +183,7 @@ namespace VoxelBloom
             session.ClearEvents();
         }
 
-        Image NewCubeImage(Transform parent)
-        {
-            var c = UI.Image(parent, "Cube", SpriteFactory.Glossy(18), Color.white, true);
-            c.pixelsPerUnitMultiplier = 18f / (0.2f * view.K);
-            c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            c.rectTransform.sizeDelta = Vector2.one * 0.8f * view.K;
-            return c;
-        }
+        Image NewCubeImage(Transform parent) => ConveyorScreen.NewCube(parent, view.K);
 
         void DrawBelt(float alpha)
         {

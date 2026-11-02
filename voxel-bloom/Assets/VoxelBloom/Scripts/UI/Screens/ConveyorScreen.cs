@@ -35,6 +35,21 @@ namespace VoxelBloom
         public readonly List<QueueCard> Cards = new List<QueueCard>();
         public RectTransform HintArrow;
         ConveyorController controller;
+        Image themeBg, themeShade;
+        AspectRatioFitter themeFit;
+
+        /// <summary>One of the 10 painted themes per 5 levels (Backgrounds/theme_00..09), dimmed so the board stays readable.</summary>
+        public static string ThemeFor(int levelId) => "Backgrounds/theme_" + (((levelId - 1) / 5) % 10).ToString("00");
+
+        void ApplyTheme(int levelId)
+        {
+            var sp = UIArt.Get(ThemeFor(levelId), default, false);
+            themeBg.gameObject.SetActive(sp != null);
+            themeShade.gameObject.SetActive(sp != null);
+            if (sp == null) return;
+            themeBg.sprite = sp;
+            themeFit.aspectRatio = sp.rect.width / sp.rect.height;
+        }
         float boardHeight, topY = 150f;
 
         public sealed class StationView
@@ -61,6 +76,12 @@ namespace VoxelBloom
             controller = gameObject.AddComponent<ConveyorController>();
             controller.Bind(this);
             UI.Sky(Root, Bg1, Bg2);
+            themeBg = UI.Image(Root, "ThemeBackground", null, Color.white, false);
+            themeBg.rectTransform.Stretch();
+            themeFit = themeBg.gameObject.AddComponent<AspectRatioFitter>();
+            themeFit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            themeShade = UI.Image(Root, "ThemeShade", SpriteFactory.VerticalGradient(new Color(0.1f, 0.06f, 0.3f, 0.35f), new Color(0.12f, 0.07f, 0.32f, 0.6f)), Color.white, false);
+            themeShade.rectTransform.Stretch();
             BuildDecor();
             BuildHud();
             BuildBoosters();
@@ -94,15 +115,24 @@ namespace VoxelBloom
             PauseButton = UI.IconButton(hud, Icon.Pause, 100, ButtonStyle.Purple);
             ((RectTransform)PauseButton.transform).Place(new Vector2(0, 0.5f), new Vector2(50, 0), new Vector2(100, 100));
             PauseButton.OnClick = () => controller.Pause();
+            UIArt.Skin(PauseButton, "Buttons/game_pause");
             GearButton = UI.IconButton(hud, Icon.Gear, 100, ButtonStyle.Purple);
             ((RectTransform)GearButton.transform).Place(new Vector2(1, 0.5f), new Vector2(-50, 0), new Vector2(100, 100));
             GearButton.OnClick = () => Router.Open<SettingsVioletDialog>();
+            UIArt.Skin(GearButton, "Buttons/game_settings");
 
             var lv = UI.Panel(hud, "LevelPill", Theme.Hex("#4B3BB0"), 40, true, 4f);
             var lr = (RectTransform)lv.transform.parent;
             lr.Place(new Vector2(0.5f, 0.5f), new Vector2(-170, 0), new Vector2(290, 88));
             var rim = UI.Image(lr, "Rim", SpriteFactory.Rounded(44), Theme.Hex("#8E7BFF"));
             rim.rectTransform.Stretch(-4, -4, -4, -4); rim.transform.SetAsFirstSibling();
+            var pillArt = UIArt.Get("HUD/game_level_pill_blank");
+            if (pillArt != null)
+            {
+                foreach (Transform ch in lr) ch.gameObject.SetActive(false);
+                var pill = UI.Image(lr, "Art", pillArt, Color.white, false); pill.preserveAspect = true;
+                pill.rectTransform.Stretch(-14, -14, -14, -14);
+            }
             LevelText = UI.Text(lr, "Nivel 1", 50, Color.white, TextAnchor.MiddleCenter, 0.15f, Theme.Hex("#22185E"));
             LevelText.supportRichText = true;
             LevelText.rectTransform.Stretch();
@@ -160,6 +190,7 @@ namespace VoxelBloom
             if (BoardRoot != null) Destroy(BoardRoot.gameObject);
             if (QueueRoot != null) Destroy(QueueRoot.gameObject);
             Cards.Clear();
+            ApplyTheme(level.Id);
             Board = new ConveyorBoard(level);
             float maxH = Root.rect.height > 0 ? Root.rect.height - 150f - 220f - 252f : 1300f;
             BoardWidth = Mathf.Min(MaxBoardWidth, maxH * (Board.W + 2f) / (Board.H + 2f));
@@ -182,11 +213,16 @@ namespace VoxelBloom
             var sh = UI.Image(Space, "Shadow", SpriteFactory.Shadow(48), new Color(0.05f, 0.02f, 0.2f, 0.45f));
             sh.rectTransform.anchoredPosition = ToUi(mid) + new Vector2(0, -16); sh.rectTransform.sizeDelta = new Vector2(W + 3f, H + 3f) * K;
             RoundRect(Space, "Frame", mid, new Vector2(W + 2f, H + 2f), R + 1f, Frame);
-            RoundRect(Space, "OuterEdge", mid, new Vector2(W + 1.32f, H + 1.32f), R + 0.66f, Edge);
-            RoundRect(Space, "Track", mid, new Vector2(W + 1.16f, H + 1.16f), R + 0.58f, Track);
-            RoundRect(Space, "TrackShade", mid, new Vector2(W + 0.2f, H + 0.2f), R + 0.1f, TrackDark).color = new Color(TrackDark.r, TrackDark.g, TrackDark.b, 0.35f);
-            RoundRect(Space, "InnerEdge", mid, new Vector2(W - 0.84f, H - 0.84f), R - 0.42f, Edge);
-            RoundRect(Space, "Floor", mid, new Vector2(W - 1.0f, H - 1.0f), Mathf.Max(0.3f, R - 0.5f), Floor);
+            bool beltArt = BeltFrame(mid);
+            if (!beltArt)
+            {
+                RoundRect(Space, "OuterEdge", mid, new Vector2(W + 1.32f, H + 1.32f), R + 0.66f, Edge);
+                RoundRect(Space, "Track", mid, new Vector2(W + 1.16f, H + 1.16f), R + 0.58f, Track);
+                RoundRect(Space, "TrackShade", mid, new Vector2(W + 0.2f, H + 0.2f), R + 0.1f, TrackDark).color = new Color(TrackDark.r, TrackDark.g, TrackDark.b, 0.35f);
+                RoundRect(Space, "InnerEdge", mid, new Vector2(W - 0.84f, H - 0.84f), R - 0.42f, Edge);
+            }
+            var floor = RoundRect(Space, "Floor", mid, new Vector2(W - 1.0f, H - 1.0f), Mathf.Max(0.3f, R - 0.5f), Floor);
+            if (beltArt) floor.transform.SetSiblingIndex(floor.transform.GetSiblingIndex() - 1); // floor under the frame art
             var glow = UI.Image(Space, "EdgeGlow", SpriteFactory.Glow(), new Color(Edge.r, Edge.g, Edge.b, 0.10f), false);
             glow.rectTransform.anchoredPosition = ToUi(mid); glow.rectTransform.sizeDelta = new Vector2(W + 4f, H + 4f) * K;
             glow.transform.SetAsFirstSibling();
@@ -194,7 +230,7 @@ namespace VoxelBloom
             // direction chevrons along the track
             int pathUnits = level.Slots * ConveyorSession.P;
             int chevrons = Mathf.Max(8, level.Slots / 6);
-            for (int i = 0; i < chevrons; i++)
+            for (int i = 0; i < chevrons && !beltArt; i++) // the frame art has its own chevrons
             {
                 float s = (i + 0.5f) * pathUnits / chevrons;
                 var t = Board.Tangent(s);
@@ -224,10 +260,7 @@ namespace VoxelBloom
             SlotCubes = new Image[level.Slots];
             for (int k = 0; k < level.Slots; k++)
             {
-                var c = UI.Image(CubeLayer, "Cube", SpriteFactory.Glossy(18), Color.white, true);
-                c.pixelsPerUnitMultiplier = 18f / (0.2f * K);
-                c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                c.rectTransform.sizeDelta = Vector2.one * 0.8f * K;
+                var c = NewCube(CubeLayer, K);
                 SlotCubes[k] = c;
             }
             FlyLayer = UI.Rect(Space, "Flying"); FlyLayer.anchorMin = FlyLayer.anchorMax = new Vector2(0.5f, 0.5f);
@@ -256,6 +289,17 @@ namespace VoxelBloom
             }
         }
 
+        /// <summary>Belt cube: the painted isometric cube (white template tinted with the colour), else a glossy square.</summary>
+        public static Image NewCube(Transform parent, float k)
+        {
+            var art = UIArt.Get("Board/cube_white");
+            Image c;
+            if (art != null) { c = UI.Image(parent, "Cube", art, Color.white, false); c.preserveAspect = true; c.rectTransform.sizeDelta = Vector2.one * 0.98f * k; }
+            else { c = UI.Image(parent, "Cube", SpriteFactory.Glossy(18), Color.white, true); c.pixelsPerUnitMultiplier = 18f / (0.2f * k); c.rectTransform.sizeDelta = Vector2.one * 0.8f * k; }
+            c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            return c;
+        }
+
         /// <summary>
         /// Performance: a nested Canvas so elements that change every frame (moving cubes, flights, effects, tray cells)
         /// only rebuild their own small batch instead of the whole screen canvas.
@@ -264,6 +308,43 @@ namespace VoxelBloom
         {
             var c = rt.gameObject.AddComponent<Canvas>();
             c.pixelPerfect = false;
+        }
+
+        /// <summary>
+        /// The painted belt frame (Board/belt_frame + its measured lane centreline and corner radius in belt_frame.json),
+        /// nine-sliced so its lane centreline lies exactly on the loop of any board size.
+        /// </summary>
+        bool BeltFrame(Vector2 mid)
+        {
+            var meta = Resources.Load<TextAsset>("VBUI/Board/belt_frame");
+            if (meta == null) return false;
+            var d = MiniJson.Obj(MiniJson.Parse(meta.text));
+            float c = (float)MiniJson.GetDouble(d, "centreInset"), rc = (float)MiniJson.GetDouble(d, "cornerRadius");
+            if (c <= 0 || rc <= 0) return false;
+            float border = c + rc + 12f;
+            var sp = UIArt.Get("Board/belt_frame", new Vector4(border, border, border, border));
+            if (sp == null) return false;
+            float sc = Board.R * K / rc; // image px -> UI px, so the painted corner matches the loop's corner radius
+            var img = UI.Image(Space, "BeltFrame", sp, Color.white, true);
+            img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 1f / sc;
+            img.rectTransform.anchorMin = img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            img.rectTransform.anchoredPosition = ToUi(mid);
+            img.rectTransform.sizeDelta = new Vector2(Board.W * K + 2f * c * sc, Board.H * K + 2f * c * sc);
+            return true;
+        }
+
+        /// <summary>A painted horizontal tile (lock / plus) fitted to a station footprint, turned 90° for vertical stations.</summary>
+        Image FootprintArt(RectTransform parent, string path, Vector2 centre, Vector2 size, bool vertical)
+        {
+            var sp = UIArt.Get(path);
+            if (sp == null) return null;
+            var img = UI.Image(parent, System.IO.Path.GetFileName(path), sp, Color.white, false, true);
+            img.rectTransform.anchorMin = img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            img.rectTransform.anchoredPosition = ToUi(centre);
+            img.rectTransform.sizeDelta = (vertical ? new Vector2(size.y, size.x) : size) * K;
+            if (vertical) img.rectTransform.localRotation = Quaternion.Euler(0, 0, 90);
+            return img;
         }
 
         StationView BuildStation(ConveyorStationDef st)
@@ -288,7 +369,30 @@ namespace VoxelBloom
                 cell.sprite = SpriteFactory.Glossy(18); cell.pixelsPerUnitMultiplier = 18f / (0.3f * K);
                 v.Cells[i] = cell;
             }
-            if (st.Lock == StationLock.Completed)
+            if (st.Lock == StationLock.Completed && UIArt.Has("Board/lock_tile"))
+            {
+                var holder = UI.Rect(root, "LockHolder"); holder.anchorMin = holder.anchorMax = new Vector2(0.5f, 0.5f);
+                FootprintArt(holder, "Board/lock_tile", centre, size, vertical);
+                v.LockTile = holder;
+                v.LockText = UI.Text(holder, st.LockN.ToString(), 0.85f * K, Color.white);
+                v.LockText.fontStyle = FontStyle.Bold;
+                v.LockText.rectTransform.anchorMin = v.LockText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                v.LockText.rectTransform.anchoredPosition = ToUi(centre);
+                v.LockText.rectTransform.sizeDelta = Vector2.one * 1.1f * K;
+                var cover = UI.Image(holder, "NumberBadge", SpriteFactory.Rounded(20), Theme.Hex("#2C2A4A")); // hides the painted "1"
+                cover.rectTransform.anchorMin = cover.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                cover.rectTransform.anchoredPosition = ToUi(centre); cover.rectTransform.sizeDelta = Vector2.one * 1.05f * K;
+                v.LockText.transform.SetAsLastSibling();
+            }
+            else if (st.Lock == StationLock.Booster && UIArt.Has("Board/plus_tile"))
+            {
+                var holder = UI.Rect(root, "PlusHolder"); holder.anchorMin = holder.anchorMax = new Vector2(0.5f, 0.5f);
+                var img = FootprintArt(holder, "Board/plus_tile", centre, size, vertical);
+                var btn = img.gameObject.AddComponent<UIButton>(); btn.Face = img.rectTransform;
+                btn.OnClick = () => controller.UseBooster(BoosterType.ExtraStation);
+                v.PlusTile = holder;
+            }
+            else if (st.Lock == StationLock.Completed)
             {
                 var tile = RoundRect(root, "Lock", centre, size, 0.3f, Stone);
                 RoundRect(tile.transform, "Top", centre + new Vector2(0, -0.04f), size - new Vector2(0.18f, 0.22f), 0.24f, Theme.Lighter(Stone, 0.25f));
@@ -334,6 +438,13 @@ namespace VoxelBloom
                 face.color = TrayRim;
                 var inner = UI.Image(b.Face, "Inner", SpriteFactory.Rounded(24), TrayInner);
                 inner.rectTransform.Stretch(9, 9, 9, 9);
+                var cardArt = UIArt.Get("Board/queue_card_empty", new Vector4(30, 30, 30, 30));
+                if (cardArt != null)
+                {
+                    UIArt.Skin(b, "Board/queue_card_empty");
+                    face.sprite = cardArt; face.type = Image.Type.Sliced; face.preserveAspect = false;
+                    inner.color = new Color(0, 0, 0, 0);
+                }
                 card.Cells = new Image[4];
                 for (int r = 0; r < 4; r++)
                 {
