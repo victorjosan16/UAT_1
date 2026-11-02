@@ -123,13 +123,16 @@ namespace VoxelBloom
             Icon[] icons = { Icon.Refresh, Icon.ColorSwap, Icon.CubesPlus };
             for (int i = 0; i < 3; i++)
             {
-                var b = UI.IconButton(row, icons[i], 150, ButtonStyle.Purple);
-                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / 3f, 0.5f), Vector2.zero, new Vector2(150, 150));
+                string art = new[] { "Boosters/refresh", "Boosters/color_swap", "Boosters/add_tray" }[i];
+                bool hasArt = UIArt.Has(art);
+                var b = hasArt ? UI.Button(row, null, ButtonStyle.Purple, new Vector2(170, 165)) : UI.IconButton(row, icons[i], 150, ButtonStyle.Purple);
+                ((RectTransform)b.transform).Place(new Vector2((i + 0.5f) / 3f, 0.5f), Vector2.zero, hasArt ? new Vector2(170, 165) : new Vector2(150, 150));
+                if (hasArt) UIArt.Skin(b, art); // the painted "3" badge is covered by the live count below
                 var t = BoosterOrder[i];
                 b.Sound = Sfx.Booster;
                 b.OnClick = () => controller.UseBooster(t);
                 var ring = UI.Image(b.transform, "CountRing", SpriteFactory.Circle(), Color.white, false);
-                ring.rectTransform.Place(new Vector2(1, 1), new Vector2(-12, -12), new Vector2(62, 62));
+                ring.rectTransform.Place(new Vector2(1, 1), new Vector2(-33, -30), new Vector2(66, 66)); // exactly over the painted badge
                 var badge = UI.Image(ring.transform, "Count", SpriteFactory.Circle(), Theme.Hex("#E8202E"), false);
                 badge.rectTransform.Stretch(5, 5, 5, 5);
                 BoosterCounts[i] = UI.Text(badge.transform, "0", 34, Color.white, TextAnchor.MiddleCenter, 0.15f, Theme.Hex("#7A0A14"));
