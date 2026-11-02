@@ -11,7 +11,7 @@ namespace VoxelBloom.Core
     /// </summary>
     public sealed class ConveyorEvents
     {
-        public const int DailyGoal = 5, MissionGoal = 200, SeasonGoal = 15;
+        public const int DailyGoal = 5, MissionGoal = 200, SeasonGoal = 15, WeeklyGoal = 30;
         public const long SeasonLength = 7 * 86400L;
         static readonly long SeasonEpoch = new DateTimeOffset(2026, 1, 5, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(); // a Monday
         readonly SaveData save;
@@ -30,7 +30,8 @@ namespace VoxelBloom.Core
             long day = Day(now);
             if (save.DailyChallengeDay != day) { save.DailyChallengeDay = day; save.DailyChallengeCount = 0; save.DailyChallengeClaimed = false; }
             int season = SeasonOf(now);
-            if (save.SeasonId != season) { save.SeasonId = season; save.SeasonStars = 0; save.SeasonClaimed = false; }
+            if (save.SeasonId != season) { save.SeasonId = season; save.SeasonStars = 0; save.SeasonClaimed = false; save.WeeklyClaimed = false; }
+            if (save.BonusDay != day) { save.BonusDay = day; save.BonusPlayed = false; save.BonusClaimed = false; }
         }
 
         public void OnLevelCompleted(int stars, long now)
@@ -38,6 +39,7 @@ namespace VoxelBloom.Core
             Refresh(now);
             if (save.DailyChallengeCount < DailyGoal) save.DailyChallengeCount++;
             save.SeasonStars += Math.Max(0, stars);
+            save.BonusPlayed = true;
         }
 
         public void OnCubesDelivered(int n) { if (n > 0) save.MissionCubes = Math.Min(MissionGoal, save.MissionCubes + n); }
@@ -45,6 +47,15 @@ namespace VoxelBloom.Core
         public bool CanClaimDaily(long now) { Refresh(now); return !save.DailyChallengeClaimed && save.DailyChallengeCount >= DailyGoal; }
         public bool CanClaimMission => save.MissionCubes >= MissionGoal;
         public bool CanClaimSeason(long now) { Refresh(now); return !save.SeasonClaimed && save.SeasonStars >= SeasonGoal; }
+
+        /// <summary>"Premiul Săptămânal": 30 stars in the current 7-day window.</summary>
+        public bool CanClaimWeekly(long now) { Refresh(now); return !save.WeeklyClaimed && save.SeasonStars >= WeeklyGoal; }
+        /// <summary>"Bonus pe Timp Limitat": finish one level before midnight (UTC).</summary>
+        public bool CanClaimBonus(long now) { Refresh(now); return !save.BonusClaimed && save.BonusPlayed; }
+        public static long DayEndsAt(long now) => (Day(now) + 1) * 86400L;
+
+        public EventReward ClaimWeekly(long now) { if (!CanClaimWeekly(now)) return default; save.WeeklyClaimed = true; return Grant(300, 30, 0); }
+        public EventReward ClaimBonus(long now) { if (!CanClaimBonus(now)) return default; save.BonusClaimed = true; return Grant(80, 0, 0); }
 
         public EventReward ClaimDaily(long now)
         {
@@ -78,6 +89,6 @@ namespace VoxelBloom.Core
             return new EventReward { Coins = coins, Gems = gems, Boosters = eachBooster };
         }
 
-        public bool AnyClaimable(long now) => CanClaimDaily(now) || CanClaimMission || CanClaimSeason(now);
+        public bool AnyClaimable(long now) => CanClaimDaily(now) || CanClaimMission || CanClaimSeason(now) || CanClaimWeekly(now) || CanClaimBonus(now);
     }
 }

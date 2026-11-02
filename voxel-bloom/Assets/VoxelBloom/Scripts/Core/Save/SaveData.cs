@@ -56,6 +56,8 @@ namespace VoxelBloom.Core
         public int SeasonId = -1, SeasonStars;
         public bool SeasonClaimed;
         public bool HowToPlaySeen;
+        public bool WeeklyClaimed, BonusPlayed, BonusClaimed;
+        public long BonusDay = -1;
         public bool CloudSave;
         public int CubesDelivered;
 
@@ -124,7 +126,7 @@ namespace VoxelBloom.Core
                 { "dailyChallengeDay", (double)s.DailyChallengeDay }, { "dailyChallengeCount", (double)s.DailyChallengeCount }, { "dailyChallengeClaimed", s.DailyChallengeClaimed },
                 { "missionCubes", (double)s.MissionCubes }, { "missionsDone", (double)s.MissionsDone },
                 { "seasonId", (double)s.SeasonId }, { "seasonStars", (double)s.SeasonStars }, { "seasonClaimed", s.SeasonClaimed },
-                { "howToPlaySeen", s.HowToPlaySeen }, { "cloudSave", s.CloudSave }, { "cubesDelivered", (double)s.CubesDelivered },
+                { "howToPlaySeen", s.HowToPlaySeen }, { "weeklyClaimed", s.WeeklyClaimed }, { "bonusPlayed", s.BonusPlayed }, { "bonusClaimed", s.BonusClaimed }, { "bonusDay", (double)s.BonusDay }, { "cloudSave", s.CloudSave }, { "cubesDelivered", (double)s.CubesDelivered },
             };
             return MiniJson.Serialize(d);
         }
@@ -187,6 +189,8 @@ namespace VoxelBloom.Core
             s.SeasonStars = Math.Max(0, MiniJson.GetInt(d, "seasonStars"));
             s.SeasonClaimed = MiniJson.GetBool(d, "seasonClaimed");
             s.HowToPlaySeen = MiniJson.GetBool(d, "howToPlaySeen");
+            s.WeeklyClaimed = MiniJson.GetBool(d, "weeklyClaimed"); s.BonusPlayed = MiniJson.GetBool(d, "bonusPlayed"); s.BonusClaimed = MiniJson.GetBool(d, "bonusClaimed");
+            s.BonusDay = MiniJson.GetLong(d, "bonusDay", -1);
             s.CloudSave = MiniJson.GetBool(d, "cloudSave");
             s.CubesDelivered = Math.Max(0, MiniJson.GetInt(d, "cubesDelivered"));
 

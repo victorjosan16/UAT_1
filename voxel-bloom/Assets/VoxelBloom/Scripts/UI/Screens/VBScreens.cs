@@ -516,11 +516,21 @@ namespace VoxelBloom
     public sealed class HowToPlayDialog : DialogBase
     {
         public Action Done;
-        protected override string Title => "Cum se joacă?";
-        protected override Vector2 Size => new Vector2(900, 1260);
+        protected override string Title => UIArt.Has("Menus/howto") ? "" : "Cum se joacă?";
+        protected override Vector2 Size => UIArt.Has("Menus/howto") ? new Vector2(1000, 1500) : new Vector2(900, 1260);
+        protected override bool ShowClose => !UIArt.Has("Menus/howto");
 
         protected override void OnBuild()
         {
+            if (UIArt.Has("Menus/howto"))
+            {
+                foreach (var n in new[] { "Face", "Shadow" }) { var tr = Panel.Find(n); if (tr != null) tr.gameObject.SetActive(false); }
+                var page = ArtPage.TryCreate(Panel, "Menus/howto");
+                void Done2() { Services.Save.HowToPlaySeen = true; Services.Commit(); Close(); Done?.Invoke(); }
+                page.Hit(860, 55, 1010, 195, Done2);
+                page.Hit(205, 1100, 820, 1290, Done2);
+                return;
+            }
             VB.VioletPanel(Panel);
             Step(0, "Alege o tavă\ndin coadă.", (r) => { MiniTray(r, new[] { "#FFD93B", "#D9259C", "#A47CF7" }, new Vector2(60, 0)); var h = UI.Icon(r, Icon.Play, 70); h.rectTransform.anchoredPosition = new Vector2(150, -40); h.rectTransform.localRotation = Quaternion.Euler(0, 0, 120); });
             Step(1, "Cuburile circulă\npe bandă.", (r) => { var belt = UI.Image(r, "Belt", SpriteFactory.Rounded(20), Theme.Hex("#5A5396")); belt.rectTransform.sizeDelta = new Vector2(300, 60); belt.rectTransform.anchoredPosition = new Vector2(40, -30); string[] c = { "#D9259C", "#FFD93B", "#3ED6F0", "#4CD964" }; for (int i = 0; i < 4; i++) Cube(r, c[i], new Vector2(-50 + i * 60, -20), 50); var a = UI.Icon(r, Icon.ArrowRight, 50); a.rectTransform.anchoredPosition = new Vector2(150, -30); });
@@ -563,8 +573,9 @@ namespace VoxelBloom
     public sealed class BoostersInfoDialog : DialogBase
     {
         public Action Changed;
-        protected override string Title => "Boostere";
-        protected override Vector2 Size => new Vector2(940, 1240);
+        protected override string Title => UIArt.Has("Menus/boosters") ? "" : "Boostere";
+        protected override Vector2 Size => UIArt.Has("Menus/boosters") ? new Vector2(1000, 1100) : new Vector2(940, 1240);
+        protected override bool ShowClose => !UIArt.Has("Menus/boosters");
 
         public static readonly (BoosterType t, Icon icon, string name, string desc)[] All =
         {
@@ -575,6 +586,12 @@ namespace VoxelBloom
 
         protected override void OnBuild()
         {
+            if (UIArt.Has("Menus/boosters"))
+            {
+                foreach (var n in new[] { "Face", "Shadow" }) { var tr = Panel.Find(n); if (tr != null) tr.gameObject.SetActive(false); }
+                BoostersArt.Build(Panel, Close, () => Changed?.Invoke());
+                return;
+            }
             VB.VioletPanel(Panel);
             for (int i = 0; i < All.Length; i++)
             {
@@ -728,14 +745,22 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             VB.Background(Root);
-            VB.Header(Root, "Evenimente", OnBack, 520);
             list = UI.Rect(Root, "List").Stretch(40, 40, 190, 300);
+            if (!UIArt.Has("Menus/events")) VB.Header(Root, "Evenimente", OnBack, 520);
         }
 
         public override void OnShow() => Rebuild();
+        RectTransform artHolder;
 
         void Rebuild()
         {
+            if (UIArt.Has("Menus/events"))
+            {
+                if (artHolder != null) Destroy(artHolder.gameObject);
+                artHolder = UI.Rect(Root, "Art").Stretch(0, 0, 0, 0);
+                EventsArt.Build(artHolder, OnBack, Rebuild);
+                return;
+            }
             for (int i = list.childCount - 1; i >= 0; i--) Destroy(list.GetChild(i).gameObject);
             var ev = Services.Events; long now = Services.Now; var s = Services.Save;
             ev.Refresh(now);
@@ -793,6 +818,7 @@ namespace VoxelBloom
         protected override void OnBuild()
         {
             VB.Background(Root);
+            if (SettingsArt.Build(Root, OnBack)) return;
             VB.Header(Root, "Setări", OnBack, 420);
             Build(Root, 190f);
         }
@@ -843,9 +869,19 @@ namespace VoxelBloom
     /// <summary>In-game "Setări" (same rows as the settings screen, keeps the level running underneath).</summary>
     public sealed class SettingsVioletDialog : DialogBase
     {
-        protected override string Title => "Setări";
-        protected override Vector2 Size => new Vector2(980, 1160);
-        protected override void OnBuild() { VB.VioletPanel(Panel); SettingsScreen.Build(Body, 30f); }
+        protected override string Title => UIArt.Has("Menus/settings") ? "" : "Setări";
+        protected override Vector2 Size => UIArt.Has("Menus/settings") ? new Vector2(1000, 1500) : new Vector2(980, 1160);
+        protected override void OnBuild()
+        {
+            if (UIArt.Has("Menus/settings"))
+            {
+                foreach (var n in new[] { "Face", "Shadow" }) { var tr = Panel.Find(n); if (tr != null) tr.gameObject.SetActive(false); }
+                SettingsArt.Build(Panel, Close);
+                return;
+            }
+            VB.VioletPanel(Panel); SettingsScreen.Build(Body, 30f);
+        }
+        protected override bool ShowClose => !UIArt.Has("Menus/settings");
     }
 
     public sealed class AboutDialog : DialogBase
