@@ -114,6 +114,19 @@ namespace VoxelBloom
         public static void Toast(string m, Icon icon = Icon.Info) => Router.Instance.Toast(m, icon);
     }
 
+    /// <summary>Keeps a map piece sized as a fraction of the map's width (the map scales with the screen).</summary>
+    public sealed class MapPiece : MonoBehaviour
+    {
+        public float WidthFraction, Aspect = 1f;
+        float last;
+        void LateUpdate()
+        {
+            var p = transform.parent as RectTransform; if (p == null) return;
+            float w = p.rect.width; if (Mathf.Approximately(w, last)) return; last = w;
+            ((RectTransform)transform).sizeDelta = new Vector2(w * WidthFraction, w * WidthFraction * Aspect);
+        }
+    }
+
     /// <summary>On/off switch of the Setări screen (green track when on).</summary>
     public sealed class VBToggle : MonoBehaviour
     {
@@ -253,8 +266,102 @@ namespace VoxelBloom
         RectTransform map, dots;
         int page;
 
+        // supplied map art (1024x1536): node centres in picture pixels, level 1 first
+        static readonly Vector2[] ArtNodes = { new Vector2(212, 452), new Vector2(472, 352), new Vector2(748, 322), new Vector2(320, 685),
+            new Vector2(619, 740), new Vector2(843, 908), new Vector2(524, 996), new Vector2(232, 1066) };
+        static readonly Vector2[] ArtDots = { new Vector2(390, 1438), new Vector2(473, 1440), new Vector2(554, 1439), new Vector2(635, 1439) };
+        RectTransform art, artNodes;
+
+        void BuildArt()
+        {
+            var bg = UIArt.Get("Backgrounds/home_background", default, false);
+            if (bg != null)
+            {
+                var b = UI.Image(Root, "Backdrop", bg, Color.white, false); b.rectTransform.Stretch();
+                var f = b.gameObject.AddComponent<AspectRatioFitter>(); f.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent; f.aspectRatio = bg.rect.width / bg.rect.height;
+                UI.Image(Root, "Dim", null, new Color(0.15f, 0.08f, 0.35f, 0.35f), false).rectTransform.Stretch();
+            }
+            var sp = UIArt.Get("Map/map_full");
+            var img = UI.Image(Root, "Map", sp, Color.white, false);
+            art = img.rectTransform;
+            art.anchorMin = new Vector2(0, 0.5f); art.anchorMax = new Vector2(1, 0.5f);
+            var fit = img.gameObject.AddComponent<AspectRatioFitter>();
+            fit.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight; fit.aspectRatio = sp.rect.width / sp.rect.height;
+            artNodes = UI.Rect(art, "Nodes").Stretch();
+            Hit(new Rect(23, 11, 165, 170), OnBack);
+            Hit(new Rect(45, 1330, 190, 190), () => Show(page - 1));
+            Hit(new Rect(785, 1330, 190, 190), () => Show(page + 1));
+        }
+
+        Vector2 Frac(Vector2 px) => new Vector2(px.x / 1024f, 1f - px.y / 1536f);
+
+        void Hit(Rect px, Action onClick)
+        {
+            var r = UI.Rect(art, "Hit"); r.anchorMin = Frac(new Vector2(px.xMin, px.yMax)); r.anchorMax = Frac(new Vector2(px.xMax, px.yMin));
+            r.offsetMin = r.offsetMax = Vector2.zero;
+            var i = r.gameObject.AddComponent<Image>(); i.color = new Color(1, 1, 1, 0);
+            var b = r.gameObject.AddComponent<UIButton>(); b.Face = r; b.OnClick = onClick; b.Squash = false;
+        }
+
+        RectTransform Piece(string path, Vector2 px, float wPx)
+        {
+            var sp = UIArt.Get(path);
+            var img = UI.Image(artNodes, System.IO.Path.GetFileName(path), sp, Color.white, false, true);
+            img.rectTransform.anchorMin = img.rectTransform.anchorMax = Frac(px);
+            float wf = wPx / 1024f;
+            img.rectTransform.sizeDelta = Vector2.zero;
+            var le = img.gameObject.AddComponent<MapPiece>(); le.WidthFraction = wf; le.Aspect = sp.rect.height / sp.rect.width;
+            return img.rectTransform;
+        }
+
+        void ShowArt()
+        {
+            for (int i = artNodes.childCount - 1; i >= 0; i--) Destroy(artNodes.GetChild(i).gameObject);
+            int total = ConveyorController.TotalLevels, current = Services.Progress.LatestConveyorLevel(total);
+            for (int i = 0; i < PerPage; i++)
+            {
+                int level = page * PerPage + i + 1;
+                var at = ArtNodes[i];
+                if (level > total) { Piece("Map/node_locked", at, 212).GetComponent<Image>().color = new Color(1, 1, 1, 0.5f); continue; }
+                bool unlocked = Services.Progress.IsConveyorUnlocked(level, total);
+                int stars = Services.Progress.ConveyorStarsFor(level);
+                bool isCurrent = unlocked && level == current && stars == 0;
+                if (!unlocked)
+                {
+                    var lk = Piece("Map/node_locked", at, i == 4 ? 270 : 212); // slot 5 of the art is the big glowing node
+                    var b0 = lk.gameObject.AddComponent<UIButton>(); b0.Face = lk; b0.Squash = false;
+                    b0.OnClick = () => Router.Toast("Termină întâi nivelul " + (level - 1), Icon.Lock);
+                    continue;
+                }
+                var n = Piece(isCurrent ? "Map/node_current_blank" : "Map/node_open_blank", at, isCurrent || i == 4 ? 262 : 230);
+                var t = UI.Text(n, level.ToString(), 90, Color.white, TextAnchor.MiddleCenter, 0.22f, Theme.Hex("#2A1466"));
+                t.fontStyle = FontStyle.Bold; t.resizeTextForBestFit = true; t.resizeTextMinSize = 20; t.resizeTextMaxSize = 110;
+                t.rectTransform.anchorMin = new Vector2(0.2f, 0.36f); t.rectTransform.anchorMax = new Vector2(0.8f, 0.92f);
+                t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
+                Vector2[] sp3 = { new Vector2(0.27f, 0.25f), new Vector2(0.5f, 0.22f), new Vector2(0.73f, 0.25f) };
+                for (int k = stars; k < 3; k++) // the painted stars are gold: grey out the ones not earned
+                {
+                    var e = UI.Image(n, "StarEmpty", UIArt.Get("Icons/star_empty") ?? SpriteFactory.Get(Icon.StarEmpty), Color.white, false);
+                    e.preserveAspect = true; e.rectTransform.anchorMin = e.rectTransform.anchorMax = sp3[k];
+                    e.rectTransform.sizeDelta = Vector2.zero;
+                    var mp = e.gameObject.AddComponent<MapPiece>(); mp.WidthFraction = 0.24f; mp.Aspect = 1f; // fraction of the node width
+                }
+                var b = n.gameObject.AddComponent<UIButton>(); b.Face = n; b.Squash = false; b.Sound = Sfx.Select;
+                b.OnClick = () => ConveyorController.StartLevel(level);
+            }
+            int pages = Pages, first = Mathf.Clamp(page - 1, 0, Mathf.Max(0, pages - 4));
+            for (int i = 0; i < 4; i++)
+            {
+                bool exists = first + i < pages, on = first + i == page;
+                var d = UI.Image(artNodes, "Dot", SpriteFactory.Circle(), !exists ? new Color(0, 0, 0, 0) : on ? Theme.Hex("#FFC531") : Theme.Hex("#4FA8F0"), false);
+                d.rectTransform.anchorMin = d.rectTransform.anchorMax = Frac(ArtDots[i]);
+                var mp = d.gameObject.AddComponent<MapPiece>(); mp.WidthFraction = 66f / 1024f; mp.Aspect = 1f;
+            }
+        }
+
         protected override void OnBuild()
         {
+            if (UIArt.Has("Map/map_full")) { BuildArt(); return; }
             UI.Sky(Root, Theme.Hex("#8FD9FF"), Theme.Hex("#5CC0F5"));
             map = UI.Rect(Root, "Map").Stretch(0, 0, 170, 240);
             VB.Header(Root, "Niveluri", OnBack, 460);
@@ -278,6 +385,7 @@ namespace VoxelBloom
         void Show(int p)
         {
             page = Mathf.Clamp(p, 0, Pages - 1);
+            if (art != null) { ShowArt(); return; }
             for (int i = map.childCount - 1; i >= 0; i--) Destroy(map.GetChild(i).gameObject);
             for (int i = dots.childCount - 1; i >= 0; i--) Destroy(dots.GetChild(i).gameObject);
             var rect = map.rect;

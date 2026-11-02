@@ -9,12 +9,13 @@ namespace VoxelBloom
     {
         [NonSerialized] public CompletionReceipt Receipt;
         [NonSerialized] public ConveyorLevel Level;
-        protected override string Title => "Nivel " + (Level != null ? Level.Id : 0) + " Finalizat!";
-        protected override Vector2 Size => new Vector2(900, 1300);
+        protected override string Title => UIArt.Has("Win/cubes_podium") ? "" : "Nivel " + (Level != null ? Level.Id : 0) + " Finalizat!";
+        protected override Vector2 Size => UIArt.Has("Win/cubes_podium") ? new Vector2(1000, 1760) : new Vector2(900, 1300);
         protected override bool ShowClose => false;
 
         protected override void OnBuild()
         {
+            if (UIArt.Has("Win/cubes_podium")) { BuildArt(); return; }
             VB.VioletPanel(Panel);
             var stars = UI.Rect(Body, "Stars").Place(new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(700, 220));
             for (int i = 0; i < 3; i++)
@@ -64,6 +65,58 @@ namespace VoxelBloom
             var replay = UI.Button(Body, "Reia", ButtonStyle.Purple, new Vector2(460, 120), Icon.Restart, 52);
             ((RectTransform)replay.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 80), new Vector2(460, 120));
             replay.OnClick = () => { Close(); ConveyorController.StartLevel(Level.Id); };
+        }
+
+        /// <summary>Victory from the supplied art: stars + ribbon with live "Nivel N Finalizat!", cubes on the podium, reward card with live amounts, Următorul / Reia.</summary>
+        void BuildArt()
+        {
+            foreach (var n in new[] { "Face", "Shadow" }) { var t = Panel.Find(n); if (t != null) t.gameObject.SetActive(false); }
+            var rays = UI.Image(Panel, "Rays", SpriteFactory.Rays(), new Color(1f, 0.95f, 0.6f, 0.5f), false);
+            rays.rectTransform.Place(new Vector2(0.5f, 1), new Vector2(0, -780), new Vector2(1500, 1500));
+            Image Art(string path, float y, float w)
+            {
+                var img = UIArt.Picture(Panel, path, w);
+                img.rectTransform.anchorMin = img.rectTransform.anchorMax = new Vector2(0.5f, 1);
+                img.rectTransform.anchoredPosition = new Vector2(0, y);
+                return img;
+            }
+            var banner = Art("Collection/win_banner", -250, 860).rectTransform;
+            // fewer than 3 stars: grey out the missing ones over the painted gold stars
+            Vector2[] starPos = { new Vector2(0.2f, 0.66f), new Vector2(0.5f, 0.8f), new Vector2(0.8f, 0.66f) };
+            for (int i = Receipt.Stars; i < 3; i++)
+            {
+                var e = UI.Image(banner, "StarEmpty", UIArt.Get("Icons/star_empty") ?? SpriteFactory.Get(Icon.StarEmpty), Color.white, false);
+                e.preserveAspect = true;
+                e.rectTransform.anchorMin = e.rectTransform.anchorMax = starPos[i];
+                e.rectTransform.sizeDelta = Vector2.one * (i == 1 ? 270 : 240);
+            }
+            var title = UI.Text(banner, "Nivel <color=#FFD84A>" + Level.Id + "</color>\nFinalizat!", 80, Color.white, TextAnchor.MiddleCenter, 0.22f, Theme.Hex("#3A1582"));
+            title.supportRichText = true; title.fontStyle = FontStyle.Bold; title.lineSpacing = 0.85f;
+            title.rectTransform.anchorMin = new Vector2(0.18f, 0.08f); title.rectTransform.anchorMax = new Vector2(0.82f, 0.4f);
+            title.rectTransform.offsetMin = title.rectTransform.offsetMax = Vector2.zero;
+            title.rectTransform.localRotation = Quaternion.Euler(0, 0, 0);
+            Art("Win/cubes_podium", -760, 640);
+            var card = Art("Win/reward_card_blank", -1140, 780).rectTransform;
+            VText Amount(float x, string v)
+            {
+                var t = UI.Text(card, v, 64, Theme.Hex("#2B1D6B"), TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+                t.rectTransform.anchorMin = new Vector2(x, 0.42f); t.rectTransform.anchorMax = new Vector2(x + 0.27f, 0.9f);
+                t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero; return t;
+            }
+            Amount(0.25f, "+" + Receipt.Coins); Amount(0.75f, "+" + Receipt.Gems);
+            UIButton Btn(string path, float y, float w)
+            {
+                var sp = UIArt.Get(path); float h = w * sp.rect.height / sp.rect.width;
+                var b = UI.Button(Panel, null, ButtonStyle.Green, new Vector2(w, h));
+                ((RectTransform)b.transform).Place(new Vector2(0.5f, 1), new Vector2(0, y), new Vector2(w, h));
+                UIArt.Skin(b, path); return b;
+            }
+            var next = Btn("Win/next", -1390, 640);
+            next.OnClick = () => { Close(); ConveyorController.Active?.NextLevel(); };
+            var replay = Btn("Win/replay", -1590, 540);
+            replay.OnClick = () => { Close(); ConveyorController.StartLevel(Level.Id); };
+            for (int i = 0; i < Receipt.Stars; i++) { int k = i; Tween.Delay(0.2f + i * 0.25f, () => Services.Audio.Play(Sfx.Star, 1f + k * 0.12f)); }
+            Tween.Pop(banner, 0.08f, 0.5f);
         }
 
         public override void OnBack() { Close(); ConveyorController.Active?.NextLevel(); }
