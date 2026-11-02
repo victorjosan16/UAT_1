@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 using VoxelBloom.Core;
 
 namespace VoxelBloom

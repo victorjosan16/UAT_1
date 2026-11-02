@@ -9,7 +9,7 @@ namespace VoxelBloom
     /// <summary>Shared look of the reference mockup: violet screens, lavender cards, purple title pills, green price buttons.</summary>
     public static class VB
     {
-        public static readonly Color Bg1 = Theme.Hex("#5A3FC8"), Bg2 = Theme.Hex("#35278C"), Card = Theme.Hex("#EEE9FF"), CardRim = Theme.Hex("#C4B5FF"),
+        public static readonly Color Bg1 = Theme.Hex("#5A3FC8"), Bg2 = Theme.Hex("#35278C"), CardFace = Theme.Hex("#EEE9FF"), CardRim = Theme.Hex("#C4B5FF"),
             Ink = Theme.Hex("#2B1D6B"), InkSoft = Theme.Hex("#5B4C93"), Pill = Theme.Hex("#6A4BE0"), PillRim = Theme.Hex("#A893FF"),
             Tab = Theme.Hex("#7A5CEB"), TabOn = Theme.Hex("#FFD23F"), PanelFace = Theme.Hex("#5B3FCB"), Plant = Theme.Hex("#3FBF4A");
 
@@ -73,8 +73,8 @@ namespace VoxelBloom
             sh.rectTransform.Stretch(-26, -26, -18, -34);
             var rim = UI.Image(root, "Rim", SpriteFactory.Rounded(40), CardRim);
             rim.rectTransform.Stretch();
-            var f = UI.Image(root, "Face", SpriteFactory.VerticalGradient(Color.white, face ?? Card), Color.white, false);
-            var mask = UI.Image(root, "FaceMask", SpriteFactory.Rounded(36), face ?? Card);
+            var f = UI.Image(root, "Face", SpriteFactory.VerticalGradient(Color.white, face ?? CardFace), Color.white, false);
+            var mask = UI.Image(root, "FaceMask", SpriteFactory.Rounded(36), face ?? CardFace);
             mask.rectTransform.Stretch(5, 5, 5, 5);
             f.transform.SetParent(mask.transform, false); f.rectTransform.Stretch(); f.color = new Color(1, 1, 1, 0.55f);
             return root;
