@@ -174,28 +174,71 @@ namespace VoxelBloom
     }
 
     // ====================================================================== 1. title
-    /// <summary>Title: landscape, the Voxel Bloom 3D logo and the big "Joacă" button (to the home screen).</summary>
+    /// <summary>
+    /// Title (first page): the painted landscape (Backgrounds/title_background, envelope-fitted so tall phones only crop
+    /// the sides), light rays, the Voxel Bloom 3D logo and the green "Joacă" button, placed at the positions of the
+    /// reference (fractions of the picture). Falls back to the 3D landscape if the picture is missing.
+    /// </summary>
     public sealed class TitleScreen : ScreenBase
     {
+        const float LogoY = 0.215f, LogoW = 0.74f, PlayY = 0.706f, PlayW = 0.67f;
+        RectTransform bgRect, logo, play;
+        Vector2 lastSize;
+
         protected override void OnBuild()
         {
             UI.Sky(Root, Theme.Hex("#2F93F0"), Theme.Hex("#A6DCFF"));
-            HomeBackdrop.Attach(Root);
-            var logo = UIArt.Picture(Root, "Logo/logo", 900);
-            logo.rectTransform.anchorMin = logo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            logo.rectTransform.anchoredPosition = new Vector2(0, -420);
-            var glow = UI.Image(Root, "PlayGlow", SpriteFactory.Glow(), new Color(1f, 0.95f, 0.45f, 0.45f), false);
-            glow.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0, 560), new Vector2(900, 330));
-            bool art = UIArt.Has("Buttons/play");
-            var play = art ? UI.Button(Root, null, ButtonStyle.Green, new Vector2(720, 258)) : UI.Button(Root, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110);
-            ((RectTransform)play.transform).Place(new Vector2(0.5f, 0), new Vector2(0, 560), art ? new Vector2(720, 258) : new Vector2(700, 176));
-            if (art) UIArt.Skin(play, "Buttons/play");
-            play.Sound = Sfx.Whoosh;
-            play.OnClick = () => Router.Show<HomeScreen>();
+            var painted = UIArt.Get("Backgrounds/title_background", default, false);
+            if (painted != null)
+            {
+                var bg = UI.Image(Root, "TitleBackground", painted, Color.white, false);
+                bg.rectTransform.Stretch();
+                var fit = bg.gameObject.AddComponent<AspectRatioFitter>();
+                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fit.aspectRatio = painted.rect.width / painted.rect.height;
+                bgRect = bg.rectTransform;
+            }
+            else bgRect = (RectTransform)HomeBackdrop.Attach(Root).transform;
+
+            var rays = UI.Image(bgRect, "Rays", SpriteFactory.Rays(), new Color(1f, 1f, 0.9f, 0.55f), false);
+            rays.rectTransform.anchorMin = rays.rectTransform.anchorMax = new Vector2(0.5f, 1f - LogoY);
+            rays.rectTransform.sizeDelta = new Vector2(1500, 1500);
+            var logoArt = UIArt.Has("Logo/logo_title") ? "Logo/logo_title" : "Logo/logo";
+            var l = UIArt.Picture(bgRect, logoArt, 800);
+            logo = l.rectTransform;
+            logo.anchorMin = logo.anchorMax = new Vector2(0.5f, 1f - LogoY);
+            logo.anchoredPosition = Vector2.zero;
+
+            var playArt = UIArt.Has("Buttons/play_title") ? "Buttons/play_title" : "Buttons/play";
+            var b = UI.Button(bgRect, null, ButtonStyle.Green, new Vector2(700, 236));
+            play = (RectTransform)b.transform;
+            play.anchorMin = play.anchorMax = new Vector2(0.5f, 1f - PlayY);
+            play.anchoredPosition = Vector2.zero;
+            if (UIArt.Skin(b, playArt) == null) { Destroy(b.gameObject); b = UI.Button(bgRect, "Joacă", ButtonStyle.Green, new Vector2(700, 176), Icon.Play, 110); play = (RectTransform)b.transform; play.anchorMin = play.anchorMax = new Vector2(0.5f, 1f - PlayY); }
+            b.Sound = Sfx.Whoosh;
+            b.OnClick = () => Router.Show<HomeScreen>();
+        }
+
+        /// <summary>Sizes follow the picture (like the reference) but never get wider than the screen.</summary>
+        void LateUpdate()
+        {
+            var size = new Vector2(bgRect.rect.width, Root.rect.width);
+            if (size == lastSize || size.x <= 0) return;
+            lastSize = size;
+            Fit(logo, Mathf.Min(LogoW * size.x, 0.94f * size.y));
+            Fit(play, Mathf.Min(PlayW * size.x, 0.86f * size.y));
+        }
+
+        static void Fit(RectTransform rt, float w)
+        {
+            var img = rt.GetComponent<Image>();
+            var sp = img != null && img.sprite != null ? img.sprite : rt.GetComponent<UIButton>()?.Face.GetComponent<Image>().sprite;
+            float aspect = sp != null ? sp.rect.height / sp.rect.width : 0.34f;
+            rt.sizeDelta = new Vector2(w, w * aspect);
         }
 
         public override bool FadeIn => false;
-        public override void OnShow() { HomeBackdrop.SetActive(true); App.State.ForceReset(GameState.Home); }
+        public override void OnShow() { HomeBackdrop.SetActive(!(bgRect != null && bgRect.GetComponent<Image>() != null)); App.State.ForceReset(GameState.Home); }
         public override void OnBack() { Application.Quit(); }
     }
 
