@@ -24,7 +24,7 @@ namespace VoxelBloom
         public RectTransform BoardRoot, Space, CubeLayer, FlyLayer, QueueRoot, FxLayer;
         public float K; // UI px per board unit
         public ConveyorBoard Board;
-        public VText LevelText, ProgressText, QueueMore, HintText, FeederText;
+        public VText LevelText, ProgressText, QueueMore, HintText, FeederText, ObjectiveText, SpaceWarning;
         public ProgressBar Progress;
         public UIButton PauseButton, GearButton;
         public readonly UIButton[] BoosterButtons = new UIButton[3];
@@ -56,7 +56,8 @@ namespace VoxelBloom
         {
             public RectTransform Root, Tray;
             public Image Rim, Inner;
-            public Image[] Cells;
+            public Image[] Cells, Plates;
+            public Image Check;
             public RectTransform LockTile, PlusTile;
             public VText LockText;
             public CanvasGroup Group;
@@ -143,8 +144,14 @@ namespace VoxelBloom
             Progress = UI.Progress(pr, Theme.Hex("#45D85A"), 60);
             ((RectTransform)Progress.transform).Stretch(12, 12, 14, 14);
             UIArt.SkinProgress(Progress);
-            ProgressText = UI.Text(pr, "0/0", 46, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Hex("#0E1430"));
+            ProgressText = UI.Text(pr, "0/8", 46, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Hex("#0E1430"));
             ProgressText.rectTransform.Stretch();
+            // objective progress (separate from the space counter) and the space warning
+            ObjectiveText = UI.Text(Root, "", 36, Color.white, TextAnchor.MiddleCenter, 0.2f, Theme.Hex("#1A1450"));
+            ObjectiveText.rectTransform.TopBand(132, 46, 200);
+            SpaceWarning = UI.Text(Root, "", 40, Theme.Hex("#FF5A6A"), TextAnchor.MiddleCenter, 0.25f, Theme.Hex("#2A0A14"));
+            SpaceWarning.fontStyle = FontStyle.Bold;
+            SpaceWarning.rectTransform.TopBand(172, 52, 120);
         }
 
         void BuildBoosters()
@@ -252,7 +259,7 @@ namespace VoxelBloom
 
             // stations
             Stations = new StationView[level.Stations.Length];
-            for (int i = 0; i < level.Stations.Length; i++) Stations[i] = BuildStation(level.Stations[i]);
+            for (int i = 0; i < level.Stations.Length; i++) Stations[i] = BuildStation(level.Stations[i], i);
 
             // cubes on the belt (one image per slot), flights and effects above
             CubeLayer = UI.Rect(Space, "Cubes"); CubeLayer.anchorMin = CubeLayer.anchorMax = new Vector2(0.5f, 0.5f);
@@ -273,6 +280,10 @@ namespace VoxelBloom
             HintText.rectTransform.anchorMin = HintText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             HintText.rectTransform.anchoredPosition = ToUi(new Vector2(W * 0.62f, H * 0.5f));
             HintText.rectTransform.sizeDelta = new Vector2((W - 7f) * K, 4f * K);
+            SpaceWarning.transform.SetParent(Space, false);
+            SpaceWarning.rectTransform.anchorMin = SpaceWarning.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            SpaceWarning.rectTransform.anchoredPosition = ToUi(new Vector2(W * 0.5f, 1.6f));
+            SpaceWarning.rectTransform.sizeDelta = new Vector2(W * K, 1.2f * K);
 
             BuildQueue(level);
 
@@ -347,7 +358,7 @@ namespace VoxelBloom
             return img;
         }
 
-        StationView BuildStation(ConveyorStationDef st)
+        StationView BuildStation(ConveyorStationDef st, int index)
         {
             var v = new StationView();
             var c0 = Board.Compartment(st, 0); var cN = Board.Compartment(st, st.Capacity - 1);
@@ -362,10 +373,18 @@ namespace VoxelBloom
             v.Rim = RoundRect(root, "Rim", centre, size, 0.3f, TrayRim);
             v.Inner = RoundRect(root, "Inner", centre, size - new Vector2(0.2f, 0.2f), 0.24f, TrayInner);
             v.Tray = v.Rim.rectTransform;
+            // tap the BUS to release one of its wrong cubes onto the belt
+            v.Rim.raycastTarget = true;
+            var tap = v.Rim.gameObject.AddComponent<UIButton>(); tap.Face = v.Rim.rectTransform; tap.Squash = false; tap.Sound = Sfx.Select;
+            tap.OnClick = () => controller.OnStationTapped(index);
             v.Cells = new Image[st.Capacity];
+            v.Plates = new Image[st.Capacity];
             for (int i = 0; i < st.Capacity; i++)
             {
-                var cell = RoundRect(root, "Cell", Board.Compartment(st, i), new Vector2(ConveyorBoard.Cell, ConveyorBoard.Cell), 0.3f, Color.clear);
+                // plate = the colour this compartment requires (seen around a wrong cube, or alone when empty)
+                var plate = RoundRect(root, "Need", Board.Compartment(st, i), new Vector2(ConveyorBoard.Cell, ConveyorBoard.Cell), 0.3f, Color.clear);
+                v.Plates[i] = plate;
+                var cell = RoundRect(root, "Cell", Board.Compartment(st, i), new Vector2(ConveyorBoard.Cell, ConveyorBoard.Cell) * 0.8f, 0.24f, Color.clear);
                 cell.sprite = SpriteFactory.Glossy(18); cell.pixelsPerUnitMultiplier = 18f / (0.3f * K);
                 v.Cells[i] = cell;
             }

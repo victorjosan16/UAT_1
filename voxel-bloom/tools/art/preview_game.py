@@ -37,8 +37,10 @@ def glossy(cx, cy, w, h, col, a=255):
 put(art('Buttons/game_pause'), 80, 75, 100, 100); put(art('Buttons/game_settings'), 1000, 75, 100, 100)
 put(art('HUD/game_level_pill_blank'), 540 - 170, 75, 318)
 d.text((540 - 170, 72), 'Nivel ', fill='white', font=F(50), anchor='rm'); d.text((540 - 170, 72), str(S['id']), fill='#FFD84A', font=F(50), anchor='lm')
-rr(705, 75, 330, 88, 44, (30, 24, 72)); f = S['completed'] / S['total']; rr(552 + (306 * f + 10) / 2, 75, 306 * f + 10, 60, 30, (69, 216, 90))
-d.text((705, 72), '%d/%d' % (S['completed'], S['total']), fill='white', font=F(46), anchor='mm', stroke_width=2, stroke_fill='#0E1430')
+rr(705, 75, 330, 88, 44, (30, 24, 72)); f = S['occupied'] / S['space']; fc = (255, 77, 94) if S['occupied'] >= S['space'] else (255, 177, 59) if S['occupied'] >= S['space'] - 1 else (69, 216, 90)
+if f > 0: rr(552 + (306 * f + 10) / 2, 75, 306 * f + 10, 60, 30, fc)
+d.text((540, 150), 'BUS-uri completate: %d/%d' % (S['completed'], S['total']), fill='white', font=F(34), anchor='mm', stroke_width=2, stroke_fill='#1A1450')
+d.text((705, 72), '%d/%d' % (S['occupied'], S['space']), fill='white', font=F(46), anchor='mm', stroke_width=2, stroke_fill='#0E1430')
 # board
 W, H, R = S['W'], S['H'], S['R']; maxH = SH - 150 - 220 - 252
 BW = min(1020, maxH * (W + 2) / (H + 2)); K = BW / (W + 2); bh = (H + 2) * K; avail = SH - 370
@@ -58,10 +60,13 @@ for st in S['stations']:
     if lk: put(art('Board/plus_tile'), cx, cy, L, Wd, 90 if vert else 0); continue
     rr(cx, cy, w, h, 0.3 * K, (218, 210, 247)); rr(cx, cy, w - 0.2 * K, h - 0.2 * K, 0.24 * K, (56, 48, 112))
     if st['tray']:
-        for k, ci2 in enumerate(st['tray']['colors']):
-            px, py = P(st['comps'][k]); col = hexc(S['colors'][ci2]); filled = k < st['tray']['filled']
-            if not filled: col = tuple(int(v + (255 - v) * 0.25) for v in col)
-            glossy(px, py, 1.5 * K, 1.5 * K, col, 255 if filled else 128)
+        for k, nc in enumerate(st['tray']['need']):
+            px, py = P(st['comps'][k]); need = tuple(int(v + (255 - v) * 0.2) for v in hexc(S['colors'][nc]))
+            rr(px, py, 1.5 * K, 1.5 * K, 0.3 * K, need + (140,))
+            h = st['tray']['have'][k]
+            if h >= 0: sz = (0.92 if h != nc else 1.12) * 0.8 * 1.5 * K; glossy(px, py, sz, sz, hexc(S['colors'][h]))
+    for j, oc in enumerate(st['out']):
+        ox, oy = P(st['at0']); put(Image.open(U + 'Board/cube_white.png').convert('RGBA'), ox, oy, 0.98 * K)
 cw = art('Board/cube_white')
 for x, y, ci2 in S['cubes']:
     px, py = P((x, y)); a = np.array(cw.resize((round(0.98 * K), round(0.98 * K * cw.height / cw.width)), Image.LANCZOS)).astype(float)
@@ -78,7 +83,9 @@ for i in range(n):
     if i >= len(S['queue']): cimg.putalpha(cimg.getchannel('A').point(lambda v: int(v * 0.35)))
     c.alpha_composite(cimg, (round(x - cwid / 2), round(qy - chh / 2)))
     if i < len(S['queue']):
-        for r, ci2 in enumerate(S['queue'][i]): glossy(x, qy - chh / 2 + 9 + 12 + 43.5 * (r + 0.5), cwid - 34, 37.5, hexc(S['colors'][ci2]))
+        for r, nc in enumerate(S['queue'][i]['need']):
+            h = S['queue'][i]['have'][r]; col = hexc(S['colors'][h]) if h >= 0 else tuple(int(v + (255 - v) * 0.55) for v in hexc(S['colors'][nc]))
+            glossy(x, qy - chh / 2 + 9 + 12 + 43.5 * (r + 0.5), cwid - 34, 37.5, col)
 if S['hidden']: d.text((1050, qy - 141), '+%d tăvi în așteptare' % S['hidden'], fill=(255, 255, 255, 190), font=F(34), anchor='rm')
 # boosters
 for i, p in enumerate(['Boosters/refresh', 'Boosters/color_swap', 'Boosters/add_tray']):

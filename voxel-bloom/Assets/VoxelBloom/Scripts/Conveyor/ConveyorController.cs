@@ -21,11 +21,15 @@ namespace VoxelBloom
         bool paused, finished, failShown;
         int shownCoins = -1;
         int hintTray = -2;
+        int[] hint;
 
         sealed class Flight { public Image Img; public Vector2 From; public int Station, Compartment; public float T, Dur; }
         readonly List<Flight> flights = new List<Flight>();
         readonly Stack<Image> flightPool = new Stack<Image>();
         readonly Dictionary<int, float> feedPop = new Dictionary<int, float>();
+        /// <summary>Released cubes: lifted from their compartment to the station's transfer point, waiting there for an empty slot.</summary>
+        sealed class OutCube { public Image Img; public int Station; public Vector2 From; public float T; }
+        readonly List<OutCube> outs = new List<OutCube>();
 
         public ConveyorSession Session => session;
         public ConveyorLevel Level => level;
@@ -58,6 +62,8 @@ namespace VoxelBloom
             acc = 0; paused = finished = failShown = false; hintTray = -2;
             foreach (var f in flights) if (f.Img != null) Destroy(f.Img.gameObject);
             flights.Clear(); flightPool.Clear(); feedPop.Clear();
+            foreach (var o in outs) if (o.Img != null) Destroy(o.Img.gameObject);
+            outs.Clear();
             Time.timeScale = 1f;
             Services.Save.LastPlayedLevel = def.Id;
             view.BuildBoard(def);
@@ -91,6 +97,26 @@ namespace VoxelBloom
             Services.Audio.Play(Sfx.Whoosh, 1f + st * 0.03f);
             FlyTray(from, st, tray);
             RefreshQueue(); RefreshStations(); RefreshHud();
+            SaveProgress();
+        }
+
+        /// <summary>Tap on a BUS: it lets one wrong cube out onto the belt (only with free space).</summary>
+        public void OnStationTapped(int k)
+        {
+            if (session == null || finished || paused) return;
+            var st = session.Stations[k];
+            if (!st.IsOpen) return;
+            if (!session.CanRelease(k))
+            {
+                Services.Audio.Play(Sfx.Error);
+                Router.Instance.Toast(st.Tray.WrongIndex() < 0 ? "Acest BUS are doar cuburi potrivite" : "Nu mai este spațiu pe bandă", Icon.Info);
+                return;
+            }
+            session.Release(k);
+            hintTray = -2;
+            ProcessEvents();
+            Services.Audio.Play(Sfx.Whoosh, 1.2f);
+            RefreshHud();
             SaveProgress();
         }
 
@@ -132,6 +158,7 @@ namespace VoxelBloom
             float alpha = paused || finished ? 0f : Mathf.Clamp01(acc);
             DrawBelt(alpha);
             UpdateFlights();
+            UpdateOuts();
             UpdateStationsVisual();
             UpdateHint();
             int c = Services.Wallet.Coins;
@@ -146,6 +173,7 @@ namespace VoxelBloom
                 switch (e.Type)
                 {
                     case ConveyorEventType.Take:
+                        RefreshHud();
                         var img = flightPool.Count > 0 ? flightPool.Pop() : NewCubeImage(view.FlyLayer);
                         img.gameObject.SetActive(true);
                         img.color = colors[e.Color];
@@ -155,6 +183,24 @@ namespace VoxelBloom
                             T = 0f, Dur = ConveyorSession.Transfer / (ConveyorSession.TicksPerSecond * SpeedFactor),
                         });
                         break;
+                    case ConveyorEventType.Lift:
+                    {
+                        var oimg = flightPool.Count > 0 ? flightPool.Pop() : NewCubeImage(view.FlyLayer);
+                        oimg.gameObject.SetActive(true);
+                        oimg.color = colors[e.Color];
+                        var def = level.Stations[e.Station];
+                        outs.Add(new OutCube { Img = oimg, Station = e.Station, From = view.ToUi(view.Board.Compartment(def, Mathf.Min(e.Compartment, def.Capacity - 1))), T = 0f });
+                        break;
+                    }
+                    case ConveyorEventType.Drop:
+                    {
+                        // the waiting cube enters the belt: the belt slot now draws it (it grows in like a fed cube)
+                        int idx = outs.FindIndex(o => o.Station == e.Station);
+                        if (idx >= 0) { outs[idx].Img.gameObject.SetActive(false); flightPool.Push(outs[idx].Img); outs.RemoveAt(idx); }
+                        feedPop[e.Slot] = Time.time - 0.12f;
+                        RefreshHud();
+                        break;
+                    }
                     case ConveyorEventType.Land:
                         Services.Audio.Play(Sfx.Pop, 1f + e.Compartment * 0.08f, 0.7f);
                         Services.Events.OnCubesDelivered(1); // "Misiune Specială"
@@ -164,6 +210,7 @@ namespace VoxelBloom
                         Tween.Pop(cell.transform, 0.25f, 0.18f);
                         break;
                     case ConveyorEventType.Complete:
+                        ShowCheck(e.Station);
                         Services.Audio.Play(Sfx.Star, 1.1f);
                         Haptics.Light();
                         Burst(e.Station);
@@ -221,11 +268,39 @@ namespace VoxelBloom
             }
         }
 
+        void UpdateOuts()
+        {
+            var perStation = new Dictionary<int, int>();
+            foreach (var o in outs)
+            {
+                if (!paused) o.T += Time.deltaTime;
+                int n = perStation.TryGetValue(o.Station, out var c) ? c : 0; perStation[o.Station] = n + 1;
+                // the transfer point on the belt, nudged towards the inside; later cubes queue behind the first
+                var s = level.Stations[o.Station].S;
+                var at = view.Board.At(s); var tan = view.Board.Tangent(s);
+                var inward = new Vector2(-tan.y, tan.x);
+                var to = view.ToUi(at - tan * (0.9f * n) + inward * 0.15f);
+                float k = Mathf.Clamp01(o.T / 0.22f), e = Ease.OutCubic(k);
+                o.Img.rectTransform.anchoredPosition = Vector2.Lerp(o.From, to, e) + new Vector2(0, Mathf.Sin(k * Mathf.PI) * 0.4f * view.K);
+                o.Img.rectTransform.localScale = Vector3.one * (1f + 0.08f * Mathf.Sin(Time.time * 10f) * (k >= 1f ? 1f : 0f));
+            }
+        }
+
+        void ShowCheck(int station)
+        {
+            var sv = view.Stations[station];
+            var ok = UI.Icon(view.FxLayer, Icon.Check2, 1.4f * view.K);
+            ok.rectTransform.anchorMin = ok.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            ok.rectTransform.anchoredPosition = sv.Tray.anchoredPosition;
+            Tween.Scale(ok.transform, Vector3.zero, Vector3.one, 0.3f, Ease.OutBack);
+            Tween.Delay(0.55f, () => { if (ok != null) Destroy(ok.gameObject); });
+        }
+
         void Burst(int station)
         {
             if (Services.ReducedEffects) return;
             var centre = view.Stations[station].Tray.anchoredPosition;
-            var col = colors[session.Stations[station].Tray?.Colors[0] ?? 0];
+            var col = colors[session.Stations[station].Tray?.Need[0] ?? 0];
             for (int i = 0; i < 10; i++)
             {
                 var sp = UI.Image(view.FxLayer, "Spark", SpriteFactory.Glow(), Color.Lerp(col, Color.white, 0.4f), false);
@@ -265,11 +340,14 @@ namespace VoxelBloom
                 bool hidden = Time.time < v.HiddenUntil;
                 for (int c = 0; c < v.Cells.Length; c++)
                 {
-                    var cell = v.Cells[c];
-                    if (hidden || st.Tray == null || c >= st.Tray.Colors.Length) { cell.color = Color.clear; continue; }
-                    var col = colors[st.Tray.Colors[c]];
-                    if (c >= st.Tray.Filled) col = Color.Lerp(col, Color.white, 0.25f); // ghost = still required (lighter, half transparent)
-                    cell.color = new Color(col.r, col.g, col.b, (c < st.Tray.Filled ? 1f : 0.5f) * a);
+                    var cell = v.Cells[c]; var plate = v.Plates[c];
+                    if (hidden || st.Tray == null || c >= st.Tray.Need.Length) { cell.color = Color.clear; plate.color = Color.clear; continue; }
+                    var need = Color.Lerp(colors[st.Tray.Need[c]], Color.white, 0.2f);
+                    plate.color = new Color(need.r, need.g, need.b, 0.55f * a);          // required colour
+                    int have = st.Tray.Have[c];
+                    if (have >= 0) { var col = colors[have]; cell.color = new Color(col.r, col.g, col.b, a); } // cube in the compartment
+                    else cell.color = Color.clear;                                       // empty or a cube on its way
+                    cell.rectTransform.localScale = Vector3.one * (have >= 0 && have != st.Tray.Need[c] ? 0.92f : 1.12f); // wrong cubes show the required rim
                 }
                 bool open = st.Lock == StationLock.None;
                 v.Rim.color = open ? ConveyorScreen.TrayRim : new Color(1, 1, 1, 0);
@@ -288,18 +366,26 @@ namespace VoxelBloom
                 for (int r = 0; r < 4; r++)
                 {
                     var cell = card.Cells[r];
-                    if (!has || r >= session.Queue[i].Colors.Length) { cell.color = Color.clear; continue; }
-                    cell.color = colors[session.Queue[i].Colors[r]];
+                    if (!has || r >= session.Queue[i].Need.Length) { cell.color = Color.clear; continue; }
+                    int h = session.Queue[i].Have[r];
+                    cell.color = h >= 0 ? colors[h] : Color.Lerp(colors[session.Queue[i].Need[r]], new Color(1, 1, 1, 0), 0.55f);
                 }
             }
             int hidden = session.Queue.Count - session.VisibleCount;
-            view.QueueMore.text = hidden > 0 ? "+" + hidden + " tăvi în așteptare" : "";
+            view.QueueMore.text = hidden > 0 ? "+" + hidden + " BUS-uri în așteptare" : "";
         }
 
         void RefreshHud()
         {
-            view.ProgressText.text = session.Completed + "/" + session.Total;
-            view.Progress.Set(session.Total == 0 ? 1f : (float)session.Completed / session.Total);
+            // HUD pill = space on the belt (X/8); the objective is shown separately (8/8 is never a win)
+            int occ = session.Occupied, space = session.Space;
+            view.ProgressText.text = occ + "/" + space;
+            view.Progress.Set(space == 0 ? 0f : Mathf.Clamp01((float)occ / space));
+            var fill = view.Progress.Fill.GetComponent<Image>();
+            if (fill != null) fill.color = occ >= space ? Theme.Hex("#FF4D5E") : occ >= space - 1 ? Theme.Hex("#FFB13B") : Color.white;
+            view.SpaceWarning.text = occ >= space ? "Nu mai este spațiu" : occ >= space - 1 ? "Aproape plin!" : "";
+            view.SpaceWarning.color = occ >= space ? Theme.Hex("#FF5A6A") : Theme.Hex("#FFC24A");
+            view.ObjectiveText.text = "BUS-uri completate: " + session.Completed + "/" + session.Total;
             view.FeederText.text = session.HopperLeft > 0 ? "+" + session.HopperLeft : "";
             for (int i = 0; i < 3; i++)
             {
@@ -310,18 +396,22 @@ namespace VoxelBloom
 
         void UpdateHint()
         {
-            // tutorial (level 1): point at the best tray until two trays are placed
-            bool show = level.Tutorial && !finished && session.Placed < 2;
+            // tutorial (level 1): point at the best action (a BUS to release or a queued BUS) for the first moves
+            bool show = level.Tutorial && !finished && session.Released + session.Placed < 3;
             if (!show) { if (view.HintArrow.gameObject.activeSelf) view.HintArrow.gameObject.SetActive(false); view.HintText.text = ""; return; }
-            if (Time.frameCount % 15 == 0 || hintTray < -1) hintTray = ConveyorSolver.Hint(session); // the solver allocates: not every frame
-            int best = hintTray < session.VisibleCount ? hintTray : -1;
-            view.HintArrow.gameObject.SetActive(best >= 0);
-            view.HintText.text = show ? (session.Placed == 0 ? "Atinge o tavă de jos.\nCuburile de aceeași culoare\no umplu de pe bandă." : "Bravo! Mai trimite una.") : "";
-            if (best >= 0)
+            if (Time.frameCount % 15 == 0 || hintTray < -1) { hint = ConveyorSolver.Hint(session); hintTray = -1; } // allocates: not every frame
+            view.HintArrow.gameObject.SetActive(hint != null);
+            view.HintText.text = session.Released == 0
+                ? "Atinge un BUS: cubul greșit iese pe bandă\nși ajunge la BUS-ul care cere culoarea lui."
+                : "Bravo! Contorul de sus arată\nspațiul ocupat pe bandă.";
+            if (hint == null) return;
+            if (hint[1] == ConveyorSession.ActRelease)
             {
-                var card = view.Cards[best].Root;
-                view.HintArrow.anchoredPosition = card.anchoredPosition + new Vector2(0, 150 + Mathf.Sin(Time.time * 6f) * 14f);
+                var p = view.QueueRoot.InverseTransformPoint(view.Stations[hint[2]].Tray.position);
+                view.HintArrow.anchoredPosition = (Vector2)p + new Vector2(0, 90 + Mathf.Sin(Time.time * 6f) * 14f);
             }
+            else if (hint[2] < view.Cards.Count)
+                view.HintArrow.anchoredPosition = view.Cards[hint[2]].Root.anchoredPosition + new Vector2(0, 150 + Mathf.Sin(Time.time * 6f) * 14f);
         }
 
         // ------------------------------------------------------------------ boosters

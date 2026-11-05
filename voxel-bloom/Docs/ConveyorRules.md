@@ -23,46 +23,43 @@
 * The screenshot shows more cubes than compartments. Chosen: **supply equals demand per colour** (validated), so every
   cube has a destination and a level never ends with leftovers.
 
-## Rules (implemented in `Core/Conveyor/ConveyorSession.cs`, mirrored by `tools/conveyor/rules.mjs`)
-1. **Loop:** one closed rounded rectangle with `slots` evenly spaced belt slots (pitch P = 100 path units). All slots move
-   together by `speed` units per 60 Hz tick, in integer math. Constant spacing, no overtaking, continuous wrap-around
-   through all four corners. A slot holds one cube or is empty.
-2. **Feeder:** cubes that do not fit on the belt wait in the hopper (shown as `+N` on the chute at the top-left corner).
-   When an empty slot passes the feeder, the next hopper cube enters it.
-3. **Stations and trays:** a station is a fixed pickup point on the inner side of the loop. Its tray has up to 4
-   compartments, which are filled in order (compartment 0 is next to the belt). When a slot crosses the pickup point
-   and its cube's colour equals the tray's next required compartment, the cube is **reserved** for that compartment
-   and leaves the belt. It lands 18 ticks later (a visible flight); only then does it count as delivered. Non-matching cubes keep circulating.
-   One cube can only be reserved once, and stations are evaluated in a fixed order.
-4. **Completion:** when all compartments are filled, the objective goes +1 (the HUD shows `completed/total` trays, never
-   collected cubes). The tray leaves the station in 24 ticks, and then the station is free.
-5. **Player:** taps one of the first `visible` queued trays. It flies to the **first free, unlocked station** (in
-   station order) with enough capacity. If no station is free, nothing is consumed (a toast explains). A double tap cannot
-   place a tray twice: placement is a single atomic `Place()` call.
-6. **Locks (per level, optional):** a numbered grey tile is a station that opens after *n* completed trays (the
-   tile shows how many are still needed). A green plus slot is a station that opens with the **Extra station** booster
-   (tap the slot or the booster).
-7. **Win:** every tray is completed (transfers in flight have landed). **Loss (deadlock, exact and proven):** nothing is in flight or
-   leaving, no tray can be placed, no cube can enter (the hopper is empty or the belt is full), and no belt cube is the next
-   colour of any station. Because supply equals demand, this happens only when the belt is full of cubes that no
-   station needs while the needed ones wait in the hopper. That jam is the puzzle. The loss dialog offers Undo /
-   Extra station (paid with coins if the inventory is empty), Retry (one life) or Quit. The game never softlocks.
-8. **Boosters** (never consumed on a failed action). Since the 10-screen mockup, the three in-game boosters are
-   **Reîmprospătează** (Shuffle, 200 coins), **Amestecă culorile** (ColorShuffle, 300) and **Adaugă o tavă** (ExtraStation, 500).
-   Undo stays in the rules engine (tests) but is no longer offered in the UI:
-   * **Undo:** restores the full state from just before the last tray placement (snapshot stack).
-   * **Shuffle:** reorders the queued trays with a seeded random order. A new order is kept only if the greedy player
-     can still win from the current state (up to 20 tries). Otherwise nothing changes and nothing is consumed.
-   * **Extra station / Adaugă o tavă:** opens the first green plus slot. Not available on levels without one.
-   * **Amestecă culorile:** reorders the colours of the cubes on the belt and in the feeder. Positions and per-colour counts
-     stay the same. A new arrangement is kept only if the greedy player can still win.
-9. **Stars:** 3 without boosters, 2 with one or two, 1 otherwise. Rewards: level coins (+10 per extra star); replays pay 25%;
-   every 5th level gives +10 gems on the first clear.
-10. **Saving:** the unfinished level is saved as a snapshot (`ConveyorActive`) on every placement, on pause and on quit.
-    It carries a level signature and a cube-conservation check, so it is never restored onto different level data.
+## Rules v4: BUS -> belt -> BUS (implemented in `Core/Conveyor/ConveyorSession.cs`, mirrored by `tools/conveyor/rules.mjs`)
+These rules follow the approved functional mockup ("Machetă – Funcționare") and `voxel_bloom_modificari_functional.txt`.
+The belt, its art and every other system are unchanged.
+
+1. **Belt:** one closed loop of evenly spaced slots, moving clockwise (top to the right, right side down, bottom to the left,
+   left side up) by a fixed integer step per 60 Hz tick. Spacing is constant, there is no overtaking, and the motion through
+   the corners is continuous. Positions are mathematical (path units), with no Rigidbody.
+2. **BUS:** a tray at a station (any side: horizontal or vertical) with compartments. Compartment *i* requires a colour and
+   holds a cube (right or wrong), is empty, or is reserved for an incoming cube. On screen, each compartment shows the colour
+   it requires as a plate, with the cube on top. A wrong cube is drawn smaller, so the required colour shows around it.
+3. **Release (BUS -> belt):** tap a BUS and its first wrong cube lifts to the station's transfer point. It enters the belt in the
+   first empty slot that passes. This is only allowed while there is space on the belt. Several waiting cubes keep their order.
+4. **Collect (belt -> BUS):** a cube crossing a transfer point is reserved, atomically, by the first empty compartment of that
+   BUS that requires its colour. It lands 18 ticks later. One cube can be reserved only once. If no BUS can take it, it keeps
+   circulating: it never moves directly from BUS to BUS and never disappears.
+5. **Space counter (HUD X/8):** cubes on the belt plus cubes waiting to enter it. At 7/8 the HUD shows "Aproape plin!".
+   At 8/8 it shows "Nu mai este spațiu" and further releases are blocked. Cubes keep circulating, and collections free space.
+   The objective ("BUS-uri completate N/T") is shown separately. 8/8 is never a win.
+6. **Completion:** when every compartment holds its colour, the BUS shows a check mark and leaves. Its station frees for the
+   next queued BUS (tap a card in the queue of 7). Numbered tiles open after *n* completed BUSes. Green plus slots open with
+   the "Adaugă o tavă" booster.
+7. **Win:** every BUS is complete and nothing is in flight.
+   **Loss (exact deadlock):** nothing is in flight, waiting or leaving; no placement or release is possible; and no belt cube
+   can be collected.
+8. **Supply equals demand** per colour (validated): the cubes on the belt and in all BUSes match the required compartments.
+9. **Determinism and checks:** the simulation is separate from the animations (the view only interpolates). Saves carry a
+   level signature and a check that no cube was lost or duplicated.
+
+**Level 1** uses the approved Premium layout:
+* a board of 17×19 and 14 stations: on the left, 7 rows with the locks "1" and "2" and two plus slots; 3 vertical BUSes on
+  top; one horizontal on the right; 3 vertical at the bottom;
+* 10 BUSes placed, 5 in the queue of 7, 4 colours, space 8.
+
+Every level stores its own stations, capacities, transfer points, BUS order and contents.
 
 ## Levels (`tools/conveyor/build-levels.mjs`)
-50 levels that differ **in kind**, not only in size:
+50 levels (rules v4, regenerated with BUS cargo: a share of every BUS's cubes is scrambled, a few cubes start on the belt, space 10/8/7/6 by tier) that differ **in kind**, not only in size:
 * **Tiers** in a saw-tooth curve: Ușor / Normal / Greu (every 5th) / Foarte greu (every 10th). The tier is shown as a
   badge on the board and a coloured tile in the level list. Rewards: coins ×1 / ×1.2 / ×1.6 / ×2.2, plus +5 / +10 gems on the
   first clear of Greu / Foarte greu.

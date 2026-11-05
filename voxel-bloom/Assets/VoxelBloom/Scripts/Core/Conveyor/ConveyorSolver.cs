@@ -2,31 +2,43 @@ using System.Collections.Generic;
 
 namespace VoxelBloom.Core
 {
-    /// <summary>Players and witness replay for conveyor levels (mirror of tools/conveyor/rules.mjs).</summary>
+    /// <summary>Greedy player, witness replay and hints for conveyor BUS levels (mirror of tools/conveyor/rules.mjs).</summary>
     public static class ConveyorSolver
     {
         public struct Result { public bool Won; public int Ticks; }
 
-        /// <summary>The visible tray whose first required colours are most available on the belt (ties: lowest index).</summary>
-        public static int BestTray(ConveyorSession s)
+        static Dictionary<int, int> Demand(ConveyorSession s)
         {
-            var count = new Dictionary<int, int>();
-            foreach (int c in s.Slot) if (c >= 0) count[c] = count.TryGetValue(c, out var n) ? n + 1 : 1;
-            int best = -1; double bestScore = -1e9;
+            var d = new Dictionary<int, int>();
+            foreach (var st in s.Stations)
+                if (st.IsOpen)
+                    for (int i = 0; i < st.Tray.Need.Length; i++)
+                        if (st.Tray.Have[i] == ConveyorSession.Empty) d[st.Tray.Need[i]] = (d.TryGetValue(st.Tray.Need[i], out var n) ? n : 0) + 1;
+            foreach (int c in s.Slot) if (c >= 0 && d.ContainsKey(c)) d[c]--;
+            foreach (var st in s.Stations) foreach (int c in st.Out) if (d.ContainsKey(c)) d[c]--;
+            return d;
+        }
+
+        static int Get(Dictionary<int, int> d, int c) => d.TryGetValue(c, out var n) ? n : 0;
+
+        /// <summary>Heuristic action [tick, kind, index] or null (mirror of bestAction).</summary>
+        public static int[] BestAction(ConveyorSession s)
+        {
+            var d = Demand(s);
+            int[] best = null; int bestScore = 0;
+            for (int k = 0; k < s.Stations.Length; k++)
+            {
+                if (!s.CanRelease(k)) continue;
+                var b = s.Stations[k].Tray; int c = b.Have[b.WrongIndex()];
+                int score = Get(d, c) > 0 ? 100 : s.Occupied < s.Space - 2 ? 10 : 0;
+                if (score > bestScore) { bestScore = score; best = new[] { s.Tick, ConveyorSession.ActRelease, k }; }
+            }
             for (int i = 0; i < s.VisibleCount; i++)
             {
                 if (!s.CanPlace(i)) continue;
-                var cols = s.Queue[i].Colors;
-                var avail = new Dictionary<int, int>(count);
-                double score = 0, w = 1;
-                foreach (int c in cols)
-                {
-                    int a = avail.TryGetValue(c, out var n) ? n : 0;
-                    if (a > 0) { score += w * 10; avail[c] = a - 1; } else break;
-                    w *= 0.7;
-                }
-                score -= cols.Length * 0.5;
-                if (score > bestScore) { bestScore = score; best = i; }
+                var b = s.Queue[i]; int score = 50;
+                for (int j = 0; j < b.Need.Length; j++) { if (b.Have[j] == b.Need[j]) score += 3; else if (Get(d, b.Have[j]) > 0) score += 5; }
+                if (score > bestScore) { bestScore = score; best = new[] { s.Tick, ConveyorSession.ActPlace, i }; }
             }
             return best;
         }
@@ -35,28 +47,28 @@ namespace VoxelBloom.Core
         {
             while (!s.IsWon && !s.IsStuck() && s.Tick < ConveyorSession.MaxTicks)
             {
-                int qi;
-                while ((qi = BestTray(s)) >= 0) s.Place(qi);
+                int[] a; int guard = 0;
+                while ((a = BestAction(s)) != null && guard++ < 50) s.Act(a);
                 s.Step();
             }
             return new Result { Won = s.IsWon, Ticks = s.Tick };
         }
 
-        /// <summary>Replays a witness [[tick, queueIndex], ...]; returns the final session.</summary>
+        /// <summary>Replays a witness [[tick, kind, index], ...]; returns the final session.</summary>
         public static ConveyorSession Replay(ConveyorLevel level, int[][] witness)
         {
             var s = new ConveyorSession(level);
             int w = 0;
             while (!s.IsWon && s.Tick < ConveyorSession.MaxTicks)
             {
-                while (w < witness.Length && witness[w][0] == s.Tick) { if (s.Place(witness[w][1]) < 0) return s; w++; }
+                while (w < witness.Length && witness[w][0] == s.Tick) { if (!s.Act(witness[w])) return s; w++; }
                 if (s.IsStuck()) break;
                 s.Step();
             }
             return s;
         }
 
-        /// <summary>Hint: the tray the greedy player would place now (-1 if none).</summary>
-        public static int Hint(ConveyorSession s) => BestTray(s);
+        /// <summary>Hint for the tutorial: the action the greedy player would take now (null if none).</summary>
+        public static int[] Hint(ConveyorSession s) => BestAction(s);
     }
 }

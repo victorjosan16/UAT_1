@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace VoxelBloom.Core
 {
-    public enum ConveyorEventType { Place, Take, Land, Complete, Feed, Leave }
+    public enum ConveyorEventType { Place, Lift, Drop, Take, Land, Complete, Feed, Leave }
 
     public struct ConveyorEvent
     {
@@ -11,14 +11,26 @@ namespace VoxelBloom.Core
         public int Slot, Station, Color, Tray, Compartment, Tick;
     }
 
+    /// <summary>A BUS in play: compartment i requires Need[i] and holds Have[i] (a colour, Empty or Incoming).</summary>
     public sealed class ConveyorTray
     {
         public int Id;
-        public int[] Colors;
-        /// <summary>Compartments reserved by cubes (filled + in flight); the next required colour is Colors[Reserved].</summary>
-        public int Reserved;
-        public int Filled;
-        public ConveyorTray Clone() => new ConveyorTray { Id = Id, Colors = Colors, Reserved = Reserved, Filled = Filled };
+        public int[] Need, Have;
+        /// <summary>Ticks until a completed BUS has left its station (0 = in play).</summary>
+        public int Leave;
+        public ConveyorTray Clone() => new ConveyorTray { Id = Id, Need = Need, Have = (int[])Have.Clone(), Leave = Leave };
+
+        public int WrongIndex()
+        {
+            for (int i = 0; i < Need.Length; i++) if (Have[i] >= 0 && Have[i] != Need[i]) return i;
+            return -1;
+        }
+
+        public bool IsComplete()
+        {
+            for (int i = 0; i < Need.Length; i++) if (Have[i] != Need[i]) return false;
+            return true;
+        }
     }
 
     public sealed class ConveyorStation
@@ -27,73 +39,83 @@ namespace VoxelBloom.Core
         public StationLock Lock;
         public int LockN;
         public ConveyorTray Tray;
-        /// <summary>Ticks until a completed tray has left (0 = not leaving).</summary>
-        public int Leave;
-        public bool IsFree => Lock == StationLock.None && Tray == null && Leave == 0;
+        /// <summary>Released cubes waiting at the transfer point for an empty belt slot (in order).</summary>
+        public readonly List<int> Out = new List<int>();
+        public bool IsFree => Lock == StationLock.None && Tray == null;
+        public bool IsOpen => Tray != null && Tray.Leave == 0;
+        public int Leave => Tray?.Leave ?? 0;
     }
 
     public struct ConveyorTransfer { public int Station, Color, Compartment, T; }
 
     /// <summary>
-    /// Conveyor sort rules v3 (engine-free, deterministic, integer and tick based at 60 ticks/s).
+    /// Conveyor BUS rules v4 (engine-free, deterministic, integer and tick based at 60 ticks/s).
     /// Mirrors tools/conveyor/rules.mjs line by line; witness replays prove both agree. See Docs/ConveyorRules.md.
+    /// BUS -> belt (release, only with free space and an empty slot) -> belt circulates clockwise -> BUS (collect into an
+    /// empty compartment of the same colour). Space counter = cubes on the belt + cubes waiting to enter it.
     /// </summary>
     public sealed class ConveyorSession
     {
-        public const int P = 100, Transfer = 18, LeaveTicks = 24, TicksPerSecond = 60, MaxTicks = 60 * 60 * 6;
+        public const int P = 100, Transfer = 18, LeaveTicks = 24, TicksPerSecond = 60, MaxTicks = 60 * 60 * 8;
+        public const int Empty = -1, Incoming = -2;
+        public const int ActPlace = 0, ActRelease = 1;
 
         public readonly ConveyorLevel Level;
-        public readonly int C, L, V;
+        public readonly int C, L, V, Space;
         public int Offset { get; private set; }
         public int Tick { get; private set; }
         public readonly int[] Slot;
         public int HopperPos { get; private set; }
-        /// <summary>Cubes waiting to enter the belt (own copy: the colour-shuffle booster may reorder it).</summary>
         readonly int[] hopper;
         public readonly List<ConveyorTray> Queue = new List<ConveyorTray>();
         public readonly ConveyorStation[] Stations;
         public readonly List<ConveyorTransfer> Transfers = new List<ConveyorTransfer>();
         public int Completed { get; private set; }
         public int Delivered { get; private set; }
+        public int Released { get; private set; }
+        /// <summary>Cubes that left the board inside completed BUSes.</summary>
+        public int Gone { get; private set; }
         public int Placed { get; private set; }
         public int BoostersUsed { get; private set; }
-        public int Total => Level.Queue.Length;
-        /// <summary>Events produced by Place/Step since the last ClearEvents (for the view); null when not recording.</summary>
+        public int Total { get; }
         public readonly List<ConveyorEvent> Events;
         readonly Stack<State> undo;
 
         public ConveyorSession(ConveyorLevel level, bool recordEvents = false, bool enableUndo = false)
         {
             Level = level ?? throw new ArgumentNullException(nameof(level));
-            C = level.Slots; L = C * P; V = level.Speed;
+            C = level.Slots; L = C * P; V = level.Speed; Space = level.Space > 0 ? level.Space : level.Slots;
             Slot = (int[])level.Belt.Clone();
             hopper = (int[])level.Hopper.Clone();
-            for (int i = 0; i < level.Queue.Length; i++) Queue.Add(new ConveyorTray { Id = i, Colors = level.Queue[i] });
             Stations = new ConveyorStation[level.Stations.Length];
             for (int i = 0; i < Stations.Length; i++)
             {
                 var d = level.Stations[i];
                 Stations[i] = new ConveyorStation { S = d.S, Capacity = d.Capacity, Lock = d.Lock, LockN = d.LockN };
             }
+            int id = 0;
+            for (int k = 0; k < Stations.Length; k++)
+                if (level.Start[k] != null) Stations[k].Tray = Bus(id++, level.Start[k]);
+            foreach (var b in level.Queue) Queue.Add(Bus(id++, b));
+            Total = id;
             if (recordEvents) Events = new List<ConveyorEvent>();
             if (enableUndo) undo = new Stack<State>();
+            for (int k = 0; k < Stations.Length; k++) CheckComplete(k);
             UpdateLocks();
         }
 
+        static ConveyorTray Bus(int id, BusDef b) => new ConveyorTray { Id = id, Need = b.Need, Have = (int[])b.Have.Clone() };
+
         // ------------------------------------------------------------------ queries
         public int SlotPos(int k) => (k * P + Offset) % L;
-        public bool IsWon => Completed == Total;
+        public bool IsWon => Completed == Total && Transfers.Count == 0;
         public int HopperLeft => hopper.Length - HopperPos;
         public int VisibleCount => Math.Min(Level.Visible, Queue.Count);
         public int UndoCount => undo?.Count ?? 0;
-
         public int BeltCount { get { int n = 0; foreach (int c in Slot) if (c >= 0) n++; return n; } }
-
-        public int NextColor(ConveyorStation st)
-        {
-            var t = st.Tray;
-            return t != null && t.Reserved < t.Colors.Length ? t.Colors[t.Reserved] : -1;
-        }
+        public int Waiting { get { int n = 0; foreach (var st in Stations) n += st.Out.Count; return n; } }
+        /// <summary>The "X/Space" counter: cubes on the belt plus cubes waiting to enter it.</summary>
+        public int Occupied => BeltCount + Waiting;
 
         public int FreeStation(int len)
         {
@@ -101,7 +123,7 @@ namespace VoxelBloom.Core
             return -1;
         }
 
-        public bool CanPlace(int qi) => qi >= 0 && qi < VisibleCount && !IsWon && FreeStation(Queue[qi].Colors.Length) >= 0;
+        public bool CanPlace(int qi) => qi >= 0 && qi < VisibleCount && !IsWon && FreeStation(Queue[qi].Need.Length) >= 0;
 
         public bool AnyPlaceable()
         {
@@ -109,34 +131,78 @@ namespace VoxelBloom.Core
             return false;
         }
 
-        /// <summary>Deadlock: nothing in flight or leaving, no tray can be placed, no cube can enter, no belt cube is needed.</summary>
+        public bool CanRelease(int k) => k >= 0 && k < Stations.Length && Stations[k].IsOpen && Occupied < Space && Stations[k].Tray.WrongIndex() >= 0;
+
+        public bool AnyReleasable()
+        {
+            for (int k = 0; k < Stations.Length; k++) if (CanRelease(k)) return true;
+            return false;
+        }
+
+        /// <summary>Compartment of the BUS at <paramref name="st"/> that would collect colour c (-1 if none).</summary>
+        public int Wants(ConveyorStation st, int c)
+        {
+            if (!st.IsOpen) return -1;
+            var b = st.Tray;
+            for (int i = 0; i < b.Need.Length; i++) if (b.Have[i] == Empty && b.Need[i] == c) return i;
+            return -1;
+        }
+
         public bool IsStuck()
         {
-            if (IsWon || Transfers.Count > 0) return false;
-            foreach (var st in Stations) if (st.Leave > 0) return false;
-            if (AnyPlaceable()) return false;
-            if (HopperLeft > 0 && BeltCount < C) return false;
+            if (IsWon || Transfers.Count > 0 || Waiting > 0) return false;
+            foreach (var st in Stations) if (st.Tray != null && st.Tray.Leave > 0) return false;
+            if (AnyPlaceable() || AnyReleasable()) return false;
+            if (HopperLeft > 0 && Occupied < Space && BeltCount < C) return false;
             foreach (int c in Slot)
             {
                 if (c < 0) continue;
-                foreach (var st in Stations) if (NextColor(st) == c) return false;
+                foreach (var st in Stations) if (Wants(st, c) >= 0) return false;
             }
             return true;
         }
 
         // ------------------------------------------------------------------ actions
-        /// <summary>Sends visible queued tray <paramref name="qi"/> to the first free station; returns the station or -1 (nothing consumed).</summary>
+        /// <summary>Sends visible queued BUS <paramref name="qi"/> to the first free station; returns the station or -1 (nothing consumed).</summary>
         public int Place(int qi)
         {
             if (!CanPlace(qi)) return -1;
             undo?.Push(Capture());
-            var tray = Queue[qi];
+            var bus = Queue[qi];
             Queue.RemoveAt(qi);
-            int k = FreeStation(tray.Colors.Length);
-            Stations[k].Tray = new ConveyorTray { Id = tray.Id, Colors = tray.Colors };
+            int k = FreeStation(bus.Need.Length);
+            Stations[k].Tray = bus;
             Placed++;
-            Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Place, Tray = tray.Id, Station = k, Slot = qi, Tick = Tick });
+            Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Place, Tray = bus.Id, Station = k, Slot = qi, Tick = Tick });
+            CheckComplete(k);
             return k;
+        }
+
+        /// <summary>The BUS at station k lets its first wrong cube out; it waits at the transfer point for an empty slot.</summary>
+        public bool Release(int k)
+        {
+            if (!CanRelease(k)) return false;
+            undo?.Push(Capture());
+            var st = Stations[k];
+            int i = st.Tray.WrongIndex(), c = st.Tray.Have[i];
+            st.Tray.Have[i] = Empty;
+            st.Out.Add(c);
+            Released++;
+            Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Lift, Station = k, Compartment = i, Color = c, Tick = Tick });
+            return true;
+        }
+
+        /// <summary>Witness action [tick, kind, index].</summary>
+        public bool Act(int[] a) => a[1] == ActPlace ? Place(a[2]) >= 0 : Release(a[2]);
+
+        void CheckComplete(int k)
+        {
+            var st = Stations[k]; var b = st.Tray;
+            if (b == null || b.Leave > 0 || !b.IsComplete() || st.Out.Count > 0) return;
+            Completed++;
+            b.Leave = LeaveTicks;
+            Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Complete, Station = k, Tray = b.Id, Tick = Tick });
+            UpdateLocks();
         }
 
         public void Step()
@@ -147,25 +213,19 @@ namespace VoxelBloom.Core
                 var tr = Transfers[i];
                 tr.T--;
                 if (tr.T > 0) { Transfers[i] = tr; continue; }
-                var st = Stations[tr.Station];
-                st.Tray.Filled++;
+                Stations[tr.Station].Tray.Have[tr.Compartment] = tr.Color;
                 Delivered++;
                 Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Land, Station = tr.Station, Color = tr.Color, Compartment = tr.Compartment, Tick = Tick });
-                if (st.Tray.Filled == st.Tray.Colors.Length)
-                {
-                    Completed++;
-                    st.Leave = LeaveTicks;
-                    Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Complete, Station = tr.Station, Tray = st.Tray.Id, Tick = Tick });
-                    UpdateLocks();
-                }
                 Transfers.RemoveAt(i); i--;
+                CheckComplete(tr.Station);
             }
-            for (int si = 0; si < Stations.Length; si++)
+            for (int k = 0; k < Stations.Length; k++)
             {
-                var st = Stations[si];
-                if (st.Leave > 0 && --st.Leave == 0)
+                var st = Stations[k];
+                if (st.Tray != null && st.Tray.Leave > 0 && --st.Tray.Leave == 0)
                 {
-                    Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Leave, Station = si, Tray = st.Tray.Id, Tick = Tick });
+                    Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Leave, Station = k, Tray = st.Tray.Id, Tick = Tick });
+                    Gone += st.Tray.Need.Length;
                     st.Tray = null;
                 }
             }
@@ -174,23 +234,31 @@ namespace VoxelBloom.Core
             for (int k = 0; k < C; k++)
             {
                 int p0 = (k * P + prev) % L;
-                if (Slot[k] >= 0)
+                for (int si = 0; si < Stations.Length; si++)
                 {
-                    for (int si = 0; si < Stations.Length; si++)
+                    var st = Stations[si];
+                    int d = (st.S - p0 + L) % L;
+                    if (d == 0 || d > V) continue;
+                    if (Slot[k] >= 0)
                     {
-                        var st = Stations[si];
-                        if (st.Tray == null || st.Leave > 0) continue;
-                        int d = (st.S - p0 + L) % L;
-                        if (d == 0 || d > V) continue;
-                        if (NextColor(st) != Slot[k]) continue;
-                        Transfers.Add(new ConveyorTransfer { Station = si, Color = Slot[k], Compartment = st.Tray.Reserved, T = Transfer });
-                        Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Take, Slot = k, Station = si, Color = Slot[k], Compartment = st.Tray.Reserved, Tick = Tick });
-                        st.Tray.Reserved++;
+                        int i = Wants(st, Slot[k]);
+                        if (i < 0) continue;
+                        st.Tray.Have[i] = Incoming;
+                        Transfers.Add(new ConveyorTransfer { Station = si, Color = Slot[k], Compartment = i, T = Transfer });
+                        Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Take, Slot = k, Station = si, Color = Slot[k], Compartment = i, Tick = Tick });
                         Slot[k] = -1;
                         break;
                     }
+                    if (st.Out.Count > 0)
+                    {
+                        Slot[k] = st.Out[0];
+                        st.Out.RemoveAt(0);
+                        Events?.Add(new ConveyorEvent { Type = ConveyorEventType.Drop, Slot = k, Station = si, Color = Slot[k], Tick = Tick });
+                        CheckComplete(si);
+                        break;
+                    }
                 }
-                if (Slot[k] < 0 && HopperLeft > 0)
+                if (Slot[k] < 0 && HopperLeft > 0 && Occupied < Space)
                 {
                     int d = (Level.Feeder - p0 + L) % L;
                     if (d != 0 && d <= V)
@@ -211,7 +279,6 @@ namespace VoxelBloom.Core
         public void ClearEvents() => Events?.Clear();
 
         // ------------------------------------------------------------------ boosters
-        /// <summary>Undo: restores the state from just before the last tray placement.</summary>
         public bool UndoLast()
         {
             if (undo == null || undo.Count == 0) return false;
@@ -221,7 +288,6 @@ namespace VoxelBloom.Core
             return true;
         }
 
-        /// <summary>Extra station: opens the first green "plus" slot. False (nothing consumed) if there is none.</summary>
         public bool ExtraStation()
         {
             foreach (var st in Stations)
@@ -235,7 +301,7 @@ namespace VoxelBloom.Core
             return false;
         }
 
-        /// <summary>Reorders the queued trays (seeded); keeps a new order only if the greedy player still wins from here.</summary>
+        /// <summary>Reorders the queued BUSes (seeded); keeps a new order only if the greedy player still wins from here.</summary>
         public bool Shuffle(DeterministicRandom rand)
         {
             if (Queue.Count < 2) return false;
@@ -251,14 +317,10 @@ namespace VoxelBloom.Core
             return false;
         }
 
-        /// <summary>
-        /// "Amestecă culorile": reorders the colours of the cubes on the belt and in the feeder (positions stay, supply is
-        /// unchanged). A new arrangement is kept only if the greedy player can still win; otherwise nothing changes.
-        /// </summary>
+        /// <summary>"Amestecă culorile": reorders the colours of the cubes on the belt and in the feeder (positions stay).</summary>
         public bool ShuffleColors(DeterministicRandom rand)
         {
-            var idx = new List<int>();          // >= 0: belt slot, < 0: -(hopper index) - 1
-            var cols = new List<int>();
+            var idx = new List<int>(); var cols = new List<int>();
             for (int k = 0; k < C; k++) if (Slot[k] >= 0) { idx.Add(k); cols.Add(Slot[k]); }
             for (int h = HopperPos; h < hopper.Length; h++) { idx.Add(-h - 1); cols.Add(hopper[h]); }
             if (cols.Count < 2) return false;
@@ -273,32 +335,31 @@ namespace VoxelBloom.Core
             return false;
         }
 
-        /// <summary>Cubes still to deliver equal the compartments still to fill, per colour (invariant).</summary>
-        public bool HasValidSupply()
-        {
-            var need = new int[Level.Colors.Length];
-            foreach (var t in Queue) foreach (int c in t.Colors) need[c]++;
-            foreach (var st in Stations) if (st.Tray != null) for (int i = st.Tray.Reserved; i < st.Tray.Colors.Length; i++) need[st.Tray.Colors[i]]++;
-            foreach (int c in Slot) if (c >= 0) need[c]--;
-            for (int h = HopperPos; h < hopper.Length; h++) need[hopper[h]]--;
-            foreach (int n in need) if (n != 0) return false;
-            return true;
-        }
-
         void Assign(List<int> idx, List<int> cols)
         {
             for (int i = 0; i < idx.Count; i++) { if (idx[i] >= 0) Slot[idx[i]] = cols[i]; else hopper[-idx[i] - 1] = cols[i]; }
         }
 
+        /// <summary>Every cube is somewhere exactly once (belt, waiting, in flight, feeder, in a BUS, or gone with a completed BUS).</summary>
+        public int CubeCount()
+        {
+            int n = BeltCount + Waiting + Transfers.Count + HopperLeft + Gone;
+            foreach (var st in Stations) if (st.Tray != null) foreach (int c in st.Tray.Have) if (c >= 0) n++;
+            foreach (var b in Queue) foreach (int c in b.Have) if (c >= 0) n++;
+            return n;
+        }
+
+        public bool HasValidSupply() => CubeCount() == Level.TotalCubes;
+
         // ------------------------------------------------------------------ state
         sealed class State
         {
-            public int Offset, Tick, HopperPos, Completed, Delivered, Placed, BoostersUsed;
+            public int Offset, Tick, HopperPos, Completed, Delivered, Released, Gone, Placed, BoostersUsed;
             public int[] Slot, Hopper;
             public List<ConveyorTray> Queue;
             public StationLock[] Locks;
             public ConveyorTray[] Trays;
-            public int[] Leave;
+            public List<int>[] Out;
             public List<ConveyorTransfer> Transfers;
         }
 
@@ -306,21 +367,28 @@ namespace VoxelBloom.Core
         {
             var s = new State
             {
-                Offset = Offset, Tick = Tick, HopperPos = HopperPos, Completed = Completed, Delivered = Delivered, Placed = Placed, BoostersUsed = BoostersUsed,
-                Slot = (int[])Slot.Clone(), Hopper = (int[])hopper.Clone(), Queue = new List<ConveyorTray>(Queue), Locks = new StationLock[Stations.Length],
-                Trays = new ConveyorTray[Stations.Length], Leave = new int[Stations.Length], Transfers = new List<ConveyorTransfer>(Transfers),
+                Offset = Offset, Tick = Tick, HopperPos = HopperPos, Completed = Completed, Delivered = Delivered, Released = Released, Gone = Gone,
+                Placed = Placed, BoostersUsed = BoostersUsed, Slot = (int[])Slot.Clone(), Hopper = (int[])hopper.Clone(),
+                Queue = new List<ConveyorTray>(), Locks = new StationLock[Stations.Length], Trays = new ConveyorTray[Stations.Length],
+                Out = new List<int>[Stations.Length], Transfers = new List<ConveyorTransfer>(Transfers),
             };
-            for (int i = 0; i < Stations.Length; i++) { s.Locks[i] = Stations[i].Lock; s.Trays[i] = Stations[i].Tray?.Clone(); s.Leave[i] = Stations[i].Leave; }
+            foreach (var b in Queue) s.Queue.Add(b.Clone());
+            for (int i = 0; i < Stations.Length; i++) { s.Locks[i] = Stations[i].Lock; s.Trays[i] = Stations[i].Tray?.Clone(); s.Out[i] = new List<int>(Stations[i].Out); }
             return s;
         }
 
         void Restore(State s)
         {
-            Offset = s.Offset; Tick = s.Tick; HopperPos = s.HopperPos; Completed = s.Completed; Delivered = s.Delivered; Placed = s.Placed; BoostersUsed = s.BoostersUsed;
+            Offset = s.Offset; Tick = s.Tick; HopperPos = s.HopperPos; Completed = s.Completed; Delivered = s.Delivered; Released = s.Released; Gone = s.Gone;
+            Placed = s.Placed; BoostersUsed = s.BoostersUsed;
             Array.Copy(s.Slot, Slot, Slot.Length);
             Array.Copy(s.Hopper, hopper, hopper.Length);
-            Queue.Clear(); Queue.AddRange(s.Queue);
-            for (int i = 0; i < Stations.Length; i++) { Stations[i].Lock = s.Locks[i]; Stations[i].Tray = s.Trays[i]?.Clone(); Stations[i].Leave = s.Leave[i]; }
+            Queue.Clear(); foreach (var b in s.Queue) Queue.Add(b.Clone());
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                Stations[i].Lock = s.Locks[i]; Stations[i].Tray = s.Trays[i]?.Clone();
+                Stations[i].Out.Clear(); Stations[i].Out.AddRange(s.Out[i]);
+            }
             Transfers.Clear(); Transfers.AddRange(s.Transfers);
         }
 
@@ -332,28 +400,34 @@ namespace VoxelBloom.Core
         }
 
         // ------------------------------------------------------------------ persistence (resume an unfinished level)
+        static List<object> L2(IEnumerable<int> a) { var l = new List<object>(); foreach (int v in a) l.Add((double)v); return l; }
+        static int[] I(List<object> a) { var r = new int[a.Count]; for (int i = 0; i < r.Length; i++) r[i] = (int)(double)a[i]; return r; }
+
+        static Dictionary<string, object> BusObj(ConveyorTray b) => new Dictionary<string, object>
+            { { "id", (double)b.Id }, { "need", L2(b.Need) }, { "have", L2(b.Have) }, { "leave", (double)b.Leave } };
+
+        static ConveyorTray ReadBus(object o)
+        {
+            var d = MiniJson.Obj(o);
+            if (d == null) return null;
+            return new ConveyorTray { Id = MiniJson.GetInt(d, "id"), Need = I(MiniJson.GetArr(d, "need")), Have = I(MiniJson.GetArr(d, "have")), Leave = MiniJson.GetInt(d, "leave") };
+        }
+
         public Dictionary<string, object> ToSnapshot()
         {
             var q = new List<object>();
-            foreach (var t in Queue) q.Add((double)t.Id);
+            foreach (var b in Queue) q.Add(BusObj(b));
             var st = new List<object>();
             foreach (var s in Stations)
-                st.Add(new Dictionary<string, object>
-                {
-                    { "lock", (double)(int)s.Lock }, { "leave", (double)s.Leave },
-                    { "tray", s.Tray == null ? -1.0 : s.Tray.Id }, { "res", (double)(s.Tray?.Reserved ?? 0) }, { "fill", (double)(s.Tray?.Filled ?? 0) },
-                });
+                st.Add(new Dictionary<string, object> { { "lock", (double)(int)s.Lock }, { "bus", s.Tray == null ? null : BusObj(s.Tray) }, { "out", L2(s.Out) } });
             var tr = new List<object>();
             foreach (var t in Transfers) tr.Add(new List<object> { (double)t.Station, (double)t.Color, (double)t.Compartment, (double)t.T });
-            var slots = new List<object>();
-            foreach (int c in Slot) slots.Add((double)c);
-            var hop = new List<object>();
-            foreach (int c in hopper) hop.Add((double)c);
             return new Dictionary<string, object>
             {
-                { "level", (double)Level.Id }, { "rules", 3.0 }, { "sig", Signature(Level) }, { "offset", (double)Offset }, { "tick", (double)Tick }, { "hopperPos", (double)HopperPos },
-                { "completed", (double)Completed }, { "delivered", (double)Delivered }, { "placed", (double)Placed }, { "boosters", (double)BoostersUsed },
-                { "slots", slots }, { "hopper", hop }, { "queue", q }, { "stations", st }, { "transfers", tr },
+                { "level", (double)Level.Id }, { "rules", 4.0 }, { "sig", Signature(Level) }, { "offset", (double)Offset }, { "tick", (double)Tick },
+                { "hopperPos", (double)HopperPos }, { "completed", (double)Completed }, { "delivered", (double)Delivered }, { "released", (double)Released },
+                { "gone", (double)Gone }, { "placed", (double)Placed }, { "boosters", (double)BoostersUsed },
+                { "slots", L2(Slot) }, { "hopper", L2(hopper) }, { "queue", q }, { "stations", st }, { "transfers", tr },
             };
         }
 
@@ -362,47 +436,47 @@ namespace VoxelBloom.Core
         {
             uint h = 2166136261u;
             void Mix(int v) { unchecked { h = (h ^ (uint)v) * 16777619u; } }
-            Mix(l.Slots); Mix(l.Speed); Mix(l.Feeder); Mix(l.Visible);
+            Mix(l.Slots); Mix(l.Speed); Mix(l.Feeder); Mix(l.Visible); Mix(l.Space);
             foreach (int c in l.Belt) Mix(c);
             foreach (int c in l.Hopper) Mix(c);
-            foreach (var t in l.Queue) { Mix(-9); foreach (int c in t) Mix(c); }
-            foreach (var st in l.Stations) { Mix(st.S); Mix((int)st.Lock); Mix(st.LockN); }
+            foreach (var b in l.Start) { Mix(-7); if (b != null) { foreach (int c in b.Need) Mix(c); foreach (int c in b.Have) Mix(c); } }
+            foreach (var b in l.Queue) { Mix(-9); foreach (int c in b.Need) Mix(c); foreach (int c in b.Have) Mix(c); }
+            foreach (var st in l.Stations) { Mix(st.S); Mix((int)st.Lock); Mix(st.LockN); Mix(st.Capacity); }
             return h.ToString();
         }
 
         public static ConveyorSession FromSnapshot(ConveyorLevel level, Dictionary<string, object> d, bool recordEvents = true, bool enableUndo = true)
         {
-            if (d == null || MiniJson.GetInt(d, "rules") != 3 || MiniJson.GetInt(d, "level") != level.Id) return null;
-            if (MiniJson.GetString(d, "sig", "") != Signature(level)) return null; // saved with another version of the level
+            if (d == null || MiniJson.GetInt(d, "rules") != 4 || MiniJson.GetInt(d, "level") != level.Id) return null;
+            if (MiniJson.GetString(d, "sig", "") != Signature(level)) return null;
             try
             {
                 var s = new ConveyorSession(level, recordEvents, enableUndo);
-                var slots = MiniJson.GetArr(d, "slots");
-                if (slots == null || slots.Count != s.C) return null;
-                for (int i = 0; i < s.C; i++) s.Slot[i] = (int)(double)slots[i];
-                var hop = MiniJson.GetArr(d, "hopper");
-                if (hop != null && hop.Count == s.hopper.Length) for (int i = 0; i < hop.Count; i++) s.hopper[i] = (int)(double)hop[i];
+                var slots = I(MiniJson.GetArr(d, "slots"));
+                if (slots.Length != s.C) return null;
+                Array.Copy(slots, s.Slot, s.C);
+                var hop = I(MiniJson.GetArr(d, "hopper"));
+                if (hop.Length == s.hopper.Length) Array.Copy(hop, s.hopper, hop.Length);
                 s.Offset = MiniJson.GetInt(d, "offset"); s.Tick = MiniJson.GetInt(d, "tick"); s.HopperPos = MiniJson.GetInt(d, "hopperPos");
-                s.Completed = MiniJson.GetInt(d, "completed"); s.Delivered = MiniJson.GetInt(d, "delivered"); s.Placed = MiniJson.GetInt(d, "placed");
-                s.BoostersUsed = MiniJson.GetInt(d, "boosters");
+                s.Completed = MiniJson.GetInt(d, "completed"); s.Delivered = MiniJson.GetInt(d, "delivered"); s.Released = MiniJson.GetInt(d, "released");
+                s.Gone = MiniJson.GetInt(d, "gone"); s.Placed = MiniJson.GetInt(d, "placed"); s.BoostersUsed = MiniJson.GetInt(d, "boosters");
                 s.Queue.Clear();
-                foreach (var o in MiniJson.GetArr(d, "queue")) { int id = (int)(double)o; s.Queue.Add(new ConveyorTray { Id = id, Colors = level.Queue[id] }); }
+                foreach (var o in MiniJson.GetArr(d, "queue")) s.Queue.Add(ReadBus(o));
                 var st = MiniJson.GetArr(d, "stations");
                 for (int i = 0; i < s.Stations.Length; i++)
                 {
                     var o = MiniJson.Obj(st[i]);
                     s.Stations[i].Lock = (StationLock)MiniJson.GetInt(o, "lock");
-                    s.Stations[i].Leave = MiniJson.GetInt(o, "leave");
-                    int tray = MiniJson.GetInt(o, "tray", -1);
-                    s.Stations[i].Tray = tray < 0 ? null : new ConveyorTray { Id = tray, Colors = level.Queue[tray], Reserved = MiniJson.GetInt(o, "res"), Filled = MiniJson.GetInt(o, "fill") };
+                    s.Stations[i].Tray = ReadBus(MiniJson.GetObj(o, "bus"));
+                    s.Stations[i].Out.Clear(); s.Stations[i].Out.AddRange(I(MiniJson.GetArr(o, "out")));
                 }
+                s.Transfers.Clear();
                 foreach (var o in MiniJson.GetArr(d, "transfers"))
                 {
                     var a = MiniJson.Arr(o);
                     s.Transfers.Add(new ConveyorTransfer { Station = (int)(double)a[0], Color = (int)(double)a[1], Compartment = (int)(double)a[2], T = (int)(double)a[3] });
                 }
-                // conservation check: nothing lost or duplicated
-                if (s.BeltCount + s.HopperLeft + s.Transfers.Count + s.Delivered != level.TotalCubes) return null;
+                if (!s.HasValidSupply()) return null; // nothing lost or duplicated
                 return s;
             }
             catch (Exception) { return null; }

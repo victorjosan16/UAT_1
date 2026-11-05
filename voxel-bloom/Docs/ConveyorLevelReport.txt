@@ -1,50 +1,50 @@
-L 1  Ușor        tablă S  culori 2  tăvi  3 (2/3)  cuburi   7  stații 3 [-]  coadă 3  viteză 6  soluție 12s  casual 1
-L 2  Ușor        tablă S  culori 3  tăvi  4 (2/3)  cuburi  10  stații 3 [-]  coadă 4  viteză 6  soluție 12s  casual 1
-L 3  Ușor        tablă S  culori 3  tăvi  5 (2/3)  cuburi  11  stații 3 [-]  coadă 5  viteză 6  soluție 23s  casual 1
-L 4  Normal      tablă M  culori 3  tăvi 20 (3/4)  cuburi  69  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 1
-L 5  Greu        tablă M  culori 4  tăvi 21 (4)  cuburi  84  stații 4 [-]  coadă 5  viteză 7  soluție 67s  casual 0.88
-L 6  Normal      tablă M  culori 4  tăvi 21 (3/4)  cuburi  72  stații 4 [-]  coadă 5  viteză 6  soluție 56s  casual 1
-L 7  Ușor        tablă S  culori 4  tăvi 11 (2/3)  cuburi  29  stații 3 [-]  coadă 6  viteză 6  soluție 32s  casual 1
-L 8  Normal      tablă M  culori 4  tăvi 23 (3/4)  cuburi  78  stații 4 [-]  coadă 5  viteză 6  soluție 71s  casual 1
-L 9  Normal      tablă S  culori 4  tăvi 21 (3)  cuburi  63  stații 4 [#3]  coadă 5  viteză 6  soluție 42s  casual 1
-L10  Foarte greu tablă L  culori 5  tăvi 36 (4)  cuburi 144  stații 5 [-]  coadă 4  viteză 7  soluție 127s  casual 0.38
-L11  Normal      tablă M  culori 4  tăvi 26 (3/4)  cuburi  89  stații 4 [-]  coadă 5  viteză 6  soluție 75s  casual 1
-L12  Ușor        tablă S  culori 4  tăvi 12 (2/3)  cuburi  28  stații 4 [+]  coadă 6  viteză 6  soluție 32s  casual 1
-L13  Normal      tablă S  culori 4  tăvi 24 (3)  cuburi  72  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 0.88
-L14  Normal      tablă M  culori 4  tăvi 27 (3/4)  cuburi  93  stații 4 [-]  coadă 5  viteză 6  soluție 89s  casual 0.94
-L15  Greu        tablă M  culori 5  tăvi 28 (4)  cuburi 112  stații 4 [#4]  coadă 5  viteză 7  soluție 142s  casual 0.5
-L16  Normal      tablă M  culori 5  tăvi 27 (3/4)  cuburi  96  stații 5 [+]  coadă 5  viteză 6  soluție 105s  casual 0.81
-L17  Ușor        tablă S  culori 5  tăvi 12 (2/3)  cuburi  30  stații 3 [-]  coadă 6  viteză 6  soluție 36s  casual 1
-L18  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 115  stații 6 [#3]  coadă 5  viteză 6  soluție 88s  casual 1
-L19  Normal      tablă M  culori 5  tăvi 28 (3/4)  cuburi  98  stații 4 [-]  coadă 5  viteză 6  soluție 116s  casual 0.5
-L20  Foarte greu tablă L  culori 6  tăvi 39 (4)  cuburi 156  stații 6 [+]  coadă 4  viteză 7  soluție 135s  casual 0.31
-L21  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 110  stații 6 [#3]  coadă 5  viteză 6  soluție 104s  casual 0.88
-L22  Ușor        tablă S  culori 5  tăvi 13 (2/3)  cuburi  35  stații 3 [-]  coadă 6  viteză 6  soluție 32s  casual 1
-L23  Normal      tablă M  culori 5  tăvi 28 (3/4)  cuburi 103  stații 4 [-]  coadă 5  viteză 6  soluție 111s  casual 0.63
-L24  Normal      tablă L  culori 5  tăvi 33 (3/4)  cuburi 116  stații 7 [#3 +]  coadă 5  viteză 6  soluție 125s  casual 0.81
-L25  Greu        tablă L  culori 6  tăvi 34 (4)  cuburi 136  stații 5 [-]  coadă 5  viteză 7  soluție 144s  casual 0.38
-L26  Normal      tablă M  culori 6  tăvi 28 (3/4)  cuburi  96  stații 4 [-]  coadă 5  viteză 6  soluție 105s  casual 0.75
-L27  Ușor        tablă S  culori 5  tăvi 13 (2/3)  cuburi  35  stații 3 [-]  coadă 6  viteză 6  soluție 42s  casual 1
-L28  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi  99  stații 5 [+]  coadă 5  viteză 6  soluție 102s  casual 0.69
-L29  Normal      tablă S  culori 5  tăvi 25 (3)  cuburi  75  stații 4 [-]  coadă 5  viteză 6  soluție 53s  casual 1
-L30  Foarte greu tablă L  culori 7  tăvi 40 (4)  cuburi 160  stații 5 [#5]  coadă 4  viteză 7  soluție 176s  casual 0.25
-L31  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi 105  stații 4 [-]  coadă 5  viteză 6  soluție 120s  casual 0.88
-L32  Ușor        tablă M  culori 6  tăvi 18 (2/3)  cuburi  41  stații 6 [+]  coadă 6  viteză 6  soluție 41s  casual 1
-L33  Normal      tablă L  culori 6  tăvi 34 (3/4)  cuburi 118  stații 6 [#3]  coadă 5  viteză 6  soluție 121s  casual 1
-L34  Normal      tablă M  culori 6  tăvi 29 (3/4)  cuburi 101  stații 4 [-]  coadă 5  viteză 6  soluție 98s  casual 0.56
-L35  Greu        tablă L  culori 7  tăvi 35 (4)  cuburi 140  stații 5 [-]  coadă 5  viteză 7  soluție 158s  casual 0.31
-L36  Normal      tablă L  culori 7  tăvi 35 (3/4)  cuburi 121  stații 7 [#3 +]  coadă 5  viteză 6  soluție 125s  casual 0.88
-L37  Ușor        tablă S  culori 5  tăvi 14 (2/3)  cuburi  32  stații 3 [-]  coadă 6  viteză 6  soluție 50s  casual 1
-L38  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 106  stații 4 [-]  coadă 5  viteză 6  soluție 111s  casual 0.75
-L39  Normal      tablă L  culori 7  tăvi 35 (3/4)  cuburi 125  stații 6 [#3]  coadă 5  viteză 6  soluție 114s  casual 0.56
-L40  Foarte greu tablă L  culori 8  tăvi 41 (4)  cuburi 164  stații 6 [+]  coadă 4  viteză 7  soluție 192s  casual 0.31
-L41  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 102  stații 4 [-]  coadă 5  viteză 6  soluție 136s  casual 0.69
-L42  Ușor        tablă M  culori 7  tăvi 20 (2/3)  cuburi  49  stații 5 [-]  coadă 6  viteză 6  soluție 46s  casual 1
-L43  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 105  stații 4 [-]  coadă 5  viteză 6  soluție 137s  casual 0.56
-L44  Normal      tablă M  culori 7  tăvi 30 (3/4)  cuburi 107  stații 5 [+]  coadă 5  viteză 6  soluție 139s  casual 0.56
-L45  Greu        tablă L  culori 8  tăvi 36 (4)  cuburi 144  stații 5 [#4]  coadă 5  viteză 7  soluție 138s  casual 0.31
-L46  Normal      tablă M  culori 8  tăvi 30 (3/4)  cuburi 104  stații 4 [-]  coadă 5  viteză 6  soluție 154s  casual 0.69
-L47  Ușor        tablă S  culori 5  tăvi 15 (2/3)  cuburi  37  stații 3 [-]  coadă 6  viteză 6  soluție 41s  casual 1
-L48  Normal      tablă L  culori 8  tăvi 36 (3/4)  cuburi 124  stații 7 [#3 +]  coadă 5  viteză 6  soluție 193s  casual 0.5
-L49  Normal      tablă M  culori 8  tăvi 31 (3/4)  cuburi  99  stații 4 [-]  coadă 5  viteză 6  soluție 137s  casual 0.63
-L50  Foarte greu tablă L  culori 8  tăvi 42 (4)  cuburi 168  stații 5 [-]  coadă 4  viteză 7  soluție 209s  casual 0.25
+L 1  Ușor        culori 4  BUS 15 (coadă 5)  cuburi  47 greșite 19  spațiu 8  stații 14 [#1 + + #2]  soluție 27s  casual 1
+L 2  Ușor        culori 3  BUS  5 (coadă 2)  cuburi  12 greșite  7  spațiu 10  stații 3 [-]  soluție 23s  casual 1
+L 3  Ușor        culori 3  BUS  6 (coadă 3)  cuburi  13 greșite  8  spațiu 10  stații 3 [-]  soluție 24s  casual 1
+L 4  Normal      culori 3  BUS  8 (coadă 4)  cuburi  27 greșite 13  spațiu 8  stații 4 [-]  soluție 29s  casual 0.94
+L 5  Greu        culori 4  BUS  9 (coadă 5)  cuburi  36 greșite 16  spațiu 7  stații 4 [-]  soluție 53s  casual 0.44
+L 6  Normal      culori 4  BUS  8 (coadă 4)  cuburi  30 greșite 12  spațiu 8  stații 4 [-]  soluție 32s  casual 0.81
+L 7  Ușor        culori 4  BUS  5 (coadă 2)  cuburi  12 greșite  7  spațiu 10  stații 3 [-]  soluție 22s  casual 1
+L 8  Normal      culori 4  BUS  8 (coadă 4)  cuburi  27 greșite 12  spațiu 8  stații 4 [-]  soluție 32s  casual 1
+L 9  Normal      culori 4  BUS  7 (coadă 4)  cuburi  21 greșite  9  spațiu 8  stații 4 [#3]  soluție 36s  casual 0.69
+L10  Foarte greu culori 5  BUS 12 (coadă 7)  cuburi  48 greșite 25  spațiu 6  stații 5 [-]  soluție 61s  casual 0.31
+L11  Normal      culori 4  BUS  9 (coadă 5)  cuburi  31 greșite 13  spațiu 8  stații 4 [-]  soluție 37s  casual 0.81
+L12  Ușor        culori 4  BUS  6 (coadă 3)  cuburi  15 greșite  7  spațiu 10  stații 4 [+]  soluție 19s  casual 1
+L13  Normal      culori 4  BUS  9 (coadă 5)  cuburi  27 greșite 13  spațiu 8  stații 4 [-]  soluție 29s  casual 0.88
+L14  Normal      culori 4  BUS  9 (coadă 5)  cuburi  30 greșite 14  spațiu 8  stații 4 [-]  soluție 34s  casual 0.56
+L15  Greu        culori 5  BUS 10 (coadă 7)  cuburi  40 greșite 22  spațiu 7  stații 4 [#4]  soluție 90s  casual 0.5
+L16  Normal      culori 5  BUS 10 (coadă 6)  cuburi  36 greșite 14  spațiu 8  stații 5 [+]  soluție 38s  casual 0.75
+L17  Ușor        culori 5  BUS  7 (coadă 4)  cuburi  17 greșite  8  spațiu 10  stații 3 [-]  soluție 24s  casual 1
+L18  Normal      culori 5  BUS 11 (coadă 6)  cuburi  40 greșite 22  spațiu 8  stații 6 [#3]  soluție 58s  casual 0.69
+L19  Normal      culori 5  BUS 10 (coadă 6)  cuburi  38 greșite 15  spațiu 8  stații 4 [-]  soluție 57s  casual 0.63
+L20  Foarte greu culori 6  BUS 15 (coadă 10)  cuburi  60 greșite 36  spațiu 6  stații 6 [+]  soluție 119s  casual 0.25
+L21  Normal      culori 5  BUS 12 (coadă 7)  cuburi  40 greșite 15  spațiu 8  stații 6 [#3]  soluție 52s  casual 0.75
+L22  Ușor        culori 5  BUS  7 (coadă 4)  cuburi  19 greșite  9  spațiu 10  stații 3 [-]  soluție 33s  casual 0.88
+L23  Normal      culori 5  BUS 11 (coadă 7)  cuburi  40 greșite 18  spațiu 8  stații 4 [-]  soluție 39s  casual 0.75
+L24  Normal      culori 5  BUS 12 (coadă 7)  cuburi  43 greșite 20  spațiu 8  stații 7 [#3 +]  soluție 54s  casual 0.88
+L25  Greu        culori 6  BUS 14 (coadă 9)  cuburi  56 greșite 31  spațiu 7  stații 5 [-]  soluție 76s  casual 0.5
+L26  Normal      culori 6  BUS 12 (coadă 8)  cuburi  42 greșite 19  spațiu 8  stații 4 [-]  soluție 56s  casual 0.75
+L27  Ușor        culori 5  BUS  8 (coadă 5)  cuburi  18 greșite 10  spațiu 10  stații 3 [-]  soluție 25s  casual 0.88
+L28  Normal      culori 6  BUS 12 (coadă 8)  cuburi  42 greșite 20  spațiu 8  stații 5 [+]  soluție 73s  casual 0.63
+L29  Normal      culori 5  BUS 12 (coadă 8)  cuburi  36 greșite 16  spațiu 8  stații 4 [-]  soluție 40s  casual 0.63
+L30  Foarte greu culori 7  BUS 16 (coadă 12)  cuburi  64 greșite 36  spațiu 6  stații 5 [#5]  soluție 115s  casual 0.31
+L31  Normal      culori 6  BUS 13 (coadă 9)  cuburi  47 greșite 20  spațiu 8  stații 4 [-]  soluție 51s  casual 0.69
+L32  Ușor        culori 6  BUS 10 (coadă 5)  cuburi  23 greșite 10  spațiu 10  stații 6 [+]  soluție 31s  casual 1
+L33  Normal      culori 6  BUS 14 (coadă 9)  cuburi  50 greșite 26  spațiu 8  stații 6 [#3]  soluție 59s  casual 0.75
+L34  Normal      culori 6  BUS 13 (coadă 9)  cuburi  47 greșite 20  spațiu 8  stații 4 [-]  soluție 45s  casual 0.69
+L35  Greu        culori 7  BUS 17 (coadă 12)  cuburi  68 greșite 32  spațiu 7  stații 5 [-]  soluție 102s  casual 0.44
+L36  Normal      culori 7  BUS 14 (coadă 9)  cuburi  50 greșite 23  spațiu 8  stații 7 [#3 +]  soluție 76s  casual 0.69
+L37  Ușor        culori 5  BUS  9 (coadă 6)  cuburi  24 greșite 13  spațiu 10  stații 3 [-]  soluție 28s  casual 0.94
+L38  Normal      culori 7  BUS 14 (coadă 10)  cuburi  54 greșite 23  spațiu 8  stații 4 [-]  soluție 58s  casual 0.56
+L39  Normal      culori 7  BUS 15 (coadă 10)  cuburi  52 greșite 28  spațiu 8  stații 6 [#3]  soluție 78s  casual 0.63
+L40  Foarte greu culori 8  BUS 20 (coadă 15)  cuburi  80 greșite 45  spațiu 7  stații 6 [+]  soluție 206s  casual 0.13
+L41  Normal      culori 7  BUS 14 (coadă 10)  cuburi  44 greșite 23  spațiu 8  stații 4 [-]  soluție 70s  casual 0.69
+L42  Ușor        culori 7  BUS 11 (coadă 6)  cuburi  28 greșite 13  spațiu 10  stații 5 [-]  soluție 32s  casual 0.94
+L43  Normal      culori 7  BUS 15 (coadă 11)  cuburi  52 greșite 24  spațiu 8  stații 4 [-]  soluție 62s  casual 0.63
+L44  Normal      culori 7  BUS 15 (coadă 11)  cuburi  50 greșite 25  spațiu 8  stații 5 [+]  soluție 63s  casual 0.56
+L45  Greu        culori 8  BUS 18 (coadă 14)  cuburi  72 greșite 39  spațiu 7  stații 5 [#4]  soluție 111s  casual 0.31
+L46  Normal      culori 8  BUS 15 (coadă 11)  cuburi  54 greșite 28  spațiu 8  stații 4 [-]  soluție 76s  casual 0.63
+L47  Ușor        culori 5  BUS 10 (coadă 7)  cuburi  23 greșite 12  spațiu 10  stații 3 [-]  soluție 26s  casual 0.94
+L48  Normal      culori 8  BUS 17 (coadă 12)  cuburi  60 greșite 35  spațiu 8  stații 7 [#3 +]  soluție 82s  casual 0.63
+L49  Normal      culori 8  BUS 16 (coadă 12)  cuburi  52 greșite 23  spațiu 8  stații 4 [-]  soluție 78s  casual 0.56
+L50  Foarte greu culori 8  BUS 23 (coadă 18)  cuburi  92 greșite 53  spațiu 6  stații 5 [-]  soluție 224s  casual 0.13
